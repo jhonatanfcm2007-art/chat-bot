@@ -1,37 +1,24 @@
-# Usar la imagen de Node.js oficial
-FROM node:20-slim
+# Imagen base ligera de Node.js
+FROM node:22-slim
 
-# Instalar dependencias necesarias para Puppeteer/Chromium en Linux
-RUN apt-get update && apt-get install -y \
-    chromium \
-    fonts-ipafont-gothic \
-    fonts-wqy-zenhei \
-    fonts-thai-tlwg \
-    fonts-kacst \
-    fonts-freefont-ttf \
-    libxss1 \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configurar variables de entorno para Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
-# Crear carpeta de trabajo
+# Directorio de trabajo
 WORKDIR /app
 
-# Copiar package.json e instalar dependencias
+# Copiar archivos de dependencias
 COPY package*.json ./
+
+# Instalar dependencias (excluyendo devDependencies para producción si se desea)
 RUN npm install
 
-# Copiar el resto del código
+# Copiar todo el código del proyecto
 COPY . .
 
-# Construir el frontend (Vite)
+# Construir el frontend de Vite
 RUN npm run build
 
-# Exponer el puerto
+# Informar a Railway sobre el puerto
+ENV PORT=3001
 EXPOSE 3001
 
-# Comando para arrancar el servidor
+# Comando de inicio
 CMD ["node", "server/index.js"]
