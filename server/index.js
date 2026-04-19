@@ -196,10 +196,11 @@ app.post('/webhook', async (req, res) => {
                 let aiReply = await getAIResponse(msgBody);
                 let requiresHuman = false;
 
-                const humanRegex = /\[?REQUIERE_HUMANO\]?/i;
+                const humanRegex = /\[?(REQUIERE_HUMANO|REQUIERE HUMANO|INTERVENCION HUMANA)\]?/i;
                 if (humanRegex.test(aiReply)) {
                     requiresHuman = true;
                     aiReply = aiReply.replace(humanRegex, '').trim();
+
                     io.emit('human_required', { from, customerName, message: msgBody });
                 }
                 
@@ -307,10 +308,12 @@ async function getAIResponse(message) {
             ? "El inventario actual es: " + inventory.map(item => `${item.name} - $${item.price} (${item.stock} disponibles)`).join(', ')
             : "Actualmente no hay inventario cargado.";
 
+        const strictRule = "REGLA OBLIGATORIA: Si el cliente pide soporte explícitamente, necesita hacer un pago que requiera confirmación humana, o hace una pregunta que no puedes resolver, incluye la palabra secreta '[REQUIERE_HUMANO]' en tu respuesta.";
+        
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: `${settings.systemPrompt}\n\nBasate en esta información para responder: ${inventoryContext}` },
+                { role: "system", content: `${settings.systemPrompt}\n\n${strictRule}\n\nBasate en esta información de inventario para responder: ${inventoryContext}` },
                 { role: "user", content: message }
             ]
         });
