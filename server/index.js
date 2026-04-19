@@ -171,8 +171,14 @@ app.post('/webhook', async (req, res) => {
 
             const msg = body.entry[0].changes[0].value.messages[0];
             const from = msg.from;
-            const msgBody = msg.text ? msg.text.body : '';
-            const customerName = body.entry[0].changes[0].value.contacts[0].profile.name || 'Cliente';
+            let msgBody = '';
+            
+            if (msg.type === 'image') {
+                msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
+                io.emit('receipt_received', { from, customerName, message: msgBody });
+            } else if (msg.text) {
+                msgBody = msg.text.body;
+            }
 
             if (msgBody) {
                 const messageData = {
@@ -198,12 +204,25 @@ app.post('/webhook', async (req, res) => {
                 let aiReply = await getAIResponse(msgBody, history);
                 let requiresHuman = false;
 
+                // 1. Detección de Soporte Humano
                 const humanRegex = /\[?(REQUIERE_HUMANO|REQUIERE HUMANO|INTERVENCION HUMANA)\]?/i;
                 if (humanRegex.test(aiReply)) {
                     requiresHuman = true;
                     aiReply = aiReply.replace(humanRegex, '').trim();
 
                     io.emit('human_required', { from, customerName, message: msgBody });
+                }
+
+                // 2. Detección de Pago Pendiente (Venta realizada pero sin confirmar)
+                const pagoRegex = /\[?(PAGO_PENDIENTE|PAGO PENDIENTE)\]?/i;
+                if (pagoRegex.test(aiReply)) {
+                    chats[from].tags = chats[from].tags || [];
+                    if (!chats[from].tags.includes('pago-pendiente')) {
+                        chats[from].tags.push('pago-pendiente');
+                        saveChats(chats);
+                        io.emit('tag_updated', { from, tags: chats[from].tags });
+                    }
+                    aiReply = aiReply.replace(pagoRegex, '').trim();
                 }
                 
                 await delay(2000);
@@ -357,6 +376,16 @@ io.on('connection', (socket) => {
         const reply = await getAIResponse(data.content, data.history || []);
         callback(reply);
     });
+
+    // Actualización manual de Etiquetas del chat
+    socket.on('update_chat_tags', ({ chatId, tags }) => {
+        if (chats[chatId]) {
+            chats[chatId].tags = tags;
+            saveChats(chats);
+            io.emit('tag_updated', { from: chatId, tags });
+        }
+    });
+
     // Mantener compatibilidad con el evento sync_inventory del frontend
     socket.on('sync_inventory', (data) => {
         inventory = data;

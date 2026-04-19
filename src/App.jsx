@@ -67,6 +67,35 @@ function App() {
       playAlertSound();
     });
 
+    socket.on('receipt_received', (data) => {
+      setNotifications(prev => [
+        {
+          id: Date.now() + Math.random(),
+          type: 'receipt',
+          title: '¡Nuevo Comprobante!',
+          body: `El cliente ${data.customerName} ha enviado una imagen.`,
+          icon: 'receipt_long',
+          data: data,
+          timestamp: new Date()
+        },
+        ...prev
+      ]);
+      playAlertSound();
+    });
+
+    socket.on('tag_updated', (data) => {
+      setChats(prev => {
+        if (!prev[data.from]) return prev;
+        return {
+          ...prev,
+          [data.from]: {
+            ...prev[data.from],
+            tags: data.tags
+          }
+        };
+      });
+    });
+
     socket.on('message', (msg) => {
       setChats(prev => {
         const chatId = msg.from;
@@ -196,7 +225,7 @@ function App() {
     }
   }, [salesHistory]);
 
-  const handleSale = (account) => {
+  const handleSale = (account, customerId = null, customerName = null) => {
     if (account.uses <= 0) return;
     
     const costPerSlot = (account.cost || 0) / (account.originalUses || 1);
@@ -207,7 +236,8 @@ function App() {
       cost: costPerSlot,
       provider: account.provider || 'N/A',
       date: new Date().toISOString().split('T')[0],
-      customer: 'Venta Directa'
+      customer: customerName || 'Venta Directa',
+      customerId: customerId || null
     };
 
     setSalesHistory([newSale, ...salesHistory]);
@@ -236,6 +266,10 @@ function App() {
     });
   };
 
+  const handleUpdateChatTag = (chatId, tags) => {
+    socket.emit('update_chat_tags', { chatId, tags });
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -247,6 +281,10 @@ function App() {
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
             onSendMessage={handleSendMessage} 
+            accounts={accounts}
+            salesHistory={salesHistory}
+            onSale={handleSale}
+            onUpdateTag={handleUpdateChatTag}
           />
         );
       case 'ai_assistant':
