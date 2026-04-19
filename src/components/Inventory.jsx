@@ -14,7 +14,8 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
     price: '',
     cost: '',
     uses: '3',
-    status: 'Available'
+    status: 'Available',
+    provider: ''
   });
 
 
@@ -37,7 +38,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
     if (editingAccount) {
       // Update existing
       setAccounts(accounts.map(acc => 
-        acc.id === editingAccount.id ? { ...acc, ...processedFormData, price: parseInt(formData.price) || 0, cost: parseInt(formData.cost) || 0 } : acc
+        acc.id === editingAccount.id ? { ...acc, ...processedFormData, price: parseInt(formData.price) || 0, cost: parseInt(formData.cost) || 0, provider: formData.provider } : acc
       ));
     } else {
       // Add new
@@ -68,7 +69,8 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
       price: account.price,
       cost: account.cost || '',
       uses: account.uses.toString(),
-      status: account.status
+      status: account.status,
+      provider: account.provider || ''
     });
 
     setIsModalOpen(true);
@@ -89,7 +91,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
     setIsModalOpen(false);
     setEditingAccount(null);
-    setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available' });
+    setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
   };
 
@@ -120,58 +122,56 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
 
 
-  return (
-    <div className="flex-grow p-8 bg-background overflow-y-auto relative">
-      <div className="flex justify-between items-center mb-8">
+  return    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-black text-on-surface">Gestión de Inventario</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Administra tu stock de streaming y precios</p>
+          <h1 className="text-xl md:text-2xl font-black text-on-surface">Gestión de Inventario</h1>
+          <p className="text-on-surface-variant text-[11px] md:text-sm mt-1">Administra tu stock de streaming y precios</p>
         </div>
 
         <button 
           onClick={() => { closeModal(); setIsModalOpen(true); }}
-          className="bg-primary text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+          className="w-full md:w-auto bg-primary text-white font-bold px-6 py-3 md:py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           <span className="material-symbols-outlined text-lg">add</span>
           Nueva Cuenta
         </button>
-
       </div>
 
       {/* Summary Dashboard */}
-      <div className="grid grid-cols-1 gap-6 mb-12">
-        <div className="bg-white rounded-[2rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-xl group">
+      <div className="grid grid-cols-1 gap-6 mb-8 md:mb-12">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-xl group">
           <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-outline-variant">
             {/* Main Stats Header */}
-            <div className="p-10 bg-panel-bg flex flex-col justify-center min-w-[320px] relative overflow-hidden">
+            <div className="p-6 md:p-10 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[320px] relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                <div className="relative z-10">
-                 <div className="flex items-center gap-4 mb-3">
-                   <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                     <span className="material-symbols-outlined text-2xl">inventory_2</span>
+                 <div className="flex items-center gap-4 mb-2 md:mb-3">
+                   <div className="w-10 h-10 md:w-12 md:h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                     <span className="material-symbols-outlined text-xl md:text-2xl">inventory_2</span>
                    </div>
-                   <h2 className="text-white font-black text-2xl tracking-tight leading-none uppercase">Stock Real</h2>
+                   <h2 className="text-white font-black text-xl md:text-2xl tracking-tight leading-none uppercase">Stock Real</h2>
                  </div>
-                 <p className="text-[10px] text-panel-on-bg/40 font-black uppercase tracking-[0.2em]">Cálculo dinámico de cupos disponibles</p>
+                 <p className="text-[9px] md:text-[10px] text-panel-on-bg/40 font-black uppercase tracking-[0.2em]">Cálculo dinámico de cupos</p>
                </div>
             </div>
 
             {/* Platform Grid Area */}
-            <div className="flex-grow p-10 bg-white grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex-grow p-6 md:p-10 bg-white grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {Object.entries(statsByService).length > 0 ? (
                 Object.entries(statsByService).map(([key, data]) => (
-                  <div key={key} className="flex flex-col gap-2">
-                    <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">{data.displayName}</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-on-surface">{data.totalSlots}</span>
-                      <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">Cupos</span>
+                  <div key={key} className="flex flex-col gap-1 md:gap-2">
+                    <span className="text-[9px] md:text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest truncate">{data.displayName}</span>
+                    <div className="flex items-baseline gap-1.5 md:gap-2">
+                      <span className="text-2xl md:text-3xl font-black text-on-surface">{data.totalSlots}</span>
+                      <span className="text-[8px] md:text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">Cupos</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="col-span-full py-2 flex flex-col items-center justify-center text-on-surface-variant/20">
-                  <span className="material-symbols-outlined text-5xl mb-2">refresh</span>
-                  <p className="text-[10px] font-black uppercase tracking-widest">Sincronizando...</p>
+                  <span className="material-symbols-outlined text-4xl mb-2">refresh</span>
+                  <p className="text-[9px] font-black uppercase tracking-widest">Sincronizando...</p>
                 </div>
               )}
             </div>
@@ -179,231 +179,165 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
         </div>
       </div>
 
+      {/* Responsive Table/Card View */}
+      <div className="space-y-4 md:space-y-0">
+        {/* Mobile Cards (View for small screens) */}
+        <div className="md:hidden space-y-4">
+          {accounts.map((acc) => (
+            <div key={acc.id} className="bg-white p-6 rounded-3xl border border-outline-variant shadow-sm relative overflow-hidden">
+               {/* Accent line for status */}
+               <div className={`absolute left-0 top-0 bottom-0 w-1 ${acc.status === 'Available' ? 'bg-tertiary' : 'bg-on-surface-variant/20'}`}></div>
+               
+               <div className="flex justify-between items-start mb-4">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                     <span className="material-symbols-outlined">tv</span>
+                   </div>
+                   <div>
+                     <h3 className="font-black text-on-surface text-base">{acc.service}</h3>
+                     <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">{acc.provider || 'Sin Proveedor'}</p>
+                   </div>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-lg font-black text-primary">${acc.price.toLocaleString()}</p>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+                      acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary' : 'bg-on-surface-variant/10 text-on-surface-variant'
+                    }`}>
+                      {acc.status === 'Available' ? 'Disponible' : 'Vendido'}
+                    </span>
+                 </div>
+               </div>
 
-      {/* Modal */}
+               <div className="grid grid-cols-2 gap-4 py-4 border-y border-outline-variant/50 mb-4">
+                 <div>
+                   <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-1">Credenciales</span>
+                   <p className="text-xs font-bold text-on-surface truncate">{acc.email}</p>
+                   <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">{acc.pass}</p>
+                 </div>
+                 <div className="text-right">
+                   <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-1">Cupos Disp.</span>
+                   <div className="flex items-center justify-end gap-1.5">
+                     <span className="text-lg font-black text-on-surface">{acc.uses}</span>
+                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                   </div>
+                 </div>
+               </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/20 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-outline-variant p-8 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-on-surface">
-                {editingAccount ? 'Editar Cuenta' : 'Agregar Nueva Cuenta'}
-              </h2>
-
-              <button 
-                onClick={closeModal}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-secondary-bg transition-colors"
-              >
-                <span className="material-symbols-outlined text-on-surface-variant">close</span>
-              </button>
+               <div className="flex gap-2">
+                 <button 
+                   onClick={() => onSale(acc)}
+                   disabled={acc.uses <= 0}
+                   className={`flex-grow flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                     acc.uses > 0 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-secondary-bg text-on-surface-variant/30 cursor-not-allowed'
+                   }`}
+                 >
+                   <span className="material-symbols-outlined text-sm">local_mall</span>
+                   Vender
+                 </button>
+                 <button 
+                   onClick={() => handleEditAccount(acc)}
+                   className="w-12 h-12 bg-secondary-bg flex items-center justify-center rounded-2xl text-on-surface-variant"
+                 >
+                   <span className="material-symbols-outlined text-xl">edit</span>
+                 </button>
+                 <button 
+                   onClick={() => handleDeleteAccount(acc.id)}
+                   className="w-12 h-12 bg-red-50 flex items-center justify-center rounded-2xl text-error"
+                 >
+                   <span className="material-symbols-outlined text-xl">delete</span>
+                 </button>
+               </div>
             </div>
-
-            
-            <form onSubmit={handleAddAccount} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Plataforma / Servicio</label>
-                <input 
-                  required
-                  name="service"
-                  value={formData.service}
-                  onChange={handleInputChange}
-                  placeholder="ej. Netflix, Disney+"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Nombre del Perfil</label>
-                  <input 
-                    name="profile"
-                    value={formData.profile}
-                    onChange={handleInputChange}
-                    placeholder="ej. Perfil 1"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
-                  <input 
-                    name="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="12000"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Costo Cuenta (Total)</label>
-                  <input 
-                    name="cost"
-                    type="number"
-                    value={formData.cost}
-                    onChange={handleInputChange}
-                    placeholder="8000"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Cupos / Usos Totales</label>
-                  <input 
-                    name="uses"
-                    type="number"
-                    value={formData.uses}
-                    onChange={handleInputChange}
-                    placeholder="3"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Estado de Cuenta</label>
-                  <select 
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  >
-                    <option value="Available">DISPONIBLE</option>
-                    <option value="Sold">VENDIDO</option>
-                  </select>
-                </div>
-              </div>
-
-
-
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Correo / Usuario</label>
-
-                <input 
-                  required
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="nombre@ejemplo.com"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Contraseña</label>
-                <input 
-                  required
-                  name="pass"
-                  type="text"
-                  value={formData.pass}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                />
-              </div>
-
-              
-              <button 
-                type="submit"
-                className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 mt-4 hover:opacity-90 active:scale-[0.98] transition-all"
-              >
-                {editingAccount ? 'Actualizar Cuenta' : 'Registrar Cuenta'}
-              </button>
-
-
-            </form>
-          </div>
+          ))}
         </div>
-      )}
 
-      <div className="bg-white rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-secondary-bg/50 border-b border-outline-variant">
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Servicio</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Perfil</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Credenciales</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Finanzas</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Usos</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Acciones</th>
-
-            </tr>
-
-          </thead>
-          <tbody className="divide-y divide-outline-variant">
-            {accounts.map((acc) => (
-              <tr key={acc.id} className="hover:bg-background/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-lg">tv</span>
-                    </div>
-                    <span className="font-bold text-on-surface">{acc.service}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-on-surface-variant">{acc.profile}</td>
-                <td className="px-6 py-4">
-                  <p className="text-xs font-medium text-on-surface">{acc.email}</p>
-                  <p className="text-[10px] text-on-surface-variant font-mono">{acc.pass}</p>
-                </td>
-                <td className="px-6 py-4">
-                  <p className="font-bold text-primary leading-none text-sm">${acc.price.toLocaleString()}</p>
-                  <p className="text-[10px] text-on-surface-variant font-bold mt-1 tracking-tighter uppercase opacity-60">Costo: ${acc.cost?.toLocaleString() || 0}</p>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    <span className="text-sm font-black text-on-surface">{acc.uses}</span>
-                    <span className="text-[10px] text-on-surface-variant font-bold">CUPOS</span>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                    acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary' : 'bg-on-surface-variant/10 text-on-surface-variant'
-                  }`}>
-                    {acc.status === 'Available' ? 'DISPONIBLE' : 'VENDIDO'}
-                  </span>
-                </td>
-
-
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => onSale(acc)}
-                      disabled={acc.uses <= 0}
-                      className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-                        acc.uses > 0 ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-secondary-bg text-on-surface-variant/30 cursor-not-allowed'
-                      }`}
-                      title="Registrar Venta"
-                    >
-                      <span className="material-symbols-outlined text-lg">local_mall</span>
-                    </button>
-                    <button 
-                      onClick={() => handleEditAccount(acc)}
-
-                      className="p-2 hover:bg-secondary-bg rounded-lg text-on-surface-variant hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-lg">edit</span>
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteAccount(acc.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-on-surface-variant hover:text-error transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-lg">delete</span>
-                    </button>
-                  </div>
-                </td>
-
-
-
+        {/* Desktop Table (Hidden on mobile) */}
+        <div className="hidden md:block bg-white rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-secondary-bg/50 border-b border-outline-variant">
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Servicio</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Perfil</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Credenciales</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Finanzas</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Proveedor</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Usos</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-outline-variant">
+              {accounts.map((acc) => (
+                <tr key={acc.id} className="hover:bg-background/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-lg">tv</span>
+                      </div>
+                      <span className="font-bold text-on-surface">{acc.service}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-on-surface-variant">{acc.profile}</td>
+                  <td className="px-6 py-4">
+                    <p className="text-xs font-medium text-on-surface">{acc.email}</p>
+                    <p className="text-[10px] text-on-surface-variant font-mono">{acc.pass}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-primary leading-none text-sm">${acc.price.toLocaleString()}</p>
+                    <p className="text-[10px] text-on-surface-variant font-bold mt-1 tracking-tighter uppercase opacity-60">Costo: ${acc.cost?.toLocaleString() || 0}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-bold text-on-surface bg-secondary-bg px-2 py-1 rounded-lg border border-outline-variant/30">
+                      {acc.provider || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                      <span className="text-sm font-black text-on-surface">{acc.uses}</span>
+                      <span className="text-[10px] text-on-surface-variant font-bold">CUPOS</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
+                      acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary' : 'bg-on-surface-variant/10 text-on-surface-variant'
+                    }`}>
+                      {acc.status === 'Available' ? 'DISPONIBLE' : 'VENDIDO'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => onSale(acc)}
+                        disabled={acc.uses <= 0}
+                        className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
+                          acc.uses > 0 ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-secondary-bg text-on-surface-variant/30 cursor-not-allowed'
+                        }`}
+                        title="Registrar Venta"
+                      >
+                        <span className="material-symbols-outlined text-lg">local_mall</span>
+                      </button>
+                      <button 
+                        onClick={() => handleEditAccount(acc)}
+                        className="p-2 hover:bg-secondary-bg rounded-lg text-on-surface-variant hover:text-primary transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-lg">edit</span>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteAccount(acc.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg text-on-surface-variant hover:text-error transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
       </div>
     </div>
   );

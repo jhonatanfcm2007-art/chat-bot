@@ -139,6 +139,7 @@ function App() {
       service: account.service,
       price: account.price,
       cost: costPerSlot,
+      provider: account.provider || 'N/A',
       date: new Date().toISOString().split('T')[0],
       customer: 'Venta Directa'
     };

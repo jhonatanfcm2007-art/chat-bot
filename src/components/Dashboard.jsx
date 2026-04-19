@@ -9,7 +9,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
   });
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(true);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const pickerRef = useRef(null);
 
@@ -52,6 +52,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
     id: sale.id,
     customer: sale.customer,
     service: sale.service,
+    provider: sale.provider,
     time: sale.date,
     amount: `$${sale.price.toLocaleString()}`
   }));
@@ -248,7 +249,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
                   </div>
                   <div>
                     <h4 className="font-black text-sm text-on-surface">{item.customer}</h4>
-                    <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.time}</p>
+                    <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.provider || 'N/A'} • {item.time}</p>
                   </div>
                 </div>
                 <span className="font-black text-primary text-sm">{item.amount}</span>
@@ -331,7 +332,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
                     </div>
                     <div>
                       <h4 className="font-black text-sm text-on-surface">{item.customer}</h4>
-                      <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.time}</p>
+                      <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.provider || 'N/A'} • {item.time}</p>
                     </div>
                   </div>
                   <div className="text-right">
