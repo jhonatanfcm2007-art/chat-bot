@@ -307,20 +307,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Estado de Cuenta</label>
-                  <select 
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  >
-                    <option value="Available">DISPONIBLE</option>
-                    <option value="Sold">VENDIDO</option>
-                  </select>
-                </div>
-              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Proveedor (Quien te la vendió)</label>
                 <input 
