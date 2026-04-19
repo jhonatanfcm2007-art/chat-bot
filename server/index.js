@@ -171,6 +171,11 @@ app.post('/webhook', async (req, res) => {
 
             const msg = body.entry[0].changes[0].value.messages[0];
             const from = msg.from;
+            
+            // Extraer el nombre del cliente del payload (contactos) o usar el número si no está disponible
+            const contacts = body.entry[0].changes[0].value.contacts;
+            const customerName = contacts && contacts[0]?.profile?.name ? contacts[0].profile.name : from;
+            
             let msgBody = '';
             
             if (msg.type === 'image') {
