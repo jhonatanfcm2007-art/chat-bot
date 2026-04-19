@@ -1,34 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const Header = () => {
-  const [notificationStatus, setNotificationStatus] = useState('default');
+const Header = ({ notifications = [], onNotificationClick, onClearNotifications }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotificationStatus(Notification.permission);
-    }
-  }, []);
-
-  const handleNotificationRequest = () => {
-    if (!('Notification' in window)) {
-      alert('Tu dispositivo/navegador no soporta notificaciones de escritorio.');
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      alert('Las notificaciones ya están activas y funcionando correctamente.');
-      return;
-    }
-
-    Notification.requestPermission().then(permission => {
-      setNotificationStatus(permission);
-      if (permission === 'granted') {
-        alert('✅ ¡Excelente! Notificaciones activadas exitosamente.');
-      } else {
-        alert('⚠️ Permiso denegado. Algunas alertas solo se mostrarán internamente visuales.');
-      }
-    });
+  const toggleDropdown = () => {
+    setIsDropdownOpen(prev => !prev);
   };
+
 
   return (
     <header className="bg-white flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-outline-variant">
@@ -45,24 +23,71 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 relative">
         <button 
-          onClick={handleNotificationRequest}
+          onClick={toggleDropdown}
           className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
-            notificationStatus === 'granted' ? 'bg-primary/10 text-primary hover:bg-primary/20' : 
-            notificationStatus === 'denied' ? 'bg-error/10 text-error hover:bg-error/20' : 
-            'bg-secondary-bg text-on-surface-variant hover:text-primary hover:scale-105'
+            notifications.length > 0 ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-secondary-bg text-on-surface-variant hover:text-primary hover:scale-105'
           }`}
-          title={notificationStatus === 'granted' ? "Notificaciones Activadas" : "Activar Notificaciones Push"}
         >
           <span className="material-symbols-outlined text-[20px]">
-            {notificationStatus === 'granted' ? 'notifications_active' : 
-             notificationStatus === 'denied' ? 'notifications_off' : 'notifications'}
+            {notifications.length > 0 ? 'notifications_active' : 'notifications'}
           </span>
-          {notificationStatus === 'default' && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full animate-pulse border border-white"></span>
+          {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+              {notifications.length}
+            </span>
           )}
         </button>
+
+        {/* Dropdown Menu */}
+        {isDropdownOpen && (
+          <div className="absolute top-14 right-16 w-80 bg-white rounded-3xl shadow-2xl border border-outline-variant overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
+            <div className="px-5 py-4 border-b border-outline-variant flex justify-between items-center bg-secondary-bg">
+              <h4 className="font-black text-on-surface tracking-tight">Centro de Notificaciones</h4>
+              {notifications.length > 0 && (
+                <button onClick={onClearNotifications} className="text-[10px] uppercase tracking-widest font-bold text-tertiary hover:text-error transition-colors">
+                  Limpiar Todas
+                </button>
+              )}
+            </div>
+            
+            <div className="max-h-96 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-on-surface-variant opacity-60">
+                  <span className="material-symbols-outlined text-4xl mb-2">notifications_paused</span>
+                  <p className="text-sm font-medium">No tienes alertas pendientes</p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {notifications.map((notif) => (
+                    <div 
+                      key={notif.id} 
+                      onClick={() => {
+                        onNotificationClick(notif);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="p-4 border-b border-outline-variant hover:bg-primary/5 cursor-pointer transition-colors flex gap-4 items-start last:border-b-0"
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${
+                        notif.type === 'human' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
+                      }`}>
+                        <span className="material-symbols-outlined text-xl">{notif.icon}</span>
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-sm text-on-surface">{notif.title}</h5>
+                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2 leading-relaxed font-medium">{notif.body}</p>
+                        <span className="text-[9px] font-bold text-tertiary uppercase tracking-widest mt-2 block opacity-70">
+                          {notif.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <button className="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-bg text-on-surface-variant hover:text-primary transition-colors shadow-sm">
            <span className="material-symbols-outlined text-[20px]">help_center</span>
         </button>
