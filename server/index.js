@@ -187,13 +187,15 @@ app.post('/webhook', async (req, res) => {
 
                 // Persistir mensaje del cliente
                 if (!chats[from]) chats[from] = { from, customerName, messages: [] };
+                
+                const history = chats[from].messages.slice(-10); // Tomar solo los últimos 10 para ahorrar tokens de ChatGPT
                 chats[from].messages.push({ ...messageData, content: msgBody });
                 saveChats(chats);
 
                 io.emit('message', messageData);
 
                 // Procesar con IA
-                let aiReply = await getAIResponse(msgBody);
+                let aiReply = await getAIResponse(msgBody, history);
                 let requiresHuman = false;
 
                 const humanRegex = /\[?(REQUIERE_HUMANO|REQUIERE HUMANO|INTERVENCION HUMANA)\]?/i;
@@ -300,7 +302,7 @@ async function sendMessageToCloudAPI(to, text) {
     }
 }
 
-async function getAIResponse(message) {
+async function getAIResponse(message, history = []) {
     if (!openai) return "Modo IA desactivado. Configura tu API Key de OpenAI en el archivo .env.";
     
     try {
@@ -310,10 +312,16 @@ async function getAIResponse(message) {
 
         const strictRule = "REGLA OBLIGATORIA: Si el cliente pide soporte explícitamente, necesita hacer un pago que requiera confirmación humana, o hace una pregunta que no puedes resolver, incluye la palabra secreta '[REQUIERE_HUMANO]' en tu respuesta.";
         
+        const formattedHistory = history.map(msg => ({
+            role: (msg.role === 'bot' || msg.isMe) ? 'assistant' : 'user',
+            content: msg.content || msg.body
+        }));
+
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
                 { role: "system", content: `${settings.systemPrompt}\n\n${strictRule}\n\nBasate en esta información de inventario para responder: ${inventoryContext}` },
+                ...formattedHistory,
                 { role: "user", content: message }
             ]
         });
@@ -345,9 +353,9 @@ io.on('connection', (socket) => {
     });
 
     // Test de la IA
-    socket.on('test_ai', async (message, callback) => {
-        const reply = await getAIResponse(message);
-        if (callback) callback(reply);
+    socket.on('test_ai', async (data, callback) => {
+        const reply = await getAIResponse(data.content, data.history || []);
+        callback(reply);
     });
     // Mantener compatibilidad con el evento sync_inventory del frontend
     socket.on('sync_inventory', (data) => {

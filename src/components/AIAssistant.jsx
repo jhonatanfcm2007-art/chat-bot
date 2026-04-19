@@ -30,11 +30,12 @@ const AIAssistant = ({ settings, socket }) => {
     if (!inputValue.trim()) return;
 
     const newMsg = { role: 'user', content: inputValue };
+    const currentHistory = [...messages];
     setMessages(prev => [...prev, newMsg]);
     setInputValue('');
     setIsTyping(true);
 
-    socket.emit('test_ai', newMsg.content, (reply) => {
+    socket.emit('test_ai', { content: newMsg.content, history: currentHistory }, (reply) => {
       setIsTyping(false);
       setMessages(prev => [...prev, { role: 'bot', content: reply }]);
     });
