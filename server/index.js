@@ -161,7 +161,7 @@ app.post('/webhook', async (req, res) => {
                 };
 
                 // Persistir mensaje del cliente
-                if (!chats[from]) chats[from] = { customerName, messages: [] };
+                if (!chats[from]) chats[from] = { from, customerName, messages: [] };
                 chats[from].messages.push({ ...messageData, content: msgBody });
                 saveChats(chats);
 
@@ -327,7 +327,7 @@ io.on('connection', (socket) => {
             };
 
             // Persistir mensaje manual
-            if (!chats[to]) chats[to] = { customerName: 'Cliente', messages: [] };
+            if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
             chats[to].messages.push({ ...msgData, content });
             saveChats(chats);
 

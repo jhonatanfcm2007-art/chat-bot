@@ -19,7 +19,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
   };
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
-  const chatSessions = Object.values(chats);
+  const chatSessions = Object.entries(chats).map(([id, data]) => ({
+    ...data,
+    from: data.from || id
+  }));
 
   return (
     <div className="flex flex-grow overflow-hidden">
