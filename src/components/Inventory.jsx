@@ -10,7 +10,6 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
-  const [showCustomProfile, setShowCustomProfile] = useState(false);
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
@@ -99,7 +98,6 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
     setIsModalOpen(false);
     setShowCustomPlatform(false);
-    setShowCustomProfile(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
@@ -258,59 +256,29 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Nombre del Perfil</label>
-                  <div className="flex gap-2">
-                    {!showCustomProfile ? (
-                      <>
-                        <select 
-                          name="profile"
-                          value={formData.profile}
-                          onChange={handleInputChange}
-                          className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                        >
-                          <option value="" disabled>Seleccionar...</option>
-                          {PREDEFINED_PROFILES.map(p => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                        <button 
-                          type="button"
-                          onClick={() => { setShowCustomProfile(true); setFormData(prev => ({...prev, profile: ''})); }}
-                          className="bg-primary/10 text-primary px-3 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
-                          title="Escribir perfil personalizado"
-                        >
-                          <span className="material-symbols-outlined font-bold text-sm">add</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <input 
-                          name="profile"
-                          value={formData.profile}
-                          onChange={handleInputChange}
-                          placeholder="ej. Perfil 1"
-                          className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => { setShowCustomProfile(false); setFormData(prev => ({...prev, profile: ''})); }}
-                          className="bg-secondary-bg text-on-surface-variant px-3 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
-                        >
-                          <span className="material-symbols-outlined text-sm">close</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Número de Perfil</label>
+                  <select 
+                    required
+                    name="profile"
+                    value={formData.profile}
+                    onChange={handleInputChange}
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                  >
+                    <option value="" disabled>Seleccionar...</option>
+                    {PREDEFINED_PROFILES.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Cupos / Usos Totales</label>
                   <input 
-                    name="price"
+                    name="uses"
                     type="number"
-                    value={formData.price}
+                    value={formData.uses}
                     onChange={handleInputChange}
-                    placeholder="12000"
+                    placeholder="3"
                     className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
@@ -328,13 +296,13 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Cupos / Usos Totales</label>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
                   <input 
-                    name="uses"
+                    name="price"
                     type="number"
-                    value={formData.uses}
+                    value={formData.price}
                     onChange={handleInputChange}
-                    placeholder="3"
+                    placeholder="12000"
                     className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
