@@ -5,6 +5,7 @@ const MobileNav = ({ activeTab, onTabChange }) => {
     { id: 'inventory', icon: 'inventory_2', label: 'Inventario' },
     { id: 'simulator', icon: 'chat', label: 'Chats' },
     { id: 'analytics', icon: 'monitoring', label: 'Analítica' },
+    { id: 'ai_assistant', icon: 'psychology', label: 'IA' },
   ];
 
   return (

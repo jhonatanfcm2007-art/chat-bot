@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Simulator from './components/Simulator';
+import AIAssistant from './components/AIAssistant';
 
 import io from 'socket.io-client';
 
@@ -14,11 +15,32 @@ function App() {
   const [activeTab, setActiveTab] = useState('inventory');
   const [chats, setChats] = useState({});
   const [selectedChat, setSelectedChat] = useState(null);
+  const [settings, setSettings] = useState({ systemPrompt: '' });
+
+  // Solicitar permiso para notificaciones
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   useEffect(() => {
     socket.on('initial_chats', (data) => {
       console.log('Received initial history:', data);
       setChats(data);
+    });
+
+    socket.on('initial_settings', (data) => {
+      setSettings(data);
+    });
+
+    socket.on('human_required', (data) => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('¡Atención Requerida!', {
+          body: `El cliente ${data.customerName} necesita soporte humano.`,
+          icon: '/app_icon.png'
+        });
+      }
     });
 
     socket.on('message', (msg) => {
@@ -49,6 +71,8 @@ function App() {
     return () => {
       socket.off('message');
       socket.off('initial_chats');
+      socket.off('initial_settings');
+      socket.off('human_required');
     };
   }, []);
   
@@ -109,7 +133,19 @@ function App() {
   // Escuchar actualizaciones de ventas en tiempo real
   useEffect(() => {
     socket.on('sales_updated', (data) => {
-      if (Array.isArray(data)) setSalesHistory(data);
+      if (Array.isArray(data)) {
+        setSalesHistory(prev => {
+          if (data.length > prev.length && prev.length > 0) {
+             if ('Notification' in window && Notification.permission === 'granted') {
+               new Notification('¡Nueva Venta!', {
+                 body: `Se ha registrado una venta de ${data[0].service} por $${data[0].price}`,
+                 icon: '/app_icon.png'
+               });
+             }
+          }
+          return data;
+        });
+      }
     });
     return () => socket.off('sales_updated');
   }, []);
@@ -180,6 +216,13 @@ function App() {
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
             onSendMessage={handleSendMessage} 
+          />
+        );
+      case 'ai_assistant':
+        return (
+          <AIAssistant 
+            settings={settings}
+            socket={socket}
           />
         );
       case 'analytics':

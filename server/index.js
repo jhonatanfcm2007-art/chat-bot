@@ -34,6 +34,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
 
 // Crear carpeta data si no existe
@@ -107,10 +108,34 @@ function saveChats(data) {
     }
 }
 
+function loadSettings() {
+    const defaultSettings = {
+        systemPrompt: "Eres un asistente virtual de ventas para WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\nRegla importante: Si el cliente pide soporte, necesita hacer un pago que requiera confirmación humana, o hace una pregunta que no puedes resolver, incluye la palabra secreta '[REQUIERE_HUMANO]' en tu respuesta y despídete amablemente diciendo que un agente humano lo atenderá."
+    };
+    try {
+        if (fs.existsSync(SETTINGS_FILE)) {
+            const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando configuración IA:', err.message);
+    }
+    return defaultSettings;
+}
+
+function saveSettings(data) {
+    try {
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando configuración IA:', err.message);
+    }
+}
+
 // Cargar datos al iniciar el servidor
 let inventory = loadInventory();
 let sales = loadSales();
 let chats = loadChats();
+let settings = loadSettings();
 
 // Helper function for random delay
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -168,7 +193,14 @@ app.post('/webhook', async (req, res) => {
                 io.emit('message', messageData);
 
                 // Procesar con IA
-                const aiReply = await getAIResponse(msgBody);
+                let aiReply = await getAIResponse(msgBody);
+                let requiresHuman = false;
+
+                if (aiReply.includes('[REQUIERE_HUMANO]')) {
+                    requiresHuman = true;
+                    aiReply = aiReply.replace('[REQUIERE_HUMANO]', '').trim();
+                    io.emit('human_required', { from, customerName, message: msgBody });
+                }
                 
                 await delay(2000);
 
@@ -181,7 +213,8 @@ app.post('/webhook', async (req, res) => {
                     body: aiReply,
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     isMe: true,
-                    role: 'bot'
+                    role: 'bot',
+                    requiresHuman
                 };
 
                 // Persistir respuesta del bot
@@ -276,7 +309,7 @@ async function getAIResponse(message) {
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: `Eres un asistente virtual de ventas para WhatsApp. Sé cordial, breve, persuasivo y usa emojis. Basate en esta información para responder: ${inventoryContext}` },
+                { role: "system", content: `${settings.systemPrompt}\n\nBasate en esta información para responder: ${inventoryContext}` },
                 { role: "user", content: message }
             ]
         });
@@ -299,7 +332,19 @@ io.on('connection', (socket) => {
     socket.emit('inventory_updated', inventory);
     socket.emit('sales_updated', sales);
     socket.emit('initial_chats', chats);
+    socket.emit('initial_settings', settings);
 
+    // Configuración de la IA
+    socket.on('sync_settings', (data) => {
+        settings = data;
+        saveSettings(settings);
+    });
+
+    // Test de la IA
+    socket.on('test_ai', async (message, callback) => {
+        const reply = await getAIResponse(message);
+        if (callback) callback(reply);
+    });
     // Mantener compatibilidad con el evento sync_inventory del frontend
     socket.on('sync_inventory', (data) => {
         inventory = data;
