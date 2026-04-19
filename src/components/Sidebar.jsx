@@ -8,7 +8,6 @@ const Sidebar = ({ activeTab, onTabChange }) => {
 
 
     { id: 'analytics', icon: 'monitoring', label: 'Analítica' },
-    { id: 'whatsapp', icon: 'qr_code_2', label: 'Conectar' },
   ];
 
   return (

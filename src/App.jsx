@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
-import WhatsAppConnector from './components/WhatsAppConnector';
 import Inventory from './components/Inventory';
 import Simulator from './components/Simulator';
 
@@ -183,8 +182,6 @@ function App() {
             onSendMessage={handleSendMessage} 
           />
         );
-      case 'whatsapp':
-        return <WhatsAppConnector />;
       case 'analytics':
       case 'dashboard':
       default:
