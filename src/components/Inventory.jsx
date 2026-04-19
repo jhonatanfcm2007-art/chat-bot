@@ -122,7 +122,8 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
 
 
-  return    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto relative">
+  return (
+    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-on-surface">Gestión de Inventario</h1>
@@ -178,6 +179,141 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/20 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-outline-variant p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-on-surface">
+                {editingAccount ? 'Editar Cuenta' : 'Agregar Nueva Cuenta'}
+              </h2>
+              <button 
+                onClick={closeModal}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-secondary-bg transition-colors"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddAccount} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Plataforma / Servicio</label>
+                <input 
+                  required
+                  name="service"
+                  value={formData.service}
+                  onChange={handleInputChange}
+                  placeholder="ej. Netflix, Disney+"
+                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Nombre del Perfil</label>
+                  <input 
+                    name="profile"
+                    value={formData.profile}
+                    onChange={handleInputChange}
+                    placeholder="ej. Perfil 1"
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
+                  <input 
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="12000"
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Costo Cuenta (Total)</label>
+                  <input 
+                    name="cost"
+                    type="number"
+                    value={formData.cost}
+                    onChange={handleInputChange}
+                    placeholder="8000"
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Cupos / Usos Totales</label>
+                  <input 
+                    name="uses"
+                    type="number"
+                    value={formData.uses}
+                    onChange={handleInputChange}
+                    placeholder="3"
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Estado de Cuenta</label>
+                  <select 
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                  >
+                    <option value="Available">DISPONIBLE</option>
+                    <option value="Sold">VENDIDO</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Proveedor (Quien te la vendió)</label>
+                <input 
+                  name="provider"
+                  value={formData.provider}
+                  onChange={handleInputChange}
+                  placeholder="ej. Juan Perez, WebX"
+                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Correo / Usuario</label>
+                <input 
+                  required
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="nombre@ejemplo.com"
+                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Contraseña</label>
+                <input 
+                  required
+                  name="pass"
+                  type="text"
+                  value={formData.pass}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-mono"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 mt-4 hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                {editingAccount ? 'Actualizar Cuenta' : 'Registrar Cuenta'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Responsive Table/Card View */}
       <div className="space-y-4 md:space-y-0">
