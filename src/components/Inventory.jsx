@@ -9,9 +9,26 @@ const PREDEFINED_PROVIDERS = ['WebX', 'Proveedor Externo']; // Puedes agregar o 
 
 const Inventory = ({ accounts, setAccounts, onSale }) => {
   
+  // Computar de forma dinámica las opciones basándose en los arrays predefinidos y lo que ya existe guardado
+  const availablePlatforms = Array.from(new Set([
+    ...PREDEFINED_PLATFORMS,
+    ...accounts.map(acc => acc.service).filter(Boolean)
+  ])).sort((a, b) => a.localeCompare(b));
+
+  const availableProviders = Array.from(new Set([
+    ...PREDEFINED_PROVIDERS,
+    ...accounts.map(acc => acc.provider).filter(Boolean)
+  ])).sort((a, b) => a.localeCompare(b));
+
+  const availableProfiles = Array.from(new Set([
+    ...PREDEFINED_PROFILES,
+    ...accounts.map(acc => acc.profile).filter(Boolean)
+  ])).sort((a, b) => a.localeCompare(b));
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
   const [showCustomProvider, setShowCustomProvider] = useState(false);
+  const [showCustomProfile, setShowCustomProfile] = useState(false);
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
@@ -101,6 +118,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
     setIsModalOpen(false);
     setShowCustomPlatform(false);
     setShowCustomProvider(false);
+    setShowCustomProfile(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
@@ -222,7 +240,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                         className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                       >
                         <option value="" disabled>Seleccionar plataforma...</option>
-                        {PREDEFINED_PLATFORMS.map(platform => (
+                        {availablePlatforms.map(platform => (
                           <option key={platform} value={platform}>{platform}</option>
                         ))}
                       </select>
@@ -270,7 +288,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                         className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                       >
                         <option value="" disabled>Seleccionar proveedor...</option>
-                        {PREDEFINED_PROVIDERS.map(provider => (
+                        {availableProviders.map(provider => (
                           <option key={provider} value={provider}>{provider}</option>
                         ))}
                       </select>
@@ -316,7 +334,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                     className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                   >
                     <option value="" disabled>Seleccionar...</option>
-                    {PREDEFINED_PROFILES.map(p => (
+                    {availableProfiles.map(p => (
                       <option key={p} value={p}>{p}</option>
                     ))}
                   </select>
