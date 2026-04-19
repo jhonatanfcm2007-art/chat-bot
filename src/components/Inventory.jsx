@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 
+const PREDEFINED_PLATFORMS = [
+  'Netflix', 'Disney+', 'Prime Video', 'HBO Max', 'Paramount', 'Vix', 'Crunchyroll'
+];
+
 const Inventory = ({ accounts, setAccounts, onSale }) => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -199,12 +203,44 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
             <form onSubmit={handleAddAccount} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Plataforma / Servicio</label>
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {PREDEFINED_PLATFORMS.map(platform => (
+                    <button
+                      key={platform}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, service: platform }))}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                        formData.service === platform 
+                          ? 'bg-primary text-white border-primary shadow-md' 
+                          : 'bg-secondary-bg text-on-surface-variant border-outline-variant hover:border-primary/50'
+                      }`}
+                    >
+                      {platform}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, service: '' }));
+                      // focus could be added here with a ref if needed
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                      !PREDEFINED_PLATFORMS.includes(formData.service) && formData.service !== ''
+                        ? 'bg-primary/10 text-primary border-primary' 
+                        : 'bg-secondary-bg text-on-surface-variant border-outline-variant'
+                    }`}
+                  >
+                    Otro +
+                  </button>
+                </div>
+
                 <input 
                   required
                   name="service"
                   value={formData.service}
                   onChange={handleInputChange}
-                  placeholder="ej. Netflix, Disney+"
+                  placeholder="Nombre de la plataforma"
                   className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
