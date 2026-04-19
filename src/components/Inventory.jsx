@@ -5,11 +5,13 @@ const PREDEFINED_PLATFORMS = [
 ];
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
+const PREDEFINED_PROVIDERS = ['WebX', 'Proveedor Externo']; // Puedes agregar o modificar esta lista de proveedores
 
 const Inventory = ({ accounts, setAccounts, onSale }) => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
+  const [showCustomProvider, setShowCustomProvider] = useState(false);
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
@@ -98,6 +100,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
     setIsModalOpen(false);
     setShowCustomPlatform(false);
+    setShowCustomProvider(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
@@ -255,6 +258,53 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Proveedor (Quien te la vendió)</label>
+                <div className="flex gap-2 mb-3">
+                  {!showCustomProvider ? (
+                    <>
+                      <select 
+                        name="provider"
+                        value={formData.provider}
+                        onChange={handleInputChange}
+                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                      >
+                        <option value="" disabled>Seleccionar proveedor...</option>
+                        {PREDEFINED_PROVIDERS.map(provider => (
+                          <option key={provider} value={provider}>{provider}</option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button"
+                        onClick={() => { setShowCustomProvider(true); setFormData(prev => ({...prev, provider: ''})); }}
+                        className="bg-primary/10 text-primary px-4 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
+                        title="Añadir nuevo proveedor"
+                      >
+                        <span className="material-symbols-outlined font-bold">add</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <input 
+                        name="provider"
+                        value={formData.provider}
+                        onChange={handleInputChange}
+                        placeholder="Escribe el nombre del proveedor"
+                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => { setShowCustomProvider(false); setFormData(prev => ({...prev, provider: ''})); }}
+                        className="bg-secondary-bg text-on-surface-variant px-4 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
+                        title="Volver a la lista"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Número de Perfil</label>
@@ -308,16 +358,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Proveedor (Quien te la vendió)</label>
-                <input 
-                  name="provider"
-                  value={formData.provider}
-                  onChange={handleInputChange}
-                  placeholder="ej. Juan Perez, WebX"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Correo / Usuario</label>
                 <input 
