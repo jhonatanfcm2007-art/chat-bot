@@ -135,6 +135,7 @@ app.get('/webhook', (req, res) => {
 
 // 2. Recepción de Mensajes (POST)
 app.post('/webhook', async (req, res) => {
+    console.log('📩 Webhook recibido de Meta:', JSON.stringify(req.body));
     const body = req.body;
 
     if (body.object === 'whatsapp_business_account') {
