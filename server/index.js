@@ -196,9 +196,10 @@ app.post('/webhook', async (req, res) => {
                 let aiReply = await getAIResponse(msgBody);
                 let requiresHuman = false;
 
-                if (aiReply.includes('[REQUIERE_HUMANO]')) {
+                const humanRegex = /\[?REQUIERE_HUMANO\]?/i;
+                if (humanRegex.test(aiReply)) {
                     requiresHuman = true;
-                    aiReply = aiReply.replace('[REQUIERE_HUMANO]', '').trim();
+                    aiReply = aiReply.replace(humanRegex, '').trim();
                     io.emit('human_required', { from, customerName, message: msgBody });
                 }
                 

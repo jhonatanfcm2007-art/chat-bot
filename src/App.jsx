@@ -16,6 +16,21 @@ function App() {
   const [chats, setChats] = useState({});
   const [selectedChat, setSelectedChat] = useState(null);
   const [settings, setSettings] = useState({ systemPrompt: '' });
+  const [inAppNotification, setInAppNotification] = useState(null);
+
+  const triggerInAppNotification = (title, body, icon) => {
+    setInAppNotification({ title, body, icon });
+    // Sonido de alerta
+    try {
+      const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-09a.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch(e) {}
+    
+    setTimeout(() => {
+      setInAppNotification(null);
+    }, 5000);
+  };
 
   // Solicitar permiso para notificaciones
   useEffect(() => {
@@ -35,11 +50,13 @@ function App() {
     });
 
     socket.on('human_required', (data) => {
+      const title = '¡Atención Requerida!';
+      const body = `El cliente ${data.customerName} necesita soporte humano.`;
+      
+      triggerInAppNotification(title, body, 'support_agent');
+
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('¡Atención Requerida!', {
-          body: `El cliente ${data.customerName} necesita soporte humano.`,
-          icon: '/app_icon.png'
-        });
+        new Notification(title, { body, icon: '/app_icon.png' });
       }
     });
 
@@ -136,11 +153,13 @@ function App() {
       if (Array.isArray(data)) {
         setSalesHistory(prev => {
           if (data.length > prev.length && prev.length > 0) {
+             const title = '¡Nueva Venta!';
+             const body = `Se ha registrado una venta de ${data[0].service} por $${data[0].price}`;
+             
+             triggerInAppNotification(title, body, 'local_mall');
+             
              if ('Notification' in window && Notification.permission === 'granted') {
-               new Notification('¡Nueva Venta!', {
-                 body: `Se ha registrado una venta de ${data[0].service} por $${data[0].price}`,
-                 icon: '/app_icon.png'
-               });
+               new Notification(title, { body, icon: '/app_icon.png' });
              }
           }
           return data;
@@ -235,6 +254,21 @@ function App() {
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       {renderContent()}
+
+      {/* In-App Notification (Toast) */}
+      {inAppNotification && (
+        <div className="fixed top-4 right-4 md:top-6 md:right-6 z-[1000] animate-in slide-in-from-top-10 fade-in duration-300">
+          <div className="bg-white px-6 py-4 rounded-2xl shadow-2xl border border-outline-variant flex items-center gap-4 cursor-pointer hover:scale-105 transition-transform" onClick={() => setInAppNotification(null)}>
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0">
+               <span className="material-symbols-outlined text-2xl">{inAppNotification.icon}</span>
+            </div>
+            <div>
+               <h4 className="font-black text-on-surface text-base">{inAppNotification.title}</h4>
+               <p className="text-xs text-on-surface-variant font-medium mt-0.5">{inAppNotification.body}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
