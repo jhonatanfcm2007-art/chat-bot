@@ -338,6 +338,44 @@ io.on('connection', (socket) => {
     });
 });
 
+app.get('/privacy', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - Chatbot Antigravity</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; line-height: 1.8; }
+        h1 { color: #1a1a2e; border-bottom: 3px solid #6c63ff; padding-bottom: 10px; }
+        h2 { color: #6c63ff; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h1>Política de Privacidad</h1>
+    <p><strong>Última actualización:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
+    
+    <h2>1. Información que recopilamos</h2>
+    <p>Recopilamos únicamente la información necesaria para brindar nuestro servicio de atención al cliente vía WhatsApp: nombre de perfil, número de teléfono y mensajes enviados.</p>
+    
+    <h2>2. Uso de la información</h2>
+    <p>La información recopilada se utiliza exclusivamente para responder consultas de los usuarios a través de WhatsApp y mejorar nuestro servicio de atención automatizada.</p>
+    
+    <h2>3. Almacenamiento y seguridad</h2>
+    <p>Los datos se almacenan de forma segura en servidores protegidos. No compartimos, vendemos ni transferimos información personal a terceros.</p>
+    
+    <h2>4. Derechos del usuario</h2>
+    <p>Los usuarios pueden solicitar la eliminación de sus datos en cualquier momento contactándonos directamente.</p>
+    
+    <h2>5. Servicios de terceros</h2>
+    <p>Utilizamos la API de WhatsApp Business (Meta) y OpenAI para procesar mensajes. Estos servicios tienen sus propias políticas de privacidad.</p>
+    
+    <h2>6. Contacto</h2>
+    <p>Para consultas sobre privacidad, contáctenos a través de nuestro número de WhatsApp Business.</p>
+</body>
+</html>`);
+});
+
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
