@@ -25,26 +25,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
   }));
 
   return (
-    <div className="flex flex-grow overflow-hidden">
+    <div className="flex flex-grow overflow-hidden relative">
       {/* Chat List Sidebar */}
-      <section className="w-80 flex flex-col bg-panel-bg relative z-10">
-        <div className="p-7 border-b border-white/5 flex items-center justify-between bg-white/5">
-          <h3 className="font-headline font-black text-xl text-white tracking-tight">Chats</h3>
+      <section className={`w-full md:w-80 flex flex-col bg-panel-bg relative z-10 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-6 md:p-7 border-b border-white/5 flex items-center justify-between bg-white/5">
+          <h3 className="font-headline font-black text-xl text-white tracking-tight">Mensajes</h3>
           <div className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center cursor-pointer hover:bg-primary transition-all">
             <span className="material-symbols-outlined text-xl">edit_square</span>
           </div>
         </div>
-        <div className="p-5 border-b border-white/5 bg-white/5">
+        <div className="p-4 md:p-5 border-b border-white/5 bg-white/5">
           <div className="relative group">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm group-focus-within:text-primary transition-colors">search</span>
             <input 
               className="w-full bg-white/10 border border-white/5 rounded-xl py-2.5 pl-11 text-xs text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary/40 focus:bg-white/15 transition-all outline-none" 
-              placeholder="Buscar conversaciones..." 
+              placeholder="Buscar..." 
               type="text"
             />
           </div>
         </div>
-        <div className="flex-grow overflow-y-auto scrollbar-hide py-3 px-3">
+        <div className="flex-grow overflow-y-auto scrollbar-hide py-3 px-3 pb-24 md:pb-3">
           {chatSessions.length > 0 ? (
             chatSessions.map((chat) => (
               <div 
@@ -85,53 +85,59 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
       </section>
 
       {/* Main Chat Area */}
-      <section className="flex-grow flex flex-col relative bg-background overflow-hidden">
+      <section className={`flex-grow flex flex-col relative bg-background overflow-hidden ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
-            <header className="h-20 flex items-center justify-between px-10 bg-white border-b border-outline-variant z-10 shadow-sm">
-              <div className="flex items-center gap-5">
+            <header className="h-20 flex items-center justify-between px-6 md:px-10 bg-white border-b border-outline-variant z-10 shadow-sm">
+              <div className="flex items-center gap-3 md:gap-5">
+                <button 
+                  onClick={() => onSelectChat(null)}
+                  className="md:hidden w-10 h-10 flex items-center justify-center text-on-surface-variant active:bg-secondary-bg rounded-full transition-colors"
+                >
+                  <span className="material-symbols-outlined">arrow_back_ios_new</span>
+                </button>
                 <div className="relative group">
-                  <div className="w-11 h-11 rounded-2xl bg-primary text-white flex items-center justify-center font-black shadow-lg shadow-primary/20">
+                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-primary text-white flex items-center justify-center font-black shadow-lg shadow-primary/20">
                     {activeChatData.customerName.charAt(0)}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary border-2 border-white rounded-lg"></div>
+                  <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 md:w-4 md:h-4 bg-tertiary border-2 border-white rounded-lg"></div>
                 </div>
                 <div>
-                  <h3 className="font-black text-on-surface text-lg leading-none tracking-tight">{activeChatData.customerName}</h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="w-2 h-2 bg-tertiary rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                    <p className="text-[10px] text-tertiary font-black uppercase tracking-widest">Bot Activo</p>
+                  <h3 className="font-black text-on-surface text-base md:text-lg leading-none tracking-tight">{activeChatData.customerName}</h3>
+                  <div className="flex items-center gap-2 mt-1.5 md:mt-2">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-tertiary rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    <p className="text-[9px] md:text-[10px] text-tertiary font-black uppercase tracking-widest">Bot Activo</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 md:gap-6">
                 <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-xl border border-primary/10">
                    <span className="material-symbols-outlined text-primary text-sm">bolt</span>
                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Smart Reply</span>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all">more_horiz</span>
+                <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all p-2">more_horiz</span>
               </div>
             </header>
 
-            <div className="flex-grow p-10 overflow-y-auto space-y-8 flex flex-col scrollbar-hide bg-[#f8fbff] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-20">
-              <div className="flex justify-center mb-4">
-                <span className="bg-white px-6 py-2 rounded-2xl text-[9px] font-black text-on-surface-variant/40 uppercase tracking-[0.3em] border border-outline-variant shadow-sm">Hoy</span>
+            <div className="flex-grow p-4 md:p-10 overflow-y-auto space-y-6 md:space-y-8 flex flex-col scrollbar-hide bg-[#f8fbff] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-20 pb-24 md:pb-10">
+              <div className="flex justify-center mb-2">
+                <span className="bg-white px-5 py-1.5 rounded-2xl text-[8px] md:text-[9px] font-black text-on-surface-variant/40 uppercase tracking-[0.3em] border border-outline-variant shadow-sm">Hoy</span>
               </div>
 
               {activeChatData.messages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                  <div className={`max-w-[70%] px-6 py-4 rounded-3xl shadow-sm transition-all duration-300 hover:shadow-md ${
+                  <div className={`max-w-[85%] md:max-w-[70%] px-5 py-3.5 md:px-6 md:py-4 rounded-2xl md:rounded-3xl shadow-sm transition-all duration-300 hover:shadow-md ${
                     msg.role === 'user' 
                       ? 'bg-white text-on-surface border border-outline-variant rounded-bl-none' 
                       : 'bg-primary text-white shadow-xl shadow-primary/10 rounded-br-none'
                   }`}>
-                    <p className="text-[14px] leading-relaxed font-medium">{msg.content}</p>
-                    <div className={`flex items-center gap-2 mt-3 ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <span className={`text-[8px] font-black uppercase tracking-[0.15em] ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
+                    <p className="text-[13px] md:text-[14px] leading-relaxed font-medium">{msg.content}</p>
+                    <div className={`flex items-center gap-2 mt-2.5 md:mt-3 ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                      <span className={`text-[7.5px] md:text-[8px] font-black uppercase tracking-[0.15em] ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
                         {msg.timestamp || msg.time}
                       </span>
                       {msg.role !== 'user' && (
-                        <span className="material-symbols-outlined text-[12px] opacity-60" style={{fontVariationSettings: "'FILL' 1"}}>done_all</span>
+                        <span className="material-symbols-outlined text-[10px] md:text-[12px] opacity-60" style={{fontVariationSettings: "'FILL' 1"}}>done_all</span>
                       )}
                     </div>
                   </div>
@@ -140,13 +146,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
               <div ref={chatEndRef} />
             </div>
 
-            <footer className="p-6 bg-white border-t border-outline-variant">
+            <footer className="p-4 md:p-6 bg-white border-t border-outline-variant pb-safe-area-inset-bottom">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex items-center gap-4 bg-secondary-bg px-4 py-2 rounded-2xl border border-outline-variant"
+                className="flex items-center gap-3 md:gap-4 bg-secondary-bg px-4 py-2 rounded-2xl border border-outline-variant"
               >
                 <input 
-                  className="flex-grow bg-transparent border-none focus:ring-0 text-sm text-on-surface" 
+                  className="flex-grow bg-transparent border-none focus:ring-0 text-sm md:text-sm text-on-surface" 
                   placeholder="Escribe un mensaje..." 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -154,7 +160,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
                 />
                 <button 
                   type="submit"
-                  className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center cursor-pointer hover:shadow-lg hover:shadow-primary/30 active:scale-95 transition-all"
+                  className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center cursor-pointer hover:shadow-lg hover:shadow-primary/30 active:scale-95 transition-all flex-shrink-0"
                 >
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>send</span>
                 </button>
@@ -162,15 +168,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage }) => {
             </footer>
           </>
         ) : (
-          <div className="flex-grow flex flex-col items-center justify-center text-center p-20 opacity-40">
-            <span className="material-symbols-outlined text-8xl font-thin mb-4">forum</span>
-            <h3 className="text-xl font-black text-on-surface">Selecciona un chat</h3>
-            <p className="text-sm font-medium">Elige una conversación de la lista para empezar a chatear.</p>
+          <div className="flex-grow flex flex-col items-center justify-center text-center p-12 md:p-20 opacity-40">
+            <span className="material-symbols-outlined text-7xl md:text-8xl font-thin mb-4">forum</span>
+            <h3 className="text-lg md:text-xl font-black text-on-surface">Selecciona un chat</h3>
+            <p className="text-[12px] md:text-sm font-medium">Elige una conversación de la lista para empezar a chatear.</p>
           </div>
         )}
 
-        {/* Floating Agent Status */}
-        <div className="absolute top-20 right-6 flex flex-col gap-3">
+        {/* Floating Agent Status - Hidden on Very Small Screens */}
+        <div className="absolute top-24 right-4 md:top-20 md:right-6 hidden sm:flex flex-col gap-3">
           <div className="bg-white text-tertiary px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-2 shadow-lg border border-outline-variant">
             <div className="w-2 h-2 bg-tertiary rounded-full animate-pulse"></div>
             AGENTE ACTIVO

@@ -2,9 +2,9 @@ import React from 'react';
 
 const Header = () => {
   return (
-    <header className="bg-white flex justify-between items-center w-full px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-outline-variant">
+    <header className="bg-white flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-outline-variant">
       <div className="flex items-center gap-8">
-        <span className="text-xl font-bold tracking-wider text-primary">Admin Vault</span>
+        <span className="text-xl font-bold tracking-wider text-primary hidden md:block">Admin Vault</span>
 
         <div className="hidden md:flex items-center bg-secondary-bg px-4 py-2 rounded-lg gap-3">
           <span className="material-symbols-outlined text-on-surface-variant">search</span>
