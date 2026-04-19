@@ -4,10 +4,13 @@ const PREDEFINED_PLATFORMS = [
   'Netflix', 'Disney+', 'Prime Video', 'HBO Max', 'Paramount', 'Vix', 'Crunchyroll'
 ];
 
+const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
+
 const Inventory = ({ accounts, setAccounts, onSale }) => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
+  const [showCustomProfile, setShowCustomProfile] = useState(false);
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
@@ -96,6 +99,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
     setIsModalOpen(false);
     setShowCustomPlatform(false);
+    setShowCustomProfile(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
@@ -254,15 +258,50 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="flex flex-col">
                   <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Nombre del Perfil</label>
-                  <input 
-                    name="profile"
-                    value={formData.profile}
-                    onChange={handleInputChange}
-                    placeholder="ej. Perfil 1"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
+                  <div className="flex gap-2">
+                    {!showCustomProfile ? (
+                      <>
+                        <select 
+                          name="profile"
+                          value={formData.profile}
+                          onChange={handleInputChange}
+                          className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                        >
+                          <option value="" disabled>Seleccionar...</option>
+                          {PREDEFINED_PROFILES.map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomProfile(true); setFormData(prev => ({...prev, profile: ''})); }}
+                          className="bg-primary/10 text-primary px-3 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
+                          title="Escribir perfil personalizado"
+                        >
+                          <span className="material-symbols-outlined font-bold text-sm">add</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input 
+                          name="profile"
+                          value={formData.profile}
+                          onChange={handleInputChange}
+                          placeholder="ej. Perfil 1"
+                          className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomProfile(false); setFormData(prev => ({...prev, profile: ''})); }}
+                          className="bg-secondary-bg text-on-surface-variant px-3 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
+                        >
+                          <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
