@@ -4,11 +4,13 @@ FROM node:22-slim
 # Directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar archivos de dependencias de la raíz
 COPY package*.json ./
-
-# Instalar dependencias (excluyendo devDependencies para producción si se desea)
 RUN npm install
+
+# Copiar archivos de dependencias del servidor
+COPY server/package*.json ./server/
+RUN cd server && npm install
 
 # Copiar todo el código del proyecto
 COPY . .

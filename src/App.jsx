@@ -7,7 +7,9 @@ import Simulator from './components/Simulator';
 
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3001');
+// En producción (Railway) usamos la misma URL base del frontend. En local, el puerto 3001.
+const SERVER_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+const socket = io(SERVER_URL);
 
 function App() {
   const [activeTab, setActiveTab] = useState('inventory');
@@ -51,33 +53,81 @@ function App() {
     };
   }, []);
   
-  // Persistence logic - Load initial state from localStorage
-  const [accounts, setAccounts] = useState(() => {
-    const saved = localStorage.getItem('streaming_accounts');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, service: 'Netflix', profile: 'Profile 1', email: 'user1@example.com', pass: 'pass123', price: 12000, cost: 8000, status: 'Available', uses: 3, originalUses: 3 },
-      { id: 2, service: 'Disney+', profile: 'Full', email: 'user2@example.com', pass: 'disney99', price: 25000, cost: 20000, status: 'Sold', uses: 0, originalUses: 3 },
-      { id: 3, service: 'HBO Max', profile: 'Profile 2', email: 'user3@example.com', pass: 'hbo777', price: 10000, cost: 7000, status: 'Available', uses: 3, originalUses: 3 },
-    ];
-  });
+  // Cargamos inventario desde el servidor (persistente en Railway)
+  const [accounts, setAccounts] = useState([]);
 
-  const [salesHistory, setSalesHistory] = useState(() => {
-    const saved = localStorage.getItem('streaming_sales');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, service: 'Netflix', price: 12000, cost: 2666, date: '2024-04-15', customer: 'Carlos M.' },
-      { id: 2, service: 'Disney+', price: 25000, cost: 6666, date: '2024-04-15', customer: 'Sofia R.' },
-    ];
-  });
-
-  // Save to localStorage whenever state changes
+  // Cargar inventario del servidor al iniciar
   useEffect(() => {
+    fetch(`${SERVER_URL}/api/inventory`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAccounts(data);
+        } else {
+          // Datos de ejemplo si el servidor está vacío en producción
+          const fallback = localStorage.getItem('streaming_accounts');
+          if (fallback) setAccounts(JSON.parse(fallback));
+        }
+      })
+      .catch(() => {
+        // Si el servidor no responde, usamos localStorage como fallback
+        const saved = localStorage.getItem('streaming_accounts');
+        if (saved) setAccounts(JSON.parse(saved));
+      });
+  }, []);
+
+  // Escuchar actualizaciones de inventario desde el servidor (tiempo real)
+  useEffect(() => {
+    socket.on('inventory_updated', (data) => {
+      if (Array.isArray(data)) setAccounts(data);
+    });
+    return () => {
+      socket.off('inventory_updated');
+      socket.off('sales_updated');
+    };
+  }, []);
+
+  const [salesHistory, setSalesHistory] = useState([]);
+
+  // Cargar ventas del servidor al iniciar
+  useEffect(() => {
+    fetch(`${SERVER_URL}/api/sales`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSalesHistory(data);
+        } else {
+          const fallback = localStorage.getItem('streaming_sales');
+          if (fallback) setSalesHistory(JSON.parse(fallback));
+        }
+      })
+      .catch(() => {
+        const saved = localStorage.getItem('streaming_sales');
+        if (saved) setSalesHistory(JSON.parse(saved));
+      });
+  }, []);
+
+  // Escuchar actualizaciones de ventas en tiempo real
+  useEffect(() => {
+    socket.on('sales_updated', (data) => {
+      if (Array.isArray(data)) setSalesHistory(data);
+    });
+    return () => socket.off('sales_updated');
+  }, []);
+
+  // Guardar inventario en servidor + localStorage cada vez que cambia
+  useEffect(() => {
+    if (accounts.length === 0) return; // No sobreescribir antes de cargar
     localStorage.setItem('streaming_accounts', JSON.stringify(accounts));
-    // Sync with WhatsApp Backend
+    // Persistir en el servidor via WebSocket
     socket.emit('sync_inventory', accounts);
   }, [accounts]);
 
   useEffect(() => {
     localStorage.setItem('streaming_sales', JSON.stringify(salesHistory));
+    if (salesHistory.length > 0) {
+      socket.emit('sync_sales', salesHistory);
+    }
   }, [salesHistory]);
 
   const handleSale = (account) => {

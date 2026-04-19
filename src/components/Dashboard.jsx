@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const Dashboard = ({ accounts, salesHistory }) => {
 
+  const today = new Date().toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState({
-    start: '2024-04-15',
-    end: '2024-04-15'
+    start: today,
+    end: today
   });
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -127,19 +128,27 @@ const Dashboard = ({ accounts, salesHistory }) => {
               <div className="w-[180px] bg-secondary-bg/50 border-r border-outline-variant p-6 space-y-2">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">Atajos</p>
                 <button 
-                  onClick={() => handleDateClick('2024-04-15')}
+                  onClick={() => handleDateClick(today)}
                   className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
                 >
                   Hoy
                 </button>
                 <button 
-                  onClick={() => setPreset('2024-04-09', '2024-04-15')}
+                  onClick={() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - 7);
+                    setPreset(d.toISOString().split('T')[0], today);
+                  }}
                   className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
                 >
                   Últimos 7 Días
                 </button>
                 <button 
-                  onClick={() => setPreset('2024-03-15', '2024-04-15')}
+                  onClick={() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - 30);
+                    setPreset(d.toISOString().split('T')[0], today);
+                  }}
                   className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
                 >
                   Últimos 30 Días

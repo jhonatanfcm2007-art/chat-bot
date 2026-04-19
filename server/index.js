@@ -4,17 +4,18 @@ const http = require('http');
 const cors = require('cors');
 const OpenAI = require('openai');
 const path = require('path');
-require('dotenv').config();
+const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // Necesario para procesar JSON de Meta
+app.use(express.json());
 app.use(express.static(path.join(__dirname, '../dist')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*",
         methods: ["GET", "POST"]
     }
 });
@@ -28,7 +29,88 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
-let inventory = [];
+// --- PERSISTENCIA DEL INVENTARIO ---
+const DATA_DIR = path.join(__dirname, 'data');
+const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
+const SALES_FILE = path.join(DATA_DIR, 'sales.json');
+const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
+
+
+// Crear carpeta data si no existe
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function loadInventory() {
+    try {
+        if (fs.existsSync(INVENTORY_FILE)) {
+            const raw = fs.readFileSync(INVENTORY_FILE, 'utf-8');
+            const parsed = JSON.parse(raw);
+            console.log(`📦 Inventario cargado desde disco: ${parsed.length} productos.`);
+            return parsed;
+        }
+    } catch (err) {
+        console.error('❌ Error cargando inventario desde disco:', err.message);
+    }
+    return [];
+}
+
+function saveInventory(data) {
+    try {
+        fs.writeFileSync(INVENTORY_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        console.log(`💾 Inventario guardado: ${data.length} productos.`);
+    } catch (err) {
+        console.error('❌ Error guardando inventario:', err.message);
+    }
+}
+
+function loadSales() {
+    try {
+        if (fs.existsSync(SALES_FILE)) {
+            const raw = fs.readFileSync(SALES_FILE, 'utf-8');
+            const parsed = JSON.parse(raw);
+            console.log(`📈 Historial de ventas cargado: ${parsed.length} registros.`);
+            return parsed;
+        }
+    } catch (err) {
+        console.error('❌ Error cargando ventas desde disco:', err.message);
+    }
+    return [];
+}
+
+function saveSales(data) {
+    try {
+        fs.writeFileSync(SALES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        console.log(`💾 Ventas guardadas: ${data.length} registros.`);
+    } catch (err) {
+        console.error('❌ Error guardando ventas:', err.message);
+    }
+}
+
+function loadChats() {
+    try {
+        if (fs.existsSync(CHATS_FILE)) {
+            const raw = fs.readFileSync(CHATS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando chats:', err.message);
+    }
+    return {};
+}
+
+function saveChats(data) {
+    try {
+        fs.writeFileSync(CHATS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando chats:', err.message);
+    }
+}
+
+// Cargar datos al iniciar el servidor
+let inventory = loadInventory();
+let sales = loadSales();
+let chats = loadChats();
 
 // Helper function for random delay
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -62,7 +144,7 @@ app.post('/webhook', async (req, res) => {
             body.entry[0].changes[0].value.messages[0]) {
 
             const msg = body.entry[0].changes[0].value.messages[0];
-            const from = msg.from; // Número del cliente
+            const from = msg.from;
             const msgBody = msg.text ? msg.text.body : '';
             const customerName = body.entry[0].changes[0].value.contacts[0].profile.name || 'Cliente';
 
@@ -77,19 +159,21 @@ app.post('/webhook', async (req, res) => {
                     role: 'user'
                 };
 
+                // Persistir mensaje del cliente
+                if (!chats[from]) chats[from] = { customerName, messages: [] };
+                chats[from].messages.push({ ...messageData, content: msgBody });
+                saveChats(chats);
+
                 io.emit('message', messageData);
 
                 // Procesar con IA
                 const aiReply = await getAIResponse(msgBody);
                 
-                // Simular escritura y delay
                 await delay(2000);
 
-                // Enviar respuesta vía Meta
                 await sendMessageToCloudAPI(from, aiReply);
 
-                // Notificar al Dashboard el mensaje enviado por el bot
-                io.emit('message', {
+                const botMsgData = {
                     id: 'bot-' + Date.now(),
                     from: from,
                     customerName: 'Bot',
@@ -97,7 +181,13 @@ app.post('/webhook', async (req, res) => {
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     isMe: true,
                     role: 'bot'
-                });
+                };
+
+                // Persistir respuesta del bot
+                chats[from].messages.push({ ...botMsgData, content: aiReply });
+                saveChats(chats);
+
+                io.emit('message', botMsgData);
             }
         }
         res.sendStatus(200);
@@ -105,6 +195,42 @@ app.post('/webhook', async (req, res) => {
         res.sendStatus(404);
     }
 });
+
+// --- API REST PARA INVENTARIO (persistente) ---
+
+app.get('/api/inventory', (req, res) => {
+    res.json(inventory);
+});
+
+app.post('/api/inventory', (req, res) => {
+    const newInventory = req.body;
+    if (!Array.isArray(newInventory)) {
+        return res.status(400).json({ error: 'Se esperaba un array de productos.' });
+    }
+    inventory = newInventory;
+    saveInventory(inventory);
+    io.emit('inventory_updated', inventory);
+    res.json({ success: true, count: inventory.length });
+});
+
+// --- API REST PARA VENTAS ---
+
+app.get('/api/sales', (req, res) => {
+    res.json(sales);
+});
+
+app.post('/api/sales', (req, res) => {
+    const newSales = req.body;
+    if (!Array.isArray(newSales)) {
+        return res.status(400).json({ error: 'Se esperaba un array de ventas.' });
+    }
+    sales = newSales;
+    saveSales(sales);
+    io.emit('sales_updated', sales);
+    res.json({ success: true, count: sales.length });
+});
+
+// --- FUNCIONES DE WHATSAPP Y IA ---
 
 async function sendMessageToCloudAPI(to, text) {
     if (!WHATSAPP_TOKEN || !PHONE_ID) {
@@ -144,7 +270,7 @@ async function getAIResponse(message) {
     try {
         const inventoryContext = inventory.length > 0
             ? "El inventario actual es: " + inventory.map(item => `${item.name} - $${item.price} (${item.stock} disponibles)`).join(', ')
-            : "Actualmente no se ha sincronizado el inventario.";
+            : "Actualmente no hay inventario cargado.";
 
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
@@ -160,22 +286,36 @@ async function getAIResponse(message) {
     }
 }
 
+// --- WEBSOCKET ---
+
 io.on('connection', (socket) => {
     console.log('A client connected');
     
-    // El bot ahora siempre se considera conectado si las llaves existen
     const status = (WHATSAPP_TOKEN && PHONE_ID) ? 'CONNECTED' : 'DISCONNECTED';
     socket.emit('status', status);
 
+    // Enviar datos actuales al cliente que se conecta
+    socket.emit('inventory_updated', inventory);
+    socket.emit('sales_updated', sales);
+    socket.emit('initial_chats', chats);
+
+    // Mantener compatibilidad con el evento sync_inventory del frontend
     socket.on('sync_inventory', (data) => {
         inventory = data;
+        saveInventory(inventory);
+        io.emit('inventory_updated', inventory);
+    });
+
+    socket.on('sync_sales', (data) => {
+        sales = data;
+        saveSales(sales);
+        io.emit('sales_updated', sales);
     });
 
     socket.on('send_message', async ({ to, content }) => {
         try {
             await sendMessageToCloudAPI(to, content);
-            // Emitir de vuelta para el dashboard
-            io.emit('message', {
+            const msgData = {
                 id: 'man-' + Date.now(),
                 from: to,
                 customerName: 'Yo',
@@ -183,7 +323,14 @@ io.on('connection', (socket) => {
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isMe: true,
                 role: 'bot'
-            });
+            };
+
+            // Persistir mensaje manual
+            if (!chats[to]) chats[to] = { customerName: 'Cliente', messages: [] };
+            chats[to].messages.push({ ...msgData, content });
+            saveChats(chats);
+
+            io.emit('message', msgData);
         } catch (err) {
             console.error('Error manual sending message:', err);
         }
@@ -197,5 +344,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`🚀 Meta Bot Server listening on port ${PORT}`);
-    console.log(`🔗 Webhook URL: http://tu-servidor.com/webhook`);
+    console.log(`📦 Inventario: ${inventory.length} | 📈 Ventas: ${sales.length}`);
 });
