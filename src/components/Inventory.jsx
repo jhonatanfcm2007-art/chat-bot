@@ -7,6 +7,7 @@ const PREDEFINED_PLATFORMS = [
 const Inventory = ({ accounts, setAccounts, onSale }) => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showCustomPlatform, setShowCustomPlatform] = useState(false);
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
@@ -94,6 +95,7 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
 
 
     setIsModalOpen(false);
+    setShowCustomPlatform(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
 
@@ -204,45 +206,51 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
               <div>
                 <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Plataforma / Servicio</label>
                 
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {PREDEFINED_PLATFORMS.map(platform => (
-                    <button
-                      key={platform}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, service: platform }))}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
-                        formData.service === platform 
-                          ? 'bg-primary text-white border-primary shadow-md' 
-                          : 'bg-secondary-bg text-on-surface-variant border-outline-variant hover:border-primary/50'
-                      }`}
-                    >
-                      {platform}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, service: '' }));
-                      // focus could be added here with a ref if needed
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
-                      !PREDEFINED_PLATFORMS.includes(formData.service) && formData.service !== ''
-                        ? 'bg-primary/10 text-primary border-primary' 
-                        : 'bg-secondary-bg text-on-surface-variant border-outline-variant'
-                    }`}
-                  >
-                    Otro +
-                  </button>
+                <div className="flex gap-2 mb-3">
+                  {!showCustomPlatform ? (
+                    <>
+                      <select 
+                        required
+                        name="service"
+                        value={formData.service}
+                        onChange={handleInputChange}
+                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                      >
+                        <option value="" disabled>Seleccionar plataforma...</option>
+                        {PREDEFINED_PLATFORMS.map(platform => (
+                          <option key={platform} value={platform}>{platform}</option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button"
+                        onClick={() => { setShowCustomPlatform(true); setFormData(prev => ({...prev, service: ''})); }}
+                        className="bg-primary/10 text-primary px-4 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
+                        title="Añadir otra plataforma"
+                      >
+                        <span className="material-symbols-outlined font-bold">add</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <input 
+                        required
+                        name="service"
+                        value={formData.service}
+                        onChange={handleInputChange}
+                        placeholder="Escribe el nombre de la plataforma"
+                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => { setShowCustomPlatform(false); setFormData(prev => ({...prev, service: ''})); }}
+                        className="bg-secondary-bg text-on-surface-variant px-4 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
+                        title="Volver a la lista"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </>
+                  )}
                 </div>
-
-                <input 
-                  required
-                  name="service"
-                  value={formData.service}
-                  onChange={handleInputChange}
-                  placeholder="Nombre de la plataforma"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
