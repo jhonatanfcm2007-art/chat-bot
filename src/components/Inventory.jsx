@@ -338,8 +338,6 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
         </div>
       </div>
     </div>
-      </div>
-    </div>
   );
 };
 
