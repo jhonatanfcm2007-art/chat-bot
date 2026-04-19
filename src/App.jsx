@@ -32,12 +32,8 @@ function App() {
     }, 5000);
   };
 
-  // Solicitar permiso para notificaciones
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
+  // Los permisos de notificación ahora se solicitarán de forma manual a través del Header, 
+  // ya que navegadores como Safari (iOS) bloquean las peticiones automáticas sin interacción.
 
   useEffect(() => {
     socket.on('initial_chats', (data) => {

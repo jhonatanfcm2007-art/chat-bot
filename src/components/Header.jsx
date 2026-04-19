@@ -1,6 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Header = () => {
+  const [notificationStatus, setNotificationStatus] = useState('default');
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationStatus(Notification.permission);
+    }
+  }, []);
+
+  const handleNotificationRequest = () => {
+    if (!('Notification' in window)) {
+      alert('Tu dispositivo/navegador no soporta notificaciones de escritorio.');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      alert('Las notificaciones ya están activas y funcionando correctamente.');
+      return;
+    }
+
+    Notification.requestPermission().then(permission => {
+      setNotificationStatus(permission);
+      if (permission === 'granted') {
+        alert('✅ ¡Excelente! Notificaciones activadas exitosamente.');
+      } else {
+        alert('⚠️ Permiso denegado. Algunas alertas solo se mostrarán internamente visuales.');
+      }
+    });
+  };
+
   return (
     <header className="bg-white flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-outline-variant">
       <div className="flex items-center gap-8">
@@ -17,8 +46,26 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-6">
-        <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
-        <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">help</span>
+        <button 
+          onClick={handleNotificationRequest}
+          className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
+            notificationStatus === 'granted' ? 'bg-primary/10 text-primary hover:bg-primary/20' : 
+            notificationStatus === 'denied' ? 'bg-error/10 text-error hover:bg-error/20' : 
+            'bg-secondary-bg text-on-surface-variant hover:text-primary hover:scale-105'
+          }`}
+          title={notificationStatus === 'granted' ? "Notificaciones Activadas" : "Activar Notificaciones Push"}
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            {notificationStatus === 'granted' ? 'notifications_active' : 
+             notificationStatus === 'denied' ? 'notifications_off' : 'notifications'}
+          </span>
+          {notificationStatus === 'default' && (
+            <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full animate-pulse border border-white"></span>
+          )}
+        </button>
+        <button className="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-bg text-on-surface-variant hover:text-primary transition-colors shadow-sm">
+           <span className="material-symbols-outlined text-[20px]">help_center</span>
+        </button>
         <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
           <img 
             alt="Administrator Avatar" 
