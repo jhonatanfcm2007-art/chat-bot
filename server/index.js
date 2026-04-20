@@ -181,8 +181,10 @@ app.post('/webhook', async (req, res) => {
             if (msg.type === 'image') {
                 msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
                 io.emit('receipt_received', { from, customerName, message: msgBody });
-            } else if (msg.text) {
+            } else if (msg.type === 'text') {
                 msgBody = msg.text.body;
+            } else {
+                msgBody = `[MENSAJE FORMATO ESPECIAL (${msg.type})]: Revisa los logs del sistema, podría ser el código de Meta. Contenido: ${JSON.stringify(msg)}`;
             }
 
             if (msgBody) {
