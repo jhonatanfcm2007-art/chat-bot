@@ -23,14 +23,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
-  const chatSessions = Object.entries(chats)
-    .map(([id, data]) => {
+  const chatArray = Object.entries(chats);
+  const chatSessions = chatArray
+    .map(([id, data], index) => {
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
       
       // Intentar obtener una fecha real del chat. 
-      // Prioridad: 1. updatedAt, 2. timestampRaw del último mensaje, 3. nada (0)
-      let activityTime = data.updatedAt || (lastMessage ? (lastMessage.timestampRaw || 0) : 0);
+      // Prioridad: 1. updatedAt, 2. timestampRaw del último mensaje, 3. índice original (como fallback para chats muy antiguos)
+      let activityTime = data.updatedAt || (lastMessage && lastMessage.timestampRaw ? lastMessage.timestampRaw : index);
       
       return {
         ...data,
@@ -136,7 +137,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         {chat.customerName}
                       </h4>
                       <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${selectedChat === chat.from ? 'text-white/60' : 'text-white/20'}`}>
-                        {chat.updatedAt && chat.updatedAt > 0 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
                       </span>
                     </div>
                     
