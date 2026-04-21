@@ -260,10 +260,6 @@ let chats = loadChats();
 let settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
-let platforms = loadPlatforms();
-let providers = loadProviders();
-let platforms = loadPlatforms();
-let providers = loadProviders();
 
 // Helper function for random delay
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -503,10 +499,6 @@ io.on('connection', (socket) => {
     socket.emit('initial_settings', settings);
     socket.emit('platforms_updated', platforms);
     socket.emit('providers_updated', providers);
-    socket.emit('platforms_updated', platforms);
-    socket.emit('providers_updated', providers);
-    socket.emit('platforms_updated', platforms);
-    socket.emit('providers_updated', providers);
 
     // Configuración de la IA
     socket.on('sync_settings', (data) => {
@@ -540,30 +532,6 @@ io.on('connection', (socket) => {
         sales = data;
         saveSales(sales);
         io.emit('sales_updated', sales);
-    });
-
-    socket.on('sync_platforms', (data) => {
-        platforms = data;
-        savePlatforms(platforms);
-        io.emit('platforms_updated', platforms);
-    });
-
-    socket.on('sync_providers', (data) => {
-        providers = data;
-        saveProviders(providers);
-        io.emit('providers_updated', providers);
-    });
-
-    socket.on('sync_platforms', (data) => {
-        platforms = data;
-        savePlatforms(platforms);
-        io.emit('platforms_updated', platforms);
-    });
-
-    socket.on('sync_providers', (data) => {
-        providers = data;
-        saveProviders(providers);
-        io.emit('providers_updated', providers);
     });
 
     socket.on('sync_platforms', (data) => {
