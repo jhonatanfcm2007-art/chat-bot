@@ -229,18 +229,60 @@ app.post('/webhook', async (req, res) => {
             // ========================
             const commandRegex = /^(apruebo|aprobado|si llego|listo|entregar|si lleg|si paso)$/i;
             if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text' && commandRegex.test(msg.text.body.trim())) {
-                // Buscar el chat con comprobante más reciente pendiente
-                const pendingChats = Object.values(chats).filter(c => 
+
+                // --- ENCONTRAR EL CLIENTE OBJETIVO ---
+                // Prioridad 1: Chats con pendingProducts (IA nueva)
+                // Prioridad 2: Chats con tag 'pago-pendiente' (IA vieja / comprobante enviado)
+                // Prioridad 3: lastReceiptFrom (último que mandó imagen)
+                let targetChat = null;
+
+                const chatsWithProducts = Object.values(chats).filter(c =>
                     c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0
                 ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
-                if (pendingChats.length > 0) {
-                    const targetChat = pendingChats[0];
-                    const targetFrom = targetChat.from;
-                    let totalCredentialsMsg = `🚀 *¡Entregado!* Aquí tienes tus cuentas:\n\n`;
-                    let accountsFound = 0;
+                if (chatsWithProducts.length > 0) {
+                    targetChat = chatsWithProducts[0];
+                } else {
+                    // Fallback: buscar el chat con pago-pendiente o el último que mandó imagen
+                    const fallbackChats = Object.values(chats).filter(c =>
+                        c.from !== ADMIN_PHONE && (
+                            (c.tags && c.tags.includes('pago-pendiente')) ||
+                            c.from === lastReceiptFrom
+                        )
+                    ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                    if (fallbackChats.length > 0) targetChat = fallbackChats[0];
+                }
 
-                    for (const serviceName of targetChat.pendingProducts) {
+                if (targetChat) {
+                    const targetFrom = targetChat.from;
+
+                    // --- DETECTAR PRODUCTOS si no están guardados ---
+                    let productsToDeliver = targetChat.pendingProducts && targetChat.pendingProducts.length > 0
+                        ? targetChat.pendingProducts
+                        : null;
+
+                    if (!productsToDeliver) {
+                        // Inferir desde el historial reciente del chat
+                        const recentMessages = (targetChat.messages || []).slice(-20);
+                        const allText = recentMessages.map(m => (m.content || m.body || '')).join(' ').toLowerCase();
+                        productsToDeliver = inventory
+                            .filter(a => allText.includes(a.service.toLowerCase()))
+                            .map(a => a.service)
+                            .filter((v, i, arr) => arr.indexOf(v) === i); // únicos
+                    }
+
+                    if (!productsToDeliver || productsToDeliver.length === 0) {
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ *No detecté productos:* Encontré al cliente *${targetChat.customerName}* pero no pude determinar qué cuenta entregar. Responde con el nombre exacto del producto (ej: "netflix ${targetFrom}") o usa el panel del CRM.`);
+                        res.sendStatus(200);
+                        return;
+                    }
+
+                    // --- ENTREGAR CUENTAS ---
+                    let totalCredentialsMsg = `🚀 *¡Aquí tienes tus cuentas!*\n\n`;
+                    let accountsFound = 0;
+                    const deliveredSales = [];
+
+                    for (const serviceName of productsToDeliver) {
                         const accIndex = inventory.findIndex(a =>
                             a.service.toLowerCase().includes(serviceName.toLowerCase()) &&
                             (a.status === 'Available' || parseInt(a.uses) > 0)
@@ -250,7 +292,9 @@ app.post('/webhook', async (req, res) => {
                             const newSale = {
                                 id: 'auto-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
                                 service: acc.service,
-                                price: targetChat.pendingProducts.length > 0 ? Math.round(parseInt(targetChat.pendingTotal || 0) / targetChat.pendingProducts.length) : acc.price,
+                                price: targetChat.pendingTotal
+                                    ? Math.round(parseInt(targetChat.pendingTotal) / productsToDeliver.length)
+                                    : acc.price,
                                 cost: acc.cost || 0,
                                 provider: acc.provider || 'N/A',
                                 date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
@@ -258,6 +302,7 @@ app.post('/webhook', async (req, res) => {
                                 customerId: targetFrom
                             };
                             sales.push(newSale);
+                            deliveredSales.push(acc.service);
                             acc.uses = parseInt(acc.uses) - 1;
                             if (acc.uses <= 0) acc.status = 'Sold Out';
                             totalCredentialsMsg += `✅ *${acc.service}*\n📧 *Correo:* ${acc.email}\n🔑 *Clave:* ${acc.pass}${acc.profile ? '\n👤 *Perfil:* ' + acc.profile : ''}${acc.pin ? '\n📌 *PIN:* ' + acc.pin : ''}\n\n`;
@@ -269,12 +314,13 @@ app.post('/webhook', async (req, res) => {
                         totalCredentialsMsg += `⚠️ *Importante:* No modificar la contraseña ni alterar otros perfiles para mantener tu garantía.\n\n¡Gracias por tu compra! 🎉`;
                         await sendMessageToCloudAPI(targetFrom, totalCredentialsMsg);
 
-                        // Actualizar estado del chat destino
+                        // Actualizar estado del chat
                         targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pago-pendiente');
                         if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
                         targetChat.pendingProducts = [];
                         targetChat.pendingTotal = null;
 
+                        // Persistir todo
                         saveSales(sales);
                         saveInventory(inventory);
                         saveChats(chats);
@@ -297,17 +343,18 @@ app.post('/webhook', async (req, res) => {
                         saveChats(chats);
                         io.emit('message', botMsgData);
 
-                        // Confirmar al admin que la entrega fue exitosa
-                        await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *ENTREGA EXITOSA:* Las cuentas de *${targetChat.pendingProducts.join ? targetChat.customerName : ''}* han sido enviadas a *${targetChat.customerName}*. La venta quedó registrada.`);
+                        // Confirmar al admin
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *ENTREGA EXITOSA* a *${targetChat.customerName}*:\n📦 Productos: ${deliveredSales.join(', ')}\nLa venta quedó registrada en el CRM.`);
+                        if (lastReceiptFrom === targetFrom) lastReceiptFrom = null;
                     } else {
-                        await sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK:* No encontré cuentas disponibles para los productos pendientes. Revisa tu inventario en el CRM.`);
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK:* Detecté los productos pero no hay cuentas disponibles para: *${productsToDeliver.join(', ')}*. Revisa el inventario en el CRM.`);
                     }
                 } else {
-                    await sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ *Sin pendientes:* No hay clientes con comprobantes pendientes de entrega en este momento.`);
+                    await sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ *Sin pendientes:* No encontré ningún cliente esperando entrega. Si el cliente ya envió el comprobante, asegúrate de que el chat tenga la etiqueta "Pago Pendiente" en el CRM.`);
                 }
 
                 res.sendStatus(200);
-                return; // Terminar aquí, no procesar como mensaje normal
+                return;
             }
             // ========================
             // FIN DETECCIÓN ADMIN
