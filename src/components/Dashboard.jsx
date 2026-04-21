@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const Dashboard = ({ accounts, salesHistory }) => {
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
     start: today,
     end: today
@@ -136,7 +136,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
                   onClick={() => {
                     const d = new Date();
                     d.setDate(d.getDate() - 7);
-                    setPreset(d.toISOString().split('T')[0], today);
+                    setPreset(d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), today);
                   }}
                   className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
                 >
@@ -146,7 +146,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
                   onClick={() => {
                     const d = new Date();
                     d.setDate(d.getDate() - 30);
-                    setPreset(d.toISOString().split('T')[0], today);
+                    setPreset(d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), today);
                   }}
                   className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
                 >
