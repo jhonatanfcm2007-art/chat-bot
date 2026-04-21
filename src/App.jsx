@@ -304,13 +304,27 @@ function App() {
     if (account.uses <= 0) return;
     
     const costPerSlot = (account.cost || 0) / (account.originalUses || 1);
+
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    
+    const cleanService = (account.service || 'SRV').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    let prefix = cleanService.substring(0, 4);
+    if (prefix.length < 3) prefix = prefix.padEnd(3, 'X');
+    
+    const reference = `${prefix}-${dd}${mm}-${hh}${mins}`;
+
     const newSale = {
       id: Date.now(),
+      reference: reference,
       service: account.service,
       price: account.price,
       cost: costPerSlot,
       provider: account.provider || 'N/A',
-      date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+      date: new Date().toISOString().split('T')[0],
       customer: customerName || 'Venta Directa',
       customerId: customerId || null
     };
@@ -344,6 +358,13 @@ function App() {
 
   const handleUpdateChatTag = (chatId, tags) => {
     socket.emit('update_chat_tags', { chatId, tags });
+  };
+
+  const handleNavigateToChat = (customerId) => {
+    if (customerId) {
+       setActiveTab('simulator');
+       setSelectedChat(customerId);
+    }
   };
 
   const renderContent = () => {
@@ -383,7 +404,7 @@ function App() {
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} />;
     }
   };
 

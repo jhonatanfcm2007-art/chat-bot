@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const Dashboard = ({ accounts, salesHistory }) => {
+const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
@@ -48,6 +48,8 @@ const Dashboard = ({ accounts, salesHistory }) => {
   const activityList = filteredSales.map(sale => ({
 
     id: sale.id,
+    customerId: sale.customerId,
+    reference: sale.reference,
     customer: sale.customer,
     service: sale.service,
     provider: sale.provider,
@@ -240,14 +242,24 @@ const Dashboard = ({ accounts, salesHistory }) => {
           </div>
           <div className="space-y-4">
             {activityList.slice(0, 3).map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-background/50 rounded-2xl border border-outline-variant/50 hover:border-primary/30 transition-colors group">
+              <div 
+                key={item.id} 
+                onClick={() => item.customerId && onNavigateToChat && onNavigateToChat(item.customerId)}
+                className={`flex items-center justify-between p-4 bg-background/50 rounded-2xl border border-outline-variant/50 hover:border-primary/30 transition-colors group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-outline-variant shadow-sm group-hover:scale-110 transition-transform">
                     <span className="material-symbols-outlined text-on-surface-variant">person</span>
                   </div>
                   <div>
-                    <h4 className="font-black text-sm text-on-surface">{item.customer}</h4>
-                    <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.provider || 'N/A'} • {item.time}</p>
+                    <h4 className="font-black text-sm text-on-surface flex items-center gap-2">
+                      {item.customer}
+                      {item.customerId && <span className="material-symbols-outlined text-[10px] text-primary opacity-50 group-hover:opacity-100 transition-opacity">open_in_new</span>}
+                    </h4>
+                    <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter mt-0.5">
+                      {item.reference && <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded mr-1.5 border border-primary/10">{item.reference}</span>}
+                      {item.service} • {item.provider || 'N/A'} • {item.time}
+                    </p>
                   </div>
                 </div>
                 <span className="font-black text-primary text-sm">{item.amount}</span>
@@ -323,14 +335,29 @@ const Dashboard = ({ accounts, salesHistory }) => {
 
             <div className="flex-grow overflow-y-auto pr-2 space-y-4 scrollbar-hide">
               {activityList.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-5 bg-secondary-bg/50 rounded-3xl border border-outline-variant/50 group hover:border-primary/30 transition-all">
+                <div 
+                  key={item.id} 
+                  onClick={() => {
+                    if(item.customerId && onNavigateToChat) {
+                      onNavigateToChat(item.customerId);
+                      setIsHistoryModalOpen(false);
+                    }
+                  }}
+                  className={`flex items-center justify-between p-5 bg-secondary-bg/50 rounded-3xl border border-outline-variant/50 group hover:border-primary/30 transition-all ${item.customerId ? 'cursor-pointer hover:bg-white shadow-sm' : ''}`}
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-outline-variant shadow-sm group-hover:scale-110 transition-transform">
                       <span className="material-symbols-outlined text-primary">receipt_long</span>
                     </div>
                     <div>
-                      <h4 className="font-black text-sm text-on-surface">{item.customer}</h4>
-                      <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">{item.service} • {item.provider || 'N/A'} • {item.time}</p>
+                      <h4 className="font-black text-sm text-on-surface flex items-center gap-2">
+                        {item.customer}
+                        {item.customerId && <span className="material-symbols-outlined text-[12px] text-primary opacity-50 group-hover:opacity-100 transition-opacity">open_in_new</span>}
+                      </h4>
+                      <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter mt-0.5">
+                        {item.reference && <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md mr-1.5 border border-primary/10">{item.reference}</span>}
+                        {item.service} • {item.provider || 'N/A'} • {item.time}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">

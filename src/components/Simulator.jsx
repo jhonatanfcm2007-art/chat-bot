@@ -21,6 +21,25 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     setInputValue('');
   };
 
+  const parseTimeString = (timeStr) => {
+    if (!timeStr) return 0;
+    try {
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      if (!match) return 0;
+      let [_, h, m, ampm] = match;
+      h = parseInt(h);
+      if (ampm) {
+         if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+         if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+      }
+      let d = new Date();
+      d.setHours(h, parseInt(m), 0, 0);
+      return d.getTime();
+    } catch(e) {
+      return 0;
+    }
+  };
+
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
   const chatArray = Object.entries(chats);
@@ -29,9 +48,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
       
-      // Intentar obtener una fecha real del chat. 
-      // Prioridad: 1. updatedAt, 2. timestampRaw del último mensaje, 3. índice original (como fallback para chats muy antiguos)
-      let activityTime = data.updatedAt || (lastMessage && lastMessage.timestampRaw ? lastMessage.timestampRaw : index);
+      let activityTime = data.updatedAt;
+      if (!activityTime && lastMessage) {
+         activityTime = lastMessage.timestampRaw;
+         if (!activityTime && lastMessage.timestamp) {
+            activityTime = parseTimeString(lastMessage.timestamp);
+         }
+      }
+      if (!activityTime) activityTime = index;
       
       return {
         ...data,
