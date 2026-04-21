@@ -367,16 +367,78 @@ app.post('/webhook', async (req, res) => {
             let msgBody = '';
             
             if (msg.type === 'image') {
-                // También guardar referencia al último que envió comprobante
-                lastReceiptFrom = from;
-                msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
-                io.emit('receipt_received', { from, customerName, message: msgBody });
-                
-                // Notificar al dueño por WhatsApp personal con detalles de la venta
-                if (ADMIN_PHONE) {
-                    const pendingProducts = chats[from]?.pendingProducts || 'Productos no detectados';
-                    const pendingTotal = chats[from]?.pendingTotal || '¿?';
-                    sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *AVISO DE PAGO:* El cliente *${customerName}* envió un comprobante.\n\n💰 *Monto esperado:* $${pendingTotal}\n📦 *Cuentas:* ${Array.isArray(pendingProducts) ? pendingProducts.join(', ') : pendingProducts}\n\nEscribe *'apruebo'* para entregar automáticamente.`);
+                // --- ANÁLISIS DE IMAGEN CON GPT-4o VISION ---
+                let isReceipt = false;
+                let detectedAmount = null;
+
+                try {
+                    // 1. Obtener URL de descarga desde Meta
+                    const mediaId = msg.image.id;
+                    const mediaInfoRes = await fetch(`https://graph.facebook.com/v18.0/${mediaId}`, {
+                        headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` }
+                    });
+                    const mediaInfo = await mediaInfoRes.json();
+                    const mediaUrl = mediaInfo.url;
+
+                    // 2. Descargar la imagen como buffer
+                    const imageRes = await fetch(mediaUrl, {
+                        headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` }
+                    });
+                    const imageBuffer = await imageRes.arrayBuffer();
+                    const base64Image = Buffer.from(imageBuffer).toString('base64');
+                    const mimeType = msg.image.mime_type || 'image/jpeg';
+
+                    // 3. Enviar a GPT-4o para análisis
+                    if (openai) {
+                        const visionResponse = await openai.chat.completions.create({
+                            model: 'gpt-4o',
+                            max_tokens: 100,
+                            messages: [{
+                                role: 'user',
+                                content: [
+                                    {
+                                        type: 'text',
+                                        text: 'Analiza esta imagen. ¿Es un comprobante de pago bancario, transferencia o Nequi/Daviplata? Responde EXACTAMENTE en este formato:\nRESULTADO: COMPROBANTE o NO_COMPROBANTE\nMONTO: (número sin puntos ni símbolos, o DESCONOCIDO si no se ve)'
+                                    },
+                                    {
+                                        type: 'image_url',
+                                        image_url: { url: `data:${mimeType};base64,${base64Image}` }
+                                    }
+                                ]
+                            }]
+                        });
+
+                        const visionText = visionResponse.choices[0].message.content || '';
+                        console.log('🔍 Análisis de imagen GPT-4o:', visionText);
+
+                        isReceipt = visionText.includes('COMPROBANTE') && !visionText.includes('NO_COMPROBANTE');
+                        const montoMatch = visionText.match(/MONTO:\s*(\d+)/);
+                        if (montoMatch) detectedAmount = parseInt(montoMatch[1]);
+                    }
+                } catch (imgErr) {
+                    console.error('❌ Error analizando imagen con GPT-4o:', imgErr.message);
+                    // En caso de error, asumir que puede ser comprobante para no perder ventas
+                    isReceipt = true;
+                }
+
+                if (isReceipt) {
+                    lastReceiptFrom = from;
+                    msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
+                    io.emit('receipt_received', { from, customerName, message: msgBody });
+
+                    // Notificar al admin con monto detectado por IA
+                    if (ADMIN_PHONE) {
+                        const pendingProducts = chats[from]?.pendingProducts;
+                        const pendingTotal = detectedAmount || chats[from]?.pendingTotal || '¿?';
+                        const productsText = Array.isArray(pendingProducts) && pendingProducts.length > 0
+                            ? pendingProducts.join(', ')
+                            : 'Revisa la conversación';
+                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* $${detectedAmount ? detectedAmount.toLocaleString('es-CO') : '¿?'}\n📦 *Cuentas:* ${productsText}\n\nEscribe *apruebo* para entregar automáticamente.`);
+                    }
+                } else {
+                    // No es comprobante, tratar como imagen normal
+                    msgBody = '[IMAGEN RECIBIDA] El cliente envió una imagen.';
+                    console.log('🖼️ Imagen analizada: NO es comprobante de pago.');
                 }
             } else if (msg.type === 'text') {
                 msgBody = msg.text.body;
