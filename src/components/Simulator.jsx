@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag }) => {
   const [inputValue, setInputValue] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   
   const chatEndRef = useRef(null);
@@ -20,13 +21,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     setInputValue('');
   };
 
-  const activeChatData = selectedChat ? chats[selectedChat] : null;
-  const chatSessions = Object.entries(chats).map(([id, data]) => ({
-    ...data,
-    from: data.from || id,
-    tags: data.tags || ['activo'], // Default tag if none
-    updatedAt: data.updatedAt || 0
-  })).sort((a, b) => b.updatedAt - a.updatedAt);
+  const chatSessions = Object.entries(chats)
+    .map(([id, data]) => {
+      const messages = data.messages || [];
+      const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+      // Si no hay updatedAt, intentamos inferirlo del último mensaje para chats antiguos
+      const activityTime = data.updatedAt || (lastMessage ? Date.now() : 0); 
+      
+      return {
+        ...data,
+        from: data.from || id,
+        tags: data.tags || ['activo'],
+        updatedAt: activityTime,
+        lastMessage: lastMessage
+      };
+    })
+    .filter(chat => 
+      chat.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      chat.from.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
@@ -86,6 +100,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               className="w-full bg-white/10 border border-white/5 rounded-xl py-2.5 pl-11 text-xs text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary/40 focus:bg-white/15 transition-all outline-none" 
               placeholder="Buscar cliente..." 
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -114,12 +130,17 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         {chat.customerName}
                       </h4>
                       <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${selectedChat === chat.from ? 'text-white/60' : 'text-white/20'}`}>
-                        {chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                        {chat.updatedAt && chat.updatedAt > 0 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
                       </span>
                     </div>
-                    {/* Injecting the Tag below name */}
+                    
+                    {/* Last Message Preview */}
+                    <p className={`text-[10px] truncate max-w-[140px] mb-1 ${selectedChat === chat.from ? 'text-white/70' : 'text-white/30'}`}>
+                      {chat.lastMessage ? chat.lastMessage.content : 'Sin mensajes'}
+                    </p>
+
                     <div className="flex items-center gap-2 mt-1">
-                       <span className={`text-[8.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                       <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
                          selectedChat === chat.from ? 'bg-white/20 border-white/30 text-white' : mainTag.classes
                        }`}>
                          {mainTag.label}
