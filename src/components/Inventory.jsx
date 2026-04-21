@@ -21,6 +21,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   ])).sort((a, b) => a.localeCompare(b));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isManageListsOpen, setIsManageListsOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
   const [showCustomProvider, setShowCustomProvider] = useState(false);
   const [showCustomProfile, setShowCustomProfile] = useState(false);
@@ -116,17 +117,37 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
 
   const closeModal = () => {
-
-
-
-
     setIsModalOpen(false);
+    setIsManageListsOpen(false);
     setShowCustomPlatform(false);
     setShowCustomProvider(false);
     setShowCustomProfile(false);
     setEditingAccount(null);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
+  };
 
+  const handleEditPlatformName = (oldName, newName) => {
+    if (!newName.trim() || oldName === newName) return;
+    setPlatforms(platforms.map(p => p === oldName ? newName : p));
+    setAccounts(accounts.map(acc => acc.service === oldName ? { ...acc, service: newName } : acc));
+  };
+
+  const handleDeletePlatform = (name) => {
+    if (window.confirm(`¿Eliminar "${name}" de la lista de plataformas?`)) {
+      setPlatforms(platforms.filter(p => p !== name));
+    }
+  };
+
+  const handleEditProviderName = (oldName, newName) => {
+    if (!newName.trim() || oldName === newName) return;
+    setProviders(providers.map(p => p === oldName ? newName : p));
+    setAccounts(accounts.map(acc => acc.provider === oldName ? { ...acc, provider: newName } : acc));
+  };
+
+  const handleDeleteProvider = (name) => {
+    if (window.confirm(`¿Eliminar "${name}" de la lista de proveedores?`)) {
+      setProviders(providers.filter(p => p !== name));
+    }
   };
 
   // Metrics calculation
@@ -164,13 +185,22 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           <p className="text-on-surface-variant text-[11px] md:text-sm mt-1">Administra tu stock de streaming y precios</p>
         </div>
 
-        <button 
-          onClick={() => { closeModal(); setIsModalOpen(true); }}
-          className="w-full md:w-auto bg-primary text-white font-bold px-6 py-3 md:py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-          Nueva Cuenta
-        </button>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <button 
+            onClick={() => setIsManageListsOpen(true)}
+            className="bg-white text-on-surface-variant font-bold px-5 py-3 md:py-2.5 rounded-xl border border-outline-variant hover:bg-secondary-bg transition-all flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-lg">settings</span>
+            Configurar Listas
+          </button>
+          <button 
+            onClick={() => { closeModal(); setIsModalOpen(true); }}
+            className="bg-primary text-white font-bold px-6 py-3 md:py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+            Nueva Cuenta
+          </button>
+        </div>
       </div>
 
       {/* Summary Dashboard */}
@@ -413,6 +443,88 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 {editingAccount ? 'Actualizar Cuenta' : 'Registrar Cuenta'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Lists Modal */}
+      {isManageListsOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-on-surface/20 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-outline-variant p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-on-surface">Configurar Listas</h2>
+              <button 
+                onClick={() => setIsManageListsOpen(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-secondary-bg transition-colors"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2">
+              {/* Platforms Section */}
+              <div>
+                <h3 className="text-xs font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">tv</span>
+                  Plataformas
+                </h3>
+                <div className="space-y-2">
+                  {platforms.map(platform => (
+                    <div key={platform} className="flex items-center gap-2 group">
+                      <input 
+                        type="text"
+                        defaultValue={platform}
+                        onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
+                        className="flex-grow bg-secondary-bg border-none rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                      />
+                      <button 
+                        onClick={() => handleDeletePlatform(platform)}
+                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant/20 group-hover:text-error transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
+                    </div>
+                  ))}
+                  {platforms.length === 0 && <p className="text-[10px] text-on-surface-variant italic">No hay plataformas guardadas.</p>}
+                </div>
+              </div>
+
+              {/* Providers Section */}
+              <div>
+                <h3 className="text-xs font-black text-tertiary uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">person_outline</span>
+                  Proveedores
+                </h3>
+                <div className="space-y-2">
+                  {providers.map(provider => (
+                    <div key={provider} className="flex items-center gap-2 group">
+                      <input 
+                        type="text"
+                        defaultValue={provider}
+                        onBlur={(e) => handleEditProviderName(provider, e.target.value)}
+                        className="flex-grow bg-secondary-bg border-none rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                      />
+                      <button 
+                        onClick={() => handleDeleteProvider(provider)}
+                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant/20 group-hover:text-error transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
+                    </div>
+                  ))}
+                  {providers.length === 0 && <p className="text-[10px] text-on-surface-variant italic">No hay proveedores guardados.</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-outline-variant flex justify-end">
+              <button 
+                onClick={() => setIsManageListsOpen(false)}
+                className="bg-on-surface text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition-all"
+              >
+                Listo
+              </button>
+            </div>
           </div>
         </div>
       )}
