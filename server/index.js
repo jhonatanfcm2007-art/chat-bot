@@ -327,6 +327,7 @@ app.post('/webhook', async (req, res) => {
                         if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
                         targetChat.pendingProducts = [];
                         targetChat.pendingTotal = null;
+                        targetChat.updatedAt = Date.now(); // Mantener orden en la lista
 
                         // Persistir todo
                         saveSales(sales);
@@ -796,6 +797,7 @@ io.on('connection', (socket) => {
                         if (!chat.tags.includes('pagado')) chat.tags.push('pagado');
                         chat.pendingProducts = []; // Limpiar pendientes
                         chat.pendingTotal = null;
+                        chat.updatedAt = Date.now(); // Mantener orden en la lista
 
                         // Persistir todo
                         saveSales(sales);

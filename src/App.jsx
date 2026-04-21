@@ -100,7 +100,8 @@ function App() {
           ...prev,
           [data.from]: {
             ...prev[data.from],
-            tags: data.tags
+            tags: data.tags,
+            updatedAt: Date.now() // Subir al tope de la lista cuando cambia etiqueta
           }
         };
       });
@@ -156,6 +157,8 @@ function App() {
       socket.off('initial_chats');
       socket.off('initial_settings');
       socket.off('human_required');
+      socket.off('receipt_received');
+      socket.off('tag_updated');
       socket.off('platforms_updated');
       socket.off('providers_updated');
     };
