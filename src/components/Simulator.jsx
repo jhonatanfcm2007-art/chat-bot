@@ -78,7 +78,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const handleSellToCustomer = () => {
     if (!selectedSaleAccount) return;
-    const accountToSell = availableInventory.find(a => a.id === selectedSaleAccount);
+    const accountToSell = availableInventory.find(a => String(a.id) === String(selectedSaleAccount));
     if (accountToSell) {
       if(window.confirm(`¿Confirmas la venta de ${accountToSell.service} por $${accountToSell.price}? Se descontará del inventario.`)){
         // 1. Registrar la venta y actualizar inventario
