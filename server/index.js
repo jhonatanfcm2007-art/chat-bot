@@ -113,7 +113,7 @@ function saveChats(data) {
 
 function loadSettings() {
     const defaultSettings = {
-        systemPrompt: "Eres un asistente virtual de ventas para WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\nRegla importante: Si el cliente pide soporte, necesita hacer un pago que requiera confirmación humana, o hace una pregunta que no puedes resolver, incluye la palabra secreta '[REQUIERE_HUMANO]' en tu respuesta y despídete amablemente diciendo que un agente humano lo atenderá."
+        systemPrompt: "Eres un asistente virtual de ventas para WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### REGLAS DE NEGOCIO:\n1. Identifica qué productos quiere el cliente.\n2. Si el cliente muestra intención de pago o pide el total, calcula la suma basada en el inventario.\n3. IMPORTANTE: Al final de cada respuesta de venta, añade SIEMPRE estas etiquetas en una línea nueva e invisible para el cliente: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero]. Ejemplo: [PRODUCTOS:Netflix,Disney+][TOTAL:25000].\n4. Si el cliente pide soporte o algo que no sepas, usa [REQUIERE_HUMANO]."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) {
@@ -227,9 +227,11 @@ app.post('/webhook', async (req, res) => {
                 msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
                 io.emit('receipt_received', { from, customerName, message: msgBody });
                 
-                // Notificar al dueño por WhatsApp personal si está configurado
+                // Notificar al dueño por WhatsApp personal con detalles de la venta
                 if (ADMIN_PHONE) {
-                    sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *AVISO DE PAGO:* El cliente *${customerName}* (${from}) acaba de enviar un comprobante. Revisa el CRM para confirmar.`);
+                    const pendingProducts = chats[from]?.pendingProducts || 'Productos no detectados';
+                    const pendingTotal = chats[from]?.pendingTotal || '¿?';
+                    sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *AVISO DE PAGO:* El cliente *${customerName}* envió un comprobante.\n\n💰 *Monto esperado:* $${pendingTotal}\n📦 *Cuentas:* ${Array.isArray(pendingProducts) ? pendingProducts.join(', ') : pendingProducts}\n\nEscribe *'apruebo'* para entregar automáticamente.`);
                 }
             } else if (msg.type === 'text') {
                 msgBody = msg.text.body;
@@ -279,13 +281,30 @@ app.post('/webhook', async (req, res) => {
 
                 // 2. Detección de Pago Pendiente (Venta realizada pero sin confirmar)
                 const pagoRegex = /\[?(PAGO_PENDIENTE|PAGO PENDIENTE)\]?/i;
-                if (pagoRegex.test(aiReply)) {
+                const productosRegex = /\[PRODUCTOS:(.+?)\]/i;
+                const totalRegex = /\[TOTAL:(\d+?)\]/i;
+
+                if (pagoRegex.test(aiReply) || productosRegex.test(aiReply)) {
                     chats[from].tags = chats[from].tags || [];
                     if (!chats[from].tags.includes('pago-pendiente')) {
                         chats[from].tags.push('pago-pendiente');
-                        saveChats(chats);
-                        io.emit('tag_updated', { from, tags: chats[from].tags });
                     }
+
+                    // Extraer productos y total detectados por la IA
+                    const prodMatch = aiReply.match(productosRegex);
+                    const totalMatch = aiReply.match(totalRegex);
+                    
+                    if (prodMatch) {
+                        chats[from].pendingProducts = prodMatch[1].split(',').map(p => p.trim());
+                        aiReply = aiReply.replace(productosRegex, '').trim();
+                    }
+                    if (totalMatch) {
+                        chats[from].pendingTotal = totalMatch[1];
+                        aiReply = aiReply.replace(totalRegex, '').trim();
+                    }
+
+                    saveChats(chats);
+                    io.emit('tag_updated', { from, tags: chats[from].tags });
                     aiReply = aiReply.replace(pagoRegex, '').trim();
                 }
                 
@@ -511,6 +530,93 @@ io.on('connection', (socket) => {
 
     socket.on('send_message', async ({ to, content }) => {
         try {
+            const commandRegex = /^(apruebo|aprobado|si llego|listo|entregar|si lleg|si paso)$/i;
+            const isCommand = commandRegex.test(content.trim());
+
+            if (isCommand) {
+                const chat = chats[to];
+                if (chat && chat.pendingProducts && chat.pendingProducts.length > 0) {
+                    let totalCredentialsMsg = "🚀 *AUTOMACIÓN:* Aquí tienes tus cuentas:\n\n";
+                    let accountsFound = 0;
+                    
+                    for (const serviceName of chat.pendingProducts) {
+                        // Buscar cuenta disponible para este servicio
+                        const accIndex = inventory.findIndex(a => 
+                            a.service.toLowerCase().includes(serviceName.toLowerCase()) && 
+                            (a.status === 'Available' || parseInt(a.uses) > 0)
+                        );
+
+                        if (accIndex !== -1) {
+                            const acc = inventory[accIndex];
+                            
+                            // 1. Registrar Venta
+                            const saleId = 'auto-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                            const newSale = {
+                                id: saleId,
+                                service: acc.service,
+                                price: parseInt(chat.pendingTotal) / chat.pendingProducts.length, // Prorrateado
+                                cost: acc.cost || 0,
+                                provider: acc.provider || 'N/A',
+                                date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+                                customer: chat.customerName || 'Cliente',
+                                customerId: to
+                            };
+                            sales.push(newSale);
+                            
+                            // 2. Descontar Inventario
+                            acc.uses = parseInt(acc.uses) - 1;
+                            if (acc.uses <= 0) acc.status = 'Sold Out';
+
+                            // 3. Formatear Credenciales
+                            totalCredentialsMsg += `✅ *${acc.service}*\n📧 *Correo:* ${acc.email}\n🔑 *Clave:* ${acc.pass}${acc.profile ? '\n👤 *Perfil:* ' + acc.profile : ''}${acc.pin ? '\n📌 *PIN:* ' + acc.pin : ''}\n\n`;
+                            accountsFound++;
+                        }
+                    }
+
+                    if (accountsFound > 0) {
+                        totalCredentialsMsg += "⚠️ *Importante:* No modificar datos de la cuenta para mantener tu garantía.\n\n¡Gracias por tu compra! 🎉";
+                        
+                        // Enviar el mensaje consolidado a WhatsApp
+                        await sendMessageToCloudAPI(to, totalCredentialsMsg);
+                        
+                        // Actualizar estado del chat
+                        chat.tags = (chat.tags || []).filter(t => t !== 'pago-pendiente');
+                        if (!chat.tags.includes('pagado')) chat.tags.push('pagado');
+                        chat.pendingProducts = []; // Limpiar pendientes
+                        chat.pendingTotal = null;
+
+                        // Persistir todo
+                        saveSales(sales);
+                        saveInventory(inventory);
+                        saveChats(chats);
+
+                        // Notificar al frontend
+                        io.emit('sales_updated', sales);
+                        io.emit('inventory_updated', inventory);
+                        io.emit('tag_updated', { from: to, tags: chat.tags });
+                        
+                        // Agregar el mensaje de entrega al historial visual
+                        const botMsgData = {
+                            id: 'auto-' + Date.now(),
+                            from: to,
+                            customerName: 'Sistema',
+                            body: totalCredentialsMsg,
+                            timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
+                            timestampRaw: Date.now(),
+                            isMe: true,
+                            role: 'bot'
+                        };
+                        chat.messages.push({ ...botMsgData, content: totalCredentialsMsg });
+                        io.emit('message', botMsgData);
+                        return; // Terminar aquí para no enviar el "apruebo"
+                    } else {
+                        // Si no encontró ninguna cuenta
+                        await sendMessageToCloudAPI(to, "❌ Hubo un inconveniente buscando tus cuentas disponibles. Un agente humano revisará esto ahora mismo.");
+                    }
+                }
+            }
+
+            // Flujo normal si no es comando o no hay pendientes
             await sendMessageToCloudAPI(to, content);
             const msgData = {
                 id: 'man-' + Date.now(),
@@ -523,7 +629,6 @@ io.on('connection', (socket) => {
                 role: 'bot'
             };
 
-            // Persistir mensaje manual
             if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
             chats[to].messages.push({ ...msgData, content });
             chats[to].updatedAt = Date.now();
@@ -531,7 +636,7 @@ io.on('connection', (socket) => {
 
             io.emit('message', msgData);
         } catch (err) {
-            console.error('Error manual sending message:', err);
+            console.error('Error in send_message processing:', err);
         }
     });
 });
