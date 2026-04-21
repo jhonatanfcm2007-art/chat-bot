@@ -128,7 +128,7 @@ function saveChats(data) {
 
 function loadSettings() {
     const defaultSettings = {
-        systemPrompt: "Eres un asistente virtual de ventas para WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### REGLAS DE NEGOCIO:\n1. Identifica qué productos quiere el cliente.\n2. Si el cliente muestra intención de pago o pide el total, calcula la suma basada en el inventario.\n3. IMPORTANTE: Al final de cada respuesta de venta, añade SIEMPRE estas etiquetas en una línea nueva e invisible para el cliente: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero]. Ejemplo: [PRODUCTOS:Netflix,Disney+][TOTAL:25000].\n4. Si el cliente pide soporte o algo que no sepas, usa [REQUIERE_HUMANO]."
+        systemPrompt: "Eres un asistente virtual de ventas para cuentas de streaming por WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### ESTRATEGIA DE VENTA:\n1. Saluda e identifica qué producto busca el cliente.\n2. Ofrece los productos disponibles con sus precios del inventario.\n3. CONFIANZA: Si el cliente duda, tiene miedo de ser estafado, o pide garantía, ofrécele activar la cuenta primero para que la pruebe antes de pagar. Muchas personas han sido estafadas y esto genera confianza.\n4. Si el cliente acepta o pide que le activen primero, confirma que un agente procederá con la activación.\n5. Métodos de pago: Nequi, Daviplata o Bancolombia.\n\n### REGLAS TÉCNICAS:\n1. Al detectar intención de compra, añade SIEMPRE al final: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero]. Ejemplo: [PRODUCTOS:Netflix,Disney+][TOTAL:25000].\n2. Si no puedes resolver algo, usa [REQUIERE_HUMANO].\n3. Nunca inventes precios, usa SOLO los del inventario.\n4. Sé breve, máximo 2-3 líneas por respuesta."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) {
@@ -248,18 +248,32 @@ app.post('/webhook', async (req, res) => {
                 // Prioridad 2: Chats con pendingProducts (IA detectó productos)
                 // Prioridad 3: Chat con etiqueta 'pago-pendiente'
                 let targetChat = null;
+                let mode = null; // 'confirm_payment' | 'deliver_and_paid' | 'deliver_first'
 
-                // Prioridad 1: Último que envió comprobante (cualquier cliente, con o sin etiqueta)
+                // Prioridad 1: Último que envió comprobante
                 if (lastReceiptFrom && chats[lastReceiptFrom] && lastReceiptFrom !== ADMIN_PHONE) {
-                    targetChat = chats[lastReceiptFrom];
+                    const receiptChat = chats[lastReceiptFrom];
+                    if (receiptChat.tags && receiptChat.tags.includes('entregado')) {
+                        // Ya tiene credenciales, esto es confirmación de pago
+                        targetChat = receiptChat;
+                        mode = 'confirm_payment';
+                    } else {
+                        // No tiene credenciales aún, pago primero → entregar + marcar pagado
+                        targetChat = receiptChat;
+                        mode = 'deliver_and_paid';
+                    }
                 }
 
                 // Prioridad 2: Chat con pendingProducts (si no hay lastReceiptFrom)
                 if (!targetChat) {
                     const chatsWithProducts = Object.values(chats).filter(c =>
-                        c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0
+                        c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0 &&
+                        !(c.tags && c.tags.includes('entregado'))
                     ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                    if (chatsWithProducts.length > 0) targetChat = chatsWithProducts[0];
+                    if (chatsWithProducts.length > 0) {
+                        targetChat = chatsWithProducts[0];
+                        mode = 'deliver_first';
+                    }
                 }
 
                 // Prioridad 3: Fallback por etiqueta pago-pendiente
@@ -267,11 +281,47 @@ app.post('/webhook', async (req, res) => {
                     const taggedChats = Object.values(chats).filter(c =>
                         c.from !== ADMIN_PHONE && c.tags && c.tags.includes('pago-pendiente')
                     ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                    if (taggedChats.length > 0) targetChat = taggedChats[0];
+                    if (taggedChats.length > 0) {
+                        targetChat = taggedChats[0];
+                        mode = 'deliver_first';
+                    }
                 }
 
                 if (targetChat) {
                     const targetFrom = targetChat.from;
+
+                    // ========== MODE: CONFIRM PAYMENT ==========
+                    if (mode === 'confirm_payment') {
+                        targetChat.tags = (targetChat.tags || []).filter(t => t !== 'entregado' && t !== 'pago-pendiente');
+                        if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
+                        targetChat.updatedAt = Date.now();
+
+                        saveChats(chats);
+                        io.emit('tag_updated', { from: targetFrom, tags: targetChat.tags });
+
+                        const confirmMsg = '✅ *¡Pago confirmado!* Muchas gracias por tu compra, disfruta tu cuenta 🎉🙌';
+                        await sendMessageToCloudAPI(targetFrom, confirmMsg);
+
+                        const confirmBotMsg = {
+                            id: 'confirm-' + Date.now(),
+                            from: targetFrom,
+                            customerName: 'Sistema',
+                            body: confirmMsg,
+                            timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
+                            timestampRaw: Date.now(),
+                            isMe: true,
+                            role: 'bot'
+                        };
+                        targetChat.messages.push({ ...confirmBotMsg, content: confirmMsg });
+                        saveChats(chats);
+                        io.emit('message', confirmBotMsg);
+
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *PAGO CONFIRMADO* de *${targetChat.customerName}*.\nLa venta se marcó como pagada en el CRM.`);
+                        if (lastReceiptFrom === targetFrom) lastReceiptFrom = null;
+
+                        res.sendStatus(200);
+                        return;
+                    }
 
                     // --- DETECTAR PRODUCTOS si no están guardados ---
                     let productsToDeliver = targetChat.pendingProducts && targetChat.pendingProducts.length > 0
@@ -335,9 +385,15 @@ app.post('/webhook', async (req, res) => {
                         totalCredentialsMsg += `⚠️ *Importante:* No modificar la contraseña ni alterar otros perfiles para mantener tu garantía.\n\n¡Gracias por tu compra! 🎉`;
                         await sendMessageToCloudAPI(targetFrom, totalCredentialsMsg);
 
-                        // Actualizar estado del chat
+                        // Actualizar estado del chat según modo
                         targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pago-pendiente');
-                        if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
+                        if (mode === 'deliver_and_paid') {
+                            if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
+                        } else {
+                            // deliver_first: cuenta activada, esperando pago
+                            targetChat.tags = targetChat.tags.filter(t => t !== 'pagado');
+                            if (!targetChat.tags.includes('entregado')) targetChat.tags.push('entregado');
+                        }
                         targetChat.pendingProducts = [];
                         targetChat.pendingTotal = null;
                         targetChat.updatedAt = Date.now(); // Mantener orden en la lista
@@ -365,14 +421,18 @@ app.post('/webhook', async (req, res) => {
                         saveChats(chats);
                         io.emit('message', botMsgData);
 
-                        // Confirmar al admin
-                        await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *ENTREGA EXITOSA* a *${targetChat.customerName}*:\n📦 Productos: ${deliveredSales.join(', ')}\nLa venta quedó registrada en el CRM.`);
+                        // Confirmar al admin según modo
+                        if (mode === 'deliver_and_paid') {
+                            await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *ENTREGA EXITOSA* a *${targetChat.customerName}*:\n📦 Productos: ${deliveredSales.join(', ')}\n💰 Venta registrada y pagada.`);
+                        } else {
+                            await sendMessageToCloudAPI(ADMIN_PHONE, `📦 *CUENTA ACTIVADA* para *${targetChat.customerName}*:\n📦 Productos: ${deliveredSales.join(', ')}\n⏳ Esperando pago. Cuando envíe comprobante, responde *r* para confirmar.`);
+                        }
                         if (lastReceiptFrom === targetFrom) lastReceiptFrom = null;
                     } else {
                         await sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK:* Detecté los productos pero no hay cuentas disponibles para: *${productsToDeliver.join(', ')}*. Revisa el inventario en el CRM.`);
                     }
                 } else {
-                    await sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ *Sin pendientes:* No encontré ningún cliente esperando entrega. Si el cliente ya envió el comprobante, asegúrate de que el chat tenga la etiqueta "Pago Pendiente" en el CRM.`);
+                    await sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ *Sin pendientes:* No encontré ningún cliente esperando entrega ni confirmación de pago.`);
                 }
 
                 res.sendStatus(200);
@@ -446,7 +506,14 @@ app.post('/webhook', async (req, res) => {
                     // Notificación simple al admin: cliente + monto detectado
                     if (ADMIN_PHONE) {
                         const montoText = detectedAmount ? `$${detectedAmount.toLocaleString('es-CO')}` : 'No visible en la imagen';
-                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* ${montoText}\n\nResponde *r* para entregar automáticamente.`);
+                        const chatData = chats[from];
+                        const isEntregado = chatData && chatData.tags && chatData.tags.includes('entregado');
+
+                        if (isEntregado) {
+                            sendMessageToCloudAPI(ADMIN_PHONE, `💰 *COMPROBANTE DE PAGO* (cuenta ya entregada)\n\n👤 *Cliente:* ${customerName}\n💵 *Monto:* ${montoText}\n\nResponde *r* para confirmar el pago.`);
+                        } else {
+                            sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* ${montoText}\n\nResponde *r* para entregar automáticamente.`);
+                        }
                     }
                 } else {
                     // No es comprobante: la IA le pide el comprobante real al cliente
@@ -473,6 +540,7 @@ app.post('/webhook', async (req, res) => {
 
                 // Persistir mensaje del cliente
                 if (!chats[from]) chats[from] = { from, customerName, messages: [] };
+                chats[from].recoveryMessageSent = false; // Reset recovery flag on new client message
                 
                 const history = chats[from].messages.slice(-10); // Tomar solo los últimos 10 para ahorrar tokens de ChatGPT
                 chats[from].messages.push({ ...messageData, content: msgBody });
@@ -547,6 +615,7 @@ app.post('/webhook', async (req, res) => {
                 // Persistir respuesta del bot
                 chats[from].messages.push({ ...botMsgData, content: aiReply });
                 chats[from].updatedAt = Date.now();
+                chats[from].lastBotReplyAt = Date.now(); // Track for recovery timer
                 saveChats(chats);
 
                 io.emit('message', botMsgData);
@@ -805,9 +874,10 @@ io.on('connection', (socket) => {
                         // Enviar el mensaje consolidado a WhatsApp
                         await sendMessageToCloudAPI(to, totalCredentialsMsg);
                         
-                        // Actualizar estado del chat
+                        // Actualizar estado del chat (desde CRM = entregado, esperando pago)
                         chat.tags = (chat.tags || []).filter(t => t !== 'pago-pendiente');
-                        if (!chat.tags.includes('pagado')) chat.tags.push('pagado');
+                        chat.tags = chat.tags.filter(t => t !== 'pagado');
+                        if (!chat.tags.includes('entregado')) chat.tags.push('entregado');
                         chat.pendingProducts = []; // Limpiar pendientes
                         chat.pendingTotal = null;
                         chat.updatedAt = Date.now(); // Mantener orden en la lista
@@ -909,6 +979,59 @@ app.get('/privacy', (req, res) => {
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
+
+// --- RECOVERY TIMER: Follow-up after 3 minutes of client silence ---
+const RECOVERY_DELAY = 3 * 60 * 1000; // 3 minutes
+
+setInterval(() => {
+    const now = Date.now();
+    Object.values(chats).forEach(async (chat) => {
+        if (!chat.from || chat.from === ADMIN_PHONE) return;
+        if (chat.recoveryMessageSent) return;
+        if (!chat.lastBotReplyAt) return;
+
+        // Only for chats with detected products (pago-pendiente)
+        const hasPending = chat.tags && chat.tags.includes('pago-pendiente');
+        if (!hasPending) return;
+
+        const timeSinceBot = now - chat.lastBotReplyAt;
+        if (timeSinceBot < RECOVERY_DELAY) return;
+
+        // Check if client responded after bot's last reply
+        const clientMessages = (chat.messages || []).filter(m => m.role === 'user');
+        const lastClientMsg = clientMessages.length > 0 ? clientMessages[clientMessages.length - 1] : null;
+        const lastClientTime = lastClientMsg?.timestampRaw || 0;
+
+        if (lastClientTime > chat.lastBotReplyAt) return; // Client already responded
+
+        // Send recovery message
+        const recoveryMsg = 'Hola! 😊 Si estás interesado/a te la puedo activar primero para que la pruebes y te asegures que todo funciona bien antes de pagar 💯✅';
+
+        try {
+            await sendMessageToCloudAPI(chat.from, recoveryMsg);
+            chat.recoveryMessageSent = true;
+
+            const botMsgData = {
+                id: 'recovery-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                from: chat.from,
+                customerName: 'Bot',
+                body: recoveryMsg,
+                timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
+                timestampRaw: Date.now(),
+                isMe: true,
+                role: 'bot'
+            };
+            chat.messages.push({ ...botMsgData, content: recoveryMsg });
+            chat.updatedAt = Date.now();
+            chat.lastBotReplyAt = Date.now();
+            saveChats(chats);
+            io.emit('message', botMsgData);
+            console.log(`🔄 Recovery message sent to ${chat.customerName} (${chat.from})`);
+        } catch (err) {
+            console.error(`❌ Error sending recovery to ${chat.from}:`, err.message);
+        }
+    });
+}, 30000); // Check every 30 seconds
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
