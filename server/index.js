@@ -231,26 +231,30 @@ app.post('/webhook', async (req, res) => {
             if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text' && commandRegex.test(msg.text.body.trim())) {
 
                 // --- ENCONTRAR EL CLIENTE OBJETIVO ---
-                // Prioridad 1: Chats con pendingProducts (IA nueva)
-                // Prioridad 2: Chats con tag 'pago-pendiente' (IA vieja / comprobante enviado)
-                // Prioridad 3: lastReceiptFrom (último que mandó imagen)
+                // Prioridad 1: lastReceiptFrom = quien envió un comprobante más recientemente (SIN IMPORTAR ETIQUETA)
+                // Prioridad 2: Chats con pendingProducts (IA detectó productos)
+                // Prioridad 3: Chat con etiqueta 'pago-pendiente'
                 let targetChat = null;
 
-                const chatsWithProducts = Object.values(chats).filter(c =>
-                    c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0
-                ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                // Prioridad 1: Último que envió comprobante (cualquier cliente, con o sin etiqueta)
+                if (lastReceiptFrom && chats[lastReceiptFrom] && lastReceiptFrom !== ADMIN_PHONE) {
+                    targetChat = chats[lastReceiptFrom];
+                }
 
-                if (chatsWithProducts.length > 0) {
-                    targetChat = chatsWithProducts[0];
-                } else {
-                    // Fallback: buscar el chat con pago-pendiente o el último que mandó imagen
-                    const fallbackChats = Object.values(chats).filter(c =>
-                        c.from !== ADMIN_PHONE && (
-                            (c.tags && c.tags.includes('pago-pendiente')) ||
-                            c.from === lastReceiptFrom
-                        )
+                // Prioridad 2: Chat con pendingProducts (si no hay lastReceiptFrom)
+                if (!targetChat) {
+                    const chatsWithProducts = Object.values(chats).filter(c =>
+                        c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0
                     ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                    if (fallbackChats.length > 0) targetChat = fallbackChats[0];
+                    if (chatsWithProducts.length > 0) targetChat = chatsWithProducts[0];
+                }
+
+                // Prioridad 3: Fallback por etiqueta pago-pendiente
+                if (!targetChat) {
+                    const taggedChats = Object.values(chats).filter(c =>
+                        c.from !== ADMIN_PHONE && c.tags && c.tags.includes('pago-pendiente')
+                    ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                    if (taggedChats.length > 0) targetChat = taggedChats[0];
                 }
 
                 if (targetChat) {
