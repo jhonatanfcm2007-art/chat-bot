@@ -90,11 +90,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
         // 3. Generar y enviar el mensaje con los datos de cuenta automáticamente
         const messageHeader = `🎉 ¡Gracias por tu compra de *${accountToSell.service}*!`;
-        const accountDetails = `*Correo:* ${accountToSell.email}\n*Contraseña:* ${accountToSell.password}`;
+        const accountDetails = `*Correo:* ${accountToSell.email}\n*Contraseña:* ${accountToSell.pass}`;
         
         let profileDetails = '';
-        if (accountToSell.profileName || accountToSell.pin) {
-          profileDetails = `\n*Perfil:* ${accountToSell.profileName || 'Principal'}`;
+        if (accountToSell.profile || accountToSell.pin) {
+          profileDetails = `\n*Perfil:* ${accountToSell.profile || 'Principal'}`;
           if (accountToSell.pin) profileDetails += `\n*PIN:* ${accountToSell.pin}`;
         }
         
