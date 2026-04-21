@@ -324,7 +324,7 @@ function App() {
       price: account.price,
       cost: costPerSlot,
       provider: account.provider || 'N/A',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
       customer: customerName || 'Venta Directa',
       customerId: customerId || null
     };

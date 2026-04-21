@@ -28,6 +28,7 @@ const openai = process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.include
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
 // --- PERSISTENCIA DEL INVENTARIO ---
 const DATA_DIR = path.join(__dirname, 'data');
@@ -225,6 +226,11 @@ app.post('/webhook', async (req, res) => {
             if (msg.type === 'image') {
                 msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
                 io.emit('receipt_received', { from, customerName, message: msgBody });
+                
+                // Notificar al dueño por WhatsApp personal si está configurado
+                if (ADMIN_PHONE) {
+                    sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *AVISO DE PAGO:* El cliente *${customerName}* (${from}) acaba de enviar un comprobante. Revisa el CRM para confirmar.`);
+                }
             } else if (msg.type === 'text') {
                 msgBody = msg.text.body;
             } else {
@@ -264,6 +270,11 @@ app.post('/webhook', async (req, res) => {
                     aiReply = aiReply.replace(humanRegex, '').trim();
 
                     io.emit('human_required', { from, customerName, message: msgBody });
+
+                    // Notificar al dueño por WhatsApp personal si requiere humano
+                    if (ADMIN_PHONE) {
+                        sendMessageToCloudAPI(ADMIN_PHONE, `👨‍💻 *INTERVENCIÓN REQUERIDA:* El cliente *${customerName}* (${from}) solicita o requiere atención humana. Mensaje: "${msgBody}"`);
+                    }
                 }
 
                 // 2. Detección de Pago Pendiente (Venta realizada pero sin confirmar)
