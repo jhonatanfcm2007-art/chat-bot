@@ -293,13 +293,17 @@ app.post('/webhook', async (req, res) => {
                         );
                         if (accIndex !== -1) {
                             const acc = inventory[accIndex];
+                            const salePrice = targetChat.pendingTotal
+                                ? Math.round(parseInt(targetChat.pendingTotal) / productsToDeliver.length)
+                                : (parseFloat(acc.price) || 0);
+                            const now = new Date();
+                            const ref = `${(acc.service || 'SRV').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,4)}-${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
                             const newSale = {
                                 id: 'auto-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                reference: ref,
                                 service: acc.service,
-                                price: targetChat.pendingTotal
-                                    ? Math.round(parseInt(targetChat.pendingTotal) / productsToDeliver.length)
-                                    : acc.price,
-                                cost: acc.cost || 0,
+                                price: salePrice,
+                                cost: parseFloat(acc.cost) || 0,
                                 provider: acc.provider || 'N/A',
                                 date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
                                 customer: targetChat.customerName || 'Cliente',
@@ -752,12 +756,18 @@ io.on('connection', (socket) => {
                             const acc = inventory[accIndex];
                             
                             // 1. Registrar Venta
-                            const saleId = 'auto-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                            const salePrice = chat.pendingTotal 
+                                ? Math.round(parseInt(chat.pendingTotal) / (chat.pendingProducts?.length || 1))
+                                : (parseFloat(acc.price) || 0);
+                            const now2 = new Date();
+                            const ref2 = `${(acc.service || 'SRV').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,4)}-${String(now2.getDate()).padStart(2,'0')}${String(now2.getMonth()+1).padStart(2,'0')}-${String(now2.getHours()).padStart(2,'0')}${String(now2.getMinutes()).padStart(2,'0')}`;
+                            const saleId = 'crm-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
                             const newSale = {
                                 id: saleId,
+                                reference: ref2,
                                 service: acc.service,
-                                price: parseInt(chat.pendingTotal) / chat.pendingProducts.length, // Prorrateado
-                                cost: acc.cost || 0,
+                                price: salePrice,
+                                cost: parseFloat(acc.cost) || 0,
                                 provider: acc.provider || 'N/A',
                                 date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
                                 customer: chat.customerName || 'Cliente',

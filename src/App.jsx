@@ -254,15 +254,17 @@ function App() {
     socket.on('sales_updated', (data) => {
       if (Array.isArray(data)) {
         setSalesHistory(prev => {
+          // Evitar el loop circular: si los datos son iguales, no actualizar
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
           if (data.length > prev.length && prev.length > 0) {
              setNotifications(prevNotifs => [
                {
                  id: Date.now() + Math.random(),
                  type: 'sale',
                  title: '¡Nueva Venta!',
-                 body: `Se ha registrado una venta de ${data[0].service} por $${data[0].price}`,
+                 body: `Se ha registrado una venta de ${data[data.length-1]?.service} por $${data[data.length-1]?.price}`,
                  icon: 'local_mall',
-                 data: data[0],
+                 data: data[data.length-1],
                  timestamp: new Date()
                },
                ...prevNotifs

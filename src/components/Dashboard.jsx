@@ -31,8 +31,8 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
 
   // Simulated dynamic data based on filter
   const getStats = () => {
-    const totalSales = filteredSales.reduce((sum, s) => sum + s.price, 0);
-    const totalCosts = filteredSales.reduce((sum, s) => sum + s.cost, 0);
+    const totalSales = filteredSales.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const totalCosts = filteredSales.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
     const netProfit = totalSales - totalCosts;
     const activeSubs = filteredSales.length; 
 
