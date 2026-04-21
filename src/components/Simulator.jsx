@@ -81,11 +81,31 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     const accountToSell = availableInventory.find(a => a.id === selectedSaleAccount);
     if (accountToSell) {
       if(window.confirm(`¿Confirmas la venta de ${accountToSell.service} por $${accountToSell.price}? Se descontará del inventario.`)){
-        // Hacemos la venta usando el prop y ligando el ID del cliente
+        // 1. Registrar la venta y actualizar inventario
         onSale(accountToSell, selectedChat, activeChatData.customerName);
         setSelectedSaleAccount('');
-        // Autocambiamos el estado a pagado
+        
+        // 2. Autocambiar el estado del cliente a pagado
         onUpdateTag(selectedChat, ['pagado']);
+
+        // 3. Generar y enviar el mensaje con los datos de cuenta automáticamente
+        const messageHeader = `🎉 ¡Gracias por tu compra de *${accountToSell.service}*!`;
+        const accountDetails = `*Correo:* ${accountToSell.email}\n*Contraseña:* ${accountToSell.password}`;
+        
+        let profileDetails = '';
+        if (accountToSell.profileName || accountToSell.pin) {
+          profileDetails = `\n*Perfil:* ${accountToSell.profileName || 'Principal'}`;
+          if (accountToSell.pin) profileDetails += `\n*PIN:* ${accountToSell.pin}`;
+        }
+        
+        let expDetail = '';
+        if (accountToSell.expiration) {
+          expDetail = `\n*Vencimiento:* ${accountToSell.expiration}`;
+        }
+        
+        const finalMessage = `${messageHeader}\n\n${accountDetails}${profileDetails}${expDetail}\n\n⚠️ Recuerda NO modificar la contraseña ni alterar otros perfiles para mantener tu garantía.`;
+        
+        onSendMessage({ to: selectedChat, content: finalMessage });
       }
     }
   };
