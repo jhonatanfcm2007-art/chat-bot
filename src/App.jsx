@@ -17,6 +17,8 @@ function App() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [settings, setSettings] = useState({ systemPrompt: '' });
   const [notifications, setNotifications] = useState([]);
+  const [platforms, setPlatforms] = useState([]);
+  const [providers, setProviders] = useState([]);
 
   // Jugar sonido simple al recibir notificación (opcional si falla)
   const playAlertSound = () => {
@@ -122,16 +124,39 @@ function App() {
         };
       });
     });
+    socket.on('platforms_updated', (data) => {
+      if (Array.isArray(data)) setPlatforms(data);
+    });
+
+    socket.on('providers_updated', (data) => {
+      if (Array.isArray(data)) setProviders(data);
+    });
+
     return () => {
       socket.off('message');
       socket.off('initial_chats');
       socket.off('initial_settings');
       socket.off('human_required');
+      socket.off('platforms_updated');
+      socket.off('providers_updated');
     };
   }, []);
   
   // Cargamos inventario desde el servidor (persistente en Railway)
   const [accounts, setAccounts] = useState([]);
+
+  // Cargar plataformas y proveedores del servidor al iniciar
+  useEffect(() => {
+    fetch(`${SERVER_URL}/api/platforms`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setPlatforms(data); })
+      .catch(() => {});
+
+    fetch(`${SERVER_URL}/api/providers`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setProviders(data); })
+      .catch(() => {});
+  }, []);
 
   // Cargar inventario del servidor al iniciar
   useEffect(() => {
@@ -213,11 +238,21 @@ function App() {
 
   // Guardar inventario en servidor + localStorage cada vez que cambia
   useEffect(() => {
-    if (accounts.length === 0) return; // No sobreescribir antes de cargar
-    localStorage.setItem('streaming_accounts', JSON.stringify(accounts));
-    // Persistir en el servidor via WebSocket
-    socket.emit('sync_inventory', accounts);
+    if (accounts.length === 0 && platforms.length === 0 && providers.length === 0) return; 
+    
+    if (accounts.length > 0) {
+      localStorage.setItem('streaming_accounts', JSON.stringify(accounts));
+      socket.emit('sync_inventory', accounts);
+    }
   }, [accounts]);
+
+  useEffect(() => {
+    if (platforms.length > 0) socket.emit('sync_platforms', platforms);
+  }, [platforms]);
+
+  useEffect(() => {
+    if (providers.length > 0) socket.emit('sync_providers', providers);
+  }, [providers]);
 
   useEffect(() => {
     localStorage.setItem('streaming_sales', JSON.stringify(salesHistory));
@@ -275,7 +310,17 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
-        return <Inventory accounts={accounts} setAccounts={setAccounts} onSale={handleSale} />;
+        return (
+          <Inventory 
+            accounts={accounts} 
+            setAccounts={setAccounts} 
+            onSale={handleSale} 
+            platforms={platforms}
+            setPlatforms={setPlatforms}
+            providers={providers}
+            setProviders={setProviders}
+          />
+        );
       case 'simulator':
         return (
           <Simulator 

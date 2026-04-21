@@ -142,7 +142,7 @@ function loadPlatforms() {
     } catch (err) {
         console.error('❌ Error cargando plataformas:', err.message);
     }
-    return [];
+    return ['Netflix', 'Disney+', 'Prime Video', 'HBO Max', 'Paramount', 'Vix', 'Crunchyroll'];
 }
 
 function savePlatforms(data) {
@@ -162,87 +162,7 @@ function loadProviders() {
     } catch (err) {
         console.error('❌ Error cargando proveedores:', err.message);
     }
-    return [];
-}
-
-function saveProviders(data) {
-    try {
-        fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('❌ Error guardando proveedores:', err.message);
-    }
-}
-
-function loadPlatforms() {
-    try {
-        if (fs.existsSync(PLATFORMS_FILE)) {
-            const raw = fs.readFileSync(PLATFORMS_FILE, 'utf-8');
-            return JSON.parse(raw);
-        }
-    } catch (err) {
-        console.error('❌ Error cargando plataformas:', err.message);
-    }
-    return [];
-}
-
-function savePlatforms(data) {
-    try {
-        fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('❌ Error guardando plataformas:', err.message);
-    }
-}
-
-function loadProviders() {
-    try {
-        if (fs.existsSync(PROVIDERS_FILE)) {
-            const raw = fs.readFileSync(PROVIDERS_FILE, 'utf-8');
-            return JSON.parse(raw);
-        }
-    } catch (err) {
-        console.error('❌ Error cargando proveedores:', err.message);
-    }
-    return [];
-}
-
-function saveProviders(data) {
-    try {
-        fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('❌ Error guardando proveedores:', err.message);
-    }
-}
-
-function loadPlatforms() {
-    try {
-        if (fs.existsSync(PLATFORMS_FILE)) {
-            const raw = fs.readFileSync(PLATFORMS_FILE, 'utf-8');
-            return JSON.parse(raw);
-        }
-    } catch (err) {
-        console.error('❌ Error cargando plataformas:', err.message);
-    }
-    return [];
-}
-
-function savePlatforms(data) {
-    try {
-        fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('❌ Error guardando plataformas:', err.message);
-    }
-}
-
-function loadProviders() {
-    try {
-        if (fs.existsSync(PROVIDERS_FILE)) {
-            const raw = fs.readFileSync(PROVIDERS_FILE, 'utf-8');
-            return JSON.parse(raw);
-        }
-    } catch (err) {
-        console.error('❌ Error cargando proveedores:', err.message);
-    }
-    return [];
+    return ['WebX', 'Proveedor Externo'];
 }
 
 function saveProviders(data) {
@@ -420,6 +340,36 @@ app.post('/api/sales', (req, res) => {
     res.json({ success: true, count: sales.length });
 });
 
+// --- API REST PARA PLATAFORMAS ---
+
+app.get('/api/platforms', (req, res) => {
+    res.json(platforms);
+});
+
+app.post('/api/platforms', (req, res) => {
+    const data = req.body;
+    if (!Array.isArray(data)) return res.status(400).json({ error: 'Array expected' });
+    platforms = data;
+    savePlatforms(platforms);
+    io.emit('platforms_updated', platforms);
+    res.json({ success: true });
+});
+
+// --- API REST PARA PROVEEDORES ---
+
+app.get('/api/providers', (req, res) => {
+    res.json(providers);
+});
+
+app.post('/api/providers', (req, res) => {
+    const data = req.body;
+    if (!Array.isArray(data)) return res.status(400).json({ error: 'Array expected' });
+    providers = data;
+    saveProviders(providers);
+    io.emit('providers_updated', providers);
+    res.json({ success: true });
+});
+
 // --- FUNCIONES DE WHATSAPP Y IA ---
 
 async function sendMessageToCloudAPI(to, text) {
@@ -459,7 +409,7 @@ async function getAIResponse(message, history = []) {
     
     try {
         const inventoryContext = inventory.length > 0
-            ? "El inventario actual es: " + inventory.map(item => `${item.name} - $${item.price} (${item.stock} disponibles)`).join(', ')
+            ? "El inventario actual es: " + inventory.map(item => `${item.service} - $${item.price} (${item.uses} disponibles)`).join(', ')
             : "Actualmente no hay inventario cargado.";
 
         const strictRule = "REGLA OBLIGATORIA: Si el cliente pide soporte explícitamente, necesita hacer un pago que requiera confirmación humana, o hace una pregunta que no puedes resolver, incluye la palabra secreta '[REQUIERE_HUMANO]' en tu respuesta.";

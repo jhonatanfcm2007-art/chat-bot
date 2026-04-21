@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
 
-const PREDEFINED_PLATFORMS = [
-  'Netflix', 'Disney+', 'Prime Video', 'HBO Max', 'Paramount', 'Vix', 'Crunchyroll'
-];
-
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
-const PREDEFINED_PROVIDERS = ['WebX', 'Proveedor Externo']; // Puedes agregar o modificar esta lista de proveedores
 
-const Inventory = ({ accounts, setAccounts, onSale }) => {
+const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders }) => {
   
-  // Computar de forma dinámica las opciones basándose en los arrays predefinidos y lo que ya existe guardado
+  // Computar de forma dinámica las opciones basándose en los datos persistentes del servidor y lo que ya existe
   const availablePlatforms = Array.from(new Set([
-    ...PREDEFINED_PLATFORMS,
+    ...platforms,
     ...accounts.map(acc => acc.service).filter(Boolean)
   ])).sort((a, b) => a.localeCompare(b));
 
   const availableProviders = Array.from(new Set([
-    ...PREDEFINED_PROVIDERS,
+    ...providers,
     ...accounts.map(acc => acc.provider).filter(Boolean)
   ])).sort((a, b) => a.localeCompare(b));
 
@@ -60,6 +55,16 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
       ...formData,
       service: serviceName
     };
+
+    // Si es una plataforma nueva que no estaba en la lista, guardarla
+    if (!platforms.includes(serviceName)) {
+      setPlatforms(prev => [...prev, serviceName]);
+    }
+
+    // Si es un proveedor nuevo que no estaba en la lista, guardarlo
+    if (formData.provider && !providers.includes(formData.provider)) {
+      setProviders(prev => [...prev, formData.provider]);
+    }
 
     if (editingAccount) {
       // Update existing
