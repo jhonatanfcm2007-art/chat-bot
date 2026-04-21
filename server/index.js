@@ -577,6 +577,7 @@ app.post('/webhook', async (req, res) => {
                     const wasAlreadyPending = chats[from].tags.includes('pago-pendiente');
                     if (!wasAlreadyPending) {
                         chats[from].tags.push('pago-pendiente');
+                        chats[from].activationNotifySent = false; // Reset when a new purchase intent is detected
                     }
 
                     // Extraer productos y total detectados por la IA
@@ -597,18 +598,20 @@ app.post('/webhook', async (req, res) => {
                     aiReply = aiReply.replace(pagoRegex, '').trim();
 
                     // --- NOTIFICAR AL ADMIN ---
-                    // Solo notificar la primera vez que se detectan productos (no en cada mensaje)
-                    if (!wasAlreadyPending && ADMIN_PHONE) {
+                    if (ADMIN_PHONE) {
                         const productos = chats[from].pendingProducts?.join(', ') || 'desconocido';
                         const total = chats[from].pendingTotal ? `$${parseInt(chats[from].pendingTotal).toLocaleString('es-CO')}` : 'por definir';
 
-                        // Detectar si el cliente pidió "activar primero"
-                        const activarPrimeroRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo)|ver\s+(si\s+)?(funciona|sirve)|garantía|fiar|conf[ií]o|no\s+(me\s+)?(enga[ñn]|fí[aeo])/i;
-                        const wantsActivateFirst = activarPrimeroRegex.test(msgBody);
+                        // Detectar si el cliente pidió "activar primero" (mejorado)
+                        const activarPrimeroRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)|ver\s+(si\s+)?(funciona|sirve)|garantía|fiar|conf[ií]o|no\s+(me\s+)?(enga[ñn]|fí[aeo])|primero\s+la\s+cuen/i;
+                        const wantsActivateFirst = activarPrimeroRegex.test(msgBody) || activarPrimeroRegex.test(aiReply);
 
-                        if (wantsActivateFirst) {
+                        if (wantsActivateFirst && !chats[from].activationNotifySent) {
                             sendMessageToCloudAPI(ADMIN_PHONE, `📦 *CLIENTE QUIERE CUENTA PRIMERO*\n\n👤 *Cliente:* ${customerName}\n🛒 *Producto(s):* ${productos}\n💰 *Total:* ${total}\n\n*Responde r* para activar y entregar las credenciales. El cliente pagará después de verificar.`);
-                        } else {
+                            chats[from].activationNotifySent = true;
+                            saveChats(chats);
+                        } else if (!wasAlreadyPending && !wantsActivateFirst) {
+                            // Solo notificar interés general la primera vez
                             sendMessageToCloudAPI(ADMIN_PHONE, `🛒 *CLIENTE LISTO PARA COMPRAR*\n\n👤 *Cliente:* ${customerName}\n🛒 *Producto(s):* ${productos}\n💰 *Total:* ${total}\n\nEspera que envíe el comprobante, luego responde *r* para entregar. Si prefieres activar primero responde también *r*.`);
                         }
                     }
