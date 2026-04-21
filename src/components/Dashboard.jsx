@@ -35,14 +35,12 @@ const Dashboard = ({ accounts, salesHistory }) => {
     const totalCosts = filteredSales.reduce((sum, s) => sum + s.cost, 0);
     const netProfit = totalSales - totalCosts;
     const activeSubs = filteredSales.length; 
-    const lowStock = accounts.filter(a => a.status === 'Available' && a.uses <= 1).length;
 
 
     return [
       { label: 'Ventas Totales', value: `$${totalSales.toLocaleString()}`, icon: 'payments', color: 'bg-primary' },
       { label: 'Utilidad Neta', value: `$${netProfit.toLocaleString()}`, icon: 'trending_up', color: 'bg-tertiary' },
       { label: 'Suscripciones Activas', value: activeSubs.toString(), icon: 'check_circle', color: 'bg-on-surface-variant' },
-      { label: 'Stock Crítico', value: lowStock.toString(), icon: 'warning', color: 'bg-error' },
     ];
   };
 
@@ -196,7 +194,7 @@ const Dashboard = ({ accounts, salesHistory }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {getStats().map((stat, i) => (
           <div 
             key={i} 
