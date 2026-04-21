@@ -27,8 +27,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     .map(([id, data]) => {
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-      // Si no hay updatedAt, intentamos inferirlo del último mensaje para chats antiguos
-      const activityTime = data.updatedAt || (lastMessage ? Date.now() : 0); 
+      
+      // Intentar obtener una fecha real del chat. 
+      // Prioridad: 1. updatedAt, 2. timestampRaw del último mensaje, 3. nada (0)
+      let activityTime = data.updatedAt || (lastMessage ? (lastMessage.timestampRaw || 0) : 0);
       
       return {
         ...data,
@@ -44,7 +46,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       const fromMatch = (chat.from || '').toLowerCase().includes(searchTerm.toLowerCase());
       return nameMatch || fromMatch;
     })
-    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    .sort((a, b) => b.updatedAt - a.updatedAt);
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);

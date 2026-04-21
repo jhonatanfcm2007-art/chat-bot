@@ -126,6 +126,7 @@ function App() {
             messages: [...chatData.messages, { 
               ...msg, 
               content: msg.body, 
+              timestampRaw: Date.now(),
               role: msg.role || (msg.isMe ? 'bot' : 'user') 
             }]
           }
@@ -335,7 +336,7 @@ function App() {
         [to]: {
           ...prev[to],
           updatedAt: Date.now(),
-          messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString() }]
+          messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString(), timestampRaw: Date.now() }]
         }
       };
     });
