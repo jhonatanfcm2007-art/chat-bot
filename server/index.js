@@ -426,14 +426,40 @@ app.post('/webhook', async (req, res) => {
                     msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
                     io.emit('receipt_received', { from, customerName, message: msgBody });
 
-                    // Notificar al admin con monto detectado por IA
+                    // Notificar al admin con toda la información posible
                     if (ADMIN_PHONE) {
-                        const pendingProducts = chats[from]?.pendingProducts;
-                        const pendingTotal = detectedAmount || chats[from]?.pendingTotal || '¿?';
-                        const productsText = Array.isArray(pendingProducts) && pendingProducts.length > 0
-                            ? pendingProducts.join(', ')
-                            : 'Revisa la conversación';
-                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* $${detectedAmount ? detectedAmount.toLocaleString('es-CO') : '¿?'}\n📦 *Cuentas:* ${productsText}\n\nEscribe *apruebo* para entregar automáticamente.`);
+                        // 1. Obtener productos: desde pendingProducts o inferir del historial
+                        let productsToShow = chats[from]?.pendingProducts;
+                        if (!Array.isArray(productsToShow) || productsToShow.length === 0) {
+                            const recentMsgs = (chats[from]?.messages || []).slice(-20);
+                            const allText = recentMsgs.map(m => (m.content || m.body || '')).join(' ').toLowerCase();
+                            productsToShow = inventory
+                                .filter(a => allText.includes(a.service.toLowerCase()))
+                                .map(a => a.service)
+                                .filter((v, i, arr) => arr.indexOf(v) === i);
+                        }
+                        const productsText = productsToShow && productsToShow.length > 0
+                            ? productsToShow.join(' + ')
+                            : '⚠️ No detectado (revisa el chat)';
+
+                        // 2. Comparar monto detectado vs. esperado
+                        const expectedTotal = chats[from]?.pendingTotal ? parseInt(chats[from].pendingTotal) : null;
+                        let montoLine = `💰 *Monto en imagen:* $${detectedAmount ? detectedAmount.toLocaleString('es-CO') : 'No visible'}`;
+                        let alertLine = '';
+
+                        if (detectedAmount && expectedTotal) {
+                            if (detectedAmount < expectedTotal) {
+                                alertLine = `\n⚠️ *ALERTA: MONTO INSUFICIENTE* — Pagó $${detectedAmount.toLocaleString('es-CO')} pero el total es $${expectedTotal.toLocaleString('es-CO')}. Verifica antes de aprobar.`;
+                            } else if (detectedAmount > expectedTotal) {
+                                alertLine = `\n✅ Monto correcto (pagó de más — considera si hay cambio).`;
+                            } else {
+                                alertLine = `\n✅ *Monto coincide exactamente con el total.*`;
+                            }
+                        } else if (expectedTotal) {
+                            montoLine += ` (esperado: $${expectedTotal.toLocaleString('es-CO')})`;
+                        }
+
+                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n${montoLine}${alertLine}\n📦 *Cuentas a entregar:* ${productsText}\n\nEscribe *apruebo* para entregar automáticamente.`);
                     }
                 } else {
                     // No es comprobante: indicarle a la IA que pida el comprobante real
