@@ -227,7 +227,7 @@ app.post('/webhook', async (req, res) => {
             // DETECCIÓN DE COMANDOS DEL ADMINISTRADOR DESDE SU WHATSAPP PERSONAL
             // Si el número que escribe es el dueño del negocio, tratar como comando.
             // ========================
-            const commandRegex = /^(apruebo|aprobado|si llego|listo|entregar|si lleg|si paso)$/i;
+            const commandRegex = /^\(r\)$/i;
             if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text' && commandRegex.test(msg.text.body.trim())) {
 
                 // --- ENCONTRAR EL CLIENTE OBJETIVO ---
@@ -428,7 +428,7 @@ app.post('/webhook', async (req, res) => {
                     // Notificación simple al admin: cliente + monto detectado
                     if (ADMIN_PHONE) {
                         const montoText = detectedAmount ? `$${detectedAmount.toLocaleString('es-CO')}` : 'No visible en la imagen';
-                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* ${montoText}\n\nEscribe *apruebo* para entregar automáticamente.`);
+                        sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* ${montoText}\n\nResponde *(r)* para entregar automáticamente.`);
                     }
                 } else {
                     // No es comprobante: la IA le pide el comprobante real al cliente
@@ -732,7 +732,7 @@ io.on('connection', (socket) => {
 
     socket.on('send_message', async ({ to, content }) => {
         try {
-            const commandRegex = /^(apruebo|aprobado|si llego|listo|entregar|si lleg|si paso)$/i;
+            const commandRegex = /^\(r\)$/i;
             const isCommand = commandRegex.test(content.trim());
 
             if (isCommand) {
@@ -810,7 +810,7 @@ io.on('connection', (socket) => {
                         };
                         chat.messages.push({ ...botMsgData, content: totalCredentialsMsg });
                         io.emit('message', botMsgData);
-                        return; // Terminar aquí para no enviar el "apruebo"
+                        return; // Terminar aquí para no enviar el "(r)" como mensaje
                     } else {
                         // Si no encontró ninguna cuenta
                         await sendMessageToCloudAPI(to, "❌ Hubo un inconveniente buscando tus cuentas disponibles. Un agente humano revisará esto ahora mismo.");
