@@ -574,7 +574,8 @@ app.post('/webhook', async (req, res) => {
 
                 if (pagoRegex.test(aiReply) || productosRegex.test(aiReply)) {
                     chats[from].tags = chats[from].tags || [];
-                    if (!chats[from].tags.includes('pago-pendiente')) {
+                    const wasAlreadyPending = chats[from].tags.includes('pago-pendiente');
+                    if (!wasAlreadyPending) {
                         chats[from].tags.push('pago-pendiente');
                     }
 
@@ -594,6 +595,23 @@ app.post('/webhook', async (req, res) => {
                     saveChats(chats);
                     io.emit('tag_updated', { from, tags: chats[from].tags });
                     aiReply = aiReply.replace(pagoRegex, '').trim();
+
+                    // --- NOTIFICAR AL ADMIN ---
+                    // Solo notificar la primera vez que se detectan productos (no en cada mensaje)
+                    if (!wasAlreadyPending && ADMIN_PHONE) {
+                        const productos = chats[from].pendingProducts?.join(', ') || 'desconocido';
+                        const total = chats[from].pendingTotal ? `$${parseInt(chats[from].pendingTotal).toLocaleString('es-CO')}` : 'por definir';
+
+                        // Detectar si el cliente pidió "activar primero"
+                        const activarPrimeroRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo)|ver\s+(si\s+)?(funciona|sirve)|garantía|fiar|conf[ií]o|no\s+(me\s+)?(enga[ñn]|fí[aeo])/i;
+                        const wantsActivateFirst = activarPrimeroRegex.test(msgBody);
+
+                        if (wantsActivateFirst) {
+                            sendMessageToCloudAPI(ADMIN_PHONE, `📦 *CLIENTE QUIERE CUENTA PRIMERO*\n\n👤 *Cliente:* ${customerName}\n🛒 *Producto(s):* ${productos}\n💰 *Total:* ${total}\n\n*Responde r* para activar y entregar las credenciales. El cliente pagará después de verificar.`);
+                        } else {
+                            sendMessageToCloudAPI(ADMIN_PHONE, `🛒 *CLIENTE LISTO PARA COMPRAR*\n\n👤 *Cliente:* ${customerName}\n🛒 *Producto(s):* ${productos}\n💰 *Total:* ${total}\n\nEspera que envíe el comprobante, luego responde *r* para entregar. Si prefieres activar primero responde también *r*.`);
+                        }
+                    }
                 }
                 
                 await delay(2000);
