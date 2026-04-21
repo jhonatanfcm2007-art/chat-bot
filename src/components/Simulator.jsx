@@ -49,13 +49,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       
       // Intentar obtener el tiempo más reciente de varias fuentes
       const updatedAt = Number(data.updatedAt) || 0;
-      const lastMsgTime = lastMessage ? (Number(lastMessage.timestampRaw) || parseTimeString(lastMessage.timestamp)) : 0;
+      const lastMsgTime = lastMessage ? (Number(lastMessage.timestampRaw) || 0) : 0;
       
       // La actividad oficial es el máximo entre el updatedAt del objeto y el tiempo del último mensaje
       let activityTime = Math.max(updatedAt, lastMsgTime);
       
-      // Fallback a index si no hay absolutamente ningún tiempo (evita desorden aleatorio)
-      if (!activityTime) activityTime = index;
+      // Fallback a index MUY bajo (para que chats sin tiempo queden al final)
+      if (!activityTime) activityTime = -1 * (Object.keys(chats).length - index);
       
       return {
         ...data,

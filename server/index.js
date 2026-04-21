@@ -97,7 +97,20 @@ function loadChats() {
     try {
         if (fs.existsSync(CHATS_FILE)) {
             const raw = fs.readFileSync(CHATS_FILE, 'utf-8');
-            return JSON.parse(raw);
+            const data = JSON.parse(raw);
+            
+            // --- CURACIÓN DE DATOS (Healing) ---
+            // Asegurar que todos los chats tengan updatedAt para el correcto ordenamiento
+            Object.keys(data).forEach(id => {
+                const chat = data[id];
+                if (!chat.updatedAt) {
+                    const messages = chat.messages || [];
+                    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+                    chat.updatedAt = lastMsg?.timestampRaw || 0;
+                }
+            });
+            
+            return data;
         }
     } catch (err) {
         console.error('❌ Error cargando chats:', err.message);
