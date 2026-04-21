@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2dd4bf; /* Teal 400 */
-  --color-on-primary: #042f2e;
-  --color-secondary-bg: #111827; /* Gray 900 */
-  --color-surface: #1f2937; /* Gray 800 */
-  --color-on-surface: #f9fafb; /* Gray 50 */
-  --color-on-surface-variant: #9ca3af; /* Gray 400 */
-  --color-outline-variant: #374151; /* Gray 700 */
-  --color-background: #030712; /* Gray 950 (Obsidian) */
-  --color-tertiary: #a78bfa; /* Violet */
-  --color-error: #fb7185; /* Rose 400 */
+  --color-primary: #0d9488; /* Teal 600 - More contrast on light */
+  --color-on-primary: #ffffff;
+  --color-secondary-bg: #f1f5f9; /* Slate 100 */
+  --color-surface: #ffffff; /* White */
+  --color-on-surface: #0f172a; /* Slate 900 */
+  --color-on-surface-variant: #64748b; /* Slate 500 */
+  --color-outline-variant: #e2e8f0; /* Slate 200 */
+  --color-background: #f8fafc; /* Slate 50 */
+  --color-tertiary: #7c3aed; /* Violet 600 */
+  --color-error: #e11d48; /* Rose 600 */
 
-  --color-panel-bg: #111827; 
-  --color-panel-on-bg: #f3f4f6;
+  --color-panel-bg: #ffffff; 
+  --color-panel-on-bg: #0f172a;
 
   --font-headline: "Manrope", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -22,18 +22,18 @@
 @layer base {
   body {
     @apply bg-background text-on-surface font-body antialiased;
-    background-image: radial-gradient(at 0% 0%, rgba(45, 212, 191, 0.03) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(167, 139, 250, 0.03) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.05) 0px, transparent 50%);
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-white/70 backdrop-blur-xl border border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.05)];
   }
   
   .glass-card {
-    @apply bg-secondary-bg/40 backdrop-blur-md border border-white/5 shadow-2xl;
+    @apply bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)];
   }
 }
 

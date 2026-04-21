@@ -9,13 +9,13 @@ const Sidebar = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <aside className="bg-background/80 backdrop-blur-2xl w-64 h-full flex flex-col py-8 z-40 hidden md:flex font-body text-sm relative border-r border-white/5">
+    <aside className="bg-surface/80 backdrop-blur-2xl w-64 h-full flex flex-col py-8 z-40 hidden md:flex font-body text-sm relative border-r border-slate-200">
       <div className="px-8 mb-12 flex items-center gap-4 relative">
-        <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center shadow-2xl shadow-primary/10 border border-primary/20">
+        <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/5 border border-primary/20">
           <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
         </div>
         <div>
-          <h2 className="text-lg font-black text-white leading-none tracking-tight font-headline uppercase">Vault <span className="text-primary">X</span></h2>
+          <h2 className="text-lg font-black text-on-surface leading-none tracking-tight font-headline uppercase">Vault <span className="text-primary">X</span></h2>
           <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-[0.2em] mt-1 opacity-60">Operations</p>
         </div>
       </div>
@@ -27,8 +27,8 @@ const Sidebar = ({ activeTab, onTabChange }) => {
             onClick={() => onTabChange(item.id)}
             className={`flex items-center gap-3.5 px-5 py-3 rounded-xl transition-all duration-500 cursor-pointer group mb-1 ${
               activeTab === item.id 
-                ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_20px_rgba(45,212,191,0.1)]' 
-                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+                ? 'bg-primary/10 text-primary border border-primary/10 shadow-sm' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-100'
             }`}
           >
             <span className={`material-symbols-outlined text-[22px] transition-all duration-300 ${activeTab === item.id ? 'scale-105 icon-fill' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
@@ -37,8 +37,8 @@ const Sidebar = ({ activeTab, onTabChange }) => {
         ))}
       </nav>
 
-      <div className="px-4 mt-auto space-y-1 relative pt-6 border-t border-white/5">
-        <div className="flex items-center gap-3.5 text-on-surface-variant/60 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 cursor-pointer group">
+      <div className="px-4 mt-auto space-y-1 relative pt-6 border-t border-slate-200">
+        <div className="flex items-center gap-3.5 text-on-surface-variant/60 px-4 py-3 hover:text-on-surface hover:bg-slate-100 rounded-xl transition-all duration-300 cursor-pointer group">
           <span className="material-symbols-outlined group-hover:rotate-45 transition-transform duration-500">settings</span>
           <span className="font-semibold tracking-tight">Ajustes</span>
         </div>

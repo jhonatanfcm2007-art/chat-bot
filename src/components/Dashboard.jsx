@@ -37,9 +37,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
     const activeSubs = filteredSales.length; 
 
     return [
-      { label: 'Total Revenue', value: `$${totalSales.toLocaleString()}`, icon: 'insights', color: 'bg-primary/20 text-primary border-primary/20', glow: 'shadow-primary/10' },
-      { label: 'Net Profit', value: `$${netProfit.toLocaleString()}`, icon: 'payments', color: 'bg-tertiary/20 text-tertiary border-tertiary/20', glow: 'shadow-tertiary/10' },
-      { label: 'Items Sold', value: activeSubs.toString(), icon: 'shopping_cart', color: 'bg-white/10 text-white border-white/20', glow: 'shadow-white/5' },
+      { label: 'Total Revenue', value: `$${totalSales.toLocaleString()}`, icon: 'insights', color: 'bg-primary/5 text-primary border-primary/20', glow: 'shadow-sm' },
+      { label: 'Net Profit', value: `$${netProfit.toLocaleString()}`, icon: 'payments', color: 'bg-tertiary/5 text-tertiary border-tertiary/20', glow: 'shadow-sm' },
+      { label: 'Items Sold', value: activeSubs.toString(), icon: 'shopping_cart', color: 'bg-slate-50 text-on-surface border-slate-200', glow: 'shadow-sm' },
     ];
   };
 
@@ -87,9 +87,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black text-white tracking-tight font-headline">Overview</h1>
+            <h1 className="text-3xl font-black text-on-surface tracking-tight font-headline">Overview</h1>
             {isFilterActive && (
-              <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/20">
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/10">
                 {dateRange.start === dateRange.end ? 'Daily View' : 'Range View'}
               </span>
             )}
