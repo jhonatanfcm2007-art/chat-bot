@@ -26,75 +26,90 @@ const WhatsAppConnector = () => {
         };
     }, []);
 
-    return (
-        <div className="flex-grow p-8 bg-background overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-10 text-center">
-                    <h1 className="text-3xl font-black text-on-surface tracking-tight">WhatsApp Cloud API</h1>
-                    <p className="text-on-surface-variant text-sm mt-2">Manage your official Meta WhatsApp connection securely.</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-10 items-start">
-                    {/* Status Card */}
-                    <div className="bg-white p-10 rounded-[3rem] border border-outline-variant shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                        
-                        <div className="flex flex-col items-center text-center relative">
-                            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-xl transition-all duration-500 scale-110 ${
-                                status === 'CONNECTED' ? 'bg-tertiary text-white' : 'bg-secondary-bg text-on-surface-variant'
-                            }`}>
-                                <span className="material-symbols-outlined text-4xl">
-                                    {status === 'CONNECTED' ? 'verified_user' : 'lock_reset'}
-                                </span>
-                            </div>
-                            
-                            <h2 className="text-2xl font-black text-on-surface mb-2">{status === 'CONNECTED' ? 'API Active' : 'Setup Required'}</h2>
-                            <p className="text-sm font-bold text-on-surface-variant opacity-70 mb-8 max-w-[340px] leading-relaxed">
-                                {message}
-                            </p>
-
-                            {status === 'CONNECTED' && (
-                                <div className="w-full space-y-4 text-left bg-secondary-bg/30 p-6 rounded-3xl border border-outline-variant/50">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase text-on-surface-variant opacity-50 mb-1">Webhook URL (Meta Console)</p>
-                                        <code className="text-[11px] font-mono bg-white px-3 py-2 rounded-lg border border-outline-variant block">
-                                            https://tu-dominio.com/webhook
-                                        </code>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase text-on-surface-variant opacity-50 mb-1">Verify Token</p>
-                                        <code className="text-[11px] font-mono bg-white px-3 py-2 rounded-lg border border-outline-variant block">
-                                            {/* Podríamos emitir el token por socket si quisiéramos mostrarlo aquí */}
-                                            (Check your .env VERIFY_TOKEN)
-                                        </code>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Instructions Card */}
-                    <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-outline-variant/40">
-                        <h3 className="text-lg font-black text-on-surface mb-6 px-4">Meta Cloud Setup Steps</h3>
-                        <div className="space-y-4">
-                            {[
-                                { step: 1, title: 'Meta Developer Portal', desc: 'Create an app at developers.facebook.com and add WhatsApp product.' },
-                                { step: 2, title: 'Configure Webhook', desc: 'Paste the Webhook URL above in Meta console with your Verify Token.' },
-                                { step: 3, title: 'Subscribe to Messages', desc: 'In Webhook settings, subscribe to "messages" to receive incoming chats.' }
-                            ].map((item) => (
-                                <div key={item.step} className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-2xl transition-colors">
-                                    <div className="w-8 h-8 shrink-0 rounded-full bg-primary text-white flex items-center justify-center text-xs font-black">{item.step}</div>
-                                    <div>
-                                        <h4 className="text-xs font-black text-on-surface uppercase tracking-tight">{item.title}</h4>
-                                        <p className="text-[11px] font-bold text-on-surface-variant leading-tight mt-1">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="flex-grow p-8 md:p-14 bg-background overflow-y-auto custom-scrollbar">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-14 text-center">
+          <h1 className="text-4xl font-black text-white tracking-tight font-headline">Meta Cloud Integration</h1>
+          <p className="text-on-surface-variant text-xs md:text-sm mt-3 uppercase font-black tracking-[0.4em] opacity-40">Secure Neural Relay Service</p>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
+          {/* Status Card */}
+          <div className="bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group flex flex-col justify-center">
+            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-1/2 translate-x-1/2 transition-colors duration-700 ${status === 'CONNECTED' ? 'bg-tertiary/10' : 'bg-error/5'}`}></div>
+            
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl transition-all duration-700 hover:scale-110 border ${
+                status === 'CONNECTED' 
+                  ? 'bg-tertiary/20 text-tertiary border-tertiary/20 shadow-tertiary/10' 
+                  : 'bg-white/5 text-white/20 border-white/5'
+              }`}>
+                <span className="material-symbols-outlined text-5xl">
+                  {status === 'CONNECTED' ? 'verified_user' : 'private_connectivity'}
+                </span>
+              </div>
+              
+              <h2 className="text-3xl font-black text-white mb-3 tracking-tight">{status === 'CONNECTED' ? 'Uplink Active' : 'Relay Offline'}</h2>
+              <p className="text-xs font-bold text-on-surface-variant opacity-50 mb-8 max-w-[340px] leading-relaxed uppercase tracking-widest">
+                {message}
+              </p>
+
+              {status === 'CONNECTED' && (
+                <div className="w-full space-y-6 text-left bg-white/[0.02] p-8 rounded-[2rem] border border-white/5">
+                  <div className="group/code">
+                    <p className="text-[9px] font-black uppercase text-on-surface-variant opacity-40 mb-3 tracking-widest flex items-center justify-between">
+                      Webhook End-point
+                      <span className="material-symbols-outlined text-xs">content_copy</span>
+                    </p>
+                    <code className="text-[10px] font-mono bg-black/40 px-4 py-3 rounded-xl border border-white/5 block text-primary overflow-x-auto whitespace-nowrap scrollbar-hide">
+                      https://vault-relay.com/webhook
+                    </code>
+                  </div>
+                  <div className="group/code">
+                    <p className="text-[9px] font-black uppercase text-on-surface-variant opacity-40 mb-3 tracking-widest flex items-center justify-between">
+                      Handshake Token
+                      <span className="material-symbols-outlined text-xs">vpn_key</span>
+                    </p>
+                    <code className="text-[10px] font-mono bg-black/40 px-4 py-3 rounded-xl border border-white/5 block text-white/40 overflow-x-auto whitespace-nowrap">
+                      Check ENV_VAR_01 (Verify Token)
+                    </code>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Instructions Card */}
+          <div className="bg-white/[0.02] p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col">
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-10 flex items-center gap-3">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
+              Onboarding Protocol
+            </h3>
+            <div className="space-y-6 flex-grow">
+              {[
+                { step: '01', title: 'Meta Portal', desc: 'Secure an app instance at developers.facebook.com and initiate WhatsApp node.' },
+                { step: '02', title: 'Sync Webhook', desc: 'Deploy the relay endpoint in Meta console and verify neural handshake.' },
+                { step: '03', title: 'Data Stream', desc: 'Subscribe to "messages" to pipe incoming signals into the CRM vault.' }
+              ].map((item) => (
+                <div key={item.step} className="flex items-start gap-5 p-6 bg-white/[0.03] rounded-3xl border border-transparent hover:border-white/5 transition-all group">
+                  <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 text-primary flex items-center justify-center text-xs font-black border border-white/5 group-hover:bg-primary group-hover:text-on-primary transition-all duration-300 shadow-lg">{item.step}</div>
+                  <div>
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider">{item.title}</h4>
+                    <p className="text-[11px] font-medium text-on-surface-variant leading-relaxed mt-2 opacity-50 group-hover:opacity-100 transition-opacity">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-10 pt-8 border-t border-white/5 flex justify-center">
+              <p className="text-[9px] font-black text-white/5 uppercase tracking-[0.5em] animate-pulse">Awaiting Manual Configuration</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     );
 };
 

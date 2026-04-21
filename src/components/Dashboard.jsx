@@ -36,11 +36,10 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
     const netProfit = totalSales - totalCosts;
     const activeSubs = filteredSales.length; 
 
-
     return [
-      { label: 'Ventas Totales', value: `$${totalSales.toLocaleString()}`, icon: 'payments', color: 'bg-primary' },
-      { label: 'Utilidad Neta', value: `$${netProfit.toLocaleString()}`, icon: 'trending_up', color: 'bg-tertiary' },
-      { label: 'Suscripciones Activas', value: activeSubs.toString(), icon: 'check_circle', color: 'bg-on-surface-variant' },
+      { label: 'Total Revenue', value: `$${totalSales.toLocaleString()}`, icon: 'insights', color: 'bg-primary/20 text-primary border-primary/20', glow: 'shadow-primary/10' },
+      { label: 'Net Profit', value: `$${netProfit.toLocaleString()}`, icon: 'payments', color: 'bg-tertiary/20 text-tertiary border-tertiary/20', glow: 'shadow-tertiary/10' },
+      { label: 'Items Sold', value: activeSubs.toString(), icon: 'shopping_cart', color: 'bg-white/10 text-white border-white/20', glow: 'shadow-white/5' },
     ];
   };
 
@@ -83,19 +82,19 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
     : `${formatDate(dateRange.start)} — ${formatDate(dateRange.end)}`;
 
   return (
-    <div className="flex-grow p-8 bg-background overflow-y-auto">
-      {/* Simplified Unified Picker Area */}
+    <div className="flex-grow p-8 bg-background overflow-y-auto custom-scrollbar">
+      {/* Unified Picker Area */}
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black text-on-surface tracking-tight">Vista General</h1>
+            <h1 className="text-3xl font-black text-white tracking-tight font-headline">Overview</h1>
             {isFilterActive && (
-              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
-                {dateRange.start === dateRange.end ? 'Vista Diaria' : 'Vista de Rango'}
+              <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                {dateRange.start === dateRange.end ? 'Daily View' : 'Range View'}
               </span>
             )}
           </div>
-          <p className="text-on-surface-variant text-sm mt-1">Métricas de rendimiento en tiempo real</p>
+          <p className="text-on-surface-variant text-sm mt-1 font-medium opacity-60">Real-time performance analytics</p>
 
         </div>
 
@@ -103,36 +102,34 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
           {/* Unified Trigger Box */}
           <div 
             onClick={() => setIsPickerOpen(!isPickerOpen)}
-            className="bg-white border border-outline-variant hover:border-primary/50 cursor-pointer shadow-sm rounded-2xl px-5 py-3.5 flex items-center gap-4 transition-all active:scale-[0.98] group min-w-[300px]"
+            className="bg-white/5 border border-white/10 hover:border-primary/40 cursor-pointer shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-4 transition-all active:scale-[0.98] group min-w-[320px] backdrop-blur-md"
           >
-            <div className="w-10 h-10 rounded-xl bg-secondary-bg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-              <span className="material-symbols-outlined text-primary text-xl">event</span>
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-primary/20">
+              <span className="material-symbols-outlined text-primary text-xl">calendar_today</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest leading-none mb-1">
-                {dateRange.start === dateRange.end ? 'Día Seleccionado' : 'Periodo Seleccionado'}
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] leading-none mb-1.5 opacity-50">
+                {dateRange.start === dateRange.end ? 'Selected Day' : 'Selected Period'}
               </span>
-              <span className="text-sm font-black text-on-surface">
+              <span className="text-sm font-black text-white tracking-wide">
                 {currentDisplay}
               </span>
 
             </div>
-            <span className={`material-symbols-outlined text-on-surface-variant ml-auto transition-transform duration-300 ${isPickerOpen ? 'rotate-180' : ''}`}>
-              keyboard_arrow_down
+            <span className={`material-symbols-outlined text-on-surface-variant/40 ml-auto transition-transform duration-500 ${isPickerOpen ? 'rotate-180' : ''}`}>
+              expand_more
             </span>
           </div>
 
-          {/* Simplified Popover */}
-          {isPickerOpen && (
-            <div className="absolute top-full right-0 mt-3 z-[100] bg-white rounded-3xl shadow-2xl border border-outline-variant w-[500px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute top-full right-0 mt-4 z-[100] bg-[#111827]/95 backdrop-blur-3xl rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10 w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
               {/* Presets Sidebar */}
-              <div className="w-[180px] bg-secondary-bg/50 border-r border-outline-variant p-6 space-y-2">
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">Atajos</p>
+              <div className="w-[180px] bg-white/5 border-r border-white/5 p-6 space-y-2">
+                <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-5">Shortcuts</p>
                 <button 
                   onClick={() => handleDateClick(today)}
-                  className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
+                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-medium text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
                 >
-                  Hoy
+                  Today
                 </button>
                 <button 
                   onClick={() => {
@@ -140,9 +137,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
                     d.setDate(d.getDate() - 7);
                     setPreset(d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), today);
                   }}
-                  className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
+                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-medium text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
                 >
-                  Últimos 7 Días
+                  Last 7 Days
                 </button>
                 <button 
                   onClick={() => {
@@ -150,15 +147,15 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
                     d.setDate(d.getDate() - 30);
                     setPreset(d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), today);
                   }}
-                  className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-on-surface hover:bg-white hover:text-primary hover:shadow-sm transition-all"
+                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-medium text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
                 >
-                  Últimos 30 Días
+                  Last 30 Days
                 </button>
                 <button 
                    onClick={() => { setIsFilterActive(false); setIsPickerOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold text-error hover:bg-red-50 transition-all mt-4"
+                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-black text-error hover:bg-error/10 transition-all mt-6 border border-transparent hover:border-error/20"
                 >
-                  Limpiar Filtro
+                  Reset Filter
                 </button>
               </div>
 
@@ -196,37 +193,38 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
         {getStats().map((stat, i) => (
           <div 
             key={i} 
-            className="group relative bg-white p-7 rounded-[2rem] border border-outline-variant shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-default overflow-hidden"
+            className="group relative bg-white/5 p-8 rounded-[2rem] border border-white/5 shadow-2xl transition-all duration-500 hover:border-white/10 cursor-default overflow-hidden backdrop-blur-md"
           >
-            <div className="flex justify-between items-start mb-6">
-              <div className={`w-14 h-14 ${stat.color} text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110 duration-500`}>
+            <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color} rounded-full -mr-16 -mt-16 blur-3xl opacity-10 group-hover:opacity-20 transition-opacity`}></div>
+            
+            <div className="flex justify-between items-start mb-6 relative">
+              <div className={`w-14 h-14 ${stat.color} rounded-2xl flex items-center justify-center border shadow-inner transition-transform group-hover:scale-110 duration-500`}>
                 <span className="material-symbols-outlined text-2xl font-bold">{stat.icon}</span>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-tertiary text-[10px] font-black flex items-center gap-1 bg-tertiary/10 px-2 py-1 rounded-lg">
+                <span className="text-primary text-[10px] font-black flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg">
                   <span className="material-symbols-outlined text-xs">trending_up</span>
-                  +12%
+                  Live
                 </span>
               </div>
             </div>
             
             <div className="relative z-10">
-              <h3 className="text-on-surface-variant text-[11px] font-black uppercase tracking-[0.2em] mb-1.5">{stat.label}</h3>
-              <p className="text-3xl font-black text-on-surface leading-none">{stat.value}</p>
+              <h3 className="text-on-surface-variant text-[11px] font-black uppercase tracking-[0.2em] mb-1.5 opacity-50">{stat.label}</h3>
+              <p className="text-3xl font-black text-white leading-none tracking-tighter">{stat.value}</p>
             </div>
             
-            {/* Bottom accent line */}
-            <div className={`absolute bottom-0 left-0 h-1 bg-primary w-0 group-hover:w-full transition-all duration-500`}></div>
+            <div className={`absolute bottom-0 left-0 h-1 bg-primary w-0 group-hover:w-full transition-all duration-700 opacity-50`}></div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-outline-variant shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl backdrop-blur-md">
           <div className="flex justify-between items-center mb-6 px-2">
             <div>
               <h3 className="font-bold text-on-surface">Actividad de Ventas Reciente</h3>
@@ -245,11 +243,11 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
               <div 
                 key={item.id} 
                 onClick={() => item.customerId && onNavigateToChat && onNavigateToChat(item.customerId)}
-                className={`flex items-center justify-between p-4 bg-background/50 rounded-2xl border border-outline-variant/50 hover:border-primary/30 transition-colors group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                className={`flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-outline-variant shadow-sm group-hover:scale-110 transition-transform">
-                    <span className="material-symbols-outlined text-on-surface-variant">person</span>
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-sm group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-on-surface-variant text-xl">person</span>
                   </div>
                   <div>
                     <h4 className="font-black text-sm text-on-surface flex items-center gap-2">

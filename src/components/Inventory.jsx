@@ -178,261 +178,261 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
 
   return (
-    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto relative">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-on-surface">Gestión de Inventario</h1>
-          <p className="text-on-surface-variant text-[11px] md:text-sm mt-1">Administra tu stock de streaming y precios</p>
+          <h1 className="text-3xl font-black text-white tracking-tight font-headline">Inventory</h1>
+          <p className="text-on-surface-variant text-sm mt-1 font-medium opacity-60">Manage your streaming stock and pricing</p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <button 
             onClick={() => setIsManageListsOpen(true)}
-            className="bg-white text-on-surface-variant font-bold px-5 py-3 md:py-2.5 rounded-xl border border-outline-variant hover:bg-secondary-bg transition-all flex items-center justify-center gap-2"
+            className="glass text-white font-bold px-6 py-3 rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/5 active:scale-95"
           >
-            <span className="material-symbols-outlined text-lg">settings</span>
-            Configurar Listas
+            <span className="material-symbols-outlined text-xl">tune</span>
+            Configure Lists
           </button>
           <button 
             onClick={() => { closeModal(); setIsModalOpen(true); }}
-            className="bg-primary text-white font-bold px-6 py-3 md:py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="bg-primary text-on-primary font-black px-8 py-3 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Nueva Cuenta
+            <span className="material-symbols-outlined text-xl">add_circle</span>
+            Add Account
           </button>
         </div>
       </div>
 
       {/* Summary Dashboard */}
-      <div className="mb-8 md:mb-10 w-full overflow-hidden">
-        <div className="bg-white rounded-full border border-outline-variant shadow-sm flex items-center h-12 md:h-14 overflow-hidden">
+      <div className="mb-10 w-full overflow-hidden">
+        <div className="glass rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden">
           {/* Main Stats Header */}
-          <div className="bg-panel-bg h-full flex items-center px-5 md:px-8 relative z-10 border-r border-outline-variant/20 flex-shrink-0">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="relative z-10 flex items-center gap-2.5">
-              <div className="w-6 h-6 md:w-7 md:h-7 bg-primary text-white rounded-[6px] md:rounded-[8px] flex items-center justify-center shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined text-[13px] md:text-[15px]">inventory_2</span>
+          <div className="bg-white/5 h-full flex items-center px-6 md:px-10 relative z-10 border-r border-white/5 flex-shrink-0">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-8 h-8 md:w-9 md:h-9 bg-primary/20 text-primary rounded-xl flex items-center justify-center border border-primary/20 shadow-inner">
+                <span className="material-symbols-outlined text-lg md:text-xl">database</span>
               </div>
-              <h2 className="text-white font-black text-sm md:text-base tracking-tight uppercase leading-none mt-0.5">Stock</h2>
+              <h2 className="text-white font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Real Stock</h2>
             </div>
           </div>
 
           {/* Platform Bubbles Area */}
-          <div className="flex-grow h-full bg-white flex gap-3 md:gap-4 items-center px-4 md:px-6 overflow-x-auto scrollbar-hide">
+          <div className="flex-grow h-full flex gap-4 md:gap-5 items-center px-6 md:px-8 overflow-x-auto custom-scrollbar scrollbar-hide">
             {Object.entries(statsByService).length > 0 ? (
               Object.entries(statsByService).map(([key, data]) => (
-                <div key={key} className="flex items-center gap-1.5 flex-shrink-0 border border-outline-variant rounded-full px-3 md:px-4 py-1 hover:bg-secondary-bg transition-colors">
-                  <span className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{data.displayName}</span>
-                  <span className="text-[11px] md:text-[13px] font-black text-primary leading-none mt-[1px]">{data.totalSlots}</span>
+                <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-white/5 border border-white/5 rounded-2xl px-5 py-2 hover:bg-white/10 hover:border-primary/20 transition-all cursor-default group">
+                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(45,212,191,0.55)] group-hover:scale-125 transition-transform"></span>
+                  <span className="text-[10px] md:text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-80 group-hover:opacity-100">{data.displayName}</span>
+                  <span className="text-sm md:text-base font-black text-white leading-none ml-1">{data.totalSlots}</span>
                 </div>
               ))
             ) : (
-              <div className="flex items-center gap-2 text-on-surface-variant/40 flex-shrink-0 pl-2">
-                <span className="material-symbols-outlined text-[14px] animate-spin">refresh</span>
-                <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">Sincronizando...</p>
+              <div className="flex items-center gap-3 text-on-surface-variant/40 flex-shrink-0 pl-2">
+                <span className="material-symbols-outlined text-lg animate-spin">sync</span>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Synchronizing Vault...</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/20 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-outline-variant p-8 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-on-surface">
-                {editingAccount ? 'Editar Cuenta' : 'Agregar Nueva Cuenta'}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-[#111827] w-full max-w-md rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-white/10 p-10 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                {editingAccount ? 'Update Account' : 'Register Service'}
               </h2>
               <button 
                 onClick={closeModal}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-secondary-bg transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
               >
-                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+                <span className="material-symbols-outlined text-white opacity-60 hover:opacity-100">close</span>
               </button>
             </div>
             
-            <form onSubmit={handleAddAccount} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Plataforma / Servicio</label>
-                
-                <div className="flex gap-2 mb-3">
-                  {!showCustomPlatform ? (
-                    <>
-                      <select 
-                        required
-                        name="service"
-                        value={formData.service}
-                        onChange={handleInputChange}
-                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                      >
-                        <option value="" disabled>Seleccionar plataforma...</option>
-                        {availablePlatforms.map(platform => (
-                          <option key={platform} value={platform}>{platform}</option>
-                        ))}
-                      </select>
-                      <button 
-                        type="button"
-                        onClick={() => { setShowCustomPlatform(true); setFormData(prev => ({...prev, service: ''})); }}
-                        className="bg-primary/10 text-primary px-4 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
-                        title="Añadir otra plataforma"
-                      >
-                        <span className="material-symbols-outlined font-bold">add</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <input 
-                        required
-                        name="service"
-                        value={formData.service}
-                        onChange={handleInputChange}
-                        placeholder="Escribe el nombre de la plataforma"
-                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => { setShowCustomPlatform(false); setFormData(prev => ({...prev, service: ''})); }}
-                        className="bg-secondary-bg text-on-surface-variant px-4 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
-                        title="Volver a la lista"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Proveedor (Quien te la vendió)</label>
-                <div className="flex gap-2 mb-3">
-                  {!showCustomProvider ? (
-                    <>
-                      <select 
-                        name="provider"
-                        value={formData.provider}
-                        onChange={handleInputChange}
-                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                      >
-                        <option value="" disabled>Seleccionar proveedor...</option>
-                        {availableProviders.map(provider => (
-                          <option key={provider} value={provider}>{provider}</option>
-                        ))}
-                      </select>
-                      <button 
-                        type="button"
-                        onClick={() => { setShowCustomProvider(true); setFormData(prev => ({...prev, provider: ''})); }}
-                        className="bg-primary/10 text-primary px-4 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm"
-                        title="Añadir nuevo proveedor"
-                      >
-                        <span className="material-symbols-outlined font-bold">add</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <input 
-                        name="provider"
-                        value={formData.provider}
-                        onChange={handleInputChange}
-                        placeholder="Escribe el nombre del proveedor"
-                        className="flex-grow bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => { setShowCustomProvider(false); setFormData(prev => ({...prev, provider: ''})); }}
-                        className="bg-secondary-bg text-on-surface-variant px-4 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-error transition-all border border-outline-variant"
-                        title="Volver a la lista"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleAddAccount} className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Número de Perfil</label>
-                  <select 
+                  <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Platform / Service</label>
+                  
+                  <div className="flex gap-2">
+                    {!showCustomPlatform ? (
+                      <>
+                        <select 
+                          required
+                          name="service"
+                          value={formData.service}
+                          onChange={handleInputChange}
+                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="" disabled className="bg-secondary-bg">Select platform...</option>
+                          {availablePlatforms.map(platform => (
+                            <option key={platform} value={platform} className="bg-secondary-bg">{platform}</option>
+                          ))}
+                        </select>
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomPlatform(true); setFormData(prev => ({...prev, service: ''})); }}
+                          className="bg-primary/20 text-primary px-5 rounded-2xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
+                        >
+                          <span className="material-symbols-outlined font-black">add</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input 
+                          required
+                          name="service"
+                          value={formData.service}
+                          onChange={handleInputChange}
+                          placeholder="Platform name..."
+                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomPlatform(false); setFormData(prev => ({...prev, service: ''})); }}
+                          className="bg-white/5 text-white/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-white/5"
+                        >
+                          <span className="material-symbols-outlined text-lg">close</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Provider</label>
+                  <div className="flex gap-2">
+                    {!showCustomProvider ? (
+                      <>
+                        <select 
+                          name="provider"
+                          value={formData.provider}
+                          onChange={handleInputChange}
+                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="" disabled className="bg-secondary-bg">Select provider...</option>
+                          {availableProviders.map(provider => (
+                            <option key={provider} value={provider} className="bg-secondary-bg">{provider}</option>
+                          ))}
+                        </select>
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomProvider(true); setFormData(prev => ({...prev, provider: ''})); }}
+                          className="bg-primary/20 text-primary px-5 rounded-2xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
+                        >
+                          <span className="material-symbols-outlined font-black">add</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input 
+                          name="provider"
+                          value={formData.provider}
+                          onChange={handleInputChange}
+                          placeholder="Provider name..."
+                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => { setShowCustomProvider(false); setFormData(prev => ({...prev, provider: ''})); }}
+                          className="bg-white/5 text-white/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-white/5"
+                        >
+                          <span className="material-symbols-outlined text-lg">close</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Profile Num</label>
+                    <select 
+                      required
+                      name="profile"
+                      value={formData.profile}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled className="bg-secondary-bg">N#</option>
+                      {availableProfiles.map(p => (
+                        <option key={p} value={p} className="bg-secondary-bg">{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Total Slots</label>
+                    <input 
+                      name="uses"
+                      type="number"
+                      value={formData.uses}
+                      onChange={handleInputChange}
+                      placeholder="3"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Cost (Full)</label>
+                    <input 
+                      name="cost"
+                      type="number"
+                      value={formData.cost}
+                      onChange={handleInputChange}
+                      placeholder="8000"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Price (Unit)</label>
+                    <input 
+                      name="price"
+                      type="number"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="12000"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Credentials (Email)</label>
+                  <input 
                     required
-                    name="profile"
-                    value={formData.profile}
+                    name="email"
+                    type="email"
+                    value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                  >
-                    <option value="" disabled>Seleccionar...</option>
-                    {availableProfiles.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Cupos / Usos Totales</label>
-                  <input 
-                    name="uses"
-                    type="number"
-                    value={formData.uses}
-                    onChange={handleInputChange}
-                    placeholder="3"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Costo Cuenta (Total)</label>
-                  <input 
-                    name="cost"
-                    type="number"
-                    value={formData.cost}
-                    onChange={handleInputChange}
-                    placeholder="8000"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                    placeholder="example@stream.com"
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Precio Venta (COP)</label>
+                  <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Secret Code (Password)</label>
                   <input 
-                    name="price"
-                    type="number"
-                    value={formData.price}
+                    required
+                    name="pass"
+                    type="text"
+                    value={formData.pass}
                     onChange={handleInputChange}
-                    placeholder="12000"
-                    className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                    placeholder="••••••••"
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all font-mono"
                   />
                 </div>
               </div>
 
-
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Correo / Usuario</label>
-                <input 
-                  required
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="nombre@ejemplo.com"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 ml-1">Contraseña</label>
-                <input 
-                  required
-                  name="pass"
-                  type="text"
-                  value={formData.pass}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="w-full bg-secondary-bg border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                />
-              </div>
               <button 
                 type="submit"
-                className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 mt-4 hover:opacity-90 active:scale-[0.98] transition-all"
+                className="w-full bg-primary text-on-primary font-black py-4 rounded-[1.5rem] shadow-2xl shadow-primary/20 mt-6 hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
               >
-                {editingAccount ? 'Actualizar Cuenta' : 'Registrar Cuenta'}
+                {editingAccount ? 'Finalize Changes' : 'Seal Account'}
               </button>
             </form>
           </div>
@@ -441,235 +441,232 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
       {/* Manage Lists Modal */}
       {isManageListsOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-on-surface/20 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-outline-variant p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-on-surface">Configurar Listas</h2>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-[#111827] w-full max-w-2xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-white/10 p-10 animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Master Config</h2>
               <button 
                 onClick={() => setIsManageListsOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-secondary-bg transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
               >
-                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+                <span className="material-symbols-outlined text-white/60">close</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-y-auto custom-scrollbar pr-4">
               {/* Platforms Section */}
               <div>
-                <h3 className="text-xs font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">tv</span>
-                  Plataformas
+                <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-lg">category</span>
+                  Platforms
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {platforms.map(platform => (
-                    <div key={platform} className="flex items-center gap-2 group">
+                    <div key={platform} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
                       <input 
                         type="text"
                         defaultValue={platform}
                         onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
-                        className="flex-grow bg-secondary-bg border-none rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
                       />
                       <button 
                         onClick={() => handleDeletePlatform(platform)}
-                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant/20 group-hover:text-error transition-colors"
+                        className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
+                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
                       </button>
                     </div>
                   ))}
-                  {platforms.length === 0 && <p className="text-[10px] text-on-surface-variant italic">No hay plataformas guardadas.</p>}
                 </div>
               </div>
 
               {/* Providers Section */}
               <div>
-                <h3 className="text-xs font-black text-tertiary uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">person_outline</span>
-                  Proveedores
+                <h3 className="text-xs font-black text-tertiary uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-lg">group</span>
+                  Suppliers
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {providers.map(provider => (
-                    <div key={provider} className="flex items-center gap-2 group">
+                    <div key={provider} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
                       <input 
                         type="text"
                         defaultValue={provider}
                         onBlur={(e) => handleEditProviderName(provider, e.target.value)}
-                        className="flex-grow bg-secondary-bg border-none rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
                       />
                       <button 
                         onClick={() => handleDeleteProvider(provider)}
-                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant/20 group-hover:text-error transition-colors"
+                        className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
+                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
                       </button>
                     </div>
                   ))}
-                  {providers.length === 0 && <p className="text-[10px] text-on-surface-variant italic">No hay proveedores guardados.</p>}
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-outline-variant flex justify-end">
+            <div className="mt-10 pt-8 border-t border-white/5 flex justify-end">
               <button 
                 onClick={() => setIsManageListsOpen(false)}
-                className="bg-on-surface text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition-all"
+                className="bg-primary text-on-primary font-black px-10 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs"
               >
-                Listo
+                Close & Sync
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Responsive Table/Card View */}
-      <div className="space-y-4 md:space-y-0">
-        {/* Mobile Cards (View for small screens) */}
-        <div className="md:hidden space-y-4">
+      {/* Main Content Area */}
+      <div className="space-y-6">
+        {/* Mobile View */}
+        <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
-            <div key={acc.id} className="bg-white p-6 rounded-3xl border border-outline-variant shadow-sm relative overflow-hidden">
-               {/* Accent line for status */}
-               <div className={`absolute left-0 top-0 bottom-0 w-1 ${acc.status === 'Available' ? 'bg-tertiary' : 'bg-on-surface-variant/20'}`}></div>
+            <div key={acc.id} className="bg-white/5 p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-all">
+               <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-primary group-hover:w-2' : 'bg-on-surface-variant/20'}`}></div>
                
-               <div className="flex justify-between items-start mb-4">
-                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                     <span className="material-symbols-outlined">tv</span>
+               <div className="flex justify-between items-start mb-6">
+                 <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 group-hover:text-primary transition-colors">
+                     <span className="material-symbols-outlined text-2xl font-light">devices</span>
                    </div>
                    <div>
-                     <h3 className="font-black text-on-surface text-base">{acc.service}</h3>
-                     <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">{acc.provider || 'Sin Proveedor'}</p>
+                     <h3 className="font-black text-white text-lg tracking-tight">{acc.service}</h3>
+                     <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em] opacity-40 mt-1">{acc.provider || 'Independent'}</p>
                    </div>
                  </div>
                  <div className="text-right">
-                    <p className="text-lg font-black text-primary">${acc.price.toLocaleString()}</p>
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
-                      acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary' : 'bg-on-surface-variant/10 text-on-surface-variant'
-                    }`}>
-                      {acc.status === 'Available' ? 'Disponible' : 'Vendido'}
-                    </span>
+                    <p className="text-xl font-black text-white tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <div className="flex justify-end mt-2">
+                      <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border transition-all ${
+                        acc.status === 'Available' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
+                      }`}>
+                        {acc.status === 'Available' ? 'Ready' : 'Archived'}
+                      </span>
+                    </div>
                  </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-4 py-4 border-y border-outline-variant/50 mb-4">
+               <div className="grid grid-cols-2 gap-6 py-6 border-y border-white/5 mb-6 bg-white/[0.02] rounded-2xl px-6">
                  <div>
-                   <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-1">Credenciales</span>
-                   <p className="text-xs font-bold text-on-surface truncate">{acc.email}</p>
-                   <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">{acc.pass}</p>
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-50">Identity</span>
+                   <p className="text-[11px] font-bold text-white truncate opacity-90">{acc.email}</p>
+                   <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">{acc.pass}</p>
                  </div>
-                 <div className="text-right">
-                   <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-1">Cupos Disp.</span>
-                   <div className="flex items-center justify-end gap-1.5">
-                     <span className="text-lg font-black text-on-surface">{acc.uses}</span>
-                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                 <div className="text-right flex flex-col justify-center">
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-50">Slots</span>
+                   <div className="flex items-center justify-end gap-2.5">
+                     <span className="text-2xl font-black text-white leading-none">{acc.uses}</span>
+                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(45,212,191,0.5)] animate-pulse' : 'bg-white/10'}`}></span>
                    </div>
                  </div>
                </div>
 
-               <div className="flex gap-2">
+               <div className="flex gap-3">
                  <button 
                    onClick={() => onSale(acc)}
                    disabled={acc.uses <= 0}
-                   className={`flex-grow flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                     acc.uses > 0 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-secondary-bg text-on-surface-variant/30 cursor-not-allowed'
+                   className={`flex-grow flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
+                     acc.uses > 0 ? 'bg-primary text-on-primary shadow-2xl shadow-primary/20 hover:scale-[1.02]' : 'bg-white/5 text-white/10 cursor-not-allowed border border-white/5'
                    }`}
                  >
-                   <span className="material-symbols-outlined text-sm">local_mall</span>
-                   Vender
+                   <span className="material-symbols-outlined text-lg">shopping_bag</span>
+                   Dispatch
                  </button>
                  <button 
                    onClick={() => handleEditAccount(acc)}
-                   className="w-12 h-12 bg-secondary-bg flex items-center justify-center rounded-2xl text-on-surface-variant"
+                   className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-white/40 hover:text-white hover:bg-white/10 border border-white/5 transition-all"
                  >
                    <span className="material-symbols-outlined text-xl">edit</span>
-                 </button>
-                 <button 
-                   onClick={() => handleDeleteAccount(acc.id)}
-                   className="w-12 h-12 bg-red-50 flex items-center justify-center rounded-2xl text-error"
-                 >
-                   <span className="material-symbols-outlined text-xl">delete</span>
                  </button>
                </div>
             </div>
           ))}
         </div>
 
-        {/* Desktop Table (Hidden on mobile) */}
-        <div className="hidden md:block bg-white rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+        {/* Desktop View */}
+        <div className="hidden md:block bg-white/5 rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden backdrop-blur-md">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-secondary-bg/50 border-b border-outline-variant">
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Servicio</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Perfil</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Credenciales</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Finanzas</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Proveedor</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Usos</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Acciones</th>
+              <tr className="bg-white/5 border-b border-white/5">
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Platform</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Profile</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Identity</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Market Value</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Supplier</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Stock</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50 text-right pr-12">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant">
+            <tbody className="divide-y divide-white/5 font-body">
               {accounts.map((acc) => (
-                <tr key={acc.id} className="hover:bg-background/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-lg">tv</span>
+                <tr key={acc.id} className="hover:bg-white/[0.03] transition-all group">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30 group-hover:text-primary transition-all duration-500">
+                        <span className="material-symbols-outlined text-xl font-light">monitor</span>
                       </div>
-                      <span className="font-bold text-on-surface">{acc.service}</span>
+                      <span className="font-black text-white tracking-tight">{acc.service}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-on-surface-variant">{acc.profile}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-xs font-medium text-on-surface">{acc.email}</p>
-                    <p className="text-[10px] text-on-surface-variant font-mono">{acc.pass}</p>
+                  <td className="px-8 py-5">
+                    <span className="text-xs font-black text-white/50 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">#{acc.profile}</span>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-primary leading-none text-sm">${acc.price.toLocaleString()}</p>
-                    <p className="text-[10px] text-on-surface-variant font-bold mt-1 tracking-tighter uppercase opacity-60">Costo: ${acc.cost?.toLocaleString() || 0}</p>
+                  <td className="px-8 py-5">
+                    <p className="text-xs font-bold text-white opacity-90">{acc.email}</p>
+                    <p className="text-[10px] text-primary font-black tracking-widest mt-1 uppercase opacity-60 group-hover:opacity-100 transition-opacity">{acc.pass}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-on-surface bg-secondary-bg px-2 py-1 rounded-lg border border-outline-variant/30">
-                      {acc.provider || 'N/A'}
+                  <td className="px-8 py-5">
+                    <p className="font-black text-white leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <p className="text-[9px] text-on-surface-variant font-black mt-2 tracking-[0.1em] uppercase opacity-40 group-hover:opacity-70 transition-opacity">Cost: ${acc.cost?.toLocaleString() || 0}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                      {acc.provider || 'Direct'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                      <span className="text-sm font-black text-on-surface">{acc.uses}</span>
-                      <span className="text-[10px] text-on-surface-variant font-bold">CUPOS</span>
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(45,212,191,0.5)] animate-pulse' : 'bg-white/10'}`}></div>
+                      <span className="text-base font-black text-white leading-none">{acc.uses}</span>
+                      <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-40">Left</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                      acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary' : 'bg-on-surface-variant/10 text-on-surface-variant'
+                  <td className="px-8 py-5">
+                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-[0.15em] border ${
+                      acc.status === 'Available' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
                     }`}>
-                      {acc.status === 'Available' ? 'DISPONIBLE' : 'VENDIDO'}
+                      {acc.status === 'Available' ? 'ACTIVE' : 'EMPTY'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
+                  <td className="px-8 py-5 text-right pr-12">
+                    <div className="flex gap-2 justify-end opacity-40 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
                       <button 
                         onClick={() => onSale(acc)}
                         disabled={acc.uses <= 0}
-                        className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-                          acc.uses > 0 ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-secondary-bg text-on-surface-variant/30 cursor-not-allowed'
+                        className={`w-11 h-11 rounded-xl transition-all flex items-center justify-center border ${
+                          acc.uses > 0 ? 'bg-primary text-on-primary border-primary/30 hover:scale-110 shadow-lg shadow-primary/20' : 'bg-white/5 text-white/5 border-white/5 cursor-not-allowed'
                         }`}
-                        title="Registrar Venta"
+                        title="Dispatch Item"
                       >
-                        <span className="material-symbols-outlined text-lg">local_mall</span>
+                        <span className="material-symbols-outlined text-xl">sell</span>
                       </button>
                       <button 
                         onClick={() => handleEditAccount(acc)}
-                        className="p-2 hover:bg-secondary-bg rounded-lg text-on-surface-variant hover:text-primary transition-colors"
+                        className="w-11 h-11 bg-white/5 border border-white/5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                        title="Edit entry"
                       >
-                        <span className="material-symbols-outlined text-lg">edit</span>
+                        <span className="material-symbols-outlined text-xl">edit</span>
                       </button>
                       <button 
                         onClick={() => handleDeleteAccount(acc.id)}
-                        className="p-2 hover:bg-red-50 rounded-lg text-on-surface-variant hover:text-error transition-colors"
+                        className="w-11 h-11 bg-error/10 border border-error/20 rounded-xl text-error hover:bg-error/20 transition-all"
+                        title="Purge record"
                       >
-                        <span className="material-symbols-outlined text-lg">delete</span>
+                        <span className="material-symbols-outlined text-xl">delete</span>
                       </button>
                     </div>
                   </td>
@@ -677,9 +674,21 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
               ))}
             </tbody>
           </table>
+          {accounts.length === 0 && (
+            <div className="p-20 text-center flex flex-col items-center gap-4 bg-white/5">
+              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                <span className="material-symbols-outlined text-4xl text-white/10 font-thin">inventory</span>
+              </div>
+              <div>
+                <p className="text-white font-black text-lg tracking-tight uppercase">Void Database</p>
+                <p className="text-on-surface-variant text-xs mt-1 font-medium opacity-40">No entries detected in current vault</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
+
   );
 };
 
