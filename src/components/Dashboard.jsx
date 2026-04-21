@@ -121,6 +121,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
             </span>
           </div>
 
+          {isPickerOpen && (
             <div className="absolute top-full right-0 mt-4 z-[100] bg-[#111827]/95 backdrop-blur-3xl rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10 w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
               {/* Presets Sidebar */}
               <div className="w-[180px] bg-white/5 border-r border-white/5 p-6 space-y-2">

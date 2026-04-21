@@ -135,7 +135,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   };
 
   return (
-  return (
     <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
       {/* 1. Chat List Sidebar (Left Column) */}
       <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-panel-bg relative z-10 border-r border-white/5 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
