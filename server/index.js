@@ -110,6 +110,39 @@ let providers = loadProviders();
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
+const recoveryTimers = {};
+
+function scheduleRecovery(to) {
+    if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
+    
+    const chat = chats[to];
+    if (!chat) return;
+
+    // Solo clientes nuevos (sin etiquetas de compra)
+    const isNewClient = !(chat.tags || []).some(t => t === 'pagado' || t === 'entregado');
+    if (!isNewClient) return;
+
+    recoveryTimers[to] = setTimeout(async () => {
+        const c = chats[to];
+        if (!c) return;
+        const stillNew = !(c.tags || []).some(t => t === 'pagado' || t === 'entregado');
+        const lastMsg = c.messages[c.messages.length - 1];
+        const isBotLast = lastMsg && (lastMsg.role === 'bot' || lastMsg.isMe);
+
+        if (stillNew && isBotLast && !c.recoverySentAt) {
+            const msgBody = "si estas interesado te la puedo activar primero";
+            await sendMessageToCloudAPI(to, msgBody);
+            const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
+            c.messages.push(botMsg);
+            c.recoverySentAt = Date.now();
+            c.updatedAt = Date.now();
+            saveChats(chats);
+            io.emit('message', botMsg);
+        }
+        delete recoveryTimers[to];
+    }, 120000);
+}
+
 // --- CENTRAL DELIVERY FUNCTION ---
 async function executeDelivery(to, mode = 'deliver_first') {
     const chat = chats[to];
@@ -194,6 +227,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             chat.messages.push(cobroMsg);
             saveChats(chats);
             io.emit('message', cobroMsg);
+            scheduleRecovery(to);
 
             if (ADMIN_PHONE) {
                 const notif = mode === 'auto' ? `🚀 *ENTREGA AUTO:* Envié *${deliveredSales.join(', ')}* a *${chat.customerName}* y realicé el cobro.` : `✅ *ENTREGA EXITOSA* a *${chat.customerName}*.`;
@@ -269,6 +303,8 @@ app.post('/webhook', async (req, res) => {
             const currentChat = chats[from];
             currentChat.messages.push({ id: msg.id, from, body: msgBody, content: msgBody, timestampRaw: Date.now(), role: 'user' });
             currentChat.updatedAt = Date.now();
+            if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
+            currentChat.recoverySentAt = null;
             saveChats(chats); io.emit('message', { id: msg.id, from, customerName, body: msgBody, role: 'user' });
 
             // Auto-confirmación (Detección ampliada)
@@ -359,6 +395,7 @@ app.post('/webhook', async (req, res) => {
             const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
             currentChat.messages.push(botMsg);
             saveChats(chats); io.emit('message', botMsg);
+            scheduleRecovery(from);
         }
     }
     res.sendStatus(200);
@@ -423,7 +460,10 @@ io.on('connection', (socket) => {
         await sendMessageToCloudAPI(to, content);
         const m = { id: 'man-'+Date.now(), from: to, body: content, content, isMe: true, role: 'bot', timestampRaw: Date.now() };
         if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
-        chats[to].messages.push(m); chats[to].updatedAt = Date.now(); saveChats(chats); io.emit('message', m);
+        chats[to].messages.push(m); chats[to].updatedAt = Date.now(); 
+        if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
+        saveChats(chats); io.emit('message', m);
+        scheduleRecovery(to);
     });
 });
 
