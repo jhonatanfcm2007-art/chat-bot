@@ -204,39 +204,37 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       </div>
 
       {/* Summary Dashboard */}
-      <div className="grid grid-cols-1 gap-6 mb-8 md:mb-12">
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-xl group">
+      <div className="grid grid-cols-1 gap-6 mb-8 md:mb-10">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-md group">
           <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-outline-variant">
             {/* Main Stats Header */}
-            <div className="py-2.5 px-6 md:py-4 md:px-10 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[320px] relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="py-2.5 px-6 md:py-3 md:px-8 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[200px] relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                <div className="relative z-10">
-                 <div className="flex items-center gap-3 mb-1 md:mb-1.5">
-                   <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                     <span className="material-symbols-outlined text-base md:text-lg">inventory_2</span>
+                 <div className="flex items-center gap-2">
+                   <div className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                     <span className="material-symbols-outlined text-base">inventory_2</span>
                    </div>
-                   <h2 className="text-white font-black text-lg md:text-xl tracking-tight leading-none uppercase">Stock Real</h2>
+                   <h2 className="text-white font-black text-lg tracking-tight leading-none uppercase">Stock</h2>
                  </div>
-                 <p className="text-[9px] md:text-[10px] text-panel-on-bg/40 font-black uppercase tracking-[0.2em]">Cálculo dinámico de cupos</p>
                </div>
             </div>
 
-            {/* Platform Grid Area */}
-            <div className="flex-grow py-2.5 px-6 md:py-4 md:px-10 bg-white grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {/* Platform Bubbles Area */}
+            <div className="flex-grow py-3 px-6 md:px-8 bg-white flex flex-wrap gap-2 items-center">
               {Object.entries(statsByService).length > 0 ? (
                 Object.entries(statsByService).map(([key, data]) => (
-                  <div key={key} className="flex flex-col gap-1 md:gap-2">
-                    <span className="text-[9px] md:text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest truncate">{data.displayName}</span>
-                    <div className="flex items-baseline gap-1.5 md:gap-2">
-                      <span className="text-2xl md:text-3xl font-black text-on-surface">{data.totalSlots}</span>
-                      <span className="text-[8px] md:text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">Cupos</span>
+                  <div key={key} className="flex items-center gap-2 bg-secondary-bg border border-outline-variant/30 rounded-full pl-3 pr-1 py-1 hover:bg-background transition-colors">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">{data.displayName}</span>
+                    <div className="bg-primary text-white text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
+                      {data.totalSlots}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="col-span-full py-2 flex flex-col items-center justify-center text-on-surface-variant/20">
-                  <span className="material-symbols-outlined text-4xl mb-2">refresh</span>
-                  <p className="text-[9px] font-black uppercase tracking-widest">Sincronizando...</p>
+                <div className="flex items-center gap-2 text-on-surface-variant/40">
+                  <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Sincronizando...</p>
                 </div>
               )}
             </div>
