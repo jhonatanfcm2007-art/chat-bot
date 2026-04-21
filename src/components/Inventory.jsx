@@ -519,8 +519,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         </div>
       )}
 
-      {/* Main Content Area */}
-      <div         {/* Mobile View */}
+      <div className="space-y-6">
+        {/* Mobile View */}
         <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
             <div key={acc.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/20 transition-all">
@@ -636,9 +636,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                     <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-[0.15em] border ${
                       acc.status === 'Available' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-50 text-on-surface-variant border-slate-200'
                     }`}>
-                      {acc.status === 'Available' ? 'ACTIVE' : 'EMPTY'}
                     </span>
-                  </td>                  </td>
+                  </td>
                   <td className="px-8 py-5 text-right pr-12">
                     <div className="flex gap-2 justify-end opacity-40 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
                       <button 
