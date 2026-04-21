@@ -30,6 +30,8 @@ const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
+let lastReceiptFrom = null; // Último cliente que envió comprobante
+
 // --- PERSISTENCIA DEL INVENTARIO ---
 const DATA_DIR = path.join(__dirname, 'data');
 const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
@@ -220,10 +222,102 @@ app.post('/webhook', async (req, res) => {
             // Extraer el nombre del cliente del payload (contactos) o usar el número si no está disponible
             const contacts = body.entry[0].changes[0].value.contacts;
             const customerName = contacts && contacts[0]?.profile?.name ? contacts[0].profile.name : from;
-            
+
+            // ========================
+            // DETECCIÓN DE COMANDOS DEL ADMINISTRADOR DESDE SU WHATSAPP PERSONAL
+            // Si el número que escribe es el dueño del negocio, tratar como comando.
+            // ========================
+            const commandRegex = /^(apruebo|aprobado|si llego|listo|entregar|si lleg|si paso)$/i;
+            if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text' && commandRegex.test(msg.text.body.trim())) {
+                // Buscar el chat con comprobante más reciente pendiente
+                const pendingChats = Object.values(chats).filter(c => 
+                    c.from !== ADMIN_PHONE && c.pendingProducts && c.pendingProducts.length > 0
+                ).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+                if (pendingChats.length > 0) {
+                    const targetChat = pendingChats[0];
+                    const targetFrom = targetChat.from;
+                    let totalCredentialsMsg = `🚀 *¡Entregado!* Aquí tienes tus cuentas:\n\n`;
+                    let accountsFound = 0;
+
+                    for (const serviceName of targetChat.pendingProducts) {
+                        const accIndex = inventory.findIndex(a =>
+                            a.service.toLowerCase().includes(serviceName.toLowerCase()) &&
+                            (a.status === 'Available' || parseInt(a.uses) > 0)
+                        );
+                        if (accIndex !== -1) {
+                            const acc = inventory[accIndex];
+                            const newSale = {
+                                id: 'auto-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                                service: acc.service,
+                                price: targetChat.pendingProducts.length > 0 ? Math.round(parseInt(targetChat.pendingTotal || 0) / targetChat.pendingProducts.length) : acc.price,
+                                cost: acc.cost || 0,
+                                provider: acc.provider || 'N/A',
+                                date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+                                customer: targetChat.customerName || 'Cliente',
+                                customerId: targetFrom
+                            };
+                            sales.push(newSale);
+                            acc.uses = parseInt(acc.uses) - 1;
+                            if (acc.uses <= 0) acc.status = 'Sold Out';
+                            totalCredentialsMsg += `✅ *${acc.service}*\n📧 *Correo:* ${acc.email}\n🔑 *Clave:* ${acc.pass}${acc.profile ? '\n👤 *Perfil:* ' + acc.profile : ''}${acc.pin ? '\n📌 *PIN:* ' + acc.pin : ''}\n\n`;
+                            accountsFound++;
+                        }
+                    }
+
+                    if (accountsFound > 0) {
+                        totalCredentialsMsg += `⚠️ *Importante:* No modificar la contraseña ni alterar otros perfiles para mantener tu garantía.\n\n¡Gracias por tu compra! 🎉`;
+                        await sendMessageToCloudAPI(targetFrom, totalCredentialsMsg);
+
+                        // Actualizar estado del chat destino
+                        targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pago-pendiente');
+                        if (!targetChat.tags.includes('pagado')) targetChat.tags.push('pagado');
+                        targetChat.pendingProducts = [];
+                        targetChat.pendingTotal = null;
+
+                        saveSales(sales);
+                        saveInventory(inventory);
+                        saveChats(chats);
+
+                        io.emit('sales_updated', sales);
+                        io.emit('inventory_updated', inventory);
+                        io.emit('tag_updated', { from: targetFrom, tags: targetChat.tags });
+
+                        const botMsgData = {
+                            id: 'auto-' + Date.now(),
+                            from: targetFrom,
+                            customerName: 'Sistema',
+                            body: totalCredentialsMsg,
+                            timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
+                            timestampRaw: Date.now(),
+                            isMe: true,
+                            role: 'bot'
+                        };
+                        targetChat.messages.push({ ...botMsgData, content: totalCredentialsMsg });
+                        saveChats(chats);
+                        io.emit('message', botMsgData);
+
+                        // Confirmar al admin que la entrega fue exitosa
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `✅ *ENTREGA EXITOSA:* Las cuentas de *${targetChat.pendingProducts.join ? targetChat.customerName : ''}* han sido enviadas a *${targetChat.customerName}*. La venta quedó registrada.`);
+                    } else {
+                        await sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK:* No encontré cuentas disponibles para los productos pendientes. Revisa tu inventario en el CRM.`);
+                    }
+                } else {
+                    await sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ *Sin pendientes:* No hay clientes con comprobantes pendientes de entrega en este momento.`);
+                }
+
+                res.sendStatus(200);
+                return; // Terminar aquí, no procesar como mensaje normal
+            }
+            // ========================
+            // FIN DETECCIÓN ADMIN
+            // ========================
+
             let msgBody = '';
             
             if (msg.type === 'image') {
+                // También guardar referencia al último que envió comprobante
+                lastReceiptFrom = from;
                 msgBody = '[IMAGEN RECIBIDA] EL CLIENTE ACABA DE ENVIAR UN COMPROBANTE FOTOGRÁFICO.';
                 io.emit('receipt_received', { from, customerName, message: msgBody });
                 
