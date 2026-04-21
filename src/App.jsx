@@ -19,6 +19,14 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [providers, setProviders] = useState([]);
+  
+  // Estados para controlar que los datos ya se cargaron inicialmente
+  const [initialized, setInitialized] = useState({
+    inventory: false,
+    platforms: false,
+    providers: false,
+    sales: false
+  });
 
   // Jugar sonido simple al recibir notificación (opcional si falla)
   const playAlertSound = () => {
@@ -125,11 +133,21 @@ function App() {
       });
     });
     socket.on('platforms_updated', (data) => {
-      if (Array.isArray(data)) setPlatforms(data);
+      if (Array.isArray(data)) {
+        setPlatforms(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+          return data;
+        });
+      }
     });
 
     socket.on('providers_updated', (data) => {
-      if (Array.isArray(data)) setProviders(data);
+      if (Array.isArray(data)) {
+        setProviders(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+          return data;
+        });
+      }
     });
 
     return () => {
@@ -149,12 +167,22 @@ function App() {
   useEffect(() => {
     fetch(`${SERVER_URL}/api/platforms`)
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data)) setPlatforms(data); })
+      .then(data => { 
+        if (Array.isArray(data)) {
+          setPlatforms(data);
+          setInitialized(prev => ({ ...prev, platforms: true }));
+        }
+      })
       .catch(() => {});
 
     fetch(`${SERVER_URL}/api/providers`)
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data)) setProviders(data); })
+      .then(data => { 
+        if (Array.isArray(data)) {
+          setProviders(data);
+          setInitialized(prev => ({ ...prev, providers: true }));
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -165,23 +193,31 @@ function App() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setAccounts(data);
+          setInitialized(prev => ({ ...prev, inventory: true }));
         } else {
           // Datos de ejemplo si el servidor está vacío en producción
           const fallback = localStorage.getItem('streaming_accounts');
           if (fallback) setAccounts(JSON.parse(fallback));
+          setInitialized(prev => ({ ...prev, inventory: true }));
         }
       })
       .catch(() => {
         // Si el servidor no responde, usamos localStorage como fallback
         const saved = localStorage.getItem('streaming_accounts');
         if (saved) setAccounts(JSON.parse(saved));
+        setInitialized(prev => ({ ...prev, inventory: true }));
       });
   }, []);
 
   // Escuchar actualizaciones de inventario desde el servidor (tiempo real)
   useEffect(() => {
     socket.on('inventory_updated', (data) => {
-      if (Array.isArray(data)) setAccounts(data);
+      if (Array.isArray(data)) {
+        setAccounts(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+          return data;
+        });
+      }
     });
     return () => {
       socket.off('inventory_updated');
@@ -198,14 +234,17 @@ function App() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setSalesHistory(data);
+          setInitialized(prev => ({ ...prev, sales: true }));
         } else {
           const fallback = localStorage.getItem('streaming_sales');
           if (fallback) setSalesHistory(JSON.parse(fallback));
+          setInitialized(prev => ({ ...prev, sales: true }));
         }
       })
       .catch(() => {
         const saved = localStorage.getItem('streaming_sales');
         if (saved) setSalesHistory(JSON.parse(saved));
+        setInitialized(prev => ({ ...prev, sales: true }));
       });
   }, []);
 
@@ -238,27 +277,26 @@ function App() {
 
   // Guardar inventario en servidor + localStorage cada vez que cambia
   useEffect(() => {
-    if (accounts.length === 0 && platforms.length === 0 && providers.length === 0) return; 
+    if (!initialized.inventory) return; 
     
-    if (accounts.length > 0) {
-      localStorage.setItem('streaming_accounts', JSON.stringify(accounts));
-      socket.emit('sync_inventory', accounts);
-    }
+    localStorage.setItem('streaming_accounts', JSON.stringify(accounts));
+    socket.emit('sync_inventory', accounts);
   }, [accounts]);
 
   useEffect(() => {
-    if (platforms.length > 0) socket.emit('sync_platforms', platforms);
+    if (!initialized.platforms) return;
+    socket.emit('sync_platforms', platforms);
   }, [platforms]);
 
   useEffect(() => {
-    if (providers.length > 0) socket.emit('sync_providers', providers);
+    if (!initialized.providers) return;
+    socket.emit('sync_providers', providers);
   }, [providers]);
 
   useEffect(() => {
+    if (!initialized.sales) return;
     localStorage.setItem('streaming_sales', JSON.stringify(salesHistory));
-    if (salesHistory.length > 0) {
-      socket.emit('sync_sales', salesHistory);
-    }
+    socket.emit('sync_sales', salesHistory);
   }, [salesHistory]);
 
   const handleSale = (account, customerId = null, customerName = null) => {
