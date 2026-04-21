@@ -42,19 +42,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
-  const chatArray = Object.entries(chats);
-  const chatSessions = chatArray
+  const chatSessions = Object.entries(chats)
     .map(([id, data], index) => {
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
       
-      let activityTime = data.updatedAt;
-      if (!activityTime && lastMessage) {
-         activityTime = lastMessage.timestampRaw;
-         if (!activityTime && lastMessage.timestamp) {
-            activityTime = parseTimeString(lastMessage.timestamp);
-         }
-      }
+      // Intentar obtener el tiempo más reciente de varias fuentes
+      const updatedAt = Number(data.updatedAt) || 0;
+      const lastMsgTime = lastMessage ? (Number(lastMessage.timestampRaw) || parseTimeString(lastMessage.timestamp)) : 0;
+      
+      // La actividad oficial es el máximo entre el updatedAt del objeto y el tiempo del último mensaje
+      let activityTime = Math.max(updatedAt, lastMsgTime);
+      
+      // Fallback a index si no hay absolutamente ningún tiempo (evita desorden aleatorio)
       if (!activityTime) activityTime = index;
       
       return {
@@ -62,7 +62,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         customerName: data.customerName || 'Cliente sin nombre',
         from: data.from || id,
         tags: data.tags || ['activo'],
-        updatedAt: activityTime,
+        activityTime: activityTime, // Usamos un nombre claro
         lastMessage: lastMessage
       };
     })
@@ -71,7 +71,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       const fromMatch = (chat.from || '').toLowerCase().includes(searchTerm.toLowerCase());
       return nameMatch || fromMatch;
     })
-    .sort((a, b) => b.updatedAt - a.updatedAt);
+    .sort((a, b) => b.activityTime - a.activityTime);
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
