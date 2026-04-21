@@ -329,6 +329,29 @@ app.post('/webhook', async (req, res) => {
                 setTimeout(() => executeDelivery(from, 'auto'), 500);
             }
 
+            if (msg.type === 'image') {
+                const mediaId = msg.image.id;
+                console.log(`📸 Imagen recibida de ${customerName}. Analizando...`);
+                
+                // Analizar en background
+                downloadMetaMedia(mediaId).then(async buffer => {
+                    if (buffer) {
+                        const isReceipt = await analyzeReceipt(buffer);
+                        if (isReceipt) {
+                            lastReceiptFrom = from;
+                            console.log(`✅ Comprobante detectado de ${customerName}.`);
+                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
+                            
+                            // Añadir etiqueta de revisión si no existe
+                            if (!currentChat.tags?.includes('pago-pendiente')) {
+                                currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
+                                saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
+                            }
+                        }
+                    }
+                });
+            }
+
             const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]/gi, '').trim();
             await delay(1500);
             await sendMessageToCloudAPI(from, cleanReply);
@@ -340,6 +363,39 @@ app.post('/webhook', async (req, res) => {
     }
     res.sendStatus(200);
 });
+
+async function downloadMetaMedia(mediaId) {
+    try {
+        const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+        });
+        const data = await response.json();
+        if (!data.url) return null;
+        
+        const mediaRes = await fetch(data.url, {
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+        });
+        return Buffer.from(await mediaRes.arrayBuffer());
+    } catch (err) { console.error('Media download error:', err); return null; }
+}
+
+async function analyzeReceipt(buffer) {
+    if (!openai) return false;
+    try {
+        const base64 = buffer.toString('base64');
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini", // Cambiado a mini por rapidez y costo, soporta visión
+            messages: [
+                { role: "system", content: "Eres un experto en validar comprobantes de transferencia (Nequi, Bancolombia, etc). Responde 'COMPROBANTE_VALIDO' si ves un recibo de pago real, o 'OTRO' si es cualquier otra cosa." },
+                { role: "user", content: [
+                    { type: "text", text: "¿Es esto un comprobante de pago?" },
+                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
+                ]}
+            ]
+        });
+        return response.choices[0].message.content.includes('COMPROBANTE_VALIDO');
+    } catch (err) { console.error('GPT Vision error:', err); return false; }
+}
 
 // --- API & SOCKETS ---
 app.get('/api/inventory', (req, res) => res.json(inventory));
