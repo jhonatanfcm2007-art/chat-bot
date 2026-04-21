@@ -35,6 +35,8 @@ const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
+const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 
 
 // Crear carpeta data si no existe
@@ -131,11 +133,137 @@ function saveSettings(data) {
     }
 }
 
+function loadPlatforms() {
+    try {
+        if (fs.existsSync(PLATFORMS_FILE)) {
+            const raw = fs.readFileSync(PLATFORMS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando plataformas:', err.message);
+    }
+    return [];
+}
+
+function savePlatforms(data) {
+    try {
+        fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando plataformas:', err.message);
+    }
+}
+
+function loadProviders() {
+    try {
+        if (fs.existsSync(PROVIDERS_FILE)) {
+            const raw = fs.readFileSync(PROVIDERS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando proveedores:', err.message);
+    }
+    return [];
+}
+
+function saveProviders(data) {
+    try {
+        fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando proveedores:', err.message);
+    }
+}
+
+function loadPlatforms() {
+    try {
+        if (fs.existsSync(PLATFORMS_FILE)) {
+            const raw = fs.readFileSync(PLATFORMS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando plataformas:', err.message);
+    }
+    return [];
+}
+
+function savePlatforms(data) {
+    try {
+        fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando plataformas:', err.message);
+    }
+}
+
+function loadProviders() {
+    try {
+        if (fs.existsSync(PROVIDERS_FILE)) {
+            const raw = fs.readFileSync(PROVIDERS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando proveedores:', err.message);
+    }
+    return [];
+}
+
+function saveProviders(data) {
+    try {
+        fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando proveedores:', err.message);
+    }
+}
+
+function loadPlatforms() {
+    try {
+        if (fs.existsSync(PLATFORMS_FILE)) {
+            const raw = fs.readFileSync(PLATFORMS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando plataformas:', err.message);
+    }
+    return [];
+}
+
+function savePlatforms(data) {
+    try {
+        fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando plataformas:', err.message);
+    }
+}
+
+function loadProviders() {
+    try {
+        if (fs.existsSync(PROVIDERS_FILE)) {
+            const raw = fs.readFileSync(PROVIDERS_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (err) {
+        console.error('❌ Error cargando proveedores:', err.message);
+    }
+    return [];
+}
+
+function saveProviders(data) {
+    try {
+        fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('❌ Error guardando proveedores:', err.message);
+    }
+}
+
 // Cargar datos al iniciar el servidor
 let inventory = loadInventory();
 let sales = loadSales();
 let chats = loadChats();
 let settings = loadSettings();
+let platforms = loadPlatforms();
+let providers = loadProviders();
+let platforms = loadPlatforms();
+let providers = loadProviders();
+let platforms = loadPlatforms();
+let providers = loadProviders();
 
 // Helper function for random delay
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -203,6 +331,7 @@ app.post('/webhook', async (req, res) => {
                 
                 const history = chats[from].messages.slice(-10); // Tomar solo los últimos 10 para ahorrar tokens de ChatGPT
                 chats[from].messages.push({ ...messageData, content: msgBody });
+                chats[from].updatedAt = Date.now();
                 saveChats(chats);
 
                 io.emit('message', messageData);
@@ -249,6 +378,7 @@ app.post('/webhook', async (req, res) => {
 
                 // Persistir respuesta del bot
                 chats[from].messages.push({ ...botMsgData, content: aiReply });
+                chats[from].updatedAt = Date.now();
                 saveChats(chats);
 
                 io.emit('message', botMsgData);
@@ -371,6 +501,12 @@ io.on('connection', (socket) => {
     socket.emit('sales_updated', sales);
     socket.emit('initial_chats', chats);
     socket.emit('initial_settings', settings);
+    socket.emit('platforms_updated', platforms);
+    socket.emit('providers_updated', providers);
+    socket.emit('platforms_updated', platforms);
+    socket.emit('providers_updated', providers);
+    socket.emit('platforms_updated', platforms);
+    socket.emit('providers_updated', providers);
 
     // Configuración de la IA
     socket.on('sync_settings', (data) => {
@@ -406,6 +542,42 @@ io.on('connection', (socket) => {
         io.emit('sales_updated', sales);
     });
 
+    socket.on('sync_platforms', (data) => {
+        platforms = data;
+        savePlatforms(platforms);
+        io.emit('platforms_updated', platforms);
+    });
+
+    socket.on('sync_providers', (data) => {
+        providers = data;
+        saveProviders(providers);
+        io.emit('providers_updated', providers);
+    });
+
+    socket.on('sync_platforms', (data) => {
+        platforms = data;
+        savePlatforms(platforms);
+        io.emit('platforms_updated', platforms);
+    });
+
+    socket.on('sync_providers', (data) => {
+        providers = data;
+        saveProviders(providers);
+        io.emit('providers_updated', providers);
+    });
+
+    socket.on('sync_platforms', (data) => {
+        platforms = data;
+        savePlatforms(platforms);
+        io.emit('platforms_updated', platforms);
+    });
+
+    socket.on('sync_providers', (data) => {
+        providers = data;
+        saveProviders(providers);
+        io.emit('providers_updated', providers);
+    });
+
     socket.on('send_message', async ({ to, content }) => {
         try {
             await sendMessageToCloudAPI(to, content);
@@ -422,6 +594,7 @@ io.on('connection', (socket) => {
             // Persistir mensaje manual
             if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
             chats[to].messages.push({ ...msgData, content });
+            chats[to].updatedAt = Date.now();
             saveChats(chats);
 
             io.emit('message', msgData);

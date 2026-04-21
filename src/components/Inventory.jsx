@@ -173,21 +173,21 @@ const Inventory = ({ accounts, setAccounts, onSale }) => {
         <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-xl group">
           <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-outline-variant">
             {/* Main Stats Header */}
-            <div className="p-6 md:p-10 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[320px] relative overflow-hidden">
+            <div className="py-2.5 px-6 md:py-4 md:px-10 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[320px] relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                <div className="relative z-10">
-                 <div className="flex items-center gap-4 mb-2 md:mb-3">
-                   <div className="w-10 h-10 md:w-12 md:h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                     <span className="material-symbols-outlined text-xl md:text-2xl">inventory_2</span>
+                 <div className="flex items-center gap-3 mb-1 md:mb-1.5">
+                   <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                     <span className="material-symbols-outlined text-base md:text-lg">inventory_2</span>
                    </div>
-                   <h2 className="text-white font-black text-xl md:text-2xl tracking-tight leading-none uppercase">Stock Real</h2>
+                   <h2 className="text-white font-black text-lg md:text-xl tracking-tight leading-none uppercase">Stock Real</h2>
                  </div>
                  <p className="text-[9px] md:text-[10px] text-panel-on-bg/40 font-black uppercase tracking-[0.2em]">Cálculo dinámico de cupos</p>
                </div>
             </div>
 
             {/* Platform Grid Area */}
-            <div className="flex-grow p-6 md:p-10 bg-white grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="flex-grow py-2.5 px-6 md:py-4 md:px-10 bg-white grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {Object.entries(statsByService).length > 0 ? (
                 Object.entries(statsByService).map(([key, data]) => (
                   <div key={key} className="flex flex-col gap-1 md:gap-2">

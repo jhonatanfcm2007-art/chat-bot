@@ -112,6 +112,7 @@ function App() {
           ...prev,
           [chatId]: {
             ...chatData,
+            updatedAt: Date.now(),
             messages: [...chatData.messages, { 
               ...msg, 
               content: msg.body, 
@@ -260,6 +261,7 @@ function App() {
         ...prev,
         [to]: {
           ...prev[to],
+          updatedAt: Date.now(),
           messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString() }]
         }
       };

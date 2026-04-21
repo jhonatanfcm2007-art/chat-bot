@@ -24,8 +24,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const chatSessions = Object.entries(chats).map(([id, data]) => ({
     ...data,
     from: data.from || id,
-    tags: data.tags || ['activo'] // Default tag if none
-  }));
+    tags: data.tags || ['activo'], // Default tag if none
+    updatedAt: data.updatedAt || 0
+  })).sort((a, b) => b.updatedAt - a.updatedAt);
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
@@ -73,7 +74,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       {/* 1. Chat List Sidebar (Left Column) */}
       <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-panel-bg relative z-10 border-r border-outline-variant/10 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-          <h3 className="font-headline font-black text-xl text-white tracking-tight">CRM Chats</h3>
+          <h3 className="font-headline font-black text-xl text-white tracking-tight">Chats</h3>
           <div className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center cursor-pointer hover:bg-primary transition-all shadow-sm">
             <span className="material-symbols-outlined text-xl">filter_list</span>
           </div>
@@ -112,7 +113,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       <h4 className={`font-bold truncate text-[13px] tracking-tight ${selectedChat === chat.from ? 'text-white' : 'text-white/90'}`}>
                         {chat.customerName}
                       </h4>
-                      <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${selectedChat === chat.from ? 'text-white/60' : 'text-white/20'}`}>Ayer</span>
+                      <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${selectedChat === chat.from ? 'text-white/60' : 'text-white/20'}`}>
+                        {chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                      </span>
                     </div>
                     {/* Injecting the Tag below name */}
                     <div className="flex items-center gap-2 mt-1">

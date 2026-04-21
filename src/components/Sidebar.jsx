@@ -4,7 +4,7 @@ const Sidebar = ({ activeTab, onTabChange }) => {
   const menuItems = [
     { id: 'inventory', icon: 'inventory_2', label: 'Inventario' },
 
-    { id: 'simulator', icon: 'chat', label: 'Simulador' },
+    { id: 'simulator', icon: 'chat', label: 'Chats' },
     { id: 'ai_assistant', icon: 'psychology', label: 'Asistente IA' },
     { id: 'analytics', icon: 'monitoring', label: 'Analítica' },
   ];
