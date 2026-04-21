@@ -204,40 +204,34 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       </div>
 
       {/* Summary Dashboard */}
-      <div className="grid grid-cols-1 gap-6 mb-8 md:mb-10">
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-outline-variant shadow-sm overflow-hidden transition-all duration-500 hover:shadow-md group">
-          <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-outline-variant">
-            {/* Main Stats Header */}
-            <div className="py-2.5 px-6 md:py-3 md:px-8 bg-panel-bg flex flex-col justify-center min-w-full md:min-w-[200px] relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-               <div className="relative z-10">
-                 <div className="flex items-center gap-2">
-                   <div className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                     <span className="material-symbols-outlined text-base">inventory_2</span>
-                   </div>
-                   <h2 className="text-white font-black text-lg tracking-tight leading-none uppercase">Stock</h2>
-                 </div>
-               </div>
+      <div className="mb-8 md:mb-10 w-full overflow-hidden">
+        <div className="bg-white rounded-full border border-outline-variant shadow-sm flex items-center h-12 md:h-14 overflow-hidden">
+          {/* Main Stats Header */}
+          <div className="bg-panel-bg h-full flex items-center px-5 md:px-8 relative z-10 border-r border-outline-variant/20 flex-shrink-0">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="relative z-10 flex items-center gap-2.5">
+              <div className="w-6 h-6 md:w-7 md:h-7 bg-primary text-white rounded-[6px] md:rounded-[8px] flex items-center justify-center shadow-lg shadow-primary/20">
+                <span className="material-symbols-outlined text-[13px] md:text-[15px]">inventory_2</span>
+              </div>
+              <h2 className="text-white font-black text-sm md:text-base tracking-tight uppercase leading-none mt-0.5">Stock</h2>
             </div>
+          </div>
 
-            {/* Platform Bubbles Area */}
-            <div className="flex-grow py-3 px-6 md:px-8 bg-white flex flex-wrap gap-2 items-center">
-              {Object.entries(statsByService).length > 0 ? (
-                Object.entries(statsByService).map(([key, data]) => (
-                  <div key={key} className="flex items-center gap-2 bg-secondary-bg border border-outline-variant/30 rounded-full pl-3 pr-1 py-1 hover:bg-background transition-colors">
-                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">{data.displayName}</span>
-                    <div className="bg-primary text-white text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
-                      {data.totalSlots}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-2 text-on-surface-variant/40">
-                  <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
-                  <p className="text-[10px] font-bold uppercase tracking-widest">Sincronizando...</p>
+          {/* Platform Bubbles Area */}
+          <div className="flex-grow h-full bg-white flex gap-3 md:gap-4 items-center px-4 md:px-6 overflow-x-auto scrollbar-hide">
+            {Object.entries(statsByService).length > 0 ? (
+              Object.entries(statsByService).map(([key, data]) => (
+                <div key={key} className="flex items-center gap-1.5 flex-shrink-0 border border-outline-variant rounded-full px-3 md:px-4 py-1 hover:bg-secondary-bg transition-colors">
+                  <span className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{data.displayName}</span>
+                  <span className="text-[11px] md:text-[13px] font-black text-primary leading-none mt-[1px]">{data.totalSlots}</span>
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="flex items-center gap-2 text-on-surface-variant/40 flex-shrink-0 pl-2">
+                <span className="material-symbols-outlined text-[14px] animate-spin">refresh</span>
+                <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">Sincronizando...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
