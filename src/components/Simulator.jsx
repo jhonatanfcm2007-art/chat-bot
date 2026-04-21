@@ -137,7 +137,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         {chat.customerName}
                       </h4>
                       <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${selectedChat === chat.from ? 'text-white/60' : 'text-white/20'}`}>
-                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) : '---'}
                       </span>
                     </div>
                     

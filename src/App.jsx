@@ -336,7 +336,7 @@ function App() {
         [to]: {
           ...prev[to],
           updatedAt: Date.now(),
-          messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString(), timestampRaw: Date.now() }]
+          messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() }]
         }
       };
     });

@@ -237,7 +237,7 @@ app.post('/webhook', async (req, res) => {
                     from: from,
                     customerName: customerName,
                     body: msgBody,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
                     timestampRaw: Date.now(),
                     isMe: false,
                     role: 'user'
@@ -287,7 +287,7 @@ app.post('/webhook', async (req, res) => {
                     from: from,
                     customerName: 'Bot',
                     body: aiReply,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
                     timestampRaw: Date.now(),
                     isMe: true,
                     role: 'bot',
@@ -506,7 +506,7 @@ io.on('connection', (socket) => {
                 from: to,
                 customerName: 'Yo',
                 body: content,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }),
                 timestampRaw: Date.now(),
                 isMe: true,
                 role: 'bot'
