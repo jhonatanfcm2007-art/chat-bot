@@ -388,17 +388,23 @@ app.post('/webhook', async (req, res) => {
                     const base64Image = Buffer.from(imageBuffer).toString('base64');
                     const mimeType = msg.image.mime_type || 'image/jpeg';
 
-                    // 3. Enviar a GPT-4o para análisis
+                    // 3. Enviar a GPT-4o para análisis + contexto de conversación
                     if (openai) {
+                        // Incluir los últimos 6 mensajes del chat como contexto
+                        const recentMsgs = (chats[from]?.messages || []).slice(-6);
+                        const chatContext = recentMsgs.length > 0
+                            ? 'Conversación reciente:\n' + recentMsgs.map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content || m.body}`).join('\n')
+                            : 'Sin conversación previa.';
+
                         const visionResponse = await openai.chat.completions.create({
                             model: 'gpt-4o',
-                            max_tokens: 100,
+                            max_tokens: 150,
                             messages: [{
                                 role: 'user',
                                 content: [
                                     {
                                         type: 'text',
-                                        text: 'Analiza esta imagen. ¿Es un comprobante de pago bancario, transferencia o Nequi/Daviplata? Responde EXACTAMENTE en este formato:\nRESULTADO: COMPROBANTE o NO_COMPROBANTE\nMONTO: (número sin puntos ni símbolos, o DESCONOCIDO si no se ve)'
+                                        text: `${chatContext}\n\nAhora analiza la imagen adjunta. ¿Es un comprobante de pago bancario, transferencia o Nequi/Daviplata? Basándote en la conversación, ¿qué producto(s) está pagando el cliente?\n\nResponde EXACTAMENTE en este formato (sin texto adicional):\nRESULTADO: COMPROBANTE o NO_COMPROBANTE\nMONTO: (número entero sin puntos ni símbolos, o DESCONOCIDO)\nPRODUCTOS: (nombre(s) del producto separados por coma, o DESCONOCIDO)`
                                     },
                                     {
                                         type: 'image_url',
@@ -414,6 +420,17 @@ app.post('/webhook', async (req, res) => {
                         isReceipt = visionText.includes('COMPROBANTE') && !visionText.includes('NO_COMPROBANTE');
                         const montoMatch = visionText.match(/MONTO:\s*(\d+)/);
                         if (montoMatch) detectedAmount = parseInt(montoMatch[1]);
+
+                        // Extraer productos detectados por la IA desde el contexto
+                        const productosMatch = visionText.match(/PRODUCTOS:\s*(.+)/);
+                        if (productosMatch && !productosMatch[1].includes('DESCONOCIDO')) {
+                            const inferredProducts = productosMatch[1].split(',').map(p => p.trim()).filter(Boolean);
+                            if (inferredProducts.length > 0 && (!chats[from]?.pendingProducts || chats[from].pendingProducts.length === 0)) {
+                                if (!chats[from]) chats[from] = { from, customerName, messages: [] };
+                                chats[from].pendingProducts = inferredProducts;
+                                saveChats(chats);
+                            }
+                        }
                     }
                 } catch (imgErr) {
                     console.error('❌ Error analizando imagen con GPT-4o:', imgErr.message);
@@ -428,21 +445,13 @@ app.post('/webhook', async (req, res) => {
 
                     // Notificar al admin con toda la información posible
                     if (ADMIN_PHONE) {
-                        // 1. Obtener productos: desde pendingProducts o inferir del historial
-                        let productsToShow = chats[from]?.pendingProducts;
-                        if (!Array.isArray(productsToShow) || productsToShow.length === 0) {
-                            const recentMsgs = (chats[from]?.messages || []).slice(-20);
-                            const allText = recentMsgs.map(m => (m.content || m.body || '')).join(' ').toLowerCase();
-                            productsToShow = inventory
-                                .filter(a => allText.includes(a.service.toLowerCase()))
-                                .map(a => a.service)
-                                .filter((v, i, arr) => arr.indexOf(v) === i);
-                        }
-                        const productsText = productsToShow && productsToShow.length > 0
+                        // Productos: desde pendingProducts (ya seteados por la IA de visión o el prompt)
+                        const productsToShow = chats[from]?.pendingProducts;
+                        const productsText = Array.isArray(productsToShow) && productsToShow.length > 0
                             ? productsToShow.join(' + ')
                             : '⚠️ No detectado (revisa el chat)';
 
-                        // 2. Comparar monto detectado vs. esperado
+                        // Comparar monto detectado vs. esperado
                         const expectedTotal = chats[from]?.pendingTotal ? parseInt(chats[from].pendingTotal) : null;
                         let montoLine = `💰 *Monto en imagen:* $${detectedAmount ? detectedAmount.toLocaleString('es-CO') : 'No visible'}`;
                         let alertLine = '';
@@ -451,7 +460,7 @@ app.post('/webhook', async (req, res) => {
                             if (detectedAmount < expectedTotal) {
                                 alertLine = `\n⚠️ *ALERTA: MONTO INSUFICIENTE* — Pagó $${detectedAmount.toLocaleString('es-CO')} pero el total es $${expectedTotal.toLocaleString('es-CO')}. Verifica antes de aprobar.`;
                             } else if (detectedAmount > expectedTotal) {
-                                alertLine = `\n✅ Monto correcto (pagó de más — considera si hay cambio).`;
+                                alertLine = `\n✅ Monto correcto (pagó de más).`;
                             } else {
                                 alertLine = `\n✅ *Monto coincide exactamente con el total.*`;
                             }
