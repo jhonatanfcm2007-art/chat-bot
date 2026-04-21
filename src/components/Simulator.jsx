@@ -21,6 +21,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     setInputValue('');
   };
 
+  const activeChatData = selectedChat ? chats[selectedChat] : null;
+  
   const chatSessions = Object.entries(chats)
     .map(([id, data]) => {
       const messages = data.messages || [];
@@ -30,16 +32,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       
       return {
         ...data,
+        customerName: data.customerName || 'Cliente sin nombre',
         from: data.from || id,
         tags: data.tags || ['activo'],
         updatedAt: activityTime,
         lastMessage: lastMessage
       };
     })
-    .filter(chat => 
-      chat.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      chat.from.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(chat => {
+      const nameMatch = (chat.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const fromMatch = (chat.from || '').toLowerCase().includes(searchTerm.toLowerCase());
+      return nameMatch || fromMatch;
+    })
     .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
