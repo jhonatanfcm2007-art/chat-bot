@@ -436,9 +436,9 @@ app.post('/webhook', async (req, res) => {
                         sendMessageToCloudAPI(ADMIN_PHONE, `🔔 *COMPROBANTE DETECTADO* (verificado por IA)\n\n👤 *Cliente:* ${customerName}\n💰 *Monto en imagen:* $${detectedAmount ? detectedAmount.toLocaleString('es-CO') : '¿?'}\n📦 *Cuentas:* ${productsText}\n\nEscribe *apruebo* para entregar automáticamente.`);
                     }
                 } else {
-                    // No es comprobante, tratar como imagen normal
-                    msgBody = '[IMAGEN RECIBIDA] El cliente envió una imagen.';
-                    console.log('🖼️ Imagen analizada: NO es comprobante de pago.');
+                    // No es comprobante: indicarle a la IA que pida el comprobante real
+                    msgBody = '[IMAGEN NO VÁLIDA] El cliente envió una imagen que NO es un comprobante de pago bancario o transferencia. Indícale amablemente que esa imagen no es un comprobante válido y pídele que envíe el comprobante de pago real (captura de Nequi, Bancolombia, Daviplata, etc.) para proceder con la entrega de su cuenta.';
+                    console.log('🖼️ Imagen analizada: NO es comprobante de pago. Pidiendo comprobante real.');
                 }
             } else if (msg.type === 'text') {
                 msgBody = msg.text.body;
