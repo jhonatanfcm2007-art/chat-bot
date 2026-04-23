@@ -476,6 +476,11 @@ io.on('connection', (socket) => {
     socket.emit('providers_updated', providers);
 
     socket.on('sync_settings', (data) => { settings = data; saveSettings(settings); });
+    socket.on('sync_inventory', (data) => { inventory = data; saveInventory(inventory); socket.broadcast.emit('inventory_updated', inventory); });
+    socket.on('sync_sales', (data) => { sales = data; saveSales(sales); socket.broadcast.emit('sales_updated', sales); });
+    socket.on('sync_platforms', (data) => { platforms = data; savePlatforms(platforms); socket.broadcast.emit('platforms_updated', platforms); });
+    socket.on('sync_providers', (data) => { providers = data; saveProviders(providers); socket.broadcast.emit('providers_updated', providers); });
+    
     socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history)));
     socket.on('update_chat_tags', ({ chatId, tags }) => { if (chats[chatId]) { chats[chatId].tags = tags; saveChats(chats); io.emit('tag_updated', { from: chatId, tags }); } });
     socket.on('send_message', async ({ to, content }) => {
