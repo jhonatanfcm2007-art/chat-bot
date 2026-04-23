@@ -9,11 +9,11 @@ const Header = ({ notifications = [], onNotificationClick, onClearNotifications 
 
 
   return (
-    <header className="bg-surface/80 backdrop-blur-xl flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-slate-200">
+    <header className="bg-surface/80 backdrop-blur-xl flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-white/5">
       <div className="flex items-center gap-8">
         <span className="text-xl font-black tracking-widest text-primary hidden md:block uppercase">Admin <span className="text-on-surface">Vault</span></span>
 
-        <div className="hidden md:flex items-center bg-slate-100 border border-slate-200 px-5 py-2.5 rounded-2xl gap-3 group focus-within:border-primary/30 transition-all">
+        <div className="hidden md:flex items-center bg-white/5 border border-white/5 px-5 py-2.5 rounded-2xl gap-3 group focus-within:border-primary/30 transition-all">
           <span className="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors text-xl">search</span>
           <input 
             className="bg-transparent border-none focus:ring-0 text-sm text-on-surface w-64 px-0 placeholder:text-on-surface-variant/40" 
@@ -28,8 +28,8 @@ const Header = ({ notifications = [], onNotificationClick, onClearNotifications 
           onClick={toggleDropdown}
           className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${
             notifications.length > 0 
-            ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' 
-            : 'bg-slate-100 text-on-surface-variant border-slate-200 hover:text-primary hover:border-primary/20 shadow-sm'
+            ? 'bg-primary/20 text-primary border-primary/20 hover:bg-primary/30' 
+            : 'bg-white/5 text-on-surface-variant border-white/5 hover:text-primary hover:border-primary/20 shadow-sm'
           }`}
         >
           <span className="material-symbols-outlined text-[22px]">
@@ -44,8 +44,8 @@ const Header = ({ notifications = [], onNotificationClick, onClearNotifications 
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div className="absolute top-14 right-0 w-80 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div className="absolute top-14 right-0 w-80 bg-surface/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/5 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
+            <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
               <h4 className="font-black text-on-surface tracking-tight text-sm uppercase">Alert Center</h4>
               {notifications.length > 0 && (
                 <button onClick={onClearNotifications} className="text-[10px] uppercase tracking-widest font-black text-primary hover:text-error transition-colors">
@@ -69,7 +69,7 @@ const Header = ({ notifications = [], onNotificationClick, onClearNotifications 
                         onNotificationClick(notif);
                         setIsDropdownOpen(false);
                       }}
-                      className="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors flex gap-4 items-start last:border-b-0"
+                      className="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors flex gap-4 items-start last:border-b-0"
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
                         notif.type === 'human' ? 'bg-error/10 text-error border border-error/20' : 'bg-primary/10 text-primary border border-primary/20'
@@ -90,10 +90,10 @@ const Header = ({ notifications = [], onNotificationClick, onClearNotifications 
             </div>
           </div>
         )}
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-100 text-on-surface-variant border border-slate-200 hover:text-primary hover:border-primary/20 transition-all">
+        <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 text-on-surface-variant border border-white/5 hover:text-primary hover:border-primary/20 transition-all">
            <span className="material-symbols-outlined text-[20px]">help_outline</span>
         </button>
-        <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 p-0.5 bg-white shadow-sm">
+        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 p-0.5 bg-white/5 shadow-sm">
           <img 
             alt="Administrator Avatar" 
             className="w-full h-full object-cover rounded-lg" 

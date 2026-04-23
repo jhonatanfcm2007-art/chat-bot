@@ -1,19 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0d9488; /* Teal 600 - More contrast on light */
-  --color-on-primary: #ffffff;
-  --color-secondary-bg: #f1f5f9; /* Slate 100 */
-  --color-surface: #ffffff; /* White */
-  --color-on-surface: #0f172a; /* Slate 900 */
-  --color-on-surface-variant: #64748b; /* Slate 500 */
-  --color-outline-variant: #e2e8f0; /* Slate 200 */
-  --color-background: #f8fafc; /* Slate 50 */
-  --color-tertiary: #7c3aed; /* Violet 600 */
-  --color-error: #e11d48; /* Rose 600 */
+  --color-primary: #fbbf24; /* Amber 400 - Accents from reference */
+  --color-on-primary: #0f172a;
+  --color-secondary-bg: #1e293b; /* Slate 800 */
+  --color-surface: #0f172a; /* Deep Slate */
+  --color-on-surface: #f8fafc; /* Slate 50 */
+  --color-on-surface-variant: #94a3b8; /* Slate 400 */
+  --color-outline-variant: #334155; /* Slate 700 */
+  --color-background: #020617; /* Deepest Blue/Black */
+  --color-tertiary: #2dd4bf; /* Teal 400 */
+  --color-error: #f43f5e; /* Rose 500 */
 
-  --color-panel-bg: #ffffff; 
-  --color-panel-on-bg: #0f172a;
+  --color-panel-bg: #0b0e14; 
+  --color-panel-on-bg: #f8fafc;
+
+  --color-chat-bubble-user: #1e293b;
+  --color-chat-bubble-agent-start: #6366f1; /* Indigo 500 */
+  --color-chat-bubble-agent-end: #a855f7;   /* Purple 500 */
 
   --font-headline: "Manrope", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -22,18 +26,23 @@
 @layer base {
   body {
     @apply bg-background text-on-surface font-body antialiased;
-    background-image: radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.05) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, rgba(251, 191, 36, 0.03) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(45, 212, 191, 0.03) 0px, transparent 50%);
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.05)];
+    @apply bg-surface/80 backdrop-blur-3xl border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)];
   }
   
   .glass-card {
-    @apply bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)];
+    @apply bg-white/5 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+
+  .hex-pattern {
+    background-color: #020617;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%231e293b' fill-opacity='0.2' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9l11-6.35 11 6.35V30.6l-11 6.35-11-6.35V17.9zm0 31.27l11-6.34 11 6.34V55.8l-11 6.35-11-6.35V49.17zM0 4.54l1.4-2.42 11 6.35 11-6.35L24.8 4.54 13.8 10.88.8 4.54zm27.6 42.53l-1.4 2.42-11-6.35-11 6.35L1.4 47.07l11-6.34 11 6.34z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 }
 

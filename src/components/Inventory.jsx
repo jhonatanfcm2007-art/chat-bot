@@ -26,6 +26,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   const [showCustomProvider, setShowCustomProvider] = useState(false);
   const [showCustomProfile, setShowCustomProfile] = useState(false);
 
+  const [newPlatformInput, setNewPlatformInput] = useState('');
+  const [newProviderInput, setNewProviderInput] = useState('');
+
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
 
@@ -150,6 +153,20 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     }
   };
 
+  const handleAddPlatform = () => {
+    if (newPlatformInput.trim() && !platforms.includes(newPlatformInput.trim())) {
+      setPlatforms([...platforms, newPlatformInput.trim()]);
+      setNewPlatformInput('');
+    }
+  };
+
+  const handleAddProvider = () => {
+    if (newProviderInput.trim() && !providers.includes(newProviderInput.trim())) {
+      setProviders([...providers, newProviderInput.trim()]);
+      setNewProviderInput('');
+    }
+  };
+
   // Metrics calculation
   const totalAvailableAccounts = accounts.filter(a => a.status === 'Available').length;
   const totalAvailableSlots = accounts
@@ -207,13 +224,13 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       <div className="mb-10 w-full overflow-hidden">
         <div className="glass rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden">
           {/* Main Stats Header */}
-          <div className="bg-slate-50 h-full flex items-center px-6 md:px-10 relative z-10 border-r border-slate-100 flex-shrink-0">
+          <div className="bg-[#0b0e14] h-full flex items-center px-6 md:px-10 relative z-10 border-r border-white/5 flex-shrink-0">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             <div className="relative z-10 flex items-center gap-3">
-              <div className="w-8 h-8 md:w-9 md:h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/10 shadow-sm">
+              <div className="w-8 h-8 md:w-9 md:h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
                 <span className="material-symbols-outlined text-lg md:text-xl">database</span>
               </div>
-              <h2 className="text-on-surface font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Real Stock</h2>
+              <h2 className="text-white font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Real Stock</h2>
             </div>
           </div>
 
@@ -221,10 +238,10 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           <div className="flex-grow h-full flex gap-4 md:gap-5 items-center px-6 md:px-8 overflow-x-auto custom-scrollbar scrollbar-hide">
             {Object.entries(statsByService).length > 0 ? (
               Object.entries(statsByService).map(([key, data]) => (
-                <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-white border border-slate-100 rounded-2xl px-5 py-2 hover:bg-slate-50 hover:border-primary/20 transition-all cursor-default group shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(13,148,136,0.3)] group-hover:scale-125 transition-transform"></span>
+                <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-white/5 border border-white/5 rounded-2xl px-5 py-2 hover:bg-white/10 hover:border-primary/20 transition-all cursor-default group shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] group-hover:scale-125 transition-transform"></span>
                   <span className="text-[10px] md:text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-80 group-hover:opacity-100">{data.displayName}</span>
-                  <span className="text-sm md:text-base font-black text-on-surface leading-none ml-1">{data.totalSlots}</span>
+                  <span className="text-sm md:text-base font-black text-white leading-none ml-1">{data.totalSlots}</span>
                 </div>
               ))
             ) : (
@@ -239,15 +256,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 p-10 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-[#0b0e14]/95 backdrop-blur-3xl w-full max-w-md rounded-[2.5rem] shadow-2xl border border-white/5 p-10 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-on-surface tracking-tight">
                 {editingAccount ? 'Update Account' : 'Register Service'}
               </h2>
               <button 
                 onClick={closeModal}
-                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-100"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
               >
                 <span className="material-symbols-outlined text-on-surface opacity-60 hover:opacity-100">close</span>
               </button>
@@ -460,23 +477,40 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   <span className="material-symbols-outlined text-lg">category</span>
                   Platforms
                 </h3>
-                <div className="space-y-3">
-                  {platforms.map(platform => (
-                    <div key={platform} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
-                      <input 
-                        type="text"
-                        defaultValue={platform}
-                        onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
-                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
-                      />
-                      <button 
-                        onClick={() => handleDeletePlatform(platform)}
-                        className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
-                      >
-                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                      </button>
-                    </div>
-                  ))}
+                  <div className="flex gap-2 mb-4 bg-primary/5 p-2 rounded-2xl border border-dashed border-primary/20 group focus-within:border-primary/40 transition-all">
+                    <input 
+                      type="text"
+                      placeholder="Add Platform..."
+                      value={newPlatformInput}
+                      onChange={(e) => setNewPlatformInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddPlatform()}
+                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 placeholder:text-white/20"
+                    />
+                    <button 
+                      onClick={handleAddPlatform}
+                      className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
+                    >
+                      <span className="material-symbols-outlined text-lg">add</span>
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {platforms.map(platform => (
+                      <div key={platform} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
+                        <input 
+                          type="text"
+                          defaultValue={platform}
+                          onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
+                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
+                        />
+                        <button 
+                          onClick={() => handleDeletePlatform(platform)}
+                          className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete_sweep</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -486,23 +520,40 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   <span className="material-symbols-outlined text-lg">group</span>
                   Suppliers
                 </h3>
-                <div className="space-y-3">
-                  {providers.map(provider => (
-                    <div key={provider} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
-                      <input 
-                        type="text"
-                        defaultValue={provider}
-                        onBlur={(e) => handleEditProviderName(provider, e.target.value)}
-                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
-                      />
-                      <button 
-                        onClick={() => handleDeleteProvider(provider)}
-                        className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
-                      >
-                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                      </button>
-                    </div>
-                  ))}
+                  <div className="flex gap-2 mb-4 bg-tertiary/5 p-2 rounded-2xl border border-dashed border-tertiary/20 group focus-within:border-tertiary/40 transition-all">
+                    <input 
+                      type="text"
+                      placeholder="Add Supplier..."
+                      value={newProviderInput}
+                      onChange={(e) => setNewProviderInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddProvider()}
+                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 placeholder:text-white/20"
+                    />
+                    <button 
+                      onClick={handleAddProvider}
+                      className="w-10 h-10 bg-tertiary/20 text-tertiary rounded-xl flex items-center justify-center hover:bg-tertiary/30 transition-all border border-tertiary/20"
+                    >
+                      <span className="material-symbols-outlined text-lg">add</span>
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {providers.map(provider => (
+                      <div key={provider} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
+                        <input 
+                          type="text"
+                          defaultValue={provider}
+                          onBlur={(e) => handleEditProviderName(provider, e.target.value)}
+                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
+                        />
+                        <button 
+                          onClick={() => handleDeleteProvider(provider)}
+                          className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete_sweep</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -519,16 +570,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         </div>
       )}
 
-      <div className="space-y-6">
-        {/* Mobile View */}
+      <div         {/* Mobile View */}
         <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
-            <div key={acc.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/20 transition-all">
-               <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-primary group-hover:w-2' : 'bg-on-surface-variant/20'}`}></div>
+            <div key={acc.id} className="bg-[#0f172a]/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
+               <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-primary group-hover:w-2' : 'bg-on-surface-variant/10'}`}></div>
                
                <div className="flex justify-between items-start mb-6">
                  <div className="flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-on-surface-variant/40 group-hover:text-primary transition-colors">
+                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant/40 group-hover:text-primary transition-colors">
                      <span className="material-symbols-outlined text-2xl font-light">devices</span>
                    </div>
                    <div>
@@ -537,10 +587,10 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                    </div>
                  </div>
                  <div className="text-right">
-                    <p className="text-xl font-black text-on-surface tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <p className="text-xl font-black text-white tracking-tighter">${acc.price.toLocaleString()}</p>
                     <div className="flex justify-end mt-2">
                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border transition-all ${
-                        acc.status === 'Available' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-100 text-on-surface-variant border-slate-200'
+                        acc.status === 'Available' ? 'bg-primary/20 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
                       }`}>
                         {acc.status === 'Available' ? 'Ready' : 'Archived'}
                       </span>
@@ -548,17 +598,17 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                  </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-6 py-6 border-y border-slate-100 mb-6 bg-slate-50/50 rounded-2xl px-6">
+               <div className="grid grid-cols-2 gap-6 py-6 border-y border-white/5 mb-6 bg-white/5 rounded-2xl px-6">
                  <div>
-                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-50">Identity</span>
-                   <p className="text-[11px] font-bold text-on-surface truncate opacity-90">{acc.email}</p>
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identity</span>
+                   <p className="text-[11px] font-bold text-white truncate opacity-90">{acc.email}</p>
                    <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">{acc.pass}</p>
                  </div>
                  <div className="text-right flex flex-col justify-center">
-                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-50">Slots</span>
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Slots</span>
                    <div className="flex items-center justify-end gap-2.5">
-                     <span className="text-2xl font-black text-on-surface leading-none">{acc.uses}</span>
-                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(13,148,136,0.3)] animate-pulse' : 'bg-slate-200'}`}></span>
+                     <span className="text-2xl font-black text-white leading-none">{acc.uses}</span>
+                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] animate-pulse' : 'bg-white/10'}`}></span>
                    </div>
                  </div>
                </div>
@@ -568,7 +618,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                    onClick={() => onSale(acc)}
                    disabled={acc.uses <= 0}
                    className={`flex-grow flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
-                     acc.uses > 0 ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02]' : 'bg-slate-100 text-on-surface-variant/20 cursor-not-allowed border border-slate-200'
+                     acc.uses > 0 ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02]' : 'bg-white/5 text-white/10 cursor-not-allowed border border-white/5'
                    }`}
                  >
                    <span className="material-symbols-outlined text-lg">shopping_bag</span>
@@ -576,18 +626,20 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                  </button>
                  <button 
                    onClick={() => handleEditAccount(acc)}
-                   className="w-14 h-14 bg-slate-50 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-on-surface hover:bg-slate-100 border border-slate-200 transition-all"
+                   className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-white hover:bg-white/10 border border-white/5 transition-all"
                  >
                    <span className="material-symbols-outlined text-xl">edit</span>
                  </button>
                </div>
             </div>
           ))}
+        </div>
+     ))}
         </div>          {/* Desktop View */}
-        <div className="hidden md:block bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="hidden md:block bg-[#0f172a]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
+              <tr className="bg-[#0b0e14] border-b border-white/5">
                 <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Platform</th>
                 <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Profile</th>
                 <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Identity</th>
@@ -598,44 +650,45 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50 text-right pr-12">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 font-body">
+            <tbody className="divide-y divide-white/5 font-body">
               {accounts.map((acc) => (
-                <tr key={acc.id} className="hover:bg-slate-50/50 transition-all group">
+                <tr key={acc.id} className="hover:bg-white/5 transition-all group">
                    <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-on-surface-variant/30 group-hover:text-primary transition-all duration-500">
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant/30 group-hover:text-primary transition-all duration-500">
                         <span className="material-symbols-outlined text-xl font-light">monitor</span>
                       </div>
                       <span className="font-black text-on-surface tracking-tight">{acc.service}</span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-xs font-black text-on-surface/50 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">#{acc.profile}</span>
+                    <span className="text-xs font-black text-on-surface-variant/80 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">#{acc.profile}</span>
                   </td>
                   <td className="px-8 py-5">
-                    <p className="text-xs font-bold text-on-surface opacity-90">{acc.email}</p>
+                    <p className="text-xs font-bold text-white opacity-90">{acc.email}</p>
                     <p className="text-[10px] text-primary font-black tracking-widest mt-1 uppercase opacity-60 group-hover:opacity-100 transition-opacity">{acc.pass}</p>
                   </td>
                   <td className="px-8 py-5">
-                    <p className="font-black text-on-surface leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
-                    <p className="text-[9px] text-on-surface-variant font-black mt-2 tracking-[0.1em] uppercase opacity-40 group-hover:opacity-70 transition-opacity">Cost: ${acc.cost?.toLocaleString() || 0}</p>
+                    <p className="font-black text-white leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <p className="text-[9px] text-on-surface-variant font-black mt-2 tracking-[0.1em] uppercase opacity-30 group-hover:opacity-60 transition-opacity">Cost: ${acc.cost?.toLocaleString() || 0}</p>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
                       {acc.provider || 'Direct'}
                     </span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(13,148,136,0.3)] animate-pulse' : 'bg-slate-200'}`}></div>
-                      <span className="text-base font-black text-on-surface leading-none">{acc.uses}</span>
-                      <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-40">Left</span>
+                      <div className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] animate-pulse' : 'bg-white/10'}`}></div>
+                      <span className="text-base font-black text-white leading-none">{acc.uses}</span>
+                      <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-30">Left</span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
                     <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-[0.15em] border ${
-                      acc.status === 'Available' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-50 text-on-surface-variant border-slate-200'
+                      acc.status === 'Available' ? 'bg-primary/20 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
                     }`}>
+                      {acc.status === 'Available' ? 'Ready' : 'Vaulted'}
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right pr-12">
@@ -644,7 +697,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                         onClick={() => onSale(acc)}
                         disabled={acc.uses <= 0}
                         className={`w-11 h-11 rounded-xl transition-all flex items-center justify-center border ${
-                          acc.uses > 0 ? 'bg-primary text-on-primary border-primary/30 hover:scale-110 shadow-lg shadow-primary/20' : 'bg-slate-50 text-on-surface-variant/10 border-slate-100 cursor-not-allowed'
+                          acc.uses > 0 ? 'bg-primary text-on-primary border-primary/30 hover:scale-110 shadow-lg shadow-primary/20' : 'bg-white/5 text-white/5 border-white/5 cursor-not-allowed'
                         }`}
                         title="Dispatch Item"
                       >
@@ -652,14 +705,14 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       </button>
                       <button 
                         onClick={() => handleEditAccount(acc)}
-                        className="w-11 h-11 bg-slate-50 border border-slate-100 rounded-xl text-on-surface-variant/60 hover:text-on-surface hover:bg-slate-100 transition-all"
+                        className="w-11 h-11 bg-white/5 border border-white/5 rounded-xl text-on-surface-variant/60 hover:text-white hover:bg-white/10 transition-all"
                         title="Edit entry"
                       >
                         <span className="material-symbols-outlined text-xl">edit</span>
                       </button>
                       <button 
                         onClick={() => handleDeleteAccount(acc.id)}
-                        className="w-11 h-11 bg-error/5 border border-error/10 rounded-xl text-error hover:bg-error/10 transition-all"
+                        className="w-11 h-11 bg-error/10 border border-error/20 rounded-xl text-error hover:bg-error/20 transition-all"
                         title="Purge record"
                       >
                         <span className="material-symbols-outlined text-xl">delete</span>

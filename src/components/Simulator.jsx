@@ -140,18 +140,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   return (
     <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
       {/* 1. Chat List Sidebar (Left Column) */}
-      <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-panel-bg relative z-10 border-r border-white/5 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+      <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-[#0b0e14] relative z-10 border-r border-white/5 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
           <h3 className="font-headline font-black text-2xl text-white tracking-tight">Chats</h3>
           <div className="w-10 h-10 glass text-white/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all border border-white/5 active:scale-90">
             <span className="material-symbols-outlined text-xl">tune</span>
           </div>
         </div>
-        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+        <div className="p-5 border-b border-white/5 bg-white/[0.02]">
           <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm group-focus-within:text-primary transition-colors">search</span>
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">search</span>
             <input 
-              className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-12 text-xs text-on-surface placeholder:text-slate-300 focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none font-medium shadow-sm" 
+              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 pl-12 text-xs text-on-surface placeholder:text-white/20 focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none font-medium shadow-sm" 
               placeholder="Search conversation..." 
               type="text"
               value={searchTerm}
@@ -170,8 +170,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   onClick={() => onSelectChat(chat.from)}
                   className={`flex gap-4 px-4 py-5 rounded-[2rem] cursor-pointer transition-all relative group mb-3 border ${
                     isSelected 
-                      ? 'bg-primary border-primary/20 text-white shadow-xl shadow-primary/20 scale-[1.02]' 
-                      : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-200 text-on-surface-variant shadow-sm'
+                      ? 'bg-primary border-primary/20 text-on-primary shadow-xl shadow-primary/20 scale-[1.02]' 
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 text-on-surface-variant shadow-sm'
                   }`}
                 >
                   <div className="relative flex-shrink-0">
@@ -183,10 +183,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   </div>
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
                     <div className="flex justify-between items-baseline mb-1">
-                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-white' : 'text-on-surface'}`}>
+                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-on-primary' : 'text-on-surface'}`}>
                         {chat.customerName}
                       </h4>
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-slate-300'}`}>
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'text-on-primary/60' : 'text-white/20'}`}>
                         {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
@@ -208,10 +208,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             })
           ) : (
             <div className="p-20 text-center flex flex-col items-center gap-4">
-               <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
-                  <span className="material-symbols-outlined text-4xl text-slate-200 font-thin">all_inbox</span>
+               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
+                  <span className="material-symbols-outlined text-4xl text-white/10 font-thin">all_inbox</span>
                </div>
-               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Archive Empty</p>
+               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Archive Empty</p>
             </div>
           )}
         </div>
@@ -221,11 +221,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       <section className={`flex-grow flex flex-col relative bg-background overflow-hidden ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
-            <header className="h-24 flex items-center justify-between px-6 md:px-10 bg-white/80 border-b border-slate-100 z-10 backdrop-blur-3xl">
+            <header className="h-24 flex items-center justify-between px-6 md:px-10 bg-[#020617]/80 border-b border-white/5 z-10 backdrop-blur-3xl">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => onSelectChat(null)}
-                  className="md:hidden w-11 h-11 flex items-center justify-center text-on-surface-variant active:bg-slate-100 rounded-2xl transition-all border border-slate-200"
+                  className="md:hidden w-11 h-11 flex items-center justify-center text-on-surface-variant active:bg-white/5 rounded-2xl transition-all border border-white/5"
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -233,7 +233,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-black shadow-lg shadow-primary/20 text-xl">
                     {activeChatData.customerName.charAt(0)}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary rounded-full border-2 border-white animate-pulse"></div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary rounded-full border-2 border-background animate-pulse"></div>
                 </div>
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
@@ -243,11 +243,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="xl:hidden material-symbols-outlined text-on-surface-variant p-2.5 cursor-pointer hover:bg-slate-100 hover:text-on-surface rounded-2xl transition-all border border-slate-200">info</span>
+                <span className="xl:hidden material-symbols-outlined text-on-surface-variant p-2.5 cursor-pointer hover:bg-white/5 hover:text-on-surface rounded-2xl transition-all border border-white/5">info</span>
               </div>
             </header>
 
-            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar bg-background pb-32 md:pb-10 relative">
+            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar hex-pattern pb-32 md:pb-10 relative">
               {/* Background Glow */}
               <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px] -z-10 animate-pulse"></div>
 
@@ -257,10 +257,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
               {activeChatData.messages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                  <div className={`max-w-[85%] md:max-w-[65%] px-6 py-4 rounded-[1.5rem] transition-all relative ${
+                  <div className={`max-w-[85%] md:max-w-[65%] px-6 py-4 rounded-[3xl] transition-all relative ${
                     msg.role === 'user' 
-                      ? 'bg-white text-on-surface border border-slate-100 rounded-bl-none shadow-sm' 
-                      : 'bg-primary text-white shadow-lg shadow-primary/10 rounded-br-none'
+                      ? 'bg-chat-bubble-user text-white border border-white/10 rounded-bl-none shadow-xl' 
+                      : 'bg-gradient-to-br from-chat-bubble-agent-start to-chat-bubble-agent-end text-white shadow-xl shadow-indigo-500/10 rounded-br-none'
                   }`}>
                     <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide">{msg.content}</p>
                     <div className={`flex items-center gap-2 mt-3 ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
@@ -274,13 +274,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               <div ref={chatEndRef} />
             </div>
 
-            <footer className="p-6 md:p-8 bg-white border-t border-slate-100 pb-safe-area-inset-bottom backdrop-blur-md">
+            <footer className="p-6 md:p-8 bg-surface/80 border-t border-white/5 pb-safe-area-inset-bottom backdrop-blur-md">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex items-center gap-4 bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all focus-within:border-primary/20"
+                className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 hover:border-primary/20 transition-all focus-within:border-primary/20"
               >
                 <input 
-                  className="flex-grow bg-transparent border-none text-sm text-on-surface focus:ring-0 placeholder:text-slate-300 font-medium" 
+                  className="flex-grow bg-transparent border-none text-sm text-on-surface focus:ring-0 placeholder:text-on-surface-variant font-medium" 
                   placeholder="Intercept frequency..." 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -307,11 +307,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
       {/* 3. Customer Profile & CRM Actions Sidebar (Right Column) */}
       {selectedChat && activeChatData && (
-        <section className={`w-85 flex-shrink-0 bg-white border-l border-slate-200 hidden xl:flex flex-col z-20 shadow-[-1px_0_20px_rgba(0,0,0,0.03)] overflow-hidden`}>
-          <div className="p-10 flex flex-col items-center text-center border-b border-slate-100 sticky top-0 bg-white z-10 backdrop-blur-3xl">
-            <div className="w-24 h-24 rounded-[2.5rem] bg-slate-50 text-primary flex items-center justify-center font-black text-4xl shadow-inner border border-slate-100 mb-6 relative">
+        <section className={`w-85 flex-shrink-0 bg-[#0b0e14] border-l border-white/5 hidden xl:flex flex-col z-20 shadow-[-10px_0_40px_rgba(0,0,0,0.4)] overflow-hidden`}>
+          <div className="p-10 flex flex-col items-center text-center border-b border-white/5 sticky top-0 bg-[#0b0e14]/80 z-10 backdrop-blur-3xl">
+            <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 text-primary flex items-center justify-center font-black text-4xl shadow-inner border border-white/5 mb-6 relative">
               {activeChatData.customerName.charAt(0)}
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-[1.2rem] border-4 border-white bg-primary flex items-center justify-center shadow-lg">
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-[1.2rem] border-4 border-background bg-primary flex items-center justify-center shadow-lg">
                 <span className="material-symbols-outlined text-on-primary text-lg">verified_user</span>
               </div>
             </div>

@@ -9,13 +9,13 @@ const MobileNav = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-3xl border-t border-slate-200 px-8 py-4 flex justify-between items-center z-[100] pb-safe-area-inset-bottom shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0b0e14]/95 backdrop-blur-3xl border-t border-white/5 px-8 py-4 flex justify-between items-center z-[100] pb-safe-area-inset-bottom shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       {menuItems.map((item) => (
         <button
           key={item.id}
           onClick={() => onTabChange(item.id)}
           className={`flex flex-col items-center gap-1.5 transition-all duration-500 relative ${
-            activeTab === item.id ? 'text-primary scale-110' : 'text-slate-300 hover:text-slate-400'
+            activeTab === item.id ? 'text-primary scale-110' : 'text-white/20 hover:text-white/40'
           }`}
         >
           {activeTab === item.id && (
