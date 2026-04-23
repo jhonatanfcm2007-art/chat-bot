@@ -174,13 +174,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 text-on-surface-variant shadow-sm'
                   }`}
                 >
-                  <div className="relative flex-shrink-0">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl transition-all duration-500 shadow-inner ${
-                      isSelected ? 'bg-white text-primary' : 'bg-white/5 text-white/60 group-hover:bg-white/10 group-hover:text-white'
-                    }`}>
-                      {chat.customerName.charAt(0)}
-                    </div>
-                  </div>
+                  {/* Profile box removed */}
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
                     <div className="flex justify-between items-baseline mb-1">
                       <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-on-primary' : 'text-on-surface'}`}>
@@ -229,12 +223,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-black shadow-lg shadow-primary/20 text-xl">
-                    {activeChatData.customerName.charAt(0)}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary rounded-full border-2 border-background animate-pulse"></div>
-                </div>
+                {/* Profile box removed */}
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
                   <div className="flex items-center gap-2 mt-2">
@@ -312,12 +301,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       {selectedChat && activeChatData && (
         <section className={`w-85 flex-shrink-0 bg-[#0b0e14] border-l border-white/5 hidden xl:flex flex-col z-20 shadow-[-10px_0_40px_rgba(0,0,0,0.4)] overflow-hidden`}>
           <div className="p-10 flex flex-col items-center text-center border-b border-white/5 sticky top-0 bg-[#0b0e14]/80 z-10 backdrop-blur-3xl">
-            <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 text-primary flex items-center justify-center font-black text-4xl shadow-inner border border-white/5 mb-6 relative">
-              {activeChatData.customerName.charAt(0)}
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-[1.2rem] border-4 border-background bg-primary flex items-center justify-center shadow-lg">
-                <span className="material-symbols-outlined text-on-primary text-lg">verified_user</span>
-              </div>
-            </div>
+            {/* Profile box removed */}
             <h2 className="font-black text-2xl text-on-surface tracking-tight leading-none mb-2">{activeChatData.customerName}</h2>
             <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-30">{selectedChat}</p>
           </div>
