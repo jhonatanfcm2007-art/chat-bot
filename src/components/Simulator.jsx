@@ -111,7 +111,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   };
 
   const TAG_UI = {
-    'entregado':     { label: 'Activado · Pend. Pago', classes: 'bg-[#f59e0b]/10 text-[#d97706] border-[#f59e0b]/20' },
     'pago-pendiente': { label: 'Pago Pendiente', classes: 'bg-[#FF9800]/10 text-[#EF6C00] border-[#FF9800]/20' },
     'pagado': { label: 'Pagado', classes: 'bg-tertiary/10 text-tertiary border-tertiary/20' },
     'inactivo': { label: 'Inactivo', classes: 'bg-on-surface-variant/10 text-on-surface-variant border-on-surface-variant/20' },
@@ -120,9 +119,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const getTagStyle = (tags) => {
     if (!tags || tags.length === 0) return TAG_UI['activo'];
-    // Prioridad: 1. entregado, 2. pago-pendiente, 3. pagado, 4. inactivo, 5. activo
-    if (tags.includes('entregado')) return TAG_UI['entregado'];
-    if (tags.includes('pago-pendiente')) return TAG_UI['pago-pendiente'];
+    if (tags.includes('entregado') || tags.includes('pago-pendiente')) return TAG_UI['pago-pendiente'];
     if (tags.includes('pagado')) return TAG_UI['pagado'];
     if (tags.includes('inactivo')) return TAG_UI['inactivo'];
     return TAG_UI['activo'];
@@ -130,8 +127,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const getTagKey = (tags) => {
     if (!tags || tags.length === 0) return 'activo';
-    if (tags.includes('entregado')) return 'entregado';
-    if (tags.includes('pago-pendiente')) return 'pago-pendiente';
+    if (tags.includes('entregado') || tags.includes('pago-pendiente')) return 'pago-pendiente';
     if (tags.includes('pagado')) return 'pagado';
     if (tags.includes('inactivo')) return 'inactivo';
     return 'activo';
