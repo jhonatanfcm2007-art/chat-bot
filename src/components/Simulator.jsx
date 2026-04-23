@@ -238,7 +238,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
                   <div className="flex items-center gap-2 mt-2">
-                    <p className="text-[9px] text-primary font-black uppercase tracking-[0.2em] opacity-80">Syncing Live</p>
+                    <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                    <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.2em]">Agent Active</p>
                   </div>
                 </div>
               </div>
