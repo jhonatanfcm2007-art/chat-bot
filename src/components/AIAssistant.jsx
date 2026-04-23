@@ -50,40 +50,42 @@ const AIAssistant = ({ settings, socket }) => {
           <p className="text-on-surface-variant text-[11px] md:text-xs mt-2 uppercase font-black tracking-[0.3em] opacity-40">Intelligence & Logic Rules</p>
         </div>
 
-        <div className="bg-[#0b0e14]/60 backdrop-blur-3xl p-8 md:p-10 rounded-[3rem] border border-white/5 shadow-2xl flex-grow flex flex-col relative overflow-hidden group">
+        <div className="bg-[#0b0e14]/60 backdrop-blur-3xl p-8 md:p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors"></div>
           
-          <div className="flex justify-between items-center mb-8 relative z-10">
+          <div className="flex justify-between items-center mb-6 relative z-10">
             <h3 className="font-black text-on-surface text-xl tracking-tight uppercase">System Prompt</h3>
             <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20 shadow-sm transition-transform group-hover:scale-110">
               <span className="material-symbols-outlined text-2xl font-light">neurology</span>
             </div>
           </div>
           
-          <div className="bg-white/5 p-6 rounded-2xl border border-white/5 mb-8 relative z-10 backdrop-blur-sm">
-            <p className="text-xs md:text-[13px] text-on-surface-variant leading-relaxed font-medium opacity-80">
+          <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 relative z-10 backdrop-blur-sm">
+            <p className="text-[11px] md:text-xs text-on-surface-variant leading-relaxed font-medium opacity-80">
               Define the AI's core identity and response logic. <strong className="text-primary italic">Note:</strong> Stock data is injected automatically. Maintain the secret keyword rule for human escalation.
             </p>
           </div>
           
           <textarea 
-            className="flex-grow w-full bg-[#020617]/80 border border-white/5 rounded-[2.5rem] p-8 text-sm md:text-base focus:ring-2 focus:ring-primary/20 resize-none text-white mb-8 min-h-[350px] leading-relaxed shadow-inner placeholder:text-white/10 custom-scrollbar outline-none focus:bg-[#020617] transition-all focus:border-primary/40 font-mono"
+            className="w-full h-[400px] bg-[#020617]/80 border border-white/5 rounded-[2.5rem] p-8 text-sm md:text-base focus:ring-2 focus:ring-primary/20 resize-none text-white mb-8 leading-relaxed shadow-inner placeholder:text-white/10 custom-scrollbar outline-none focus:bg-[#020617] transition-all focus:border-primary/40 font-mono"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Define neural protocols here..."
           />
 
-          <button 
-            onClick={handleSaveSettings}
-            className={`w-full py-5 rounded-[1.8rem] font-black tracking-[0.3em] uppercase text-[10px] transition-all duration-700 flex items-center justify-center gap-3 relative z-10 ${
-              isSaved 
-                ? 'bg-tertiary text-white shadow-[0_0_30px_rgba(45,212,191,0.3)] scale-[1.02]' 
-                : 'bg-primary text-on-primary shadow-2xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]'
-            }`}
-          >
-            <span className="material-symbols-outlined font-black text-xl">{isSaved ? 'verified' : 'bolt'}</span>
-            {isSaved ? 'Protocols Secure' : 'Commit Logic'}
-          </button>
+          <div className="relative z-10 pb-2">
+            <button 
+              onClick={handleSaveSettings}
+              className={`w-full py-5 rounded-[1.8rem] font-black tracking-[0.3em] uppercase text-[10px] transition-all duration-700 flex items-center justify-center gap-3 ${
+                isSaved 
+                  ? 'bg-tertiary text-white shadow-[0_0_30px_rgba(45,212,191,0.3)] scale-[1.02]' 
+                  : 'bg-primary text-on-primary shadow-2xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]'
+              }`}
+            >
+              <span className="material-symbols-outlined font-black text-xl">{isSaved ? 'verified' : 'bolt'}</span>
+              {isSaved ? 'Protocols Secure' : 'Commit Logic'}
+            </button>
+          </div>
         </div>
       </div>
 
