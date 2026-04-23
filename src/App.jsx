@@ -346,19 +346,6 @@ function App() {
   const handleSendMessage = (messageData) => {
     // messageData: { to: '...', content: '...' }
     socket.emit('send_message', messageData);
-    
-    setChats(prev => {
-      const to = messageData.to;
-      const existingMessages = prev[to]?.messages || [];
-      return {
-        ...prev,
-        [to]: {
-          ...prev[to],
-          updatedAt: Date.now(),
-          messages: [...existingMessages, { content: messageData.content, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() }]
-        }
-      };
-    });
   };
 
   const handleUpdateChatTag = (chatId, tags) => {
