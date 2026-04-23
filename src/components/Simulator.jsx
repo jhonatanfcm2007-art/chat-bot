@@ -141,18 +141,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
       {/* 1. Chat List Sidebar (Left Column) */}
       <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-[#0b0e14] relative z-10 border-r border-white/5 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-          <h3 className="font-headline font-black text-2xl text-white tracking-tight">Chats</h3>
-          <div className="w-10 h-10 glass text-white/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all border border-white/5 active:scale-90">
-            <span className="material-symbols-outlined text-xl">tune</span>
+        <div className="p-8 pb-4 flex items-center justify-between">
+          <h3 className="font-headline font-black text-2xl text-white tracking-tight">Messages</h3>
+          <div className="w-10 h-10 text-white/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all active:scale-90">
+            <span className="material-symbols-outlined text-xl">edit_square</span>
           </div>
         </div>
-        <div className="p-5 border-b border-white/5 bg-white/[0.02]">
+        <div className="px-5 pb-5 border-b border-white/5">
           <div className="relative group">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">search</span>
             <input 
-              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 pl-12 text-xs text-on-surface placeholder:text-white/20 focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none font-medium shadow-sm" 
-              placeholder="Search conversation..." 
+              className="w-full bg-[#111827] border border-white/5 rounded-xl py-3.5 pl-12 text-xs text-on-surface placeholder:text-white/20 focus:ring-1 focus:ring-primary/40 transition-all outline-none font-medium" 
+              placeholder="Filter chats..." 
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -162,39 +162,33 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         <div className="flex-grow overflow-y-auto custom-scrollbar py-4 px-4 pb-24 md:pb-4">
           {chatSessions.length > 0 ? (
             chatSessions.map((chat) => {
-              const mainTag = getTagStyle(chat.tags);
               const isSelected = selectedChat === chat.from;
               return (
                 <div 
                   key={chat.from}
                   onClick={() => onSelectChat(chat.from)}
-                  className={`flex gap-4 px-4 py-5 rounded-[2rem] cursor-pointer transition-all relative group mb-3 border ${
+                  className={`flex gap-4 px-6 py-4 cursor-pointer transition-all relative group border-b border-white/5 ${
                     isSelected 
-                      ? 'bg-primary border-primary/20 text-on-primary shadow-xl shadow-primary/20 scale-[1.02]' 
-                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 text-on-surface-variant shadow-sm'
+                      ? 'bg-white/10 border-l-2 border-l-primary shadow-inner shadow-black/20' 
+                      : 'hover:bg-white/[0.02] border-l-2 border-l-transparent'
                   }`}
                 >
-                  {/* Profile box removed */}
+                  {/* Profile box removed as requested earlier */}
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
-                    <div className="flex justify-between items-baseline mb-1">
-                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-on-primary' : 'text-on-surface'}`}>
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-white' : 'text-on-surface'}`}>
                         {chat.customerName}
                       </h4>
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'text-on-primary/60' : 'text-white/20'}`}>
-                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) : ''}
+                      <span className={`text-[10px] font-black ${isSelected ? 'text-primary' : 'text-white/20'}`}>
+                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
                     
-                    <p className={`text-[11px] font-medium truncate max-w-[160px] mb-2 ${isSelected ? 'text-white/80 font-bold' : 'text-on-surface-variant'}`}>
-                      {chat.lastMessage ? chat.lastMessage.content : 'No signals'}
-                    </p>
-
-                    <div className="flex items-center gap-2">
-                       <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-lg border leading-none ${
-                         isSelected ? 'bg-white/20 border-white/30 text-white' : mainTag.classes
-                       }`}>
-                         {mainTag.label}
-                       </span>
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      {isSelected && <span className="material-symbols-outlined text-[12px] text-primary">key</span>}
+                      <p className={`text-[11px] font-medium truncate opacity-60 ${isSelected ? 'text-white' : 'text-on-surface-variant'}`}>
+                        {chat.lastMessage ? chat.lastMessage.content : 'No signals'}
+                      </p>
                     </div>
                   </div>
                 </div>
