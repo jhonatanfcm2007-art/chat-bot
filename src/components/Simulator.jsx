@@ -273,13 +273,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </div>
               ))}
               
-              {/* Fast Templates - Restored from reference image */}
-              <div className="absolute right-10 top-24 z-20 w-48 bg-[#1e293b]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col gap-2">
-                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1 px-1">Fast Templates</p>
-                <button className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-[11px] font-black text-white rounded-xl border border-white/5 transition-all text-left">Prices Table</button>
-                <button className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-[11px] font-black text-white rounded-xl border border-white/5 transition-all text-left">Payment Methods</button>
-                <button className="w-full py-2.5 px-4 bg-primary text-on-primary text-[11px] font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all text-left">Deliver Login</button>
-              </div>
 
               <div ref={chatEndRef} />
             </div>
