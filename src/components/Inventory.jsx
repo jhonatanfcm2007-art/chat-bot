@@ -511,7 +511,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       </div>
                     ))}
                   </div>
-                </div>
               </div>
 
               {/* Providers Section */}
@@ -554,7 +553,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       </div>
                     ))}
                   </div>
-                </div>
               </div>
             </div>
 
@@ -570,7 +568,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         </div>
       )}
 
-      <div         {/* Mobile View */}
+      <div>
+        {/* Mobile View */}
         <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
             <div key={acc.id} className="bg-[#0f172a]/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
@@ -634,8 +633,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
             </div>
           ))}
         </div>
-     ))}
-        </div>          {/* Desktop View */}
+
+        {/* Desktop View */}
         <div className="hidden md:block bg-[#0f172a]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
