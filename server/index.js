@@ -75,7 +75,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas para cuentas de streaming por WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### ESTRATEGIA DE VENTA:\n1. Saluda e identifica qué producto busca el cliente.\n2. Ofrece los productos disponibles con sus precios del inventario.\n3. CONFIANZA: Si el cliente duda o pide garantía, ofrécele activar la cuenta primero para que la pruebe antes de pagar. Esto genera mucha confianza.\n4. Si el cliente acepta, pide que la activen primero, o pregunta por el tiempo de entrega tras la oferta, confirma que procederás y añade SIEMPRE la etiqueta [ENTREGAR_AHORA] al final de tu respuesta para que el sistema le envíe las credenciales de inmediato.\n\n### REGLAS TÉCNICAS:\n1. Al detectar intención de compra, añade SIEMPRE: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero].\n2. Si vas a entregar la cuenta ya mismo (porque el cliente aceptó o preguntó cuánto falta), añade obligatoriamente: [ENTREGAR_AHORA].\n3. Métodos de pago: Nequi, Daviplata o Bancolombia.\n4. Sé breve, máximo 2-3 líneas por respuesta."
+        systemPrompt: "Eres un asistente virtual de ventas para cuentas de streaming por WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### ESTRATEGIA DE VENTA:\n1. Saluda e identifica qué producto busca el cliente.\n2. Ofrece los productos disponibles con sus precios del inventario.\n3. CONFIANZA: Si el cliente duda o pide garantía, ofrécele activar la cuenta primero para que la pruebe antes de pagar. Esto genera mucha confianza.\n4. Si el cliente confirma interés en probarla o menciona el producto tras tu oferta, añade SIEMPRE la etiqueta [ENTREGAR_AHORA] al final de tu respuesta para que el sistema le envíe las credenciales de inmediato. NO vuelvas a cobrar o pedir medios de pago si el cliente ya aceptó la activación previa.\n\n### REGLAS TÉCNICAS:\n1. Al detectar intención de compra, añade SIEMPRE: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero].\n2. Si el cliente acepta la activación previa o pregunta 'cuánto demora' tras la oferta, añade obligatoriamente: [ENTREGAR_AHORA].\n3. Métodos de pago: Nequi, Daviplata o Bancolombia.\n4. Sé breve, máximo 2-3 líneas por respuesta."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -235,7 +235,19 @@ async function executeDelivery(to, mode = 'deliver_first') {
             }
             return { success: true };
         } else {
-            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK* para entregar a *${chat.customerName}*.`);
+            // MENSAJE DE ESPERA AL CLIENTE SI NO HAY STOCK
+            const holdingMsg = `¡Listo! Dame un momento y te envío los datos de acceso para que los pruebes. Estoy preparando tu cuenta... 😊`;
+            await sendMessageToCloudAPI(to, holdingMsg);
+            
+            const holdBotMsg = {
+                id: 'hold-' + Date.now(), from: to, body: holdingMsg, content: holdingMsg,
+                isMe: true, role: 'bot', timestampRaw: Date.now(),
+                timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+            };
+            chat.messages.push(holdBotMsg);
+            saveChats(chats); io.emit('message', holdBotMsg);
+
+            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK* para entregar a *${chat.customerName}*. Repón inventario pronto.`);
             return { success: false, error: 'No stock' };
         }
     } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
@@ -304,7 +316,6 @@ app.post('/webhook', async (req, res) => {
             currentChat.messages.push({ id: msg.id, from, body: msgBody, content: msgBody, timestampRaw: Date.now(), role: 'user' });
             currentChat.updatedAt = Date.now();
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
-            currentChat.recoverySentAt = null;
             saveChats(chats); io.emit('message', { id: msg.id, from, customerName, body: msgBody, role: 'user' });
 
             // Auto-confirmación (Detección ampliada)
@@ -326,6 +337,18 @@ app.post('/webhook', async (req, res) => {
                 executeDelivery(from, 'auto').catch(e => console.error('Error in proactive delivery:', e));
                 currentChat.activationNotifySent = true;
                 currentChat.activationOfferedAt = Date.now();
+            }
+
+            // --- DETECCIÓN DE PRODUCTO TRAS OFERTA ---
+            const offeredAt = currentChat.activationOfferedAt || 0;
+            if (Date.now() - offeredAt < 1800000) { // Si se le ofreció hace menos de 30 mins
+                const mentionedProduct = inventory.find(a => msgBody.toLowerCase().includes(a.service.toLowerCase()));
+                if (mentionedProduct) {
+                    console.log(`🤖 Cliente mencionó ${mentionedProduct.service} tras oferta. Entregando...`);
+                    currentChat.pendingProducts = [mentionedProduct.service];
+                    executeDelivery(from, 'auto').catch(e => console.error('Error in post-offer delivery:', e));
+                    res.sendStatus(200); return; 
+                }
             }
 
             // Respuesta IA
