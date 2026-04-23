@@ -221,8 +221,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
-                    <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.2em]">Agent Active</p>
+                    <div className="bg-tertiary/10 border border-tertiary/20 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(45,212,191,0.1)]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                      <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.2em] leading-none">Agent Active</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -231,12 +233,12 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </div>
             </header>
 
-            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar hex-pattern pb-32 md:pb-10 relative">
+            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar cube-pattern pb-32 md:pb-10 relative">
               {/* Background Glow */}
               <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px] -z-10 animate-pulse"></div>
 
               <div className="flex justify-center mb-4">
-                <span className="px-6 py-2 rounded-full text-[9px] font-black text-white/20 uppercase tracking-[0.4em] border border-white/5 bg-white/[0.02]">Real Time Feed</span>
+                <span className="px-5 py-1.5 rounded-full text-[10px] font-black text-white/40 uppercase tracking-[0.3em] border border-white/5 bg-[#111827]/80 backdrop-blur-md">Today</span>
               </div>
 
               {activeChatData.messages.map((msg, idx) => (
@@ -256,6 +258,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </div>
               ))}
               
+              
+              {/* Fast Templates - Floating Menu from reference */}
+              <div className="absolute right-10 top-24 z-30 w-48 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col gap-2">
+                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 px-1">Fast Templates</p>
+                <button className="w-full py-2.5 px-4 bg-[#0b0e14]/60 hover:bg-[#0b0e14] text-[11px] font-black text-white rounded-xl border border-white/5 transition-all text-left">Prices Table</button>
+                <button className="w-full py-2.5 px-4 bg-[#0b0e14]/60 hover:bg-[#0b0e14] text-[11px] font-black text-white rounded-xl border border-white/5 transition-all text-left">Payment Methods</button>
+                <button className="w-full py-2.5 px-4 bg-primary text-on-primary text-[11px] font-black rounded-xl shadow-lg shadow-primary/40 hover:scale-[1.02] transition-all text-left">Deliver Login</button>
+              </div>
 
               <div ref={chatEndRef} />
             </div>
