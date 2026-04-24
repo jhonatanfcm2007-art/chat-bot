@@ -31,6 +31,7 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
 let lastReceiptFrom = null; 
+const aiTimers = {};
 
 // --- PERSISTENCIA ---
 const DATA_DIR = path.join(__dirname, 'data');
@@ -357,52 +358,65 @@ app.post('/webhook', async (req, res) => {
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
             saveChats(chats); io.emit('message', { ...newMessage, customerName });
 
-            // Auto-confirmación
-            const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuanto|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;
-            if (confirmWords.test(msgBody.trim())) {
-                const offeredAt = currentChat.activationOfferedAt || 0;
-                const recoveredAt = currentChat.recoverySentAt || 0;
-                if (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000) {
-                    await executeDelivery(from, 'auto'); res.sendStatus(200); return;
+            if (aiTimers[from]) clearTimeout(aiTimers[from]);
+            aiTimers[from] = setTimeout(async () => {
+                const refreshedChat = chats[from];
+                const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
+                if (!lastUserMsg) return;
+
+                const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
+
+                // Auto-confirmación
+                const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuanto|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;
+                if (confirmWords.test(msgBodyLower)) {
+                    const offeredAt = refreshedChat.activationOfferedAt || 0;
+                    const recoveredAt = refreshedChat.recoverySentAt || 0;
+                    if (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000) {
+                        await executeDelivery(from, 'auto');
+                        delete aiTimers[from];
+                        return;
+                    }
                 }
-            }
 
-            // Intención de activación
-            const activateRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)/i;
-            if (activateRegex.test(msgBody.trim())) {
-                executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
-                currentChat.activationNotifySent = true;
-                currentChat.activationOfferedAt = Date.now();
-            }
-
-            // Respuesta IA
-            const aiReply = await getAIResponse(msgBody, currentChat.messages.slice(-10));
-            const hasPurchaseIntent = /\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply);
-            const forceDelivery = /\[ENTREGAR_AHORA\]/i.test(aiReply);
-
-            if (hasPurchaseIntent) {
-                if (!currentChat.tags?.includes('pago-pendiente')) {
-                    currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
-                    const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
-                    const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
-                    if (prodsMatch) currentChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
-                    if (totalMatch) currentChat.pendingTotal = totalMatch[1];
-                    saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
+                // Intención de activación
+                const activateRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)/i;
+                if (activateRegex.test(msgBodyLower)) {
+                    executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
+                    refreshedChat.activationNotifySent = true;
+                    refreshedChat.activationOfferedAt = Date.now();
                 }
-            }
 
-            if (forceDelivery) {
-                setTimeout(() => executeDelivery(from, 'auto'), 500);
-            }
+                // Respuesta IA
+                const aiReply = await getAIResponse(msgBodyLower, refreshedChat.messages.slice(-15));
+                const hasPurchaseIntent = /\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply);
+                const forceDelivery = /\[ENTREGAR_AHORA\]/i.test(aiReply);
 
-            const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]/gi, '').trim();
-            await delay(1500);
-            await sendMessageToCloudAPI(from, cleanReply);
+                if (hasPurchaseIntent) {
+                    if (!refreshedChat.tags?.includes('pago-pendiente')) {
+                        refreshedChat.tags = [...(refreshedChat.tags || []), 'pago-pendiente'];
+                        const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
+                        const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
+                        if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
+                        if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
+                        saveChats(chats); io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                    }
+                }
 
-            const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
-            currentChat.messages.push(botMsg);
-            saveChats(chats); io.emit('message', botMsg);
-            scheduleRecovery(from);
+                if (forceDelivery) {
+                    setTimeout(() => executeDelivery(from, 'auto'), 500);
+                }
+
+                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]/gi, '').trim();
+                await delay(1500);
+                await sendMessageToCloudAPI(from, cleanReply);
+
+                const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                refreshedChat.messages.push(botMsg);
+                saveChats(chats); io.emit('message', botMsg);
+                scheduleRecovery(from);
+                
+                delete aiTimers[from];
+            }, 5000); 
         }
     }
     res.sendStatus(200);
