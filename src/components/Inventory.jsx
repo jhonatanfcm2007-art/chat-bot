@@ -573,25 +573,22 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
             <div key={acc.id} className="bg-[#0f172a]/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
-               <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-primary group-hover:w-2' : 'bg-on-surface-variant/10'}`}></div>
+               <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-tertiary group-hover:w-2' : 'bg-error/50'}`}></div>
                
                <div className="flex justify-between items-start mb-6">
                  <div className="flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant/40 group-hover:text-primary transition-colors">
-                     <span className="material-symbols-outlined text-2xl font-light">devices</span>
-                   </div>
                    <div>
                      <h3 className="font-black text-on-surface text-lg tracking-tight">{acc.service}</h3>
-                     <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em] opacity-40 mt-1">{acc.provider || 'Independent'}</p>
+                     <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em] opacity-40 mt-1">{acc.provider || 'Independiente'}</p>
                    </div>
                  </div>
                  <div className="text-right">
                     <p className="text-xl font-black text-white tracking-tighter">${acc.price.toLocaleString()}</p>
                     <div className="flex justify-end mt-2">
                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border transition-all ${
-                        acc.status === 'Available' ? 'bg-primary/20 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
+                        acc.status === 'Available' ? 'bg-tertiary/20 text-tertiary border-tertiary/20' : 'bg-error/20 text-error border-error/20'
                       }`}>
-                        {acc.status === 'Available' ? 'Ready' : 'Archived'}
+                        {acc.status === 'Available' ? 'Disponible' : 'No Disponible'}
                       </span>
                     </div>
                  </div>
@@ -599,15 +596,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
                <div className="grid grid-cols-2 gap-6 py-6 border-y border-white/5 mb-6 bg-white/5 rounded-2xl px-6">
                  <div>
-                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identity</span>
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identidad</span>
                    <p className="text-[11px] font-bold text-white truncate opacity-90">{acc.email}</p>
                    <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">{acc.pass}</p>
                  </div>
                  <div className="text-right flex flex-col justify-center">
-                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Slots</span>
+                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Cupos</span>
                    <div className="flex items-center justify-end gap-2.5">
                      <span className="text-2xl font-black text-white leading-none">{acc.uses}</span>
-                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] animate-pulse' : 'bg-white/10'}`}></span>
+                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-tertiary shadow-[0_0_8px_rgba(45,212,191,0.3)] animate-pulse' : 'bg-white/10'}`}></span>
                    </div>
                  </div>
                </div>
@@ -621,7 +618,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                    }`}
                  >
                    <span className="material-symbols-outlined text-lg">shopping_bag</span>
-                   Dispatch
+                   Vender
                  </button>
                  <button 
                    onClick={() => handleEditAccount(acc)}
@@ -638,81 +635,78 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         <div className="hidden md:block bg-[#0f172a]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#0b0e14] border-b border-white/5">
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Platform</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Profile</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Identity</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Market Value</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Supplier</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Stock</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50 text-right pr-12">Actions</th>
+              <tr className="bg-[#0b0e14] border-b border-white/5 text-center">
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Plataforma</th>
+                <th className="px-4 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Perfil</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Correo</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50 text-primary">Contraseña</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Precio Venta</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Costo</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Proveedor</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Cupos</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Estado</th>
+                <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50 text-right pr-12">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-body">
+            <tbody className="divide-y divide-white/5 font-body text-center">
               {accounts.map((acc) => (
                 <tr key={acc.id} className="hover:bg-white/5 transition-all group">
-                   <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant/30 group-hover:text-primary transition-all duration-500">
-                        <span className="material-symbols-outlined text-xl font-light">monitor</span>
-                      </div>
-                      <span className="font-black text-on-surface tracking-tight">{acc.service}</span>
-                    </div>
+                   <td className="px-6 py-5">
+                    <span className="font-black text-on-surface tracking-tight">{acc.service}</span>
                   </td>
-                  <td className="px-8 py-5">
-                    <span className="text-xs font-black text-on-surface-variant/80 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">#{acc.profile}</span>
-                  </td>
-                  <td className="px-8 py-5">
+                  <td className="px-4 py-5 font-black text-on-surface tracking-tight">#{acc.profile}</td>
+                  <td className="px-6 py-5">
                     <p className="text-xs font-bold text-white opacity-90">{acc.email}</p>
-                    <p className="text-[10px] text-primary font-black tracking-widest mt-1 uppercase opacity-60 group-hover:opacity-100 transition-opacity">{acc.pass}</p>
                   </td>
-                  <td className="px-8 py-5">
+                  <td className="px-6 py-5">
+                    <p className="text-[11px] text-primary font-black tracking-widest uppercase">{acc.pass}</p>
+                  </td>
+                  <td className="px-6 py-5">
                     <p className="font-black text-white leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
-                    <p className="text-[9px] text-on-surface-variant font-black mt-2 tracking-[0.1em] uppercase opacity-30 group-hover:opacity-60 transition-opacity">Cost: ${acc.cost?.toLocaleString() || 0}</p>
                   </td>
-                  <td className="px-8 py-5">
+                  <td className="px-6 py-5">
+                    <p className="font-black text-on-surface-variant leading-none text-sm tracking-tighter opacity-60 group-hover:opacity-100 transition-opacity">${acc.cost?.toLocaleString() || 0}</p>
+                  </td>
+                  <td className="px-6 py-5">
                     <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                      {acc.provider || 'Direct'}
+                      {acc.provider || 'Directo'}
                     </span>
                   </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] animate-pulse' : 'bg-white/10'}`}></div>
-                      <span className="text-base font-black text-white leading-none">{acc.uses}</span>
-                      <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-30">Left</span>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3 justify-center">
+                       <span className="text-base font-black text-white leading-none">{acc.uses}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-5">
-                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-[0.15em] border ${
-                      acc.status === 'Available' ? 'bg-primary/20 text-primary border-primary/20' : 'bg-white/5 text-on-surface-variant border-white/5'
+                  <td className="px-6 py-5">
+                    <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black tracking-[0.15em] border transition-colors ${
+                      acc.status === 'Available' ? 'bg-tertiary/20 text-tertiary border-tertiary/20 shadow-[0_0_15px_rgba(45,212,191,0.1)]' : 'bg-error/20 text-error border-error/20'
                     }`}>
-                      {acc.status === 'Available' ? 'Ready' : 'Vaulted'}
+                      {acc.status === 'Available' ? 'DISPONIBLE' : 'AGOTADO'}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-right pr-12">
-                    <div className="flex gap-2 justify-end opacity-40 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                  <td className="px-6 py-5 text-right pr-12">
+                    <div className="flex gap-2 justify-end">
                       <button 
                         onClick={() => onSale(acc)}
                         disabled={acc.uses <= 0}
-                        className={`w-11 h-11 rounded-xl transition-all flex items-center justify-center border ${
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border ${
                           acc.uses > 0 ? 'bg-primary text-on-primary border-primary/30 hover:scale-110 shadow-lg shadow-primary/20' : 'bg-white/5 text-white/5 border-white/5 cursor-not-allowed'
                         }`}
-                        title="Dispatch Item"
+                        title="Vender"
                       >
-                        <span className="material-symbols-outlined text-xl">sell</span>
+                        <span className="material-symbols-outlined text-xl font-bold">shopping_cart</span>
                       </button>
                       <button 
                         onClick={() => handleEditAccount(acc)}
-                        className="w-11 h-11 bg-white/5 border border-white/5 rounded-xl text-on-surface-variant/60 hover:text-white hover:bg-white/10 transition-all"
-                        title="Edit entry"
+                        className="w-10 h-10 bg-white/5 border border-white/5 rounded-xl text-on-surface-variant/60 hover:text-white hover:bg-white/10 transition-all"
+                        title="Editar"
                       >
                         <span className="material-symbols-outlined text-xl">edit</span>
                       </button>
                       <button 
                         onClick={() => handleDeleteAccount(acc.id)}
-                        className="w-11 h-11 bg-error/10 border border-error/20 rounded-xl text-error hover:bg-error/20 transition-all"
-                        title="Purge record"
+                        className="w-10 h-10 bg-error/10 border border-error/20 rounded-xl text-error hover:bg-error/20 transition-all font-bold"
+                        title="Eliminar"
                       >
                         <span className="material-symbols-outlined text-xl">delete</span>
                       </button>
@@ -727,10 +721,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
               <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
                 <span className="material-symbols-outlined text-4xl text-white/10 font-thin">inventory</span>
               </div>
-              <div>
-                <p className="text-white font-black text-lg tracking-tight uppercase">Void Database</p>
-                <p className="text-on-surface-variant text-xs mt-1 font-medium opacity-40">No entries detected in current vault</p>
-              </div>
+              <p className="text-white font-black text-lg tracking-tight uppercase">Base de datos vacía</p>
             </div>
           )}
         </div>
