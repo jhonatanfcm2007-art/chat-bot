@@ -341,6 +341,9 @@ function App() {
         : acc
     ));
   };
+  const handleDeleteSale = (saleId) => {
+    setSalesHistory(prev => prev.filter(sale => sale.id !== saleId));
+  };
 
 
   const handleSendMessage = (messageData) => {
@@ -396,7 +399,7 @@ function App() {
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} />;
     }
   };
 

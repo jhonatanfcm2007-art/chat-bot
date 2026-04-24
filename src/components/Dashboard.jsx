@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
+const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) => {
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
@@ -356,9 +356,25 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat }) => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-black text-primary text-sm">{item.amount}</p>
-                    <p className="text-[9px] text-tertiary font-bold uppercase">Éxito</p>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="font-black text-primary text-sm">{item.amount}</p>
+                      <p className="text-[9px] text-tertiary font-bold uppercase">Éxito</p>
+                    </div>
+                    {onDeleteSale && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm('¿Estás seguro de eliminar este registro de venta?')) {
+                            onDeleteSale(item.id);
+                          }
+                        }}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-error/10 text-error opacity-0 group-hover:opacity-100 transition-all hover:bg-error hover:text-white"
+                        title="Eliminar registro"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
+                    )}
                   </div>
 
                 </div>
