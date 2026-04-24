@@ -38,6 +38,8 @@ const DATA_DIR = path.join(__dirname, 'data');
 const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
