@@ -374,7 +374,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 g                  <div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Profile Num</label>
                     <select 
                       required
