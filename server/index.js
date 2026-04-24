@@ -133,6 +133,14 @@ function scheduleRecovery(to) {
         const isBotLast = lastMsg && (lastMsg.role === 'bot' || lastMsg.isMe);
 
         if (stillNew && isBotLast && !c.recoverySentAt) {
+            // Verificación extra: no enviar si ya existe en el historial completo de mensajes
+            const alreadySent = c.messages.some(m => m.body?.includes("activar primero") || m.content?.includes("activar primero"));
+            if (alreadySent) {
+                c.recoverySentAt = Date.now(); // Marcamos para no volver a evaluar
+                saveChats(chats);
+                return;
+            }
+
             const msgBody = "si estas interesado te la puedo activar primero";
             await sendMessageToCloudAPI(to, msgBody);
             const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
@@ -508,10 +516,17 @@ async function getAIResponse(message, history = []) {
     if (!openai) return "Error IA";
     try {
         const inv = inventory.map(i => `${i.service} - $${i.price} (${i.uses})`).join(', ');
+        
+        // Memoria de compras pasadas
+        const customerSales = sales.filter(s => s.customerId === history[0]?.from || s.customer === history[0]?.customerName);
+        const purchaseHistory = customerSales.length > 0 
+            ? `Historial del cliente: Ha comprado ${customerSales.map(s => s.service).join(', ')} antes.`
+            : "Cliente nuevo (sin compras previas).";
+
         const comp = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: `${settings.systemPrompt}\n\nStock actual para entrega instantánea (solo usa esto si el cliente pide algo que ya tenemos listo): ${inv}` },
+                { role: "system", content: `${settings.systemPrompt}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea: ${inv}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
                 { role: "user", content: message }
             ]
