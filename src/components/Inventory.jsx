@@ -207,17 +207,17 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight font-headline">Inventory</h1>
+          <h1 className="text-3xl font-black text-on-surface tracking-tight font-headline">Inventory</h1>
           <p className="text-on-surface-variant text-sm mt-1 font-medium opacity-60">Manage your streaming stock and pricing</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <button 
             onClick={() => setIsManageListsOpen(true)}
-            className="glass text-white font-bold px-6 py-3 rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/5 active:scale-95"
+            className="glass transition-all flex items-center justify-center gap-3 active:scale-95 px-6 py-3 rounded-2xl hover:bg-black/5"
           >
-            <span className="material-symbols-outlined text-xl">tune</span>
-            Configure Lists
+            <span className="material-symbols-outlined text-xl text-primary font-bold">tune</span>
+            <span className="font-bold text-on-surface">Configure Lists</span>
           </button>
           <button 
             onClick={() => { closeModal(); setIsModalOpen(true); }}
@@ -233,13 +233,13 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       <div className="mb-10 w-full overflow-hidden">
         <div className="glass rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden">
           {/* Main Stats Header */}
-          <div className="bg-[#0b0e14] h-full flex items-center px-6 md:px-10 relative z-10 border-r border-white/5 flex-shrink-0">
+          <div className="bg-secondary-bg h-full flex items-center px-6 md:px-10 relative z-10 border-r border-outline-variant flex-shrink-0">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             <div className="relative z-10 flex items-center gap-3">
               <div className="w-8 h-8 md:w-9 md:h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
                 <span className="material-symbols-outlined text-lg md:text-xl">database</span>
               </div>
-              <h2 className="text-white font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Real Stock</h2>
+              <h2 className="text-on-surface font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Real Stock</h2>
             </div>
           </div>
 
@@ -247,10 +247,10 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           <div className="flex-grow h-full flex gap-4 md:gap-5 items-center px-6 md:px-8 overflow-x-auto custom-scrollbar scrollbar-hide">
             {Object.entries(statsByService).length > 0 ? (
               Object.entries(statsByService).map(([key, data]) => (
-                <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-white/5 border border-white/5 rounded-2xl px-5 py-2 hover:bg-white/10 hover:border-primary/20 transition-all cursor-default group shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(251,191,36,0.3)] group-hover:scale-125 transition-transform"></span>
+                <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-secondary-bg border border-outline-variant rounded-2xl px-5 py-2 hover:bg-white hover:border-primary/20 transition-all cursor-default group shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.3)] group-hover:scale-125 transition-transform"></span>
                   <span className="text-[10px] md:text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-80 group-hover:opacity-100">{data.displayName}</span>
-                  <span className="text-sm md:text-base font-black text-white leading-none ml-1">{data.totalSlots}</span>
+                  <span className="text-sm md:text-base font-black text-on-surface leading-none ml-1">{data.totalSlots}</span>
                 </div>
               ))
             ) : (
@@ -265,8 +265,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-[#0b0e14]/95 backdrop-blur-3xl w-full max-w-md rounded-[2.5rem] shadow-2xl border border-white/5 p-10 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-surface w-full max-w-md rounded-[2.5rem] shadow-2xl border border-outline-variant p-10 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-on-surface tracking-tight">
                 {editingAccount ? 'Update Account' : 'Register Service'}
@@ -641,10 +641,10 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:block bg-[#0f172a]/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden">
+        <div className="hidden md:block bg-surface rounded-[2.5rem] border border-outline-variant shadow-2xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#0b0e14] border-b border-white/5 text-center">
+              <tr className="bg-secondary-bg border-b border-outline-variant text-center">
                 <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Plataforma</th>
                 <th className="px-4 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Perfil</th>
                 <th className="px-6 py-6 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.25em] opacity-50">Correo</th>
@@ -665,25 +665,25 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </td>
                   <td className="px-4 py-5 font-black text-on-surface tracking-tight">#{acc.profile}</td>
                   <td className="px-6 py-5">
-                    <p className="text-xs font-bold text-white opacity-90">{acc.email}</p>
+                    <p className="text-xs font-bold text-on-surface opacity-90">{acc.email}</p>
                   </td>
                   <td className="px-6 py-5">
                     <p className="text-[11px] text-primary font-black tracking-widest uppercase">{acc.pass}</p>
                   </td>
                   <td className="px-6 py-5">
-                    <p className="font-black text-white leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <p className="font-black text-on-surface leading-none text-base tracking-tighter">${acc.price.toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-5">
                     <p className="font-black text-on-surface-variant leading-none text-sm tracking-tighter opacity-60 group-hover:opacity-100 transition-opacity">${acc.cost?.toLocaleString() || 0}</p>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest bg-secondary-bg px-3 py-1.5 rounded-lg border border-outline-variant">
                       {acc.provider || 'Directo'}
                     </span>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3 justify-center">
-                       <span className="text-base font-black text-white leading-none">{acc.uses}</span>
+                       <span className="text-base font-black text-on-surface leading-none">{acc.uses}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5">

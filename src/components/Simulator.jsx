@@ -143,18 +143,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   return (
     <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
       {/* 1. Chat List Sidebar (Left Column) */}
-      <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-[#0b0e14] relative z-10 border-r border-white/5 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+      <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-surface/90 backdrop-blur-xl relative z-10 border-r border-slate-200 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-8 pb-4 flex items-center justify-between">
-          <h3 className="font-headline font-black text-2xl text-white tracking-tight">Messages</h3>
-          <div className="w-10 h-10 text-white/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all active:scale-90">
+          <h3 className="font-headline font-black text-2xl text-on-surface tracking-tight">Messages</h3>
+          <div className="w-10 h-10 text-on-surface-variant/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all active:scale-90">
             <span className="material-symbols-outlined text-xl">edit_square</span>
           </div>
         </div>
-        <div className="px-5 pb-5 border-b border-white/5 space-y-4">
+        <div className="px-5 pb-5 border-b border-slate-200 space-y-4">
           <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">search</span>
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/20 text-sm group-focus-within:text-primary transition-colors">search</span>
             <input 
-              className="w-full bg-[#111827] border border-white/5 rounded-xl py-3.5 pl-12 text-xs text-on-surface placeholder:text-white/20 focus:ring-1 focus:ring-primary/40 transition-all outline-none font-medium" 
+              className="w-full bg-slate-100/50 border border-slate-200 rounded-xl py-3.5 pl-12 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary/40 transition-all outline-none font-medium" 
               placeholder="Filter chats..." 
               type="text"
               value={searchTerm}
@@ -165,7 +165,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             <button 
               onClick={() => setFilterTag('all')}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === 'all' ? 'bg-primary text-on-primary' : 'bg-white/5 text-white/30 hover:bg-white/10'}`}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === 'all' ? 'bg-primary text-on-primary' : 'bg-slate-100 text-on-surface-variant hover:bg-slate-200'}`}
             >
               Todos
             </button>
@@ -173,7 +173,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               <button 
                 key={key}
                 onClick={() => setFilterTag(key)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === key ? 'bg-primary text-on-primary' : 'bg-white/5 text-white/30 hover:bg-white/10'}`}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === key ? 'bg-primary text-on-primary' : 'bg-slate-100 text-on-surface-variant hover:bg-slate-200'}`}
               >
                 {style.label.replace('Activado · ', '')}
               </button>
@@ -188,26 +188,24 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 <div 
                   key={chat.from}
                   onClick={() => onSelectChat(chat.from)}
-                  className={`flex gap-4 px-6 py-4 cursor-pointer transition-all relative group border-b border-white/5 ${
+                  className={`flex gap-4 px-6 py-4 cursor-pointer transition-all relative group border-b border-slate-200 ${
                     isSelected 
-                      ? 'bg-white/10 border-l-2 border-l-primary shadow-inner shadow-black/20' 
-                      : 'hover:bg-white/[0.02] border-l-2 border-l-transparent'
+                      ? 'bg-primary/5 border-l-2 border-l-primary' 
+                      : 'hover:bg-slate-50 border-l-2 border-l-transparent'
                   }`}
                 >
-                  {/* Profile box removed as requested earlier */}
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
                     <div className="flex justify-between items-baseline mb-0.5">
-                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-white' : 'text-on-surface'}`}>
+                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
                         {chat.customerName}
                       </h4>
-                      <span className={`text-[10px] font-black ${isSelected ? 'text-primary' : 'text-white/20'}`}>
+                      <span className={`text-[10px] font-black ${isSelected ? 'text-primary' : 'text-on-surface-variant/40'}`}>
                         {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
                     
                     <div className="flex items-center gap-1.5 overflow-hidden">
-                      {isSelected && <span className="material-symbols-outlined text-[12px] text-primary">key</span>}
-                      <p className={`text-[11px] font-medium truncate opacity-60 ${isSelected ? 'text-white' : 'text-on-surface-variant'}`}>
+                      <p className={`text-[11px] font-medium truncate opacity-60 ${isSelected ? 'text-primary/70' : 'text-on-surface-variant'}`}>
                         {chat.lastMessage ? chat.lastMessage.content : 'No signals'}
                       </p>
                     </div>
@@ -217,64 +215,56 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             })
           ) : (
             <div className="p-20 text-center flex flex-col items-center gap-4">
-               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
-                  <span className="material-symbols-outlined text-4xl text-white/10 font-thin">all_inbox</span>
+               <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/20 font-thin">all_inbox</span>
                </div>
-               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Archive Empty</p>
+               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-on-surface-variant/20">Archive Empty</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* 2. Main Chat Area (Middle Column) */}
       <section className={`flex-grow flex flex-col relative bg-background overflow-hidden ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
-            <header className="h-24 flex items-center justify-between px-6 md:px-10 bg-[#020617]/80 border-b border-white/5 z-10 backdrop-blur-3xl">
+            <header className="h-24 flex items-center justify-between px-6 md:px-10 bg-surface/80 border-b border-slate-200 z-10 backdrop-blur-3xl">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => onSelectChat(null)}
-                  className="md:hidden w-11 h-11 flex items-center justify-center text-on-surface-variant active:bg-white/5 rounded-2xl transition-all border border-white/5"
+                  className="md:hidden w-11 h-11 flex items-center justify-center text-on-surface-variant active:bg-slate-100 rounded-2xl transition-all border border-slate-200"
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
-                {/* Profile box removed */}
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
                   <div className="flex items-center gap-2 mt-2">
-                    <div className="bg-tertiary/10 border border-tertiary/20 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(45,212,191,0.1)]">
+                    <div className="bg-tertiary/10 border border-tertiary/20 px-3 py-1 rounded-full flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
                       <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.2em] leading-none">Agent Active</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="xl:hidden material-symbols-outlined text-on-surface-variant p-2.5 cursor-pointer hover:bg-white/5 hover:text-on-surface rounded-2xl transition-all border border-white/5">info</span>
-              </div>
             </header>
 
-            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar cube-pattern pb-32 md:pb-10 relative">
-              {/* Background Glow */}
-              <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px] -z-10 animate-pulse"></div>
-
+            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar pb-32 md:pb-10 relative">
               <div className="flex justify-center mb-4">
-                <span className="px-5 py-1.5 rounded-full text-[10px] font-black text-white/40 uppercase tracking-[0.3em] border border-white/5 bg-[#111827]/80 backdrop-blur-md">Today</span>
+                <span className="px-5 py-1.5 rounded-full text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.3em] border border-slate-200 bg-white/80 backdrop-blur-md">Today</span>
               </div>
 
               {activeChatData.messages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
                   <div className={`max-w-[85%] md:max-w-[65%] transition-all relative ${
                     msg.role === 'user' 
-                      ? 'bg-chat-bubble-user text-white border border-white/10 rounded-bl-none shadow-xl' 
-                      : 'bg-gradient-to-br from-chat-bubble-agent-start to-chat-bubble-agent-end text-white shadow-xl shadow-indigo-500/10 rounded-br-none'
+                      ? 'bg-slate-100 text-on-surface border border-slate-200 rounded-bl-none shadow-sm' 
+                      : 'bg-primary text-on-primary shadow-xl shadow-primary/10 rounded-br-none'
                   } ${msg.imageUrl ? 'p-1' : 'px-6 py-4 rounded-[1.5rem]'}`}>
                     {msg.imageUrl ? (
                       <div className="rounded-[1.2rem] overflow-hidden">
                         <img 
                           src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
                           alt="Message attachment" 
-                          className="max-w-full h-auto object-cover hover:scale-105 transition-transform cursor-pointer"
+                          className="max-w-full h-auto object-cover"
                           onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`, '_blank')}
                         />
                       </div>
@@ -290,19 +280,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   </div>
                 </div>
               ))}
-              
-              
-
               <div ref={chatEndRef} />
             </div>
 
-            <footer className="p-6 md:p-8 bg-surface/80 border-t border-white/5 pb-safe-area-inset-bottom backdrop-blur-md">
+            <footer className="p-6 md:p-8 bg-surface/80 border-t border-slate-200 backdrop-blur-md">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 hover:border-primary/20 transition-all focus-within:border-primary/20"
+                className="flex items-center gap-4 bg-slate-100 px-6 py-3 rounded-2xl border border-slate-200 focus-within:border-primary/20 transition-all"
               >
                 <input 
-                  className="flex-grow bg-transparent border-none text-sm text-on-surface focus:ring-0 placeholder:text-on-surface-variant font-medium" 
+                  className="flex-grow bg-transparent border-none text-sm text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40 font-medium" 
                   placeholder="Intercept frequency..." 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -310,7 +297,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 />
                 <button 
                   type="submit"
-                  className="w-12 h-12 bg-primary text-on-primary rounded-xl flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                  className="w-12 h-12 bg-primary text-on-primary rounded-xl flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
                 >
                   <span className="material-symbols-outlined text-xl">send</span>
                 </button>
@@ -318,26 +305,21 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             </footer>
           </>
         ) : (
-          <div className="flex-grow flex flex-col items-center justify-center text-center p-12 relative overflow-hidden">
-             <div className="absolute w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px]"></div>
-             <span className="material-symbols-outlined text-8xl font-thin mb-8 text-white/5 relative">waves</span>
-             <h3 className="text-2xl font-black text-white/20 tracking-[0.2em] relative">SELECT SIGNAL</h3>
-             <p className="text-[10px] font-black uppercase tracking-[0.4em] mt-4 text-white/5 relative">Awaiting decryption</p>
+          <div className="flex-grow flex flex-col items-center justify-center text-center p-12">
+             <span className="material-symbols-outlined text-8xl font-thin mb-8 text-on-surface-variant/10">waves</span>
+             <h3 className="text-2xl font-black text-on-surface-variant/20 tracking-[0.2em]">SELECT SIGNAL</h3>
           </div>
         )}
       </section>
 
-      {/* 3. Customer Profile & CRM Actions Sidebar (Right Column) */}
       {selectedChat && activeChatData && (
-        <section className={`w-85 flex-shrink-0 bg-[#0b0e14] border-l border-white/5 hidden xl:flex flex-col z-20 shadow-[-10px_0_40px_rgba(0,0,0,0.4)] overflow-hidden`}>
-          <div className="p-10 flex flex-col items-center text-center border-b border-white/5 sticky top-0 bg-[#0b0e14]/80 z-10 backdrop-blur-3xl">
-            {/* Profile box removed */}
+        <section className={`w-85 flex-shrink-0 bg-surface/90 backdrop-blur-xl border-l border-slate-200 hidden xl:flex flex-col z-20 shadow-[-10px_0_40px_rgba(0,0,0,0.05)] overflow-hidden`}>
+          <div className="p-10 flex flex-col items-center text-center border-b border-slate-200 sticky top-0 bg-surface/80 z-10 backdrop-blur-3xl">
             <h2 className="font-black text-2xl text-on-surface tracking-tight leading-none mb-2">{activeChatData.customerName}</h2>
             <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-30">{selectedChat}</p>
           </div>
 
           <div className="flex-grow overflow-y-auto p-8 space-y-10 custom-scrollbar">
-            {/* Status Field */}
             <div>
               <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant mb-5 opacity-40">Classification</h4>
               <div className="grid grid-cols-2 gap-3">
@@ -347,8 +329,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     onClick={() => onUpdateTag(selectedChat, [key])}
                     className={`py-3 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
                       getTagKey(activeChatData.tags) === key 
-                        ? style.classes + ' shadow-[0_0_15px_rgba(45,212,191,0.1)] border-current scale-105' 
-                        : 'bg-white/5 border-transparent text-white/20 hover:bg-white/10 hover:text-white/60'
+                        ? style.classes + ' shadow-[0_0_15px_rgba(79,70,229,0.1)] border-current scale-105' 
+                        : 'bg-slate-100 border-transparent text-on-surface-variant/40 hover:bg-slate-200 hover:text-on-surface'
                     }`}
                   >
                     {style.label}
@@ -357,23 +339,22 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </div>
             </div>
 
-            {/* Direct Forge (Sales) */}
-            <div className="bg-white/[0.02] rounded-[2rem] p-6 border border-white/5 shadow-inner">
+            <div className="bg-slate-50 rounded-[2rem] p-6 border border-slate-200">
                <div className="flex items-center gap-3 mb-6">
-                 <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <span className="material-symbols-outlined text-primary text-lg">bolt</span>
                  </div>
-                 <h4 className="font-black text-sm text-white tracking-tight">Direct Dispatch</h4>
+                 <h4 className="font-black text-sm text-on-surface tracking-tight">Direct Dispatch</h4>
                </div>
                
                <select 
                  value={selectedSaleAccount}
                  onChange={(e) => setSelectedSaleAccount(e.target.value)}
-                 className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-5 text-xs font-bold text-white focus:ring-2 focus:ring-primary/20 mb-4 appearance-none cursor-pointer"
+                 className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-xs font-bold text-on-surface focus:ring-2 focus:ring-primary/20 mb-4 appearance-none cursor-pointer"
                >
-                 <option value="" className="bg-panel-bg">Select asset...</option>
+                 <option value="" className="bg-surface">Select asset...</option>
                  {availableInventory.map(acc => (
-                   <option key={acc.id} value={acc.id} className="bg-panel-bg">
+                   <option key={acc.id} value={acc.id} className="bg-surface">
                      {acc.service} ({acc.profile || 'Acc'}) — ${acc.price}
                    </option>
                  ))}
@@ -382,17 +363,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                <button 
                 disabled={!selectedSaleAccount}
                 onClick={handleSellToCustomer}
-                className="w-full bg-primary text-on-primary py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-20 transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-primary/20"
+                className="w-full bg-primary text-on-primary py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-20 transition-all hover:scale-[1.02] active:scale-95"
                >
                  Finalize Sale
                </button>
             </div>
 
-            {/* Deployment History */}
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant opacity-40">Deployment Records</h4>
-                <span className="bg-white/5 border border-white/5 text-white/40 px-3 py-1 rounded-lg text-[10px] font-black flex items-center gap-2">
+                <span className="bg-secondary-bg border border-outline-variant text-on-surface-variant px-3 py-1 rounded-lg text-[10px] font-black flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">history</span>
                   {customerSales.length}
                 </span>
@@ -401,12 +381,12 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               {customerSales.length > 0 ? (
                 <div className="space-y-4">
                   {customerSales.map(sale => (
-                    <div key={sale.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex gap-4 items-center group hover:bg-white/10 transition-all cursor-default">
-                       <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/20 group-hover:text-primary transition-all duration-500">
+                    <div key={sale.id} className="bg-secondary-bg border border-outline-variant rounded-2xl p-5 flex gap-4 items-center group">
+                       <div className="w-11 h-11 rounded-xl bg-background border border-outline-variant flex items-center justify-center text-on-surface-variant/40">
                          <span className="material-symbols-outlined text-xl font-light">package_2</span>
                        </div>
                        <div className="flex-grow">
-                         <h5 className="font-black text-sm text-white leading-tight tracking-tight">{sale.service}</h5>
+                         <h5 className="font-black text-sm text-on-surface leading-tight tracking-tight">{sale.service}</h5>
                          <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mt-1 opacity-40">
                            {sale.dateOut || sale.date}
                          </p>

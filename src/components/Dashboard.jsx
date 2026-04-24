@@ -111,10 +111,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] leading-none mb-1.5 opacity-50">
                 {dateRange.start === dateRange.end ? 'Selected Day' : 'Selected Period'}
               </span>
-              <span className="text-sm font-black text-white tracking-wide">
+              <span className="text-sm font-black text-on-surface tracking-wide">
                 {currentDisplay}
               </span>
-
             </div>
             <span className={`material-symbols-outlined text-on-surface-variant/40 ml-auto transition-transform duration-500 ${isPickerOpen ? 'rotate-180' : ''}`}>
               expand_more
@@ -122,13 +121,13 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
           </div>
 
           {isPickerOpen && (
-            <div className="absolute top-full right-0 mt-4 z-[100] bg-[#111827]/95 backdrop-blur-3xl rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10 w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="absolute top-full right-0 mt-4 z-[100] bg-surface rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.15)] border border-outline-variant w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
               {/* Presets Sidebar */}
-              <div className="w-[180px] bg-white/5 border-r border-white/5 p-6 space-y-2">
+              <div className="w-[180px] bg-secondary-bg border-r border-outline-variant p-6 space-y-2">
                 <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-5">Shortcuts</p>
                 <button 
                   onClick={() => handleDateClick(today)}
-                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-medium text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
+                  className="w-full text-left px-5 py-3 rounded-xl text-[13px] font-medium text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-all border border-transparent hover:border-primary/20"
                 >
                   Today
                 </button>
@@ -176,7 +175,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
                       type="date"
                       value={dateRange.start}
                       onChange={(e) => handleDateClick(e.target.value)}
-                      className="w-full bg-secondary-bg border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                      className="w-full bg-secondary-bg border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                     />
                   </div>
                   
@@ -198,12 +197,12 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
         {getStats().map((stat, i) => (
           <div 
             key={i} 
-            className="group relative bg-[#0f172a]/40 p-8 rounded-[2rem] border border-white/5 shadow-2xl transition-all duration-500 hover:border-primary/20 cursor-default overflow-hidden backdrop-blur-md"
+            className="group relative bg-surface p-8 rounded-[2rem] border border-outline-variant shadow-sm transition-all duration-500 hover:border-primary/20 cursor-default overflow-hidden"
           >
             <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color} rounded-full -mr-16 -mt-16 blur-3xl opacity-5 group-hover:opacity-10 transition-opacity`}></div>
             
             <div className="flex justify-between items-start mb-6 relative">
-              <div className={`w-14 h-14 ${stat.color} rounded-2xl flex items-center justify-center border border-white/5 shadow-lg transition-transform group-hover:scale-110 duration-500`}>
+              <div className={`w-14 h-14 ${stat.color} rounded-2xl flex items-center justify-center border border-outline-variant shadow-sm transition-transform group-hover:scale-110 duration-500`}>
                 <span className="material-symbols-outlined text-2xl font-bold">{stat.icon}</span>
               </div>
               <div className="flex flex-col items-end">
@@ -216,7 +215,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
             
             <div className="relative z-10">
               <h3 className="text-on-surface-variant text-[11px] font-black uppercase tracking-[0.2em] mb-1.5 opacity-50">{stat.label}</h3>
-              <p className="text-3xl font-black text-white leading-none tracking-tighter">{stat.value}</p>
+              <p className="text-3xl font-black text-on-surface leading-none tracking-tighter">{stat.value}</p>
             </div>
             
             <div className={`absolute bottom-0 left-0 h-1 bg-primary w-0 group-hover:w-full transition-all duration-700 opacity-50`}></div>
@@ -225,7 +224,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl backdrop-blur-md">
+        <div className="lg:col-span-2 bg-surface p-8 rounded-[2.5rem] border border-outline-variant shadow-sm">
           <div className="flex justify-between items-center mb-6 px-2">
             <div>
               <h3 className="font-bold text-on-surface">Actividad de Ventas Reciente</h3>
@@ -244,10 +243,10 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
               <div 
                 key={item.id} 
                 onClick={() => item.customerId && onNavigateToChat && onNavigateToChat(item.customerId)}
-                className={`flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                className={`flex items-center justify-between p-4 bg-secondary-bg rounded-2xl border border-outline-variant hover:border-primary/30 transition-all group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-sm group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center border border-outline-variant shadow-sm group-hover:scale-110 transition-transform">
                     <span className="material-symbols-outlined text-on-surface-variant text-xl">person</span>
                   </div>
                   <div>
@@ -267,7 +266,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
           </div>
         </div>
 
-        <div className="bg-[#0f172a]/40 p-6 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden backdrop-blur-md">
+        <div className="bg-surface p-6 rounded-3xl border border-outline-variant shadow-sm relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full pointer-events-none"></div>
           <h3 className="font-bold text-on-surface mb-6 px-2 uppercase text-xs tracking-[0.15em]">Ventas por Plataforma</h3>
 
@@ -283,9 +282,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
                   <span className="text-on-surface tracking-widest">{service}</span>
                   <span className={idx === 0 ? "text-primary" : "text-orange-400"}>{count} ventas</span>
                 </div>
-                <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                <div className="w-full h-2.5 bg-secondary-bg rounded-full overflow-hidden border border-outline-variant">
                   <div 
-                    className={`h-full ${idx === 0 ? "bg-primary shadow-[0_0_12px_rgba(251,191,36,0.3)]" : "bg-orange-400"} rounded-full transition-all`} 
+                    className={`h-full ${idx === 0 ? "bg-primary" : "bg-orange-400"} rounded-full transition-all`} 
                     style={{ width: `${Math.min((count / (filteredSales.length || 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -297,7 +296,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
           </div>
 
-          <div className="mt-10 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+          <div className="mt-10 p-4 bg-secondary-bg rounded-2xl border border-outline-variant flex items-center justify-between">
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Plataforma Top</span>
             <span className="text-[10px] font-black text-primary uppercase flex items-center gap-1">
               {filteredSales.length > 0 ? 
@@ -311,8 +310,8 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
       {/* History Modal */}
       {isHistoryModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-end p-4 bg-background/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-[#0b0e14]/95 backdrop-blur-3xl w-full max-w-md h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 p-8 flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+        <div className="fixed inset-0 z-[200] flex items-center justify-end p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-surface w-full max-w-md h-[90vh] rounded-[2.5rem] shadow-2xl border border-outline-variant p-8 flex flex-col animate-in slide-in-from-right duration-500 ease-out">
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h2 className="text-2xl font-black text-on-surface">Historial de Ventas</h2>
@@ -323,7 +322,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
               <button 
                 onClick={() => setIsHistoryModalOpen(false)}
-                className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors"
+                className={`flex items-center gap-3.5 px-5 py-3 rounded-xl transition-all duration-500 cursor-pointer group mb-1 text-on-surface-variant hover:text-on-surface hover:bg-black/5`}
               >
                 <span className="material-symbols-outlined text-on-surface-variant">close</span>
               </button>
