@@ -321,6 +321,10 @@ app.post('/webhook', async (req, res) => {
         }
 
         // Mensajes de Clientes
+        let msgBody = msg.type === 'text' ? msg.text.body : (msg.type === 'image' ? '[IMAGEN]' : '');
+
+        if (msgBody) {
+            if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
             
             let imageUrl = null;
@@ -333,9 +337,7 @@ app.post('/webhook', async (req, res) => {
                     const filePath = path.join(UPLOADS_DIR, fileName);
                     fs.writeFileSync(filePath, buffer);
                     imageUrl = `/uploads/${fileName}`;
-                    msgBody = "[IMAGEN]"; // Cambiamos el texto base
                     
-                    // Análisis en background (opcional, ya lo hacemos abajo si queremos)
                     analyzeReceipt(buffer).then(isReceipt => {
                         if (isReceipt) {
                             lastReceiptFrom = from;
@@ -353,46 +355,28 @@ app.post('/webhook', async (req, res) => {
             currentChat.messages.push(newMessage);
             currentChat.updatedAt = Date.now();
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
-            saveChats(chats); 
-            io.emit('message', { ...newMessage, customerName });
+            saveChats(chats); io.emit('message', { ...newMessage, customerName });
 
-            // Auto-confirmación (Detección ampliada)
+            // Auto-confirmación
             const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuanto|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;
             if (confirmWords.test(msgBody.trim())) {
                 const offeredAt = currentChat.activationOfferedAt || 0;
                 const recoveredAt = currentChat.recoverySentAt || 0;
                 if (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000) {
-                    console.log(`🤖 Confirmación por mensaje detectada (${msgBody}). Entregando...`);
                     await executeDelivery(from, 'auto'); res.sendStatus(200); return;
                 }
             }
 
-            // --- DISPARO INMEDIATO POR INTENCIÓN (Ej: "Me la activas primero?") ---
+            // Intención de activación
             const activateRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)/i;
             if (activateRegex.test(msgBody.trim())) {
-                console.log(`🤖 Intención de activación proactiva detectada (${msgBody}). Iniciando entrega...`);
-                // Ejecutamos entrega SIN esperar (background) para dejar que la IA responda también
-                executeDelivery(from, 'auto').catch(e => console.error('Error in proactive delivery:', e));
+                executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
                 currentChat.activationNotifySent = true;
                 currentChat.activationOfferedAt = Date.now();
             }
 
-            // --- DETECCIÓN DE PRODUCTO TRAS OFERTA ---
-            const offeredAt = currentChat.activationOfferedAt || 0;
-            if (Date.now() - offeredAt < 1800000) { // Si se le ofreció hace menos de 30 mins
-                const mentionedProduct = inventory.find(a => msgBody.toLowerCase().includes(a.service.toLowerCase()));
-                if (mentionedProduct) {
-                    console.log(`🤖 Cliente mencionó ${mentionedProduct.service} tras oferta. Entregando...`);
-                    currentChat.pendingProducts = [mentionedProduct.service];
-                    executeDelivery(from, 'auto').catch(e => console.error('Error in post-offer delivery:', e));
-                    res.sendStatus(200); return; 
-                }
-            }
-
             // Respuesta IA
             const aiReply = await getAIResponse(msgBody, currentChat.messages.slice(-10));
-            
-            // Intención de compra y disparo inmediato
             const hasPurchaseIntent = /\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply);
             const forceDelivery = /\[ENTREGAR_AHORA\]/i.test(aiReply);
 
@@ -403,50 +387,12 @@ app.post('/webhook', async (req, res) => {
                     const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
                     if (prodsMatch) currentChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
                     if (totalMatch) currentChat.pendingTotal = totalMatch[1];
-                    currentChat.updatedAt = Date.now();
                     saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
-                }
-                
-                const activateRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)|cuanto|cuánto|demora|demoras/i;
-                if (activateRegex.test(msgBody) && !currentChat.activationNotifySent) {
-                    currentChat.activationNotifySent = true;
-                    currentChat.activationOfferedAt = Date.now();
-                    saveChats(chats);
-                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📦 *CLIENTE QUIERE CUENTA PRIMERO* - ${customerName}. Responde *r* para activar.`);
                 }
             }
 
             if (forceDelivery) {
-                console.log(`🤖 AI ordenó entrega inmediata ([ENTREGAR_AHORA]) para ${customerName}.`);
-                // Capturar productos antes de limpiar el reply
-                const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
-                if (prodsMatch) currentChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
-                
-                // Ejecutar entrega en segundo plano para no bloquear respuesta
                 setTimeout(() => executeDelivery(from, 'auto'), 500);
-            }
-
-            if (msg.type === 'image') {
-                const mediaId = msg.image.id;
-                console.log(`📸 Imagen recibida de ${customerName}. Analizando...`);
-                
-                // Analizar en background
-                downloadMetaMedia(mediaId).then(async buffer => {
-                    if (buffer) {
-                        const isReceipt = await analyzeReceipt(buffer);
-                        if (isReceipt) {
-                            lastReceiptFrom = from;
-                            console.log(`✅ Comprobante detectado de ${customerName}.`);
-                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
-                            
-                            // Añadir etiqueta de revisión si no existe
-                            if (!currentChat.tags?.includes('pago-pendiente')) {
-                                currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
-                                saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
-                            }
-                        }
-                    }
-                });
             }
 
             const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]/gi, '').trim();
