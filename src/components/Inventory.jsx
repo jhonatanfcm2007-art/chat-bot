@@ -315,12 +315,12 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                           value={formData.service}
                           onChange={handleInputChange}
                           placeholder="Platform name..."
-                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
+                          className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
                         />
                         <button 
                           type="button"
                           onClick={() => { setShowCustomPlatform(false); setFormData(prev => ({...prev, service: ''})); }}
-                          className="bg-white/5 text-white/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-white/5"
+                          className="bg-slate-100 text-on-surface/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-slate-200"
                         >
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
@@ -338,11 +338,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                           name="provider"
                           value={formData.provider}
                           onChange={handleInputChange}
-                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                          className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" disabled className="bg-secondary-bg">Select provider...</option>
+                          <option value="" disabled className="text-on-surface">Select provider...</option>
                           {availableProviders.map(provider => (
-                            <option key={provider} value={provider} className="bg-secondary-bg">{provider}</option>
+                            <option key={provider} value={provider} className="text-on-surface">{provider}</option>
                           ))}
                         </select>
                         <button 
@@ -360,12 +360,12 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                           value={formData.provider}
                           onChange={handleInputChange}
                           placeholder="Provider name..."
-                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
+                          className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
                         />
                         <button 
                           type="button"
                           onClick={() => { setShowCustomProvider(false); setFormData(prev => ({...prev, provider: ''})); }}
-                          className="bg-white/5 text-white/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-white/5"
+                          className="bg-slate-100 text-on-surface/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-slate-200"
                         >
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
@@ -374,19 +374,18 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-2 g                  <div>
                     <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Profile Num</label>
                     <select 
                       required
                       name="profile"
                       value={formData.profile}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
                     >
-                      <option value="" disabled className="bg-secondary-bg">N#</option>
+                      <option value="" disabled className="text-on-surface">N#</option>
                       {availableProfiles.map(p => (
-                        <option key={p} value={p} className="bg-secondary-bg">{p}</option>
+                        <option key={p} value={p} className="text-on-surface">{p}</option>
                       ))}
                     </select>
                   </div>
@@ -398,7 +397,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       value={formData.uses}
                       onChange={handleInputChange}
                       placeholder="3"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
                 </div>
@@ -412,7 +411,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       value={formData.cost}
                       onChange={handleInputChange}
                       placeholder="8000"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
                   <div>
@@ -423,7 +422,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       value={formData.price}
                       onChange={handleInputChange}
                       placeholder="12000"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
                 </div>
@@ -437,7 +436,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="example@stream.com"
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
                 <div>
@@ -449,8 +448,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                     value={formData.pass}
                     onChange={handleInputChange}
                     placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
                   />
+                </div>
                 </div>
               </div>
 
@@ -467,15 +467,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
       {/* Manage Lists Modal */}
       {isManageListsOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-[#111827] w-full max-w-2xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-white/10 p-10 animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-surface w-full max-w-2xl rounded-[3rem] shadow-2xl border border-slate-200 p-10 animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Master Config</h2>
+              <h2 className="text-2xl font-black text-on-surface tracking-tight uppercase">Master Config</h2>
               <button 
                 onClick={() => setIsManageListsOpen(false)}
-                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
               >
-                <span className="material-symbols-outlined text-white/60">close</span>
+                <span className="material-symbols-outlined text-on-surface/60">close</span>
               </button>
             </div>
 
@@ -493,7 +493,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       value={newPlatformInput}
                       onChange={(e) => setNewPlatformInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddPlatform()}
-                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 placeholder:text-white/20"
+                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40"
                     />
                     <button 
                       onClick={handleAddPlatform}
@@ -504,16 +504,16 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </div>
                   <div className="space-y-3">
                     {platforms.map(platform => (
-                      <div key={platform} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
+                      <div key={platform} className="flex items-center gap-3 group bg-slate-50 p-2 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
                         <input 
                           type="text"
                           defaultValue={platform}
                           onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
-                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
+                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 transition-all"
                         />
                         <button 
                           onClick={() => handleDeletePlatform(platform)}
-                          className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
+                          className="w-10 h-10 flex items-center justify-center text-on-surface/10 group-hover:text-error transition-all"
                         >
                           <span className="material-symbols-outlined text-lg">delete_sweep</span>
                         </button>
@@ -535,7 +535,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       value={newProviderInput}
                       onChange={(e) => setNewProviderInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddProvider()}
-                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 placeholder:text-white/20"
+                      className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40"
                     />
                     <button 
                       onClick={handleAddProvider}
@@ -546,16 +546,16 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </div>
                   <div className="space-y-3">
                     {providers.map(provider => (
-                      <div key={provider} className="flex items-center gap-3 group bg-white/5 p-2 rounded-2xl border border-transparent hover:border-white/10 transition-all">
+                      <div key={provider} className="flex items-center gap-3 group bg-slate-50 p-2 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
                         <input 
                           type="text"
                           defaultValue={provider}
                           onBlur={(e) => handleEditProviderName(provider, e.target.value)}
-                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-white focus:ring-0 transition-all"
+                          className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 transition-all"
                         />
                         <button 
                           onClick={() => handleDeleteProvider(provider)}
-                          className="w-10 h-10 flex items-center justify-center text-white/10 group-hover:text-error transition-all"
+                          className="w-10 h-10 flex items-center justify-center text-on-surface/10 group-hover:text-error transition-all"
                         >
                           <span className="material-symbols-outlined text-lg">delete_sweep</span>
                         </button>
@@ -565,7 +565,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
               </div>
             </div>
 
-            <div className="mt-10 pt-8 border-t border-white/5 flex justify-end">
+            <div className="mt-10 pt-8 border-t border-slate-200 flex justify-end">
               <button 
                 onClick={() => setIsManageListsOpen(false)}
                 className="bg-primary text-on-primary font-black px-10 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs"
@@ -581,7 +581,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         {/* Mobile View */}
         <div className="md:hidden space-y-6">
           {accounts.map((acc) => (
-            <div key={acc.id} className="bg-[#0f172a]/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
+            <div key={acc.id} className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 shadow-xl relative overflow-hidden group hover:border-primary/20 transition-all">
                <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-tertiary group-hover:w-2' : 'bg-error/50'}`}></div>
                
                <div className="flex justify-between items-start mb-6">
@@ -592,7 +592,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                    </div>
                  </div>
                  <div className="text-right">
-                    <p className="text-xl font-black text-white tracking-tighter">${acc.price.toLocaleString()}</p>
+                    <p className="text-xl font-black text-on-surface tracking-tighter">${acc.price.toLocaleString()}</p>
                     <div className="flex justify-end mt-2">
                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border transition-all ${
                         acc.status === 'Available' ? 'bg-tertiary/20 text-tertiary border-tertiary/20' : 'bg-error/20 text-error border-error/20'
@@ -603,17 +603,17 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                  </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-6 py-6 border-y border-white/5 mb-6 bg-white/5 rounded-2xl px-6">
+               <div className="grid grid-cols-2 gap-6 py-6 border-y border-slate-200 mb-6 bg-white/5 rounded-2xl px-6">
                  <div>
                    <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identidad</span>
-                   <p className="text-[11px] font-bold text-white truncate opacity-90">{acc.email}</p>
+                   <p className="text-[11px] font-bold text-on-surface truncate opacity-90">{acc.email}</p>
                    <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">{acc.pass}</p>
                  </div>
                  <div className="text-right flex flex-col justify-center">
                    <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Cupos</span>
                    <div className="flex items-center justify-end gap-2.5">
-                     <span className="text-2xl font-black text-white leading-none">{acc.uses}</span>
-                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-tertiary shadow-[0_0_8px_rgba(45,212,191,0.3)] animate-pulse' : 'bg-white/10'}`}></span>
+                     <span className="text-2xl font-black text-on-surface leading-none">{acc.uses}</span>
+                     <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-tertiary shadow-[0_0_8px_rgba(45,212,191,0.3)] animate-pulse' : 'bg-on-surface-variant/10'}`}></span>
                    </div>
                  </div>
                </div>
@@ -726,11 +726,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
             </tbody>
           </table>
           {accounts.length === 0 && (
-            <div className="p-20 text-center flex flex-col items-center gap-4 bg-white/5">
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                <span className="material-symbols-outlined text-4xl text-white/10 font-thin">inventory</span>
+            <div className="p-20 text-center flex flex-col items-center gap-4 bg-slate-50">
+              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center border border-slate-200">
+                <span className="material-symbols-outlined text-4xl text-on-surface-variant/20 font-thin">inventory</span>
               </div>
-              <p className="text-white font-black text-lg tracking-tight uppercase">Base de datos vacía</p>
+              <p className="text-on-surface font-black text-lg tracking-tight uppercase">Base de datos vacía</p>
             </div>
           )}
         </div>
