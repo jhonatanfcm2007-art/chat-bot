@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -272,10 +272,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     {msg.imageUrl ? (
                       <div className="rounded-[1.2rem] overflow-hidden">
                         <img 
-                          src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${window.location.protocol}//${window.location.host}${msg.imageUrl}`} 
+                          src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
                           alt="Message attachment" 
                           className="max-w-full h-auto object-cover hover:scale-105 transition-transform cursor-pointer"
-                          onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${window.location.protocol}//${window.location.host}${msg.imageUrl}`, '_blank')}
+                          onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`, '_blank')}
                         />
                       </div>
                     ) : (

@@ -10,7 +10,6 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../dist')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -47,6 +46,8 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 app.use('/uploads', express.static(UPLOADS_DIR));
+
+app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
 
 function loadInventory() {
     try {
