@@ -57,7 +57,7 @@ const AIAssistant = ({ settings, socket }) => {
           </div>
           
           <textarea 
-            className="flex-grow w-full bg-transparent border-none p-0 text-base md:text-lg focus:ring-0 resize-none text-on-surface mb-10 leading-relaxed placeholder:text-on-surface-variant/30 custom-scrollbar outline-none font-mono"
+            className="flex-grow w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none text-on-surface mb-10 leading-relaxed placeholder:text-on-surface-variant/30 custom-scrollbar outline-none font-sans"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Define neural protocols here..."
