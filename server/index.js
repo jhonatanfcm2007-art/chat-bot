@@ -1,11 +1,16 @@
-const express = require('express');
-const { Server } = require('socket.io');
-const http = require('http');
-const cors = require('cors');
-const OpenAI = require('openai');
-const path = require('path');
-const fs = require('fs');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+import express from 'express';
+import { Server } from 'socket.io';
+import http from 'http';
+import cors from 'cors';
+import OpenAI from 'openai';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());
