@@ -154,8 +154,18 @@ async function executeDelivery(to, mode = 'deliver_first') {
         let productsToDeliver = chat.pendingProducts?.length > 0 ? chat.pendingProducts : null;
 
         if (!productsToDeliver) {
-            const allText = (chat.messages || []).slice(-15).map(m => (m.content || m.body || '')).join(' ').toLowerCase();
-            productsToDeliver = inventory.filter(a => allText.includes(a.service.toLowerCase())).map(a => a.service).filter((v, i, arr) => arr.indexOf(v) === i);
+            // Solo buscamos productos en los últimos mensajes del USUARIO para evitar falsos positivos con lo que el bot ofrece
+            const userText = (chat.messages || [])
+                .filter(m => m.role === 'user')
+                .slice(-3)
+                .map(m => (m.content || m.body || '').toLowerCase())
+                .join(' ');
+            
+            // Si el usuario mencionó específicamente un servicio que tenemos, lo marcamos
+            productsToDeliver = inventory
+                .filter(a => userText.includes(a.service.toLowerCase()))
+                .map(a => a.service)
+                .filter((v, i, arr) => arr.indexOf(v) === i);
         }
 
         if (!productsToDeliver || productsToDeliver.length === 0) {
