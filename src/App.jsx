@@ -152,6 +152,19 @@ function App() {
       }
     });
 
+    socket.on('ai_state_updated', (data) => {
+      setChats(prev => {
+        if (!prev[data.chatId]) return prev;
+        return {
+          ...prev,
+          [data.chatId]: {
+            ...prev[data.chatId],
+            aiDisabled: data.disabled
+          }
+        };
+      });
+    });
+
     return () => {
       socket.off('message');
       socket.off('initial_chats');
@@ -355,6 +368,20 @@ function App() {
     socket.emit('update_chat_tags', { chatId, tags });
   };
 
+  const handleToggleAI = (chatId, disabled) => {
+    socket.emit('toggle_ai', { chatId, disabled });
+    setChats(prev => {
+      if (!prev[chatId]) return prev;
+      return {
+        ...prev,
+        [chatId]: {
+          ...prev[chatId],
+          aiDisabled: disabled
+        }
+      };
+    });
+  };
+
   const handleNavigateToChat = (customerId) => {
     if (customerId) {
        setActiveTab('simulator');
@@ -387,6 +414,7 @@ function App() {
             salesHistory={salesHistory}
             onSale={handleSale}
             onUpdateTag={handleUpdateChatTag}
+            onToggleAI={handleToggleAI}
             serverUrl={SERVER_URL}
           />
         );

@@ -408,6 +408,14 @@ app.post('/webhook', async (req, res) => {
             saveChats(chats); io.emit('message', { ...newMessage, customerName });
 
             if (aiTimers[from]) clearTimeout(aiTimers[from]);
+            
+            // Verificación de si el bot está apagado para este chat específico
+            if (currentChat.aiDisabled) {
+                console.log(`ℹ️ [SISTEMA] IA desactivada para ${customerName}. Ignorando IA...`);
+                res.sendStatus(200);
+                return;
+            }
+
             aiTimers[from] = setTimeout(async () => {
                 const refreshedChat = chats[from];
                 const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
@@ -528,6 +536,14 @@ io.on('connection', (socket) => {
     socket.on('sync_platforms', (data) => { platforms = data; savePlatforms(platforms); socket.broadcast.emit('platforms_updated', platforms); });
     socket.on('sync_providers', (data) => { providers = data; saveProviders(providers); socket.broadcast.emit('providers_updated', providers); });
     
+    socket.on('toggle_ai', ({ chatId, disabled }) => {
+        if (chats[chatId]) {
+            chats[chatId].aiDisabled = disabled;
+            saveChats(chats);
+            io.emit('ai_state_updated', { chatId, disabled });
+        }
+    });
+
     socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history)));
     socket.on('update_chat_tags', ({ chatId, tags }) => { if (chats[chatId]) { chats[chatId].tags = tags; saveChats(chats); io.emit('tag_updated', { from: chatId, tags }); } });
     socket.on('send_message', async ({ to, content }) => {

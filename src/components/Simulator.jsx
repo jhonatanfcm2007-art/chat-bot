@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onToggleAI, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -237,10 +237,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </button>
                 <div>
                   <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="bg-tertiary/10 border border-tertiary/20 px-3 py-1 rounded-full flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
-                      <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.2em] leading-none">Agent Active</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className={`${activeChatData.aiDisabled ? 'bg-slate-100 border-slate-200 text-on-surface-variant/40' : 'bg-tertiary/10 border-tertiary/20 text-tertiary'} border px-3 py-1 rounded-full flex items-center gap-1.5`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${activeChatData.aiDisabled ? 'bg-slate-300' : 'bg-tertiary animate-pulse'}`}></span>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">
+                        {activeChatData.aiDisabled ? 'IA Pausada' : 'IA Activa'}
+                      </p>
+                    </div>
+
+                    <div 
+                      onClick={() => onToggleAI(selectedChat, !activeChatData.aiDisabled)}
+                      className={`relative w-10 h-5 rounded-full cursor-pointer transition-all duration-300 ${activeChatData.aiDisabled ? 'bg-slate-200' : 'bg-primary'}`}
+                    >
+                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${activeChatData.aiDisabled ? 'left-1' : 'left-6'}`}></div>
                     </div>
                   </div>
                 </div>
