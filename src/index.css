@@ -1,50 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #fbbf24; /* Amber 400 - Accents from reference */
-  --color-on-primary: #0f172a;
-  --color-secondary-bg: #1e293b; /* Slate 800 */
-  --color-surface: #0f172a; /* Deep Slate */
-  --color-on-surface: #f8fafc; /* Slate 50 */
-  --color-on-surface-variant: #94a3b8; /* Slate 400 */
-  --color-outline-variant: #334155; /* Slate 700 */
-  --color-background: #020617; /* Deepest Blue/Black */
-  --color-tertiary: #2dd4bf; /* Teal 400 */
-  --color-error: #f43f5e; /* Rose 500 */
+  --color-primary: #4f46e5; /* Indigo 600 - Clean professional accent */
+  --color-on-primary: #ffffff;
+  --color-secondary-bg: #f8fafc; /* Slate 50 */
+  --color-surface: #ffffff; /* pure white */
+  --color-on-surface: #0f172a; /* Deep Slate 900 for readability */
+  --color-on-surface-variant: #64748b; /* Slate 500 */
+  --color-outline-variant: #e2e8f0; /* Slate 200 */
+  --color-background: #f1f5f9; /* Light Slate 100 base */
+  --color-tertiary: #0ea5e9; /* Light Blue 500 */
+  --color-error: #ef4444; /* Red 500 */
 
-  --color-panel-bg: #0b0e14; 
-  --color-panel-on-bg: #f8fafc;
+  --color-panel-bg: #ffffff; 
+  --color-panel-on-bg: #0f172a;
 
-  --color-chat-bubble-user: #1e293b;
-  --color-chat-bubble-agent-start: #6366f1; /* Indigo 500 */
-  --color-chat-bubble-agent-end: #a855f7;   /* Purple 500 */
+  --color-chat-bubble-user: #f1f5f9;
+  --color-chat-bubble-agent-start: #4338ca; /* Indigo 700 */
+  --color-chat-bubble-agent-end: #7c3aed;   /* Purple 600 */
 
-  --font-headline: "Manrope", sans-serif;
+  --font-headline: "Plus Jakarta Sans", "Manrope", sans-serif;
   --font-body: "Inter", sans-serif;
 }
 
 @layer base {
   body {
     @apply bg-background text-on-surface font-body antialiased;
-    background-image: radial-gradient(at 0% 0%, rgba(251, 191, 36, 0.03) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(45, 212, 191, 0.03) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.05) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%);
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-surface/80 backdrop-blur-3xl border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)];
+    @apply bg-white/90 backdrop-blur-xl border border-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.05)];
   }
   
   .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/5 shadow-2xl;
+    @apply bg-white backdrop-blur-xl border border-slate-200 shadow-lg;
   }
 
   .cube-pattern {
-    background-color: #020617;
-    /* Isometric cube pattern */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='69.2' viewBox='0 0 40 69.2'%3E%3Cpath d='M20 0l20 11.5v23.1L20 46.1 0 34.6V11.5L20 0z' fill='none' stroke='%231e293b' stroke-opacity='0.2'/%3E%3Cpath d='M20 0v23.1L40 34.6M20 23.1L0 34.6' fill='none' stroke='%231e293b' stroke-opacity='0.2'/%3E%3Cpath d='M20 46.1v23.1l20-11.5M20 69.2L0 57.7' fill='none' stroke='%231e293b' stroke-opacity='0.2'/%3E%3C/svg%3E");
-    background-size: 40px 69.2px;
+    background-color: #f1f5f9;
+    background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px);
+    background-size: 20px 20px;
   }
 }
 
