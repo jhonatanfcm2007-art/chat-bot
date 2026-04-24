@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config(); 
+
 import express from 'express';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -6,12 +9,11 @@ import OpenAI from 'openai';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config(); // Intenta cargar .env desde la raíz
-dotenv.config({ path: path.join(__dirname, '../.env') }); // Refuerzo para diferentes entornos
+// Refuerzo opcional de ruta
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());
@@ -552,8 +554,16 @@ async function sendMessageToCloudAPI(to, text) {
 }
 
 async function getAIResponse(message, history = []) {
-    if (!openai) {
-        console.error("❌ OpenAI no inicializado.");
+    let activeOpenAI = openai;
+    
+    // Intento de recuperación si la variable no estaba lista al inicio
+    if (!activeOpenAI && process.env.OPENAI_API_KEY) {
+        console.log("📡 [SISTEMA] Inicializando OpenAI dinámicamente...");
+        activeOpenAI = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+
+    if (!activeOpenAI) {
+        console.error("❌ [ERROR] OpenAI no disponible. Variable:", process.env.OPENAI_API_KEY ? 'Presente' : 'Ausente');
         return "⚠️ Error: El bot no tiene configurada la llave de inteligencia artificial en Railway.";
     }
     try {
@@ -565,7 +575,7 @@ async function getAIResponse(message, history = []) {
             ? `Historial del cliente: Ha comprado ${customerSales.map(s => s.service).join(', ')} antes.`
             : "Cliente nuevo (sin compras previas).";
 
-        const comp = await openai.chat.completions.create({
+        const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
                 { role: "system", content: `${settings.systemPrompt}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea: ${inv}` },
