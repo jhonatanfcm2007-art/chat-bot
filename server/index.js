@@ -37,11 +37,13 @@ const DATA_DIR = path.join(__dirname, 'data');
 const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
-const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
-const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 function loadInventory() {
     try {
@@ -319,14 +321,40 @@ app.post('/webhook', async (req, res) => {
         }
 
         // Mensajes de Clientes
-        let msgBody = msg.type === 'text' ? msg.text.body : (msg.type === 'image' ? '[IMAGEN RECIBIDA]' : '');
-        if (msgBody) {
-            if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
-            currentChat.messages.push({ id: msg.id, from, body: msgBody, content: msgBody, timestampRaw: Date.now(), role: 'user' });
+            
+            let imageUrl = null;
+            if (msg.type === 'image') {
+                const mediaId = msg.image.id;
+                console.log(`📸 Imagen recibida de ${customerName}. Descargando...`);
+                const buffer = await downloadMetaMedia(mediaId);
+                if (buffer) {
+                    const fileName = `${Date.now()}-${from}.jpg`;
+                    const filePath = path.join(UPLOADS_DIR, fileName);
+                    fs.writeFileSync(filePath, buffer);
+                    imageUrl = `/uploads/${fileName}`;
+                    msgBody = "[IMAGEN]"; // Cambiamos el texto base
+                    
+                    // Análisis en background (opcional, ya lo hacemos abajo si queremos)
+                    analyzeReceipt(buffer).then(isReceipt => {
+                        if (isReceipt) {
+                            lastReceiptFrom = from;
+                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
+                            if (!currentChat.tags?.includes('pago-pendiente')) {
+                                currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
+                                saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
+                            }
+                        }
+                    });
+                }
+            }
+
+            const newMessage = { id: msg.id, from, body: msgBody, content: msgBody, imageUrl, timestampRaw: Date.now(), role: 'user' };
+            currentChat.messages.push(newMessage);
             currentChat.updatedAt = Date.now();
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
-            saveChats(chats); io.emit('message', { id: msg.id, from, customerName, body: msgBody, role: 'user' });
+            saveChats(chats); 
+            io.emit('message', { ...newMessage, customerName });
 
             // Auto-confirmación (Detección ampliada)
             const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuanto|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;

@@ -239,14 +239,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
               {activeChatData.messages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                  <div className={`max-w-[85%] md:max-w-[65%] px-6 py-4 rounded-[1.5rem] transition-all relative ${
+                  <div className={`max-w-[85%] md:max-w-[65%] transition-all relative ${
                     msg.role === 'user' 
                       ? 'bg-chat-bubble-user text-white border border-white/10 rounded-bl-none shadow-xl' 
                       : 'bg-gradient-to-br from-chat-bubble-agent-start to-chat-bubble-agent-end text-white shadow-xl shadow-indigo-500/10 rounded-br-none'
-                  }`}>
-                    <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide">{msg.content}</p>
-                    <div className={`flex items-center gap-2 mt-3 ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <span className={`text-[8px] font-black uppercase tracking-[0.15em] ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
+                  } ${msg.imageUrl ? 'p-1' : 'px-6 py-4 rounded-[1.5rem]'}`}>
+                    {msg.imageUrl ? (
+                      <div className="rounded-[1.2rem] overflow-hidden">
+                        <img 
+                          src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${window.location.protocol}//${window.location.host}${msg.imageUrl}`} 
+                          alt="Message attachment" 
+                          className="max-w-full h-auto object-cover hover:scale-105 transition-transform cursor-pointer"
+                          onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${window.location.protocol}//${window.location.host}${msg.imageUrl}`, '_blank')}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide">{msg.content}</p>
+                    )}
+                    
+                    <div className={`flex items-center gap-2 mt-2 ${msg.imageUrl ? 'px-4 pb-2' : ''} ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                      <span className={`text-[8px] font-black uppercase tracking-0.15em ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
                         {msg.timestamp || msg.time}
                       </span>
                     </div>
