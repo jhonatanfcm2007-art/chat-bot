@@ -4,6 +4,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
+  const [filterTag, setFilterTag] = useState('all');
   
   const chatEndRef = useRef(null);
 
@@ -69,7 +70,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     .filter(chat => {
       const nameMatch = (chat.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
       const fromMatch = (chat.from || '').toLowerCase().includes(searchTerm.toLowerCase());
-      return nameMatch || fromMatch;
+      const searchMatch = nameMatch || fromMatch;
+      
+      const tagMatch = filterTag === 'all' || 
+                       chat.tags.includes(filterTag) || 
+                       (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
+      
+      return searchMatch && tagMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
 
@@ -143,7 +150,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             <span className="material-symbols-outlined text-xl">edit_square</span>
           </div>
         </div>
-        <div className="px-5 pb-5 border-b border-white/5">
+        <div className="px-5 pb-5 border-b border-white/5 space-y-4">
           <div className="relative group">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">search</span>
             <input 
@@ -153,6 +160,24 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <button 
+              onClick={() => setFilterTag('all')}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === 'all' ? 'bg-primary text-on-primary' : 'bg-white/5 text-white/30 hover:bg-white/10'}`}
+            >
+              Todos
+            </button>
+            {Object.entries(TAG_UI).map(([key, style]) => (
+              <button 
+                key={key}
+                onClick={() => setFilterTag(key)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === key ? 'bg-primary text-on-primary' : 'bg-white/5 text-white/30 hover:bg-white/10'}`}
+              >
+                {style.label.replace('Activado · ', '')}
+              </button>
+            ))}
           </div>
         </div>
         <div className="flex-grow overflow-y-auto custom-scrollbar py-4 px-4 pb-24 md:pb-4">
