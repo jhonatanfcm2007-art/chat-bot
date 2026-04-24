@@ -55,9 +55,14 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     const serviceName = formData.service.trim();
     if (!serviceName || !formData.email || !formData.pass) return;
 
+    const usesCount = parseInt(formData.uses) || 0;
+    const computedStatus = usesCount > 0 ? 'Available' : 'Sold';
+
     const processedFormData = {
       ...formData,
-      service: serviceName
+      service: serviceName,
+      status: computedStatus,
+      uses: usesCount
     };
 
     // Si es una plataforma nueva que no estaba en la lista, guardarla
@@ -73,17 +78,21 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     if (editingAccount) {
       // Update existing
       setAccounts(accounts.map(acc => 
-        acc.id === editingAccount.id ? { ...acc, ...processedFormData, price: parseInt(formData.price) || 0, cost: parseInt(formData.cost) || 0, provider: formData.provider } : acc
+        acc.id === editingAccount.id ? { 
+          ...acc, 
+          ...processedFormData, 
+          price: parseInt(formData.price) || 0, 
+          cost: parseInt(formData.cost) || 0, 
+          provider: formData.provider 
+        } : acc
       ));
     } else {
       // Add new
-      const usesCount = parseInt(formData.uses) || 1;
       const newAcc = {
         id: accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1,
         ...processedFormData,
         price: parseInt(formData.price) || 0,
         cost: parseInt(formData.cost) || 0,
-        uses: usesCount,
         originalUses: usesCount
       };
       setAccounts([newAcc, ...accounts]);
