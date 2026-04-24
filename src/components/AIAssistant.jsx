@@ -42,22 +42,22 @@ const AIAssistant = ({ settings, socket }) => {
   };
 
   return (
-    <div className="flex-grow flex flex-col md:flex-row p-6 md:p-10 bg-background gap-8 overflow-y-auto custom-scrollbar relative">
-      {/* Configuration Section */}
-      <div className="w-full md:w-5/12 flex flex-col h-full">
-        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative h-full">
-          <div className="flex justify-between items-center mb-8">
+    <div className="flex-grow flex flex-col md:flex-row p-6 md:p-10 bg-background gap-10 overflow-y-auto custom-scrollbar relative">
+      {/* Configuration Section (Prioritized) */}
+      <div className="w-full md:w-2/3 flex flex-col h-full">
+        <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative h-full">
+          <div className="flex justify-between items-center mb-10">
             <div>
-              <h3 className="font-black text-on-surface text-2xl tracking-tight uppercase">System Prompt</h3>
+              <h3 className="font-black text-on-surface text-3xl tracking-tight uppercase">System Prompt</h3>
               <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1 opacity-50">Behavioral Protocols</p>
             </div>
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20">
-              <span className="material-symbols-outlined text-2xl font-light">neurology</span>
+            <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20">
+              <span className="material-symbols-outlined text-3xl font-light">neurology</span>
             </div>
           </div>
           
           <textarea 
-            className="flex-grow w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-8 text-sm md:text-base focus:ring-2 focus:ring-primary/10 resize-none text-on-surface mb-8 leading-relaxed shadow-inner placeholder:text-on-surface-variant/30 custom-scrollbar outline-none focus:bg-white focus:border-primary/30 transition-all font-mono"
+            className="flex-grow w-full bg-transparent border-none p-0 text-base md:text-lg focus:ring-0 resize-none text-on-surface mb-10 leading-relaxed placeholder:text-on-surface-variant/30 custom-scrollbar outline-none font-mono"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Define neural protocols here..."
@@ -65,98 +65,89 @@ const AIAssistant = ({ settings, socket }) => {
 
           <button 
             onClick={handleSaveSettings}
-            className={`w-full py-5 rounded-[1.5rem] font-black tracking-[0.3em] uppercase text-[10px] transition-all duration-500 flex items-center justify-center gap-3 ${
+            className={`w-full py-6 rounded-2xl font-black tracking-[0.4em] uppercase text-xs transition-all duration-500 flex items-center justify-center gap-4 ${
               isSaved 
                 ? 'bg-tertiary text-white shadow-xl shadow-tertiary/20' 
-                : 'bg-primary text-on-primary hover:shadow-xl hover:shadow-primary/20 active:scale-[0.98]'
+                : 'bg-primary text-on-primary hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98]'
             }`}
           >
-            <span className="material-symbols-outlined font-black text-xl">{isSaved ? 'verified' : 'save_as'}</span>
-            {isSaved ? 'Protocols Secure' : 'Commit Changes'}
+            <span className="material-symbols-outlined font-black text-2xl">{isSaved ? 'verified' : 'save_as'}</span>
+            {isSaved ? 'Protocols Secure' : 'Commit Logic Changes'}
           </button>
         </div>
       </div>
 
-      {/* Testing Section */}
-      <div className="w-full md:w-7/12 flex flex-col bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden h-full">
-        <header className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-primary shadow-sm">
-              <span className="material-symbols-outlined text-2xl font-light">precision_manufacturing</span>
-            </div>
-            <div>
-              <h3 className="font-black text-on-surface text-lg tracking-tight uppercase">Neural Sandbox</h3>
-              <p className="text-[9px] text-tertiary font-black uppercase tracking-[0.4em] flex items-center gap-2 mt-2">
-                <span className="w-2 h-2 bg-tertiary rounded-full animate-pulse shadow-[0_0_8px_rgba(45,212,191,0.4)]"></span>
-                Isolated Environment
-              </p>
-            </div>
+      {/* Testing Section (Narrower) */}
+      <div className="w-full md:w-1/3 flex flex-col bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden h-full">
+        <header className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h3 className="font-black text-on-surface text-sm tracking-tight uppercase">Sandbox</h3>
+            <p className="text-[8px] text-tertiary font-black uppercase tracking-[0.3em] flex items-center gap-2 mt-1">
+              <span className="w-1.5 h-1.5 bg-tertiary rounded-full animate-pulse"></span>
+              Live Test
+            </p>
           </div>
           <button 
             onClick={() => setMessages([])} 
-            className="w-11 h-11 flex items-center justify-center text-on-surface-variant/40 hover:text-error hover:bg-error/5 rounded-2xl transition-all border border-slate-100" 
+            className="w-10 h-10 flex items-center justify-center text-on-surface-variant/30 hover:text-error transition-all" 
             title="Purge Stream"
           >
              <span className="material-symbols-outlined text-xl">delete_sweep</span>
           </button>
         </header>
 
-        <div className="flex-grow p-10 overflow-y-auto space-y-8 relative custom-scrollbar">
-          {/* Ambient Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-
+        <div className="flex-grow p-8 overflow-y-auto space-y-6 relative custom-scrollbar">
           {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center gap-6 text-center opacity-30">
-              <span className="material-symbols-outlined text-7xl font-thin text-on-surface-variant">terminal</span>
-              <p className="text-[10px] font-black uppercase tracking-[0.5em] max-w-[240px] text-on-surface-variant">Awaiting input sequence...</p>
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-center opacity-20">
+              <span className="material-symbols-outlined text-5xl font-thin text-on-surface-variant">terminal</span>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] max-w-[150px] text-on-surface-variant">Waiting for sequence</p>
             </div>
           )}
 
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`max-w-[85%] px-7 py-5 rounded-[1.8rem] transition-all ${
+              <div className={`max-w-[90%] px-5 py-4 rounded-[1.5rem] transition-all text-sm ${
                 msg.role === 'user' 
-                  ? 'bg-slate-100 text-on-surface border border-slate-200 rounded-br-none' 
-                  : 'bg-primary text-on-primary rounded-bl-none shadow-lg shadow-primary/10'
+                  ? 'bg-slate-100 text-on-surface rounded-br-none' 
+                  : 'bg-primary text-on-primary rounded-bl-none'
               }`}>
-                <p className="text-[14px] leading-relaxed whitespace-pre-wrap font-medium tracking-wide">{msg.content}</p>
+                <p className="leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
               </div>
             </div>
           ))}
 
           {isTyping && (
              <div className="flex flex-col items-start animate-in fade-in duration-300">
-               <div className="glass px-7 py-5 rounded-[2rem] rounded-bl-none flex items-center gap-2.5">
-                 <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span>
-                 <span className="w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></span>
-                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
+               <div className="bg-slate-50 px-5 py-4 rounded-[1.5rem] rounded-bl-none flex items-center gap-2">
+                 <span className="w-1 h-1 bg-primary/40 rounded-full animate-bounce"></span>
+                 <span className="w-1 h-1 bg-primary/70 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></span>
+                 <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
                </div>
              </div>
           )}
           <div ref={chatEndRef} />
         </div>
 
-        <footer className="p-8 bg-slate-50 border-t border-slate-100">
-          <form onSubmit={handleSendMessage} className="flex gap-4">
+        <footer className="p-6 border-t border-slate-100">
+          <form onSubmit={handleSendMessage} className="flex gap-3">
             <input 
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Inject test data..."
-              className="flex-grow bg-white border border-slate-200 rounded-[1.5rem] px-8 py-5 text-sm font-medium focus:ring-2 focus:ring-primary/10 text-on-surface placeholder:text-on-surface-variant/30 outline-none focus:bg-white focus:border-primary/30 transition-all shadow-sm"
+              placeholder="Inject command..."
+              className="flex-grow bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-xs font-medium focus:ring-2 focus:ring-primary/10 text-on-surface placeholder:text-on-surface-variant/30 outline-none transition-all"
             />
             <button 
               type="submit"
               disabled={isTyping || !inputValue.trim()}
-              className="w-16 h-16 bg-primary text-on-primary rounded-[1.5rem] flex items-center justify-center disabled:opacity-20 transition-all hover:scale-[1.05] active:scale-95 shadow-lg shadow-primary/20 flex-shrink-0"
+              className="w-12 h-12 bg-primary text-on-primary rounded-xl flex items-center justify-center disabled:opacity-20 transition-all active:scale-90 flex-shrink-0"
             >
-              <span className="material-symbols-outlined text-2xl font-black">send</span>
+              <span className="material-symbols-outlined text-xl">send</span>
             </button>
           </form>
         </footer>
       </div>
     </div>
-
   );
 };
 
