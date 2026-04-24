@@ -10,7 +10,8 @@ import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config(); // Intenta cargar .env desde la raíz
+dotenv.config({ path: path.join(__dirname, '../.env') }); // Refuerzo para diferentes entornos
 
 const app = express();
 app.use(cors());
@@ -24,7 +25,7 @@ const io = new Server(server, {
     }
 });
 
-const openai = process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes('YOUR_OPENAI_API_KEY') 
+const openai = (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 20)
     ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     : null;
 
@@ -33,6 +34,13 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
+
+console.log('--- [SISTEMA] Diagnóstico de Variables ---');
+console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.env.OPENAI_API_KEY.substring(0, 10)}...)` : '❌ FALTANTE');
+console.log('WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
+console.log('Phone ID:', PHONE_ID ? '✅ Detectado' : '❌ FALTANTE');
+console.log('Admin Phone:', ADMIN_PHONE ? '✅ Detectado' : '❌ FALTANTE');
+console.log('-----------------------------------------');
 
 let lastReceiptFrom = null; 
 const aiTimers = {};
@@ -544,7 +552,10 @@ async function sendMessageToCloudAPI(to, text) {
 }
 
 async function getAIResponse(message, history = []) {
-    if (!openai) return "Error IA";
+    if (!openai) {
+        console.error("❌ OpenAI no inicializado.");
+        return "⚠️ Error: El bot no tiene configurada la llave de inteligencia artificial en Railway.";
+    }
     try {
         const inv = inventory.map(i => `${i.service} - $${i.price} (${i.uses})`).join(', ');
         
@@ -563,7 +574,10 @@ async function getAIResponse(message, history = []) {
             ]
         });
         return comp.choices[0].message.content;
-    } catch (e) { return "Error técnico"; }
+    } catch (e) { 
+        console.error('❌ OpenAI API Error:', e.message);
+        return `⚠️ Error IA: ${e.message || 'Sin respuesta del cerebro'}`; 
+    }
 }
 
 const PORT = process.env.PORT || 3000;
