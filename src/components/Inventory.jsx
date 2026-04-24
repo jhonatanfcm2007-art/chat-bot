@@ -452,8 +452,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
                   />
                 </div>
-                </div>
-              </div>
 
               <button 
                 type="submit"
