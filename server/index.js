@@ -361,6 +361,29 @@ app.post('/webhook', async (req, res) => {
             }
 
             const newMessage = { id: msg.id, from, body: msgBody, content: msgBody, imageUrl, timestampRaw: Date.now(), role: 'user' };
+            
+            // --- MANEJO DE AUDIO (Voice to Text) ---
+            if (msg.type === 'audio') {
+                const mediaId = msg.audio.id;
+                console.log(`🎙️ Audio recibido de ${customerName}. Transcribiendo...`);
+                const buffer = await downloadMetaMedia(mediaId);
+                if (buffer) {
+                    const tempAudioPath = path.join(UPLOADS_DIR, `temp-${Date.now()}-${from}.ogg`);
+                    fs.writeFileSync(tempAudioPath, buffer);
+                    try {
+                        const transcription = await openai.audio.transcriptions.create({
+                            file: fs.createReadStream(tempAudioPath),
+                            model: "whisper-1",
+                        });
+                        msgBody = transcription.text;
+                        newMessage.body = `🎙️ (Audio): ${msgBody}`;
+                        newMessage.content = newMessage.body;
+                        console.log(`📝 Transcripción: ${msgBody}`);
+                    } catch (e) { console.error('Whisper error:', e); }
+                    if (fs.existsSync(tempAudioPath)) fs.unlinkSync(tempAudioPath);
+                }
+            }
+
             currentChat.messages.push(newMessage);
             currentChat.updatedAt = Date.now();
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
