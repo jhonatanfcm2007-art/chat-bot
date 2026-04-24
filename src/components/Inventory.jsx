@@ -292,11 +292,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                           name="service"
                           value={formData.service}
                           onChange={handleInputChange}
-                          className="flex-grow bg-white/5 border border-white/5 rounded-2xl py-3.5 px-5 text-sm font-bold text-white focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                          className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" disabled className="bg-secondary-bg">Select platform...</option>
+                          <option value="" disabled className="text-on-surface">Select platform...</option>
                           {availablePlatforms.map(platform => (
-                            <option key={platform} value={platform} className="bg-secondary-bg">{platform}</option>
+                            <option key={platform} value={platform} className="text-on-surface">{platform}</option>
                           ))}
                         </select>
                         <button 
