@@ -531,9 +531,12 @@ async function downloadMetaMedia(mediaId) {
             return null;
         }
         
-        console.log('📡 [META] Descargando binario desde URL firmada...');
+        console.log('📡 [META] Descargando binario desde URL firmada con Token...');
         const mediaRes = await fetch(data.url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' }
+            headers: { 
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' 
+            }
         });
         
         if (!mediaRes.ok) {
@@ -584,8 +587,12 @@ app.get('/api/media/:mediaId', async (req, res) => {
             return res.status(404).send('Media not found');
         }
 
+        console.log('🔌 [PROXY] Descargando binario final con Token...');
         const mediaRes = await fetch(data.url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' }
+            headers: { 
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' 
+            }
         });
         
         if (!mediaRes.ok) return res.status(mediaRes.status).send('Download failed');
