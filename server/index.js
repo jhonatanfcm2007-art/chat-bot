@@ -391,11 +391,12 @@ app.post('/webhook', async (req, res) => {
                         fs.writeFileSync(filePath, buffer);
                         mediaUrl = `/uploads/${fileName}`;
                         
+                        // GPT analysis if image
                         if (msg.type === 'image') {
                             analyzeReceipt(buffer).then(isReceipt => {
                                 if (isReceipt) {
                                     lastReceiptFrom = from;
-                                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
+                                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responda con *r* para confirmar.`);
                                     if (!currentChat.tags?.includes('pago-pendiente')) {
                                         currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
                                         saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
@@ -404,10 +405,11 @@ app.post('/webhook', async (req, res) => {
                             });
                         }
                     } else {
+                        console.error(`❌ [ERROR] Falló descarga de ${msg.type}. Revisa logs de downloadMetaMedia.`);
                         msgBody += ' (⚠️ Error de descarga)';
                     }
                 } catch (e) {
-                    console.error(`Error procesando media ${msg.type}:`, e);
+                    console.error(`❌ [ERROR] Excepción procesando media ${msg.type}:`, e.message);
                     msgBody += ' (⚠️ Fallo técnico)';
                 }
             }
@@ -515,16 +517,34 @@ app.post('/webhook', async (req, res) => {
 
 async function downloadMetaMedia(mediaId) {
     try {
+        console.log(`📡 [META] Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+            headers: { 
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0'
+            }
         });
         const data = await response.json();
-        if (!data.url) return null;
         
-        const mediaRes = await fetch(data.url);
-        if (!mediaRes.ok) return null;
+        if (!data.url) {
+            console.error('❌ [META ERROR] No se obtuvo URL de descarga:', JSON.stringify(data));
+            return null;
+        }
+        
+        console.log('📡 [META] Descargando binario desde URL firmada...');
+        const mediaRes = await fetch(data.url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' }
+        });
+        
+        if (!mediaRes.ok) {
+            console.error(`❌ [META ERROR] Falló descarga del binario. Status: ${mediaRes.status}`);
+            return null;
+        }
         return Buffer.from(await mediaRes.arrayBuffer());
-    } catch (err) { console.error('Media download error:', err); return null; }
+    } catch (err) { 
+        console.error('❌ [CRITICAL ERROR] downloadMetaMedia:', err.message); 
+        return null; 
+    }
 }
 
 async function analyzeReceipt(buffer) {
@@ -551,29 +571,34 @@ app.get('/api/media/:mediaId', async (req, res) => {
     if (!WHATSAPP_TOKEN) return res.status(500).send('No token');
 
     try {
-        // 1. Obtener URL de la media
+        console.log(`🔌 [PROXY] Sirviendo media: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+            headers: { 
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0'
+            }
         });
         const data = await response.json();
-        if (!data.url) return res.status(404).send('Media not found');
-
-        // 2. Descargar y streamear al cliente (Sin header de auth, ya es una URL firmada)
-        const mediaRes = await fetch(data.url);
-        
-        if (!mediaRes.ok) {
-            console.error(`Meta media download failed: ${mediaRes.status}`);
-            return res.status(mediaRes.status).send('Media download failed');
+        if (!data.url) {
+            console.error('❌ [PROXY ERROR] Meta no devolvió URL:', data);
+            return res.status(404).send('Media not found');
         }
+
+        const mediaRes = await fetch(data.url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' }
+        });
+        
+        if (!mediaRes.ok) return res.status(mediaRes.status).send('Download failed');
         
         const contentType = mediaRes.headers.get('content-type');
         res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache 24h
         
         const arrayBuffer = await mediaRes.arrayBuffer();
         res.send(Buffer.from(arrayBuffer));
     } catch (err) { 
-        console.error('Proxy media error:', err); 
-        res.status(500).send('Error loading media');
+        console.error('❌ [PROXY ERROR]:', err.message); 
+        res.status(500).send('Error');
     }
 });
 
