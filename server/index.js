@@ -521,9 +521,8 @@ async function downloadMetaMedia(mediaId) {
         const data = await response.json();
         if (!data.url) return null;
         
-        const mediaRes = await fetch(data.url, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
-        });
+        const mediaRes = await fetch(data.url);
+        if (!mediaRes.ok) return null;
         return Buffer.from(await mediaRes.arrayBuffer());
     } catch (err) { console.error('Media download error:', err); return null; }
 }
@@ -559,10 +558,13 @@ app.get('/api/media/:mediaId', async (req, res) => {
         const data = await response.json();
         if (!data.url) return res.status(404).send('Media not found');
 
-        // 2. Descargar y streamear al cliente
-        const mediaRes = await fetch(data.url, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
-        });
+        // 2. Descargar y streamear al cliente (Sin header de auth, ya es una URL firmada)
+        const mediaRes = await fetch(data.url);
+        
+        if (!mediaRes.ok) {
+            console.error(`Meta media download failed: ${mediaRes.status}`);
+            return res.status(mediaRes.status).send('Media download failed');
+        }
         
         const contentType = mediaRes.headers.get('content-type');
         res.setHeader('Content-Type', contentType);
