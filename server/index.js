@@ -348,57 +348,91 @@ app.post('/webhook', async (req, res) => {
         }
 
         // Mensajes de Clientes
-        let msgBody = msg.type === 'text' ? msg.text.body : (msg.type === 'image' ? '[IMAGEN]' : '');
+        // Manejo de Multimedia (Imágenes, Stickers, Documentos)
+        let mediaUrl = null;
+        let msgBody = '';
+        
+        switch (msg.type) {
+            case 'text':
+                msgBody = msg.text.body;
+                break;
+            case 'image':
+                msgBody = '[FOTO]';
+                break;
+            case 'sticker':
+                msgBody = '[STICKER]';
+                break;
+            case 'document':
+                msgBody = `[DOCUMENTO: ${msg.document.filename || 'archivo'}]`;
+                break;
+            case 'audio':
+                msgBody = '[AUDIO]';
+                break;
+            default:
+                msgBody = '[ARCHIVO NO SOPORTADO]';
+        }
 
         if (msgBody) {
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
             
-            let imageUrl = null;
-            if (msg.type === 'image') {
-                const mediaId = msg.image.id;
-                console.log(`📸 Imagen recibida de ${customerName}. Descargando...`);
-                const buffer = await downloadMetaMedia(mediaId);
-                if (buffer) {
-                    const fileName = `${Date.now()}-${from}.jpg`;
-                    const filePath = path.join(UPLOADS_DIR, fileName);
-                    fs.writeFileSync(filePath, buffer);
-                    imageUrl = `/uploads/${fileName}`;
-                    
-                    analyzeReceipt(buffer).then(isReceipt => {
-                        if (isReceipt) {
-                            lastReceiptFrom = from;
-                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
-                            if (!currentChat.tags?.includes('pago-pendiente')) {
-                                currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
-                                saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
-                            }
+            // Descarga de Multimedia
+            if (['image', 'sticker', 'document', 'audio'].includes(msg.type)) {
+                const mediaData = msg[msg.type];
+                const mediaId = mediaData.id;
+                console.log(`📥 ${msg.type.toUpperCase()} recibido de ${customerName}. Descargando...`);
+                
+                try {
+                    const buffer = await downloadMetaMedia(mediaId);
+                    if (buffer) {
+                        const ext = msg.type === 'document' ? (msg.document.filename?.split('.').pop() || 'file') : (msg.type === 'image' ? 'jpg' : (msg.type === 'sticker' ? 'webp' : 'ogg'));
+                        const fileName = `${Date.now()}-${from}.${ext}`;
+                        const filePath = path.join(UPLOADS_DIR, fileName);
+                        fs.writeFileSync(filePath, buffer);
+                        mediaUrl = `/uploads/${fileName}`;
+                        
+                        if (msg.type === 'image') {
+                            analyzeReceipt(buffer).then(isReceipt => {
+                                if (isReceipt) {
+                                    lastReceiptFrom = from;
+                                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responde con *r* para confirmar el pago.`);
+                                    if (!currentChat.tags?.includes('pago-pendiente')) {
+                                        currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
+                                        saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
+                                    }
+                                }
+                            });
                         }
-                    });
+                    } else {
+                        msgBody += ' (⚠️ Error de descarga)';
+                    }
+                } catch (e) {
+                    console.error(`Error procesando media ${msg.type}:`, e);
+                    msgBody += ' (⚠️ Fallo técnico)';
                 }
             }
 
-            const newMessage = { id: msg.id, from, body: msgBody, content: msgBody, imageUrl, timestampRaw: Date.now(), role: 'user' };
+            const newMessage = { 
+                id: msg.id, from, 
+                body: msgBody, content: msgBody, 
+                imageUrl: msg.type === 'image' || msg.type === 'sticker' ? mediaUrl : null,
+                fileUrl: msg.type === 'document' || msg.type === 'audio' ? mediaUrl : null,
+                timestampRaw: Date.now(), role: 'user' 
+            };
             
-            // --- MANEJO DE AUDIO (Voice to Text) ---
-            if (msg.type === 'audio') {
-                const mediaId = msg.audio.id;
-                console.log(`🎙️ Audio recibido de ${customerName}. Transcribiendo...`);
-                const buffer = await downloadMetaMedia(mediaId);
-                if (buffer) {
-                    const tempAudioPath = path.join(UPLOADS_DIR, `temp-${Date.now()}-${from}.ogg`);
-                    fs.writeFileSync(tempAudioPath, buffer);
+            // --- MANEJO DE AUDIO (Whisper) ---
+            if (msg.type === 'audio' && newMessage.fileUrl) {
+                const filePath = path.join(__dirname, newMessage.fileUrl);
+                if (fs.existsSync(filePath)) {
+                    console.log(`🎙️ Transcribiendo audio de ${customerName}...`);
                     try {
                         const transcription = await openai.audio.transcriptions.create({
-                            file: fs.createReadStream(tempAudioPath),
+                            file: fs.createReadStream(filePath),
                             model: "whisper-1",
                         });
-                        msgBody = transcription.text;
-                        newMessage.body = `🎙️ (Audio): ${msgBody}`;
+                        newMessage.body = `🎙️ (Audio): ${transcription.text}`;
                         newMessage.content = newMessage.body;
-                        console.log(`📝 Transcripción: ${msgBody}`);
                     } catch (e) { console.error('Whisper error:', e); }
-                    if (fs.existsSync(tempAudioPath)) fs.unlinkSync(tempAudioPath);
                 }
             }
 

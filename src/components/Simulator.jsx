@@ -267,23 +267,48 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     msg.role === 'user' 
                       ? 'bg-slate-100 text-on-surface border border-slate-200 rounded-bl-none shadow-sm' 
                       : 'bg-primary text-on-primary shadow-xl shadow-primary/10 rounded-br-none'
-                  } ${msg.imageUrl ? 'p-1' : 'px-6 py-4 rounded-[1.5rem]'}`}>
-                    {msg.imageUrl ? (
-                      <div className="rounded-[1.2rem] overflow-hidden">
+                  } ${msg.imageUrl ? 'p-1 rounded-[1.8rem]' : 'px-6 py-4 rounded-[1.5rem]'}`}>
+                    
+                    {msg.imageUrl && (
+                      <div className="rounded-[1.6rem] overflow-hidden group/img relative">
                         <img 
                           src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
                           alt="Message attachment" 
-                          className="max-w-full h-auto object-cover"
+                          className="max-w-full h-auto object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
                           onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`, '_blank')}
                         />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                           <span className="material-symbols-outlined text-white text-3xl">zoom_in</span>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide">{msg.content}</p>
+                    )}
+
+                    {msg.fileUrl && !msg.imageUrl && (
+                      <div className="flex items-center gap-4 py-2 px-1">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                          <span className="material-symbols-outlined text-2xl">description</span>
+                        </div>
+                        <div className="flex-grow overflow-hidden">
+                          <p className="text-[11px] font-black uppercase tracking-widest truncate">{msg.content.replace('[DOCUMENTO: ', '').replace(']', '')}</p>
+                          <a 
+                            href={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${serverUrl}${msg.fileUrl}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-[9px] font-black uppercase tracking-widest underline opacity-60 hover:opacity-100"
+                          >
+                            Descargar Archivo
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {!msg.imageUrl && !msg.fileUrl && (
+                      <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide whitespace-pre-wrap">{msg.content}</p>
                     )}
                     
                     <div className={`flex items-center gap-2 mt-2 ${msg.imageUrl ? 'px-4 pb-2' : ''} ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
                       <span className={`text-[8px] font-black uppercase tracking-0.15em ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
-                        {msg.timestamp || msg.time}
+                        {msg.timestamp || msg.time || new Date(msg.timestampRaw).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   </div>
