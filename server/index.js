@@ -415,8 +415,8 @@ app.post('/webhook', async (req, res) => {
             const newMessage = { 
                 id: msg.id, from, 
                 body: msgBody, content: msgBody, 
-                imageUrl: msg.type === 'image' || msg.type === 'sticker' ? mediaUrl : null,
-                fileUrl: msg.type === 'document' || msg.type === 'audio' ? mediaUrl : null,
+                imageUrl: msg.type === 'image' || msg.type === 'sticker' ? `/api/media/${msg[msg.type].id}` : null,
+                fileUrl: msg.type === 'document' ? `/api/media/${msg.document.id}` : (msg.type === 'audio' ? `/api/media/${msg.audio.id}` : null),
                 timestampRaw: Date.now(), role: 'user' 
             };
             
@@ -547,6 +547,34 @@ async function analyzeReceipt(buffer) {
 }
 
 // --- API & SOCKETS ---
+app.get('/api/media/:mediaId', async (req, res) => {
+    const { mediaId } = req.params;
+    if (!WHATSAPP_TOKEN) return res.status(500).send('No token');
+
+    try {
+        // 1. Obtener URL de la media
+        const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+        });
+        const data = await response.json();
+        if (!data.url) return res.status(404).send('Media not found');
+
+        // 2. Descargar y streamear al cliente
+        const mediaRes = await fetch(data.url, {
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+        });
+        
+        const contentType = mediaRes.headers.get('content-type');
+        res.setHeader('Content-Type', contentType);
+        
+        const arrayBuffer = await mediaRes.arrayBuffer();
+        res.send(Buffer.from(arrayBuffer));
+    } catch (err) { 
+        console.error('Proxy media error:', err); 
+        res.status(500).send('Error loading media');
+    }
+});
+
 app.get('/api/inventory', (req, res) => res.json(inventory));
 app.post('/api/inventory', (req, res) => { inventory = req.body; saveInventory(inventory); io.emit('inventory_updated', inventory); res.json({success:true}); });
 app.get('/api/sales', (req, res) => res.json(sales));
