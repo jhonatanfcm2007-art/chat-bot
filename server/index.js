@@ -135,6 +135,8 @@ let settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
 
+const getPlatformNames = () => platforms.map(p => p.toLowerCase());
+
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 const recoveryTimers = {};
@@ -490,10 +492,16 @@ app.post('/webhook', async (req, res) => {
 
                 const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
                 const isPricingInquiry = (/\?|qué val|que val|precio|costo|cuánto|cuanto|valor|promoción|promo|descuento/i.test(msgBodyLower));
+                
+                // Nueva protección: ¿El mensaje es SOLO el nombre de una plataforma?
+                const platformNames = getPlatformNames();
+                const isOnlyProductName = platformNames.includes(msgBodyLower) || platformNames.some(p => msgBodyLower === `quiere ${p}` || msgBodyLower === `quiero ${p}`);
 
                 // Auto-confirmación
-                const confirmWords = /^(si|sí|dale|ok|listo|recibido|proceder|hagale|hágale|de una|deuna|ready|mándala|mandala|pásala|pasala|manda|pasa)$/i;
-                if (!isPricingInquiry && confirmWords.test(msgBodyLower)) {
+                const confirmWords = /^(si|sí|dale|ok|listo|recibido|proceder|hagale|hágale|de una|deuna|ready|mándala|mandala|pásala|pasala|manda|pasa|venda|véndame|activar|pruébala|pruebala|probar)$/i;
+                const containsExplicitConfirmation = confirmWords.test(msgBodyLower);
+
+                if (!isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation) {
                     const offeredAt = refreshedChat.activationOfferedAt || 0;
                     const recoveredAt = refreshedChat.recoverySentAt || 0;
                     const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
@@ -532,8 +540,11 @@ app.post('/webhook', async (req, res) => {
                     allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
-                const hasPurchaseIntent = !isSupport && !isPricingInquiry && !credentialsSentInChat(refreshedChat.messages) && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
-                const forceDelivery = !isSupport && !isPricingInquiry && !credentialsSentInChat(refreshedChat.messages) && /\[ENTREGAR_AHORA\]/i.test(aiReply);
+                // SOLO permitir entrega automática si NO es una consulta de precio, NO es solo el nombre del producto, y el cliente CONFIRMÓ explícitamente.
+                const canAutoDeliver = !isSupport && !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation && !credentialsSentInChat(refreshedChat.messages);
+                
+                const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
+                const forceDelivery = canAutoDeliver && /\[ENTREGAR_AHORA\]/i.test(aiReply);
 
                 if (hasPurchaseIntent) {
                     if (!refreshedChat.tags?.includes('pago-pendiente')) {
