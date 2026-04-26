@@ -145,26 +145,30 @@ function scheduleRecovery(to) {
     const chat = chats[to];
     if (!chat) return;
 
-    // Solo clientes nuevos (sin etiquetas de compra)
-    const isNewClient = !(chat.tags || []).some(t => t === 'pagado' || t === 'entregado');
-    if (!isNewClient) return;
+    // No programar si ya tiene etiquetas de compra o pago en progreso
+    const hasActiveTransaction = (chat.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
+    if (hasActiveTransaction) return;
 
     recoveryTimers[to] = setTimeout(async () => {
         const c = chats[to];
         if (!c) return;
-        const stillNew = !(c.tags || []).some(t => t === 'pagado' || t === 'entregado');
+        
+        // Verificar de nuevo al momento de ejecutar
+        const stillEligible = !(c.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
         const lastMsg = c.messages[c.messages.length - 1];
         const isBotLast = lastMsg && (lastMsg.role === 'bot' || lastMsg.isMe);
 
-        if (stillNew && isBotLast && !c.recoverySentAt) {
-            // Verificación extra: no enviar si ya existe en el historial completo de mensajes
-            const alreadySent = c.messages.some(m => m.body?.includes("activar primero") || m.content?.includes("activar primero"));
-            if (alreadySent) {
-                c.recoverySentAt = Date.now(); // Marcamos para no volver a evaluar
-                saveChats(chats);
-                return;
-            }
+        // Detectar si ya se enviaron credenciales o solicitud de pago (entrega manual incluida)
+        const credentialsAlreadySent = c.messages.some(m => {
+            const text = (m.body || m.content || '').toLowerCase();
+            return text.includes('correo:') || text.includes('contraseña:') || 
+                   text.includes('clave:') || text.includes('nequi') || 
+                   text.includes('activar primero') || text.includes('datos de acceso') ||
+                   text.includes('puedes hacer el pago') || text.includes('pago vía') ||
+                   text.includes('comprobante');
+        });
 
+        if (stillEligible && isBotLast && !c.recoverySentAt && !credentialsAlreadySent) {
             const msgBody = "si estas interesado te la puedo activar primero";
             await sendMessageToCloudAPI(to, msgBody);
             const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
@@ -177,6 +181,7 @@ function scheduleRecovery(to) {
         delete recoveryTimers[to];
     }, 120000);
 }
+
 
 // --- CENTRAL DELIVERY FUNCTION ---
 async function executeDelivery(to, mode = 'deliver_first') {
