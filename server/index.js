@@ -414,11 +414,16 @@ app.post('/webhook', async (req, res) => {
                 }
             }
 
+            const mediaId = msg.type !== 'text' ? msg[msg.type]?.id : null;
             const newMessage = { 
                 id: msg.id, from, 
                 body: msgBody, content: msgBody, 
-                imageUrl: msg.type === 'image' || msg.type === 'sticker' ? `/api/media/${msg[msg.type].id}` : null,
-                fileUrl: msg.type === 'document' ? `/api/media/${msg.document.id}` : (msg.type === 'audio' ? `/api/media/${msg.audio.id}` : null),
+                imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
+                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    : null,
+                fileUrl: (msg.type === 'document' || msg.type === 'audio') 
+                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    : null,
                 timestampRaw: Date.now(), role: 'user' 
             };
             
@@ -517,35 +522,52 @@ app.post('/webhook', async (req, res) => {
 
 async function downloadMetaMedia(mediaId) {
     try {
-        console.log(`📡 [META] Obteniendo URL para Media ID: ${mediaId}`);
+        console.log(`📡 [META] Paso 1: Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 
-                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0'
-            }
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
         });
         const data = await response.json();
         
         if (!data.url) {
-            console.error('❌ [META ERROR] No se obtuvo URL de descarga:', JSON.stringify(data));
+            console.error('❌ [META] No se obtuvo URL:', JSON.stringify(data));
             return null;
         }
+        console.log(`📡 [META] Paso 2: URL obtenida. Descargando con redirect manual...`);
         
-        console.log('📡 [META] Descargando binario desde URL firmada con Token...');
-        const mediaRes = await fetch(data.url, {
-            headers: { 
-                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' 
+        // Paso 2: Manejar redirecciones manualmente para preservar el header Authorization
+        // Node.js fetch lo elimina automáticamente en cross-origin redirects (graph.facebook.com → lookaside.fbsbx.com)
+        let downloadUrl = data.url;
+        let attempts = 0;
+        
+        while (attempts < 5) {
+            const mediaRes = await fetch(downloadUrl, {
+                headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` },
+                redirect: 'manual'  // NO seguir redirects automáticamente
+            });
+            
+            // Si es un redirect (301, 302, 303, 307, 308), seguirlo manualmente
+            if ([301, 302, 303, 307, 308].includes(mediaRes.status)) {
+                downloadUrl = mediaRes.headers.get('location');
+                console.log(`📡 [META] Redirect ${mediaRes.status} → ${downloadUrl?.substring(0, 80)}...`);
+                attempts++;
+                continue;
             }
-        });
-        
-        if (!mediaRes.ok) {
-            console.error(`❌ [META ERROR] Falló descarga del binario. Status: ${mediaRes.status}`);
-            return null;
+            
+            // Si llegamos a la respuesta final
+            if (mediaRes.ok) {
+                console.log(`✅ [META] Descarga exitosa. Content-Type: ${mediaRes.headers.get('content-type')}`);
+                return Buffer.from(await mediaRes.arrayBuffer());
+            } else {
+                const errorBody = await mediaRes.text().catch(() => 'No body');
+                console.error(`❌ [META] Descarga falló. Status: ${mediaRes.status}, Body: ${errorBody.substring(0, 200)}`);
+                return null;
+            }
         }
-        return Buffer.from(await mediaRes.arrayBuffer());
+        
+        console.error('❌ [META] Demasiados redirects');
+        return null;
     } catch (err) { 
-        console.error('❌ [CRITICAL ERROR] downloadMetaMedia:', err.message); 
+        console.error('❌ [META CRITICAL]', err.message); 
         return null; 
     }
 }
@@ -574,35 +596,20 @@ app.get('/api/media/:mediaId', async (req, res) => {
     if (!WHATSAPP_TOKEN) return res.status(500).send('No token');
 
     try {
-        console.log(`🔌 [PROXY] Sirviendo media: ${mediaId}`);
-        const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 
-                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0'
-            }
-        });
-        const data = await response.json();
-        if (!data.url) {
-            console.error('❌ [PROXY ERROR] Meta no devolvió URL:', data);
-            return res.status(404).send('Media not found');
-        }
-
-        console.log('🔌 [PROXY] Descargando binario final con Token...');
-        const mediaRes = await fetch(data.url, {
-            headers: { 
-                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChatbotCRM/1.0' 
-            }
-        });
+        // Reutilizamos downloadMetaMedia que ya maneja redirects correctamente
+        const buffer = await downloadMetaMedia(mediaId);
+        if (!buffer) return res.status(404).send('Media not found or download failed');
         
-        if (!mediaRes.ok) return res.status(mediaRes.status).send('Download failed');
+        // Detectar tipo de contenido por los primeros bytes (magic bytes)
+        let contentType = 'application/octet-stream';
+        if (buffer[0] === 0xFF && buffer[1] === 0xD8) contentType = 'image/jpeg';
+        else if (buffer[0] === 0x89 && buffer[1] === 0x50) contentType = 'image/png';
+        else if (buffer[0] === 0x52 && buffer[1] === 0x49) contentType = 'image/webp';
+        else if (buffer[0] === 0x47 && buffer[1] === 0x49) contentType = 'image/gif';
         
-        const contentType = mediaRes.headers.get('content-type');
         res.setHeader('Content-Type', contentType);
-        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache 24h
-        
-        const arrayBuffer = await mediaRes.arrayBuffer();
-        res.send(Buffer.from(arrayBuffer));
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.send(buffer);
     } catch (err) { 
         console.error('❌ [PROXY ERROR]:', err.message); 
         res.status(500).send('Error');
