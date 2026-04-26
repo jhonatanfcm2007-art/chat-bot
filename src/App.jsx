@@ -186,7 +186,11 @@ function App() {
       .then(res => res.json())
       .then(data => { 
         if (Array.isArray(data)) {
-          setPlatforms(data);
+          setPlatforms(prev => {
+            // Unir sin duplicados: priorizar lo que viene del servidor pero mantener lo nuevo local
+            const combined = [...new Set([...data, ...prev])];
+            return combined;
+          });
           setInitialized(prev => ({ ...prev, platforms: true }));
         }
       })
@@ -196,7 +200,10 @@ function App() {
       .then(res => res.json())
       .then(data => { 
         if (Array.isArray(data)) {
-          setProviders(data);
+          setProviders(prev => {
+            const combined = [...new Set([...data, ...prev])];
+            return combined;
+          });
           setInitialized(prev => ({ ...prev, providers: true }));
         }
       })

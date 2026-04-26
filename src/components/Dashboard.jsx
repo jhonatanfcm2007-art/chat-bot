@@ -102,7 +102,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
           {/* Unified Trigger Box */}
           <div 
             onClick={() => setIsPickerOpen(!isPickerOpen)}
-            className="bg-white/5 border border-white/10 hover:border-primary/40 cursor-pointer shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-4 transition-all active:scale-[0.98] group min-w-[320px] backdrop-blur-md"
+            className="bg-white border border-slate-200 hover:border-primary/40 cursor-pointer shadow-lg rounded-2xl px-6 py-4 flex items-center gap-4 transition-all active:scale-[0.98] group min-w-[320px] backdrop-blur-md"
           >
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-primary/20">
               <span className="material-symbols-outlined text-primary text-xl">calendar_today</span>
@@ -121,9 +121,9 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
           </div>
 
           {isPickerOpen && (
-            <div className="absolute top-full right-0 mt-4 z-[100] bg-surface rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.15)] border border-outline-variant w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="absolute top-full right-0 mt-4 z-[100] bg-surface/95 backdrop-blur-3xl rounded-3xl shadow-2xl border border-slate-200 w-[520px] flex overflow-hidden animate-in fade-in zoom-in-95 duration-300">
               {/* Presets Sidebar */}
-              <div className="w-[180px] bg-secondary-bg border-r border-outline-variant p-6 space-y-2">
+              <div className="w-[180px] bg-slate-50 border-r border-slate-100 p-6 space-y-2">
                 <p className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-5">Shortcuts</p>
                 <button 
                   onClick={() => handleDateClick(today)}
@@ -197,7 +197,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
         {getStats().map((stat, i) => (
           <div 
             key={i} 
-            className="group relative bg-surface p-8 rounded-[2rem] border border-outline-variant shadow-sm transition-all duration-500 hover:border-primary/20 cursor-default overflow-hidden"
+            className="group relative bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl transition-all duration-500 hover:border-primary/20 cursor-default overflow-hidden backdrop-blur-md"
           >
             <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color} rounded-full -mr-16 -mt-16 blur-3xl opacity-5 group-hover:opacity-10 transition-opacity`}></div>
             
@@ -224,7 +224,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-surface p-8 rounded-[2.5rem] border border-outline-variant shadow-sm">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl backdrop-blur-md">
           <div className="flex justify-between items-center mb-6 px-2">
             <div>
               <h3 className="font-bold text-on-surface">Actividad de Ventas Reciente</h3>
@@ -243,7 +243,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
               <div 
                 key={item.id} 
                 onClick={() => item.customerId && onNavigateToChat && onNavigateToChat(item.customerId)}
-                className={`flex items-center justify-between p-4 bg-secondary-bg rounded-2xl border border-outline-variant hover:border-primary/30 transition-all group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                className={`flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/30 transition-all group ${item.customerId ? 'cursor-pointer hover:bg-primary/5' : ''}`}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center border border-outline-variant shadow-sm group-hover:scale-110 transition-transform">
@@ -266,7 +266,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
           </div>
         </div>
 
-        <div className="bg-surface p-6 rounded-3xl border border-outline-variant shadow-sm relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl relative overflow-hidden backdrop-blur-md">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full pointer-events-none"></div>
           <h3 className="font-bold text-on-surface mb-6 px-2 uppercase text-xs tracking-[0.15em]">Ventas por Plataforma</h3>
 
@@ -296,7 +296,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
           </div>
 
-          <div className="mt-10 p-4 bg-secondary-bg rounded-2xl border border-outline-variant flex items-center justify-between">
+          <div className="mt-10 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Plataforma Top</span>
             <span className="text-[10px] font-black text-primary uppercase flex items-center gap-1">
               {filteredSales.length > 0 ? 
@@ -310,8 +310,8 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
       {/* History Modal */}
       {isHistoryModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-end p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-surface w-full max-w-md h-[90vh] rounded-[2.5rem] shadow-2xl border border-outline-variant p-8 flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+        <div className="fixed inset-0 z-[200] flex items-center justify-end p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-surface/95 backdrop-blur-3xl w-full max-w-md h-[90vh] rounded-[2.5rem] shadow-2xl border border-slate-200 p-8 flex flex-col animate-in slide-in-from-right duration-500 ease-out">
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h2 className="text-2xl font-black text-on-surface">Historial de Ventas</h2>
@@ -322,7 +322,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
 
               <button 
                 onClick={() => setIsHistoryModalOpen(false)}
-                className={`flex items-center gap-3.5 px-5 py-3 rounded-xl transition-all duration-500 cursor-pointer group mb-1 text-on-surface-variant hover:text-on-surface hover:bg-black/5`}
+                className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 transition-colors"
               >
                 <span className="material-symbols-outlined text-on-surface-variant">close</span>
               </button>
@@ -338,10 +338,10 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
                       setIsHistoryModalOpen(false);
                     }
                   }}
-                  className={`flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5 group hover:border-primary/30 transition-all ${item.customerId ? 'cursor-pointer hover:bg-white/5 shadow-sm' : ''}`}
+                  className={`flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-primary/30 transition-all ${item.customerId ? 'cursor-pointer hover:bg-white shadow-sm' : ''}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-sm group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 shadow-sm group-hover:scale-110 transition-transform flex items-center justify-center">
                       <span className="material-symbols-outlined text-primary">receipt_long</span>
                     </div>
                     <div>

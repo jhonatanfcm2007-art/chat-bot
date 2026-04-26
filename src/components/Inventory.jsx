@@ -29,6 +29,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   const [newPlatformInput, setNewPlatformInput] = useState('');
   const [newProviderInput, setNewProviderInput] = useState('');
 
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [bulkRange, setBulkRange] = useState('1-7');
+
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
 
@@ -56,49 +59,76 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     if (!serviceName || !formData.email || !formData.pass) return;
 
     const usesCount = parseInt(formData.uses) || 0;
-    const computedStatus = usesCount > 0 ? 'Available' : 'Sold';
-
-    const processedFormData = {
-      ...formData,
-      service: serviceName,
-      status: computedStatus,
-      uses: usesCount
-    };
-
+    
     // Si es una plataforma nueva que no estaba en la lista, guardarla
-    if (!platforms.includes(serviceName)) {
-      setPlatforms(prev => [...prev, serviceName]);
+    if (serviceName) {
+      setPlatforms(prev => prev.includes(serviceName) ? prev : [...prev, serviceName]);
     }
 
     // Si es un proveedor nuevo que no estaba en la lista, guardarlo
-    if (formData.provider && !providers.includes(formData.provider)) {
-      setProviders(prev => [...prev, formData.provider]);
+    if (formData.provider) {
+      setProviders(prev => prev.includes(formData.provider) ? prev : [...prev, formData.provider]);
     }
 
     if (editingAccount) {
       // Update existing
-      setAccounts(accounts.map(acc => 
+      setAccounts(prev => prev.map(acc => 
         acc.id === editingAccount.id ? { 
           ...acc, 
-          ...processedFormData, 
+          ...formData, 
+          service: serviceName,
           price: parseInt(formData.price) || 0, 
           cost: parseInt(formData.cost) || 0, 
-          provider: formData.provider 
+          uses: usesCount,
+          status: usesCount > 0 ? 'Available' : 'Sold'
         } : acc
       ));
+    } else if (isBulkMode) {
+      // Logic for Bulk Mode (Type 2)
+      const rangeMatch = bulkRange.match(/(\d+)-(\d+)/);
+      if (!rangeMatch) {
+         alert('Por favor usa formato de rango válido (ej: 1-7)');
+         return;
+      }
+      const start = parseInt(rangeMatch[1]);
+      const end = parseInt(rangeMatch[2]);
+      const totalProfiles = end - start + 1;
+      
+      const totalPrice = parseInt(formData.price) || 0;
+      const totalCost = parseInt(formData.cost) || 0;
+      const costPerProfile = totalCost / totalProfiles;
+
+      const newAccounts = [];
+      let baseId = accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
+
+      for (let i = start; i <= end; i++) {
+        newAccounts.push({
+          id: baseId++,
+          ...formData,
+          service: serviceName,
+          profile: i.toString(),
+          uses: usesCount,
+          status: usesCount > 0 ? 'Available' : 'Sold',
+          price: totalPrice,
+          cost: costPerProfile,
+          originalUses: usesCount
+        });
+      }
+      setAccounts(prev => [...newAccounts, ...prev]);
     } else {
-      // Add new
+      // Individual Mode (Type 1)
       const newAcc = {
         id: accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1,
-        ...processedFormData,
+        ...formData,
+        service: serviceName,
+        status: usesCount > 0 ? 'Available' : 'Sold',
+        uses: usesCount,
         price: parseInt(formData.price) || 0,
         cost: parseInt(formData.cost) || 0,
         originalUses: usesCount
       };
-      setAccounts([newAcc, ...accounts]);
+      setAccounts(prev => [newAcc, ...prev]);
     }
-
-
 
     closeModal();
   };
@@ -135,43 +165,46 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     setShowCustomProvider(false);
     setShowCustomProfile(false);
     setEditingAccount(null);
+    setIsBulkMode(false);
     setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
   };
 
   const handleEditPlatformName = (oldName, newName) => {
     if (!newName.trim() || oldName === newName) return;
-    setPlatforms(platforms.map(p => p === oldName ? newName : p));
-    setAccounts(accounts.map(acc => acc.service === oldName ? { ...acc, service: newName } : acc));
+    setPlatforms(prev => prev.map(p => p === oldName ? newName : p));
+    setAccounts(prev => prev.map(acc => acc.service === oldName ? { ...acc, service: newName } : acc));
   };
 
   const handleDeletePlatform = (name) => {
     if (window.confirm(`¿Eliminar "${name}" de la lista de plataformas?`)) {
-      setPlatforms(platforms.filter(p => p !== name));
+      setPlatforms(prev => prev.filter(p => p !== name));
     }
   };
 
   const handleEditProviderName = (oldName, newName) => {
     if (!newName.trim() || oldName === newName) return;
-    setProviders(providers.map(p => p === oldName ? newName : p));
-    setAccounts(accounts.map(acc => acc.provider === oldName ? { ...acc, provider: newName } : acc));
+    setProviders(prev => prev.map(p => p === oldName ? newName : p));
+    setAccounts(prev => prev.map(acc => acc.provider === oldName ? { ...acc, provider: newName } : acc));
   };
 
   const handleDeleteProvider = (name) => {
     if (window.confirm(`¿Eliminar "${name}" de la lista de proveedores?`)) {
-      setProviders(providers.filter(p => p !== name));
+      setProviders(prev => prev.filter(p => p !== name));
     }
   };
 
   const handleAddPlatform = () => {
-    if (newPlatformInput.trim() && !platforms.includes(newPlatformInput.trim())) {
-      setPlatforms([...platforms, newPlatformInput.trim()]);
+    const trimmed = newPlatformInput.trim();
+    if (trimmed) {
+      setPlatforms(prev => prev.includes(trimmed) ? prev : [...prev, trimmed]);
       setNewPlatformInput('');
     }
   };
 
   const handleAddProvider = () => {
-    if (newProviderInput.trim() && !providers.includes(newProviderInput.trim())) {
-      setProviders([...providers, newProviderInput.trim()]);
+    const trimmed = newProviderInput.trim();
+    if (trimmed) {
+      setProviders(prev => prev.includes(trimmed) ? prev : [...prev, trimmed]);
       setNewProviderInput('');
     }
   };
@@ -374,30 +407,65 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                   </div>
                 </div>
 
+                {!editingAccount && (
+                  <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isBulkMode ? 'bg-primary text-on-primary' : 'bg-slate-200 text-on-surface-variant'}`}>
+                        <span className="material-symbols-outlined text-sm">{isBulkMode ? 'layers' : 'person'}</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface">Tipo de Registro</p>
+                        <p className="text-[9px] font-bold text-on-surface-variant opacity-60">{isBulkMode ? 'Modo Masivo (7 Perfiles)' : 'Registro Individual'}</p>
+                      </div>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsBulkMode(!isBulkMode)}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-300 ${isBulkMode ? 'bg-primary' : 'bg-slate-300'}`}
+                    >
+                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isBulkMode ? 'left-7' : 'left-1'}`}></div>
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Profile Num</label>
-                    <select 
-                      required
-                      name="profile"
-                      value={formData.profile}
-                      onChange={handleInputChange}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="" disabled className="text-on-surface">N#</option>
-                      {availableProfiles.map(p => (
-                        <option key={p} value={p} className="text-on-surface">{p}</option>
-                      ))}
-                    </select>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
+                      {isBulkMode ? 'Rango Perfiles' : 'Profile Num'}
+                    </label>
+                    {isBulkMode ? (
+                      <input 
+                        required
+                        value={bulkRange}
+                        onChange={(e) => setBulkRange(e.target.value)}
+                        placeholder="1-7"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
+                      />
+                    ) : (
+                      <select 
+                        required={!isBulkMode}
+                        name="profile"
+                        value={formData.profile}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="" disabled className="text-on-surface">N#</option>
+                        {availableProfiles.map(p => (
+                          <option key={p} value={p} className="text-on-surface">{p}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Total Slots</label>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
+                      {isBulkMode ? 'Cupos x Perfil' : 'Total Slots'}
+                    </label>
                     <input 
                       name="uses"
                       type="number"
                       value={formData.uses}
                       onChange={handleInputChange}
-                      placeholder="3"
+                      placeholder={isBulkMode ? "1" : "3"}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
@@ -405,7 +473,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Cost (Full)</label>
+                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
+                      {isBulkMode ? 'Costo Total (Combo)' : 'Cost (Full)'}
+                    </label>
                     <input 
                       name="cost"
                       type="number"
