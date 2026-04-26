@@ -303,6 +303,20 @@ async function executeDelivery(to, mode = 'deliver_first') {
     } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
     finally { chat.isAutoDelivering = false; }
 }
+}
+
+// Helper global: detectar si ya se enviaron credenciales o se cobró en este chat
+const credentialsSentInChat = (messages) => {
+    if (!messages || !Array.isArray(messages)) return false;
+    return messages.some(m => {
+        const text = (m.body || m.content || '').toLowerCase();
+        return text.includes('correo:') || text.includes('contraseña:') || 
+               text.includes('clave:') || text.includes('nequi') || 
+               text.includes('datos de acceso') || text.includes('puedes hacer el pago') || 
+               text.includes('pago vía') || text.includes('comprobante') ||
+               text.includes('gracias por tu compra');
+    });
+};
 
 // --- WEBHOOK META ---
 app.get('/webhook', (req, res) => {
@@ -324,7 +338,8 @@ app.post('/webhook', async (req, res) => {
             let target = null; let mode = null;
             if (lastReceiptFrom && chats[lastReceiptFrom]) {
                 target = chats[lastReceiptFrom];
-                mode = target.tags?.includes('entregado') ? 'confirm_payment' : 'deliver_and_paid';
+                const alreadyDelivered = target.tags?.includes('entregado') || credentialsSentInChat(target.messages);
+                mode = alreadyDelivered ? 'confirm_payment' : 'deliver_and_paid';
             }
             if (!target) {
                 const pending = Object.values(chats).filter(c => c.from !== ADMIN_PHONE && c.pendingProducts?.length > 0 && !c.tags?.includes('entregado')).sort((a,b) => b.updatedAt - a.updatedAt);
@@ -467,16 +482,6 @@ app.post('/webhook', async (req, res) => {
                 res.sendStatus(200);
                 return;
             }
-
-            // Helper: detectar si ya se enviaron credenciales o se cobró en este chat
-            const credentialsSentInChat = (messages) => messages.some(m => {
-                const text = (m.body || m.content || '').toLowerCase();
-                return text.includes('correo:') || text.includes('contraseña:') || 
-                       text.includes('clave:') || text.includes('nequi') || 
-                       text.includes('datos de acceso') || text.includes('puedes hacer el pago') || 
-                       text.includes('pago vía') || text.includes('comprobante') ||
-                       text.includes('gracias por tu compra');
-            });
 
             aiTimers[from] = setTimeout(async () => {
                 const refreshedChat = chats[from];
