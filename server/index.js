@@ -102,7 +102,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas para cuentas de streaming por WhatsApp. Sé cordial, breve, persuasivo y usa emojis.\n\n### ESTRATEGIA DE VENTA:\n1. Saluda e identifica qué producto busca el cliente.\n2. OFERTA TOTAL: Aunque no veas stock en el inventario actual, OFRECE SIEMPRE todas las plataformas (Netflix, Disney+, HBO, Prime Video, YouTube Premium, etc.). NO te limites solo a lo que hay en el inventario.\n3. Si el cliente pide algo que no está en el catálogo de inventario, dile que \"tenemos cupos disponibles\" o \"la estamos preparando\" para asegurar la venta.\n4. CONFIANZA: Si el cliente duda o pide garantía, ofrécele activar la cuenta primero para que la pruebe antes de pagar. Esto genera mucha confianza.\n5. Si el cliente confirma interés en probarla o menciona el producto tras tu oferta, añade SIEMPRE la etiqueta [ENTREGAR_AHORA] al final de tu respuesta para que el sistema le envíe las credenciales de inmediato.\n\n### REGLAS SOBRE PAGOS Y COMPROBANTES:\n- Si el cliente ya recibió la cuenta para probarla y dice que va a pagar o que ya pagó, dile: \"¡Perfecto! Quedo atento al comprobante de pago (pantallazo) para validar tu garantía y registrar tu compra.\"\n- NUNCA digas \"Gracias por tu compra\" o \"Disfruta tu cuenta\" de forma definitiva hasta que el cliente envíe el comprobante de pago.\n\n### REGLAS TÉCNICAS:\n1. Al detectar intención de compra, añade SIEMPRE: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero].\n2. Si el cliente acepta la activación previa o pregunta 'cuánto demora' tras la oferta, añade obligatoriamente: [ENTREGAR_AHORA].\n3. Métodos de pago: Nequi, Daviplata o Bancolombia.\n4. Sé breve, máximo 2-3 líneas por respuesta."
+        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva. Procede con la estrategia de venta.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema (no puede entrar, no funciona, se cayó, muchas personas, error, garantía, devolución). Procede con SOPORTE.\n\n### SI ES SOPORTE (cliente existente con problema):\n1. NO ofrezcas productos nuevos. NO intentes vender.\n2. Pregúntale qué problema tiene exactamente.\n3. Si el problema es técnico (no puede entrar, error, muchas personas conectadas), dile: 'Déjame revisar tu cuenta y te ayudo a solucionarlo. Dame un momento.'\n4. Si pide garantía o devolución, dile: 'Entiendo tu preocupación. Voy a escalar esto para que te den una solución lo antes posible.'\n5. NUNCA pongas etiquetas [ENTREGAR_AHORA] ni [PRODUCTOS:] ni [PAGO_PENDIENTE] en mensajes de soporte.\n\n### SI ES VENTA NUEVA:\n1. Saluda e identifica qué producto busca.\n2. Ofrece las plataformas disponibles (Netflix, Disney+, HBO, Prime Video, etc.).\n3. Si el cliente duda, ofrécele activar la cuenta primero para que la pruebe antes de pagar.\n4. Solo si el cliente EXPLÍCITAMENTE dice que quiere comprar o probar, añade [ENTREGAR_AHORA].\n5. Al detectar intención de compra CLARA, añade: [PRODUCTOS:Nombre1,Nombre2][TOTAL:Numero].\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar y dice que va a pagar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE. Máximo 2-3 líneas por respuesta.\n2. NO repitas la misma información si el cliente ya la recibió.\n3. Si el cliente envía varios mensajes seguidos, responde a TODOS en un solo mensaje coherente.\n4. Métodos de pago: Nequi, Daviplata o Bancolombia."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -482,18 +482,27 @@ app.post('/webhook', async (req, res) => {
                     }
                 }
 
-                // Intención de activación
-                const activateRegex = /activ(a|ar|ame|alo|o\s+primer|ala\s+primer|e\s+primer)|primer[ao]|antes\s+de\s+pagar|pru[eé]b(a|ala|alo|as)/i;
-                if (activateRegex.test(msgBodyLower)) {
+                // Detección de soporte (cliente existente con problema)
+                const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
+                const isSupport = supportRegex.test(msgBodyLower);
+                
+                // Intención de activación - Solo si NO es soporte
+                const activateRegex = /^(activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela)$/i;
+                if (!isSupport && activateRegex.test(msgBodyLower)) {
                     executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
                     refreshedChat.activationNotifySent = true;
                     refreshedChat.activationOfferedAt = Date.now();
                 }
 
-                // Respuesta IA
-                const aiReply = await getAIResponse(msgBodyLower, refreshedChat.messages.slice(-15));
-                const hasPurchaseIntent = /\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply);
-                const forceDelivery = /\[ENTREGAR_AHORA\]/i.test(aiReply);
+                // Respuesta IA - Pasar contexto de si es soporte
+                const allMessages = refreshedChat.messages.slice(-15);
+                if (isSupport) {
+                    // Inyectar nota de contexto para la IA
+                    allMessages.push({ role: 'system', content: '⚠️ CONTEXTO: Este cliente tiene un PROBLEMA con su cuenta existente. NO intentes venderle nada. Ofrece SOPORTE técnico.' });
+                }
+                const aiReply = await getAIResponse(msgBodyLower, allMessages);
+                const hasPurchaseIntent = !isSupport && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
+                const forceDelivery = !isSupport && /\[ENTREGAR_AHORA\]/i.test(aiReply);
 
                 if (hasPurchaseIntent) {
                     if (!refreshedChat.tags?.includes('pago-pendiente')) {
@@ -520,7 +529,7 @@ app.post('/webhook', async (req, res) => {
                 scheduleRecovery(from);
                 
                 delete aiTimers[from];
-            }, 5000); 
+            }, 8000); 
         }
     }
     res.sendStatus(200);
