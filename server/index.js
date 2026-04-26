@@ -506,6 +506,14 @@ app.post('/webhook', async (req, res) => {
                 // Detección de soporte (cliente existente con problema)
                 const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
                 const isSupport = supportRegex.test(msgBodyLower);
+
+                // Auto-etiquetado de soporte
+                if (isSupport && !refreshedChat.tags?.includes('soporte')) {
+                    refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+                    saveChats(chats);
+                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                    console.log(`🏷️ [SOPORTE] Chat de ${customerName} etiquetado automáticamente.`);
+                }
                 
                 // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
                 const activateRegex = /^(activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela)$/i;
