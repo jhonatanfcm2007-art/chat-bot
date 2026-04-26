@@ -42,6 +42,12 @@ console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.en
 console.log('WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
 console.log('Phone ID:', PHONE_ID ? '✅ Detectado' : '❌ FALTANTE');
 console.log('Admin Phone:', ADMIN_PHONE ? '✅ Detectado' : '❌ FALTANTE');
+
+// URL pública del backend (Railway la provee automáticamente)
+const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN 
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` 
+    : (process.env.BACKEND_URL || '');
+console.log('Backend URL:', BACKEND_URL || '⚠️ No configurada (usando rutas relativas)');
 console.log('-----------------------------------------');
 
 let lastReceiptFrom = null; 
@@ -389,7 +395,7 @@ app.post('/webhook', async (req, res) => {
                         const fileName = `${Date.now()}-${from}.${ext}`;
                         const filePath = path.join(UPLOADS_DIR, fileName);
                         fs.writeFileSync(filePath, buffer);
-                        mediaUrl = `/uploads/${fileName}`;
+                        mediaUrl = `${BACKEND_URL}/uploads/${fileName}`;
                         
                         // GPT analysis if image
                         if (msg.type === 'image') {
@@ -419,10 +425,10 @@ app.post('/webhook', async (req, res) => {
                 id: msg.id, from, 
                 body: msgBody, content: msgBody, 
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
-                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (mediaId ? `${BACKEND_URL}/api/media/${mediaId}` : null)) 
                     : null,
                 fileUrl: (msg.type === 'document' || msg.type === 'audio') 
-                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (mediaId ? `${BACKEND_URL}/api/media/${mediaId}` : null)) 
                     : null,
                 timestampRaw: Date.now(), role: 'user' 
             };
