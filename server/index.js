@@ -303,7 +303,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
     } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
     finally { chat.isAutoDelivering = false; }
 }
-}
+
 
 // Helper global: detectar si ya se enviaron credenciales o se cobró en este chat
 const credentialsSentInChat = (messages) => {
