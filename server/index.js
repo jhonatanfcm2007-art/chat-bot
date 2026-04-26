@@ -468,6 +468,16 @@ app.post('/webhook', async (req, res) => {
                 return;
             }
 
+            // Helper: detectar si ya se enviaron credenciales o se cobró en este chat
+            const credentialsSentInChat = (messages) => messages.some(m => {
+                const text = (m.body || m.content || '').toLowerCase();
+                return text.includes('correo:') || text.includes('contraseña:') || 
+                       text.includes('clave:') || text.includes('nequi') || 
+                       text.includes('datos de acceso') || text.includes('puedes hacer el pago') || 
+                       text.includes('pago vía') || text.includes('comprobante') ||
+                       text.includes('gracias por tu compra');
+            });
+
             aiTimers[from] = setTimeout(async () => {
                 const refreshedChat = chats[from];
                 const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
@@ -476,11 +486,12 @@ app.post('/webhook', async (req, res) => {
                 const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
 
                 // Auto-confirmación
-                const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuanto|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;
+                const confirmWords = /^(si|sí|dale|ok|vale|hagale|hágale|de una|deuna|listo|ready|cuánto|demora|demoras|esperando|mándala|mandala|pásala|pasala|manda|pasa)$/i;
                 if (confirmWords.test(msgBodyLower)) {
                     const offeredAt = refreshedChat.activationOfferedAt || 0;
                     const recoveredAt = refreshedChat.recoverySentAt || 0;
-                    if (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000) {
+                    const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
+                    if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000)) {
                         await executeDelivery(from, 'auto');
                         delete aiTimers[from];
                         return;
@@ -491,23 +502,24 @@ app.post('/webhook', async (req, res) => {
                 const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
                 const isSupport = supportRegex.test(msgBodyLower);
                 
-                // Intención de activación - Solo si NO es soporte
+                // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
                 const activateRegex = /^(activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela)$/i;
-                if (!isSupport && activateRegex.test(msgBodyLower)) {
+                if (!isSupport && !credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
                     executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
                     refreshedChat.activationNotifySent = true;
                     refreshedChat.activationOfferedAt = Date.now();
                 }
 
-                // Respuesta IA - Pasar contexto de si es soporte
+                // Respuesta IA - Pasar contexto según la situación del chat
                 const allMessages = refreshedChat.messages.slice(-15);
                 if (isSupport) {
-                    // Inyectar nota de contexto para la IA
                     allMessages.push({ role: 'system', content: '⚠️ CONTEXTO: Este cliente tiene un PROBLEMA con su cuenta existente. NO intentes venderle nada. Ofrece SOPORTE técnico.' });
+                } else if (credentialsSentInChat(refreshedChat.messages)) {
+                    allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
-                const hasPurchaseIntent = !isSupport && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
-                const forceDelivery = !isSupport && /\[ENTREGAR_AHORA\]/i.test(aiReply);
+                const hasPurchaseIntent = !isSupport && !credentialsSentInChat(refreshedChat.messages) && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
+                const forceDelivery = !isSupport && !credentialsSentInChat(refreshedChat.messages) && /\[ENTREGAR_AHORA\]/i.test(aiReply);
 
                 if (hasPurchaseIntent) {
                     if (!refreshedChat.tags?.includes('pago-pendiente')) {
