@@ -1,107 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-const Header = ({ notifications = [], onNotificationClick, onClearNotifications }) => {
+const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(prev => !prev);
-  };
-
+  const menuItems = [
+    { id: 'inventory', icon: 'inventory_2', label: 'Inventario' },
+    { id: 'simulator', icon: 'chat', label: 'Chats' },
+    { id: 'ai_assistant', icon: 'psychology', label: 'Asistente IA' },
+    { id: 'analytics', icon: 'monitoring', label: 'Reportes' },
+  ];
 
   return (
-    <header className="bg-surface/80 backdrop-blur-xl flex justify-between items-center w-full px-4 md:px-8 h-20 z-50 fixed top-0 font-headline tracking-tight border-b border-white/5">
-      <div className="flex items-center gap-8">
-        <span className="text-xl font-black tracking-widest text-primary hidden md:block uppercase">Admin <span className="text-on-surface">Vault</span></span>
-
-        <div className="hidden md:flex items-center bg-white/5 border border-white/5 px-5 py-2.5 rounded-2xl gap-3 group focus-within:border-primary/30 transition-all">
-          <span className="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors text-xl">search</span>
-          <input 
-            className="bg-transparent border-none focus:ring-0 text-sm text-on-surface w-64 px-0 placeholder:text-on-surface-variant/40" 
-            placeholder="Search credentials, customers..." 
-            type="text"
-          />
+    <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 z-50 fixed top-0 w-full">
+      {/* 1. Logo - Left */}
+      <div className="flex items-center gap-2 cursor-pointer min-w-[200px]" onClick={() => onTabChange('simulator')}>
+        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+          <span className="material-symbols-outlined text-lg">smart_toy</span>
         </div>
+        <span className="text-lg font-bold tracking-tight text-slate-800">Chat<span className="text-primary">Bot</span></span>
       </div>
 
-      <div className="flex items-center gap-6 relative">
+      {/* 2. Nav Menu - Centered */}
+      <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onTabChange(item.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === item.id 
+                ? 'bg-primary text-white shadow-md shadow-primary/10' 
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <span className={`material-symbols-outlined text-xl ${activeTab === item.id ? 'icon-fill' : ''}`}>{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* 3. Actions - Right */}
+      <div className="flex items-center gap-4 min-w-[200px] justify-end">
+
+
         <button 
-          onClick={toggleDropdown}
-          className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${
-            notifications.length > 0 
-            ? 'bg-primary/20 text-primary border-primary/20 hover:bg-primary/30' 
-            : 'bg-white/5 text-on-surface-variant border-white/5 hover:text-primary hover:border-primary/20 shadow-sm'
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+            notifications.length > 0 ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-100'
           }`}
         >
-          <span className="material-symbols-outlined text-[22px]">
+          <span className="material-symbols-outlined text-xl">
             {notifications.length > 0 ? 'notifications_active' : 'notifications'}
           </span>
           {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-black rounded-lg flex items-center justify-center shadow-lg animate-bounce">
-              {notifications.length}
-            </span>
+            <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
           )}
         </button>
 
-        {/* Dropdown Menu */}
-        {isDropdownOpen && (
-          <div className="absolute top-14 right-0 w-80 bg-surface/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/5 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
-              <h4 className="font-black text-on-surface tracking-tight text-sm uppercase">Alert Center</h4>
-              {notifications.length > 0 && (
-                <button onClick={onClearNotifications} className="text-[10px] uppercase tracking-widest font-black text-primary hover:text-error transition-colors">
-                  Clear
-                </button>
-              )}
-            </div>
-            
-            <div className="max-h-96 overflow-y-auto custom-scrollbar">
-              {notifications.length === 0 ? (
-                <div className="p-10 text-center text-on-surface-variant opacity-40">
-                  <span className="material-symbols-outlined text-4xl mb-3">notifications_none</span>
-                  <p className="text-xs font-bold tracking-wide">Nothing to report</p>
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  {notifications.map((notif) => (
-                    <div 
-                      key={notif.id} 
-                      onClick={() => {
-                        onNotificationClick(notif);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors flex gap-4 items-start last:border-b-0"
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
-                        notif.type === 'human' ? 'bg-error/10 text-error border border-error/20' : 'bg-primary/10 text-primary border border-primary/20'
-                      }`}>
-                        <span className="material-symbols-outlined text-xl">{notif.icon}</span>
-                      </div>
-                      <div className="flex-grow">
-                        <h5 className="font-bold text-[13px] text-on-surface leading-tight">{notif.title}</h5>
-                        <p className="text-[11px] text-on-surface-variant mt-1 line-clamp-2 leading-relaxed font-medium">{notif.body}</p>
-                        <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest mt-2 block">
-                          {notif.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
+        <div className="flex items-center gap-3 pl-1">
+          <div className="text-right hidden sm:block">
+            <p className="text-xs font-bold text-slate-800 leading-none">Admin User</p>
+            <p className="text-[10px] text-slate-500 mt-1">Super Administrador</p>
           </div>
-        )}
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 text-on-surface-variant border border-white/5 hover:text-primary hover:border-primary/20 transition-all">
-           <span className="material-symbols-outlined text-[20px]">help_outline</span>
-        </button>
-        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 p-0.5 bg-white/5 shadow-sm">
-          <img 
-            alt="Administrator Avatar" 
-            className="w-full h-full object-cover rounded-lg" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkhfyqiMCHE-ifNl6WZsm5jJnBL4Y5b4gl2TozJW9AvAlOgRI4i9Mz60k2CmNlk3KrV2dYSREFgAmzSa3rGnQQV2dHSV6s3nTMw0U-oXRTXLcLtkOfLYzsDNgdCjixFrSrKRESvX9yKwINhNhJHv9qtK1071_A8rLZARSCdw-AT7jsspLio3yFsPBycn6nZgRNjq0fAyeWjYfXu68I-k5e0xNwQr-BKUaVNA9L56kVPQ_VuktY5rvxmVd0ooc4LnDNDzA7XKrxwutp"
-          />
+          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shadow-sm">
+            <img 
+              alt="Avatar" 
+              className="w-full h-full object-cover" 
+              src="https://ui-avatars.com/api/?name=Admin&background=004d4d&color=fff"
+            />
+          </div>
         </div>
       </div>
-
     </header>
   );
 };

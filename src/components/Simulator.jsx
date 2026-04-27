@@ -5,9 +5,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
+  const [showContactInfo, setShowContactInfo] = useState(false);
   
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [openTagMenu, setOpenTagMenu] = useState(null);
   const chatEndRef = useRef(null);
 
+  const TAG_UI = {
+    'pagado': { label: 'PAGADO', color: '#00a884', classes: 'bg-[#00a884]/10 text-[#00a884] border-[#00a884]/20' },
+    'pago-pendiente': { label: 'Pago Pendiente', color: '#ff9800', classes: 'bg-[#ff9800]/10 text-[#ff9800] border-[#ff9800]/20' },
+    'soporte': { label: 'Soporte', color: '#607d8b', classes: 'bg-[#607d8b]/10 text-[#607d8b] border-[#607d8b]/20' },
+    'interesado': { label: 'Interesado', color: '#2196f3', classes: 'bg-[#2196f3]/10 text-[#2196f3] border-[#2196f3]/20' }
+  };
+  
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -15,6 +25,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   useEffect(() => {
     scrollToBottom();
   }, [chats, selectedChat]);
+
+  useEffect(() => {
+    const handleCloseMenu = () => {
+      setOpenTagMenu(null);
+      setIsFilterMenuOpen(false);
+    };
+    window.addEventListener('click', handleCloseMenu);
+    return () => window.removeEventListener('click', handleCloseMenu);
+  }, []);
 
   const handleSend = () => {
     if (!inputValue.trim() || !selectedChat) return;
@@ -117,70 +136,76 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     }
   };
 
-  const TAG_UI = {
-    'pago-pendiente': { label: 'Pago Pendiente', classes: 'bg-[#FF9800]/10 text-[#EF6C00] border-[#FF9800]/20' },
-    'pagado': { label: 'Pagado', classes: 'bg-tertiary/10 text-tertiary border-tertiary/20' },
-    'inactivo': { label: 'Inactivo', classes: 'bg-on-surface-variant/10 text-on-surface-variant border-on-surface-variant/20' },
-    'activo': { label: 'Activo', classes: 'bg-primary/10 text-primary border-primary/20' }
-  };
-
   const getTagStyle = (tags) => {
-    if (!tags || tags.length === 0) return TAG_UI['activo'];
-    if (tags.includes('entregado') || tags.includes('pago-pendiente')) return TAG_UI['pago-pendiente'];
-    if (tags.includes('pagado')) return TAG_UI['pagado'];
-    if (tags.includes('inactivo')) return TAG_UI['inactivo'];
-    return TAG_UI['activo'];
+    if (!tags || tags.length === 0) return { label: 'Sin asignar', classes: 'bg-slate-100 text-slate-400 border-slate-200' };
+    const key = tags[0];
+    return TAG_UI[key] || { label: 'Sin asignar', classes: 'bg-slate-100 text-slate-400 border-slate-200' };
   };
 
   const getTagKey = (tags) => {
-    if (!tags || tags.length === 0) return 'activo';
-    if (tags.includes('entregado') || tags.includes('pago-pendiente')) return 'pago-pendiente';
-    if (tags.includes('pagado')) return 'pagado';
-    if (tags.includes('inactivo')) return 'inactivo';
-    return 'activo';
+    return (tags && tags.length > 0) ? tags[0] : 'sin-asignar';
   };
 
   return (
-    <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
+    <div className="flex flex-grow overflow-hidden relative font-sans bg-slate-50">
       {/* 1. Chat List Sidebar (Left Column) */}
-      <section className={`w-full md:w-80 flex-shrink-0 flex flex-col bg-surface/90 backdrop-blur-xl relative z-10 border-r border-slate-200 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-8 pb-4 flex items-center justify-between">
-          <h3 className="font-headline font-black text-2xl text-on-surface tracking-tight">Messages</h3>
-          <div className="w-10 h-10 text-on-surface-variant/40 rounded-xl flex items-center justify-center cursor-pointer hover:text-primary transition-all active:scale-90">
-            <span className="material-symbols-outlined text-xl">edit_square</span>
+      <section className={`w-full md:w-[400px] flex-shrink-0 flex flex-col bg-white overflow-hidden relative z-10 border-r border-slate-200 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-6 pb-2">
+          <div className="flex items-center justify-between mb-4">
+             <div className="relative">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filterTag !== 'all' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  <span className="material-symbols-outlined text-sm">{filterTag !== 'all' ? 'filter_list_off' : 'filter_list'}</span>
+                  {filterTag !== 'all' ? TAG_UI[filterTag]?.label : 'Filtrar'}
+                </button>
+
+                {isFilterMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[100] py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                    <div 
+                      className={`px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === 'all' ? 'bg-primary/5' : ''}`}
+                      onClick={() => { setFilterTag('all'); setIsFilterMenuOpen(false); }}
+                    >
+                      <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                      <span className="text-[11px] font-black text-slate-600 tracking-widest uppercase">Ver Todos</span>
+                    </div>
+                    {Object.entries(TAG_UI).map(([key, style]) => (
+                      <div 
+                        key={key}
+                        className={`px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === key ? 'bg-primary/5' : ''}`}
+                        onClick={() => { setFilterTag(key); setIsFilterMenuOpen(false); }}
+                      >
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: style.color }}></div>
+                        <span className="text-[11px] font-black text-slate-600 tracking-widest uppercase">{style.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+             </div>
+             
+             <div className="flex items-center gap-3 text-slate-400">
+                {filterTag !== 'all' && (
+                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                    {chatSessions.length} Resultados
+                  </span>
+                )}
+             </div>
           </div>
-        </div>
-        <div className="px-5 pb-5 border-b border-slate-200 space-y-4">
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/20 text-sm group-focus-within:text-primary transition-colors">search</span>
+          
+          <div className="relative mb-4">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
             <input 
-              className="w-full bg-slate-100/50 border border-slate-200 rounded-xl py-3.5 pl-12 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary/40 transition-all outline-none font-medium" 
-              placeholder="Filter chats..." 
+              className="w-full bg-slate-100 border border-transparent rounded-full py-2 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-primary/20 transition-all outline-none" 
+              placeholder="Buscar contacto..." 
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <button 
-              onClick={() => setFilterTag('all')}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === 'all' ? 'bg-primary text-on-primary' : 'bg-slate-100 text-on-surface-variant hover:bg-slate-200'}`}
-            >
-              Todos
-            </button>
-            {Object.entries(TAG_UI).map(([key, style]) => (
-              <button 
-                key={key}
-                onClick={() => setFilterTag(key)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterTag === key ? 'bg-primary text-on-primary' : 'bg-slate-100 text-on-surface-variant hover:bg-slate-200'}`}
-              >
-                {style.label.replace('Activado · ', '')}
-              </button>
-            ))}
-          </div>
         </div>
-        <div className="flex-grow overflow-y-auto custom-scrollbar py-4 px-4 pb-24 md:pb-4">
+
+        <div className="flex-grow overflow-y-auto custom-scrollbar">
           {chatSessions.length > 0 ? (
             chatSessions.map((chat) => {
               const isSelected = selectedChat === chat.from;
@@ -188,208 +213,238 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 <div 
                   key={chat.from}
                   onClick={() => onSelectChat(chat.from)}
-                  className={`flex gap-4 px-6 py-4 cursor-pointer transition-all relative group border-b border-slate-200 ${
+                  className={`flex gap-3 px-6 py-4 cursor-pointer transition-all relative border-b border-slate-50 ${
                     isSelected 
-                      ? 'bg-primary/5 border-l-2 border-l-primary' 
-                      : 'hover:bg-slate-50 border-l-2 border-l-transparent'
+                      ? 'bg-primary/10' 
+                      : 'hover:bg-slate-50'
                   }`}
                 >
+                  <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-sm border-2 border-white shadow-sm overflow-hidden">
+                    {chat.imageUrl ? (
+                      <img src={chat.imageUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      chat.customerName ? chat.customerName.charAt(0).toUpperCase() : '?'
+                    )}
+                  </div>
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h4 className={`font-black truncate text-sm tracking-tight ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
+                    <div className="flex justify-between items-center mb-0.5">
+                      <h4 className={`font-bold truncate text-[13px] ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
                         {chat.customerName}
                       </h4>
-                      <span className={`text-[10px] font-black ${isSelected ? 'text-primary' : 'text-on-surface-variant/40'}`}>
-                        {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div 
+                           className={`w-[110px] py-0.5 rounded-full text-[9px] font-bold border transition-all cursor-pointer flex items-center justify-center gap-1 ${getTagStyle(chat.tags).classes}`}
+                           onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setOpenTagMenu(openTagMenu && openTagMenu.from === chat.from ? null : { 
+                                from: chat.from, 
+                                top: rect.bottom, 
+                                left: rect.left 
+                              });
+                           }}
+                        >
+                           <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getTagStyle(chat.tags).color || '#cbd5e1' }}></div>
+                           {getTagStyle(chat.tags).label}
+                           <span className="material-symbols-outlined text-[10px]">expand_more</span>
+                        </div>
+
+                        {openTagMenu && openTagMenu.from === chat.from && (
+                           <div 
+                              className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-100 z-[999] py-2 animate-in fade-in zoom-in-95 duration-200"
+                              style={{ top: openTagMenu.top, left: openTagMenu.left }}
+                           >
+                              {Object.entries(TAG_UI).map(([key, style]) => (
+                                 <div 
+                                    key={key}
+                                    className="px-4 py-2 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3"
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       onUpdateTag(chat.from, [key]);
+                                       setOpenTagMenu(null);
+                                    }}
+                                 >
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: style.color }}></div>
+                                    <span className="text-[11px] font-bold text-slate-600">{style.label}</span>
+                                 </div>
+                              ))}
+                           </div>
+                        )}
+
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <p className={`text-[11px] font-medium truncate opacity-60 ${isSelected ? 'text-primary/70' : 'text-on-surface-variant'}`}>
-                        {chat.lastMessage ? chat.lastMessage.content : 'No signals'}
+                    <div className="flex items-center justify-between overflow-hidden">
+                      <p className="text-[11px] text-slate-400 truncate font-medium max-w-[80%]">
+                        {chat.lastMessage ? chat.lastMessage.content : 'No hay mensajes'}
                       </p>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                         <div 
+                           className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${chat.aiDisabled ? 'bg-slate-300' : 'bg-[#00a884] shadow-sm shadow-[#00a884]/20'}`}
+                           title={chat.aiDisabled ? 'IA Desactivada' : 'IA Activa'}
+                         ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="p-20 text-center flex flex-col items-center gap-4">
-               <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/20 font-thin">all_inbox</span>
-               </div>
-               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-on-surface-variant/20">Archive Empty</p>
+            <div className="p-12 text-center flex flex-col items-center gap-3 opacity-30">
+               <span className="material-symbols-outlined text-5xl">chat_bubble_outline</span>
+               <p className="text-xs font-bold uppercase tracking-widest">Sin conversaciones</p>
             </div>
           )}
         </div>
       </section>
 
-      <section className={`flex-grow flex flex-col relative bg-background overflow-hidden ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
+      <section className={`flex-grow flex flex-col relative overflow-hidden bg-[#f7f4f0] ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
-            <header className="h-24 flex items-center justify-between px-6 md:px-10 bg-surface/80 border-b border-slate-200 z-10 backdrop-blur-3xl">
-              <div className="flex items-center gap-4">
+            <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200 z-10">
+              <div 
+                className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-all px-2 py-1 rounded-xl"
+                onClick={() => setShowContactInfo(!showContactInfo)}
+              >
                 <button 
-                  onClick={() => onSelectChat(null)}
-                  className="md:hidden w-11 h-11 flex items-center justify-center text-on-surface-variant active:bg-slate-100 rounded-2xl transition-all border border-slate-200"
+                  onClick={(e) => { e.stopPropagation(); onSelectChat(null); }}
+                  className="md:hidden w-8 h-8 flex items-center justify-center text-slate-500 rounded-lg hover:bg-slate-100"
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm shadow-primary/20">
+                  {activeChatData.customerName.charAt(0)}
+                </div>
                 <div>
-                  <h3 className="font-black text-on-surface text-lg md:text-xl leading-none tracking-tight">{activeChatData.customerName}</h3>
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className={`${activeChatData.aiDisabled ? 'bg-slate-100 border-slate-200 text-on-surface-variant/40' : 'bg-tertiary/10 border-tertiary/20 text-tertiary'} border px-3 py-1 rounded-full flex items-center gap-1.5`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${activeChatData.aiDisabled ? 'bg-slate-300' : 'bg-tertiary animate-pulse'}`}></span>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">
-                        {activeChatData.aiDisabled ? 'IA Pausada' : 'IA Activa'}
-                      </p>
-                    </div>
+                  <h3 className="font-bold text-slate-800 text-[15px] leading-tight">{activeChatData.customerName}</h3>
+                  <p className="text-[11px] text-slate-400 font-medium leading-none">Desconectado</p>
+                </div>
+              </div>
 
-                    <div 
-                      onClick={() => onToggleAI(selectedChat, !activeChatData.aiDisabled)}
-                      className={`relative w-10 h-5 rounded-full cursor-pointer transition-all duration-300 ${activeChatData.aiDisabled ? 'bg-slate-200' : 'bg-primary'}`}
-                    >
-                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${activeChatData.aiDisabled ? 'left-1' : 'left-6'}`}></div>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-3">
+                
+                <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+                  <span className={`text-[11px] font-black uppercase tracking-widest ${activeChatData.aiDisabled ? 'text-slate-400' : 'text-[#00a884]'}`}>
+                    IA {activeChatData.aiDisabled ? 'Desactivada' : 'Activa'}
+                  </span>
+                  <button 
+                    onClick={() => onToggleAI(selectedChat, !activeChatData.aiDisabled)}
+                    className={`w-10 h-5 rounded-full relative transition-all duration-500 shadow-inner ${activeChatData.aiDisabled ? 'bg-slate-200' : 'bg-[#00a884]'}`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-500 ${activeChatData.aiDisabled ? 'left-0.5' : 'left-[1.4rem]'}`}></div>
+                  </button>
                 </div>
               </div>
             </header>
 
-            <div className="flex-grow p-6 md:p-10 overflow-y-auto space-y-8 flex flex-col custom-scrollbar pb-32 md:pb-10 relative">
-              <div className="flex justify-center mb-4">
-                <span className="px-5 py-1.5 rounded-full text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.3em] border border-slate-200 bg-white/80 backdrop-blur-md">Today</span>
-              </div>
-
-              {activeChatData.messages.map((msg, idx) => (
-                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                  <div className={`max-w-[85%] md:max-w-[65%] transition-all relative ${
-                    msg.role === 'user' 
-                      ? 'bg-slate-100 text-on-surface border border-slate-200 rounded-bl-none shadow-sm' 
-                      : 'bg-primary text-on-primary shadow-xl shadow-primary/10 rounded-br-none'
-                  } ${msg.imageUrl ? 'p-1 rounded-[1.8rem]' : 'px-6 py-4 rounded-[1.5rem]'}`}>
-                    
-                    {msg.imageUrl && (
-                      <div className="rounded-[1.6rem] overflow-hidden group/img relative">
-                        <img 
-                          src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
-                          alt="Message attachment" 
-                          className="max-w-full h-auto object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
-                          onClick={() => window.open(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`, '_blank')}
-                        />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                           <span className="material-symbols-outlined text-white text-3xl">zoom_in</span>
+            <div className="flex-grow overflow-y-auto flex flex-col relative group">
+              <div className="whatsapp-pattern"></div>
+              
+              <div className="p-6 md:p-10 space-y-4 flex flex-col relative z-20 custom-scrollbar">
+                {activeChatData.messages.map((msg, idx) => (
+                  <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
+                    <div className={`max-w-[75%] md:max-w-[60%] transition-all relative ${
+                      msg.role === 'user' 
+                        ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
+                        : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
+                    } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
+                      
+                      {msg.imageUrl && (
+                        <div className="rounded-lg overflow-hidden mb-1">
+                          <img 
+                            src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
+                            alt="" 
+                            className="max-w-full h-auto cursor-pointer"
+                          />
                         </div>
+                      )}
+
+                      <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">{msg.content}</p>
+                      
+                      <div className="flex justify-end items-center gap-1 mt-1">
+                        <span className="text-[9px] text-slate-400 font-medium">
+                          {msg.time || '11:09'}
+                        </span>
+                        {msg.role !== 'user' && (
+                           <span className="material-symbols-outlined text-[10px] text-primary">done_all</span>
+                        )}
                       </div>
-                    )}
-
-                    {msg.fileUrl && !msg.imageUrl && (
-                      <div className="flex items-center gap-4 py-2 px-1">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                          <span className="material-symbols-outlined text-2xl">description</span>
-                        </div>
-                        <div className="flex-grow overflow-hidden">
-                          <p className="text-[11px] font-black uppercase tracking-widest truncate">{msg.content.replace('[DOCUMENTO: ', '').replace(']', '')}</p>
-                          <a 
-                            href={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${serverUrl}${msg.fileUrl}`} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-[9px] font-black uppercase tracking-widest underline opacity-60 hover:opacity-100"
-                          >
-                            Descargar Archivo
-                          </a>
-                        </div>
-                      </div>
-                    )}
-
-                    {!msg.imageUrl && !msg.fileUrl && (
-                      <p className="text-[13px] md:text-[14px] leading-relaxed font-medium tracking-wide whitespace-pre-wrap">{msg.content}</p>
-                    )}
-                    
-                    <div className={`flex items-center gap-2 mt-2 ${msg.imageUrl ? 'px-4 pb-2' : ''} ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <span className={`text-[8px] font-black uppercase tracking-0.15em ${msg.role === 'user' ? 'opacity-30' : 'opacity-60'}`}>
-                        {msg.timestamp || msg.time || new Date(msg.timestampRaw).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
                     </div>
                   </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
+                ))}
+                <div ref={chatEndRef} />
+              </div>
             </div>
 
-            <footer className="p-6 md:p-8 bg-surface/80 border-t border-slate-200 backdrop-blur-md">
-              <form 
-                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex items-center gap-4 bg-slate-100 px-6 py-3 rounded-2xl border border-slate-200 focus-within:border-primary/20 transition-all"
-              >
-                <input 
-                  className="flex-grow bg-transparent border-none text-sm text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40 font-medium" 
-                  placeholder="Intercept frequency..." 
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  type="text"
-                />
-                <button 
-                  type="submit"
-                  className="w-12 h-12 bg-primary text-on-primary rounded-xl flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
-                >
-                  <span className="material-symbols-outlined text-xl">send</span>
-                </button>
-              </form>
+            <footer className="p-4 bg-white border-t border-slate-200">
+               <div className="flex items-center gap-3">
+                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                     <span className="material-symbols-outlined text-2xl">mood</span>
+                  </button>
+                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                     <span className="material-symbols-outlined text-2xl">attach_file</span>
+                  </button>
+                  <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
+                    <input 
+                      className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
+                      placeholder="Escribe un mensaje..." 
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    />
+                  </div>
+                  <button 
+                    onClick={handleSend}
+                    className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                  >
+                    <span className="material-symbols-outlined text-xl">send</span>
+                  </button>
+               </div>
             </footer>
           </>
         ) : (
-          <div className="flex-grow flex flex-col items-center justify-center text-center p-12">
-             <span className="material-symbols-outlined text-8xl font-thin mb-8 text-on-surface-variant/10">waves</span>
-             <h3 className="text-2xl font-black text-on-surface-variant/20 tracking-[0.2em]">SELECT SIGNAL</h3>
+          <div className="flex-grow flex flex-col items-center justify-center text-center p-12 relative overflow-hidden">
+             <div className="whatsapp-pattern"></div>
+             <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-6 border border-slate-100 z-10">
+                <span className="material-symbols-outlined text-4xl text-slate-200 font-thin">all_inbox</span>
+             </div>
+             <h3 className="text-xl font-bold text-slate-300 z-10">Selecciona un chat para comenzar</h3>
           </div>
         )}
       </section>
 
+      {/* Right Sidebar - Info and Actions */}
       {selectedChat && activeChatData && (
-        <section className={`w-85 flex-shrink-0 bg-surface/90 backdrop-blur-xl border-l border-slate-200 hidden xl:flex flex-col z-20 shadow-[-10px_0_40px_rgba(0,0,0,0.05)] overflow-hidden`}>
-          <div className="p-10 flex flex-col items-center text-center border-b border-slate-200 sticky top-0 bg-surface/80 z-10 backdrop-blur-3xl">
-            <h2 className="font-black text-2xl text-on-surface tracking-tight leading-none mb-2">{activeChatData.customerName}</h2>
-            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-30">{selectedChat}</p>
+        <section className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white flex flex-col relative overflow-hidden ${
+          showContactInfo ? 'w-80 flex-shrink-0 visible opacity-100' : 'w-0 invisible opacity-0 border-none'
+        }`}>
+          <div className="p-8 flex flex-col items-center text-center border-b border-slate-50">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold mb-4">
+               {activeChatData.customerName.charAt(0)}
+            </div>
+            <h2 className="font-bold text-lg text-slate-800 leading-tight">{activeChatData.customerName}</h2>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedChat}</p>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-8 space-y-10 custom-scrollbar">
-            <div>
-              <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant mb-5 opacity-40">Classification</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(TAG_UI).map(([key, style]) => (
-                  <button 
-                    key={key}
-                    onClick={() => onUpdateTag(selectedChat, [key])}
-                    className={`py-3 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
-                      getTagKey(activeChatData.tags) === key 
-                        ? style.classes + ' shadow-[0_0_15px_rgba(79,70,229,0.1)] border-current scale-105' 
-                        : 'bg-slate-100 border-transparent text-on-surface-variant/40 hover:bg-slate-200 hover:text-on-surface'
-                    }`}
-                  >
-                    {style.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 rounded-[2rem] p-6 border border-slate-200">
-               <div className="flex items-center gap-3 mb-6">
-                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-lg">bolt</span>
-                 </div>
-                 <h4 className="font-black text-sm text-on-surface tracking-tight">Direct Dispatch</h4>
+          <div className="flex-grow overflow-y-auto p-6 space-y-8 custom-scrollbar">
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+               <div className="flex items-center gap-2 mb-4">
+                  <span className="material-symbols-outlined text-primary text-xl">shopping_cart</span>
+                  <h4 className="font-bold text-sm text-slate-800">Venta Directa</h4>
                </div>
                
                <select 
                  value={selectedSaleAccount}
                  onChange={(e) => setSelectedSaleAccount(e.target.value)}
-                 className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-xs font-bold text-on-surface focus:ring-2 focus:ring-primary/20 mb-4 appearance-none cursor-pointer"
+                 className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-xs font-semibold text-slate-700 mb-4 appearance-none cursor-pointer outline-none focus:border-primary/40"
                >
-                 <option value="" className="bg-surface">Select asset...</option>
+                 <option value="">Seleccionar cuenta...</option>
                  {availableInventory.map(acc => (
-                   <option key={acc.id} value={acc.id} className="bg-surface">
-                     {acc.service} ({acc.profile || 'Acc'}) — ${acc.price}
+                   <option key={acc.id} value={acc.id}>
+                     {acc.service} — ${acc.price}
                    </option>
                  ))}
                </select>
@@ -397,52 +452,74 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                <button 
                 disabled={!selectedSaleAccount}
                 onClick={handleSellToCustomer}
-                className="w-full bg-primary text-on-primary py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-20 transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full bg-primary text-white py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-wider disabled:opacity-30 hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
                >
-                 Finalize Sale
+                 Finalizar Venta
                </button>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-on-surface-variant opacity-40">Deployment Records</h4>
-                <span className="bg-secondary-bg border border-outline-variant text-on-surface-variant px-3 py-1 rounded-lg text-[10px] font-black flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">history</span>
-                  {customerSales.length}
-                </span>
-              </div>
-
-              {customerSales.length > 0 ? (
-                <div className="space-y-4">
-                  {customerSales.map(sale => (
-                    <div key={sale.id} className="bg-secondary-bg border border-outline-variant rounded-2xl p-5 flex gap-4 items-center group">
-                       <div className="w-11 h-11 rounded-xl bg-background border border-outline-variant flex items-center justify-center text-on-surface-variant/40">
-                         <span className="material-symbols-outlined text-xl font-light">package_2</span>
-                       </div>
-                       <div className="flex-grow">
-                         <h5 className="font-black text-sm text-on-surface leading-tight tracking-tight">{sale.service}</h5>
-                         <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mt-1 opacity-40">
-                           {sale.dateOut || sale.date}
-                         </p>
-                       </div>
-                       <div className="flex flex-col items-end">
-                         <span className="font-black text-primary text-sm tracking-tighter">${sale.price}</span>
-                       </div>
+              <h4 className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-4 px-2 flex items-center justify-between">
+                Historial de Compras
+                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">{customerSales.length}</span>
+              </h4>
+              <div className="space-y-4">
+                {customerSales.length > 0 ? (
+                  customerSales.map((sale, i) => (
+                    <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                              <span className="material-symbols-outlined text-primary text-lg">local_mall</span>
+                           </div>
+                           <div>
+                              <h5 className="text-[12px] font-bold text-slate-800 leading-tight">{sale.service}</h5>
+                              <p className="text-[10px] text-slate-400 font-medium">{sale.date}</p>
+                           </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-tertiary">Vendido</span>
+                      </div>
+                      
+                      <div className="space-y-2 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase">Proveedor:</span>
+                          <span className="text-primary font-bold uppercase tracking-widest">{sale.provider || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase">Correo:</span>
+                          <span className="text-slate-700 font-mono font-medium">{sale.email}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase">Clave:</span>
+                          <span className="text-slate-700 font-mono font-medium">{sale.pass}</span>
+                        </div>
+                        {sale.profile && (
+                          <div className="flex justify-between text-[10px]">
+                            <span className="text-slate-400 font-bold uppercase">Perfil:</span>
+                            <span className="text-slate-700 font-medium">{sale.profile} {sale.pin ? `(PIN: ${sale.pin})` : ''}</span>
+                          </div>
+                        )}
+                        {sale.expiration && (
+                          <div className="flex justify-between text-[10px] pt-1 border-t border-slate-200">
+                            <span className="text-slate-400 font-bold uppercase">Vence:</span>
+                            <span className="text-primary font-bold">{sale.expiration}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 bg-white/[0.01] rounded-3xl border border-white/5 border-dashed">
-                  <span className="material-symbols-outlined text-white/5 text-4xl mb-2 font-thin">history_toggle_off</span>
-                  <p className="text-[10px] font-black text-white/10 uppercase tracking-widest">No operations recorded</p>
-                </div>
-              )}
+                  ))
+                ) : (
+                  <div className="text-center py-10 opacity-30">
+                    <span className="material-symbols-outlined text-4xl mb-2">history</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Sin ventas previas</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
       )}
     </div>
-
   );
 };
 

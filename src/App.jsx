@@ -351,7 +351,12 @@ function App() {
       provider: account.provider || 'N/A',
       date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
       customer: customerName || 'Venta Directa',
-      customerId: customerId || null
+      customerId: customerId || null,
+      email: account.email || '',
+      pass: account.pass || '',
+      profile: account.profile || '',
+      pin: account.pin || '',
+      expiration: account.expiration || ''
     };
 
     setSalesHistory([newSale, ...salesHistory]);

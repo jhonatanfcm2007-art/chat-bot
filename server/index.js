@@ -231,7 +231,8 @@ async function executeDelivery(to, mode = 'deliver_first') {
                     id: 'sale-' + Date.now() + '-' + Math.random(),
                     reference: ref, service: acc.service, price: salePrice, cost: acc.cost, provider: acc.provider, 
                     date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
-                    customer: chat.customerName, customerId: to
+                    customer: chat.customerName, customerId: to,
+                    email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || ''
                 });
 
                 deliveredSales.push(acc.service);
