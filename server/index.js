@@ -697,6 +697,15 @@ io.on('connection', (socket) => {
     socket.on('sync_platforms', (data) => { platforms = data; savePlatforms(platforms); socket.broadcast.emit('platforms_updated', platforms); });
     socket.on('sync_providers', (data) => { providers = data; saveProviders(providers); socket.broadcast.emit('providers_updated', providers); });
     
+    socket.on('delete_chat', (chatId) => {
+        if (chats[chatId]) {
+            delete chats[chatId];
+            saveChats(chats);
+            io.emit('chat_deleted', chatId);
+            console.log(`🗑️ [SISTEMA] Chat de ${chatId} eliminado.`);
+        }
+    });
+
     socket.on('toggle_ai', ({ chatId, disabled }) => {
         if (chats[chatId]) {
             chats[chatId].aiDisabled = disabled;

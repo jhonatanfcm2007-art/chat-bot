@@ -297,8 +297,31 @@ function App() {
           return data;
         });
       }
+      socket.on('ai_state_updated', ({ chatId, disabled }) => {
+        setChats(prev => {
+          if (!prev[chatId]) return prev;
+          return {
+            ...prev,
+            [chatId]: { ...prev[chatId], aiDisabled: disabled }
+          };
+        });
+      });
+
+      socket.on('chat_deleted', (chatId) => {
+        setChats(prev => {
+          const newChats = { ...prev };
+          delete newChats[chatId];
+          return newChats;
+        });
+        setSelectedChat(prev => prev === chatId ? null : prev);
+      });
     });
-    return () => socket.off('sales_updated');
+
+    return () => {
+      socket.off('sales_updated');
+      socket.off('ai_state_updated');
+      socket.off('chat_deleted');
+    };
   }, []);
 
   // Guardar inventario en servidor + localStorage cada vez que cambia
@@ -394,6 +417,12 @@ function App() {
     });
   };
 
+  const handleDeleteChat = (chatId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este chat permanentemente?')) {
+      socket.emit('delete_chat', chatId);
+    }
+  };
+
   const handleNavigateToChat = (customerId) => {
     if (customerId) {
        setActiveTab('simulator');
@@ -426,6 +455,7 @@ function App() {
             salesHistory={salesHistory}
             onSale={handleSale}
             onUpdateTag={handleUpdateChatTag}
+            onDeleteChat={handleDeleteChat}
             onToggleAI={handleToggleAI}
             serverUrl={SERVER_URL}
           />

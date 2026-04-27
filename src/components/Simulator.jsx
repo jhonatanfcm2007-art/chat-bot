@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onToggleAI, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onToggleAI, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -514,6 +514,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+            <button 
+              onClick={() => onDeleteChat && onDeleteChat(selectedChat)}
+              className="w-full flex items-center justify-center gap-2 py-4 text-red-500 hover:text-white hover:bg-red-500 rounded-2xl border border-red-100 hover:border-red-500 transition-all font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-xl hover:shadow-red-500/20 active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+              Eliminar Chat
+            </button>
           </div>
         </section>
       )}
