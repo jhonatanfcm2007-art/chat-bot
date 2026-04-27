@@ -340,10 +340,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </div>
             </header>
 
-            <div className="flex-grow overflow-y-auto flex flex-col relative group">
-              <div className="whatsapp-pattern"></div>
-              
-              <div className="p-6 md:p-10 space-y-4 flex flex-col relative z-20 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto flex flex-col relative group whatsapp-pattern custom-scrollbar">
+              <div className="p-6 md:p-10 space-y-4 flex flex-col relative z-20">
                 {activeChatData.messages.map((msg, idx) => (
                   <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
                     <div className={`max-w-[75%] md:max-w-[60%] transition-all relative ${

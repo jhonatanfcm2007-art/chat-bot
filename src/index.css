@@ -42,21 +42,25 @@
   }
 
   .whatsapp-pattern {
-    background-color: #f7f4f0;
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+    background-color: #f7f4f0 !important;
+    position: relative;
     z-index: 0;
   }
   
   .whatsapp-pattern::before {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
     background-repeat: repeat;
-    background-size: 750px;
-    opacity: 0.5;
+    background-size: 500px;
+    background-attachment: local;
+    opacity: 0.05;
+    z-index: -1;
+    pointer-events: none;
   }
 
   .nav-item-active {
