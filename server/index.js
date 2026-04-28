@@ -322,12 +322,13 @@ async function executeDelivery(to, mode = 'deliver_first') {
 const credentialsSentInChat = (messages) => {
     if (!messages || !Array.isArray(messages)) return false;
     return messages.some(m => {
+        if (m.role !== 'bot' && !m.isMe) return false; // Solo chequear mensajes del bot
         const text = (m.body || m.content || '').toLowerCase();
-        return text.includes('correo:') || text.includes('contraseña:') || 
-               text.includes('clave:') || text.includes('nequi') || 
-               text.includes('datos de acceso') || text.includes('puedes hacer el pago') || 
-               text.includes('pago vía') || text.includes('comprobante') ||
-               text.includes('gracias por tu compra');
+        // Buscar explícitamente el formato exacto en el que el bot entrega las cuentas
+        return text.includes('📧 *correo:*') || 
+               text.includes('🔑 *clave:*') || 
+               text.includes('aquí tienes tus cuentas activas') ||
+               text.includes('nota de seguridad: como soy un asistente virtual');
     });
 };
 
