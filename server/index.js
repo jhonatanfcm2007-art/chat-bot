@@ -218,8 +218,15 @@ async function executeDelivery(to, mode = 'deliver_first') {
         let totalMsg = `🚀 *¡Hola ${chat.customerName}! Aquí tienes tus cuentas activas:*\n\n`;
         let accountsFound = 0;
         const deliveredSales = [];
+        const pendingToDeliverAfterPayment = [];
 
         for (const serviceName of productsToDeliver) {
+            // Limitar a 1 si no está pagado
+            if (accountsFound >= 1 && mode !== 'deliver_and_paid') {
+                pendingToDeliverAfterPayment.push(serviceName);
+                continue;
+            }
+
             const accIndex = inventory.findIndex(a => a.service.toLowerCase().includes(serviceName.toLowerCase()) && (parseInt(a.uses) > 0));
             if (accIndex !== -1) {
                 const acc = inventory[accIndex];
@@ -245,7 +252,10 @@ async function executeDelivery(to, mode = 'deliver_first') {
         }
 
         if (accountsFound > 0) {
-            totalMsg += `⚠️ No modificar datos para mantener tu garantía.`;
+            totalMsg += `⚠️ No modificar datos para mantener tu garantía.\n\n`;
+            if (pendingToDeliverAfterPayment.length > 0) {
+                totalMsg += `🤖 *Nota de seguridad:* Como soy un asistente virtual con Inteligencia Artificial, por seguridad el sistema me permite activarte solo una (1) cuenta primero para que pruebes.\n\nCon esto puedes verificar que somos totalmente serios. No estoy programado para estafar, así que puedes estar totalmente tranquilo. 😊\n\nLas demás cuentas (${pendingToDeliverAfterPayment.join(', ')}) se te enviarán automáticamente una vez realices el pago total.\n\n`;
+            }
             await sendMessageToCloudAPI(to, totalMsg);
 
             chat.tags = (chat.tags || []).filter(t => t !== 'pago-pendiente');
@@ -492,6 +502,33 @@ app.post('/webhook', async (req, res) => {
                 if (!lastUserMsg) return;
 
                 const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
+
+                // Detección de soporte (cliente existente con problema)
+                const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
+                const isSupport = supportRegex.test(msgBodyLower);
+
+                if (isSupport) {
+                    if (!refreshedChat.tags?.includes('soporte')) {
+                        refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+                    }
+                    refreshedChat.aiDisabled = true; // Apagar IA
+                    saveChats(chats);
+                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                    io.emit('ai_state_updated', { chatId: from, disabled: true });
+                    
+                    const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
+                    await sendMessageToCloudAPI(from, supportMsg);
+                    
+                    const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                    refreshedChat.messages.push(botMsg);
+                    saveChats(chats); io.emit('message', botMsg);
+
+                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
+                    
+                    delete aiTimers[from];
+                    return; // Detener flujo IA y no llamar a OpenAI
+                }
+
                 const isPricingInquiry = (/\?|qué val|que val|precio|costo|cuánto|cuanto|valor|promoción|promo|descuento/i.test(msgBodyLower));
                 
                 // Nueva protección: ¿El mensaje es SOLO el nombre de una plataforma?
@@ -512,22 +549,10 @@ app.post('/webhook', async (req, res) => {
                         return;
                     }
                 }
-
-                // Detección de soporte (cliente existente con problema)
-                const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
-                const isSupport = supportRegex.test(msgBodyLower);
-
-                // Auto-etiquetado de soporte
-                if (isSupport && !refreshedChat.tags?.includes('soporte')) {
-                    refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
-                    saveChats(chats);
-                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
-                    console.log(`🏷️ [SOPORTE] Chat de ${customerName} etiquetado automáticamente.`);
-                }
                 
                 // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
                 const activateRegex = /^(activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela)$/i;
-                if (!isSupport && !credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
+                if (!credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
                     executeDelivery(from, 'auto').catch(e => console.error('Error:', e));
                     refreshedChat.activationNotifySent = true;
                     refreshedChat.activationOfferedAt = Date.now();
@@ -535,14 +560,12 @@ app.post('/webhook', async (req, res) => {
 
                 // Respuesta IA - Pasar contexto según la situación del chat
                 const allMessages = refreshedChat.messages.slice(-15);
-                if (isSupport) {
-                    allMessages.push({ role: 'system', content: '⚠️ CONTEXTO: Este cliente tiene un PROBLEMA con su cuenta existente. NO intentes venderle nada. Ofrece SOPORTE técnico.' });
-                } else if (credentialsSentInChat(refreshedChat.messages)) {
+                if (credentialsSentInChat(refreshedChat.messages)) {
                     allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
                 // SOLO permitir entrega automática si NO es una consulta de precio, NO es solo el nombre del producto, y el cliente CONFIRMÓ explícitamente.
-                const canAutoDeliver = !isSupport && !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation && !credentialsSentInChat(refreshedChat.messages);
+                const canAutoDeliver = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation && !credentialsSentInChat(refreshedChat.messages);
                 
                 const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
                 const forceDelivery = canAutoDeliver && /\[ENTREGAR_AHORA\]/i.test(aiReply);
@@ -572,7 +595,7 @@ app.post('/webhook', async (req, res) => {
                 scheduleRecovery(from);
                 
                 delete aiTimers[from];
-            }, 8000); 
+            }, 15000); 
         }
     }
     res.sendStatus(200);
@@ -753,7 +776,14 @@ async function getAIResponse(message, history = []) {
         return "⚠️ Error: El bot no tiene configurada la llave de inteligencia artificial en Railway.";
     }
     try {
-        const inv = inventory.map(i => `${i.service} - $${i.price} (${i.uses})`).join(', ');
+        // Mostrar todo el inventario como disponible para la IA, sin importar el stock real
+        const uniqueInventory = [];
+        inventory.forEach(item => {
+            if (!uniqueInventory.some(i => i.service === item.service)) {
+                uniqueInventory.push(item);
+            }
+        });
+        const inv = uniqueInventory.map(i => `${i.service} - $${i.price} (Disponible)`).join(', ');
         
         // Memoria de compras pasadas
         const customerSales = sales.filter(s => s.customerId === history[0]?.from || s.customer === history[0]?.customerName);
