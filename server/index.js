@@ -796,7 +796,7 @@ async function getAIResponse(message, history = []) {
             : "Cliente nuevo (sin compras previas).";
 
         const comp = await activeOpenAI.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: `${settings.systemPrompt}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea: ${inv}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
