@@ -393,6 +393,9 @@ function App() {
     setSalesHistory(prev => prev.filter(sale => sale.id !== saleId));
   };
 
+  const handleUpdateSale = (saleId, updates) => {
+    setSalesHistory(prev => prev.map(sale => sale.id === saleId ? { ...sale, ...updates } : sale));
+  };
 
   const handleSendMessage = (messageData) => {
     // messageData: { to: '...', content: '...' }
@@ -470,7 +473,7 @@ function App() {
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} />;
     }
   };
 

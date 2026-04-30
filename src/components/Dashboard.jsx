@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) => {
+const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale, onUpdateSale }) => {
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
@@ -32,10 +32,11 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
   const stats = (() => {
     const totalSales = filteredSales.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
     const totalCosts = filteredSales.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
+    const totalPendiente = filteredSales.reduce((sum, s) => s.paid ? sum : sum + (parseFloat(s.price) || 0), 0);
     const netProfit = totalSales - totalCosts;
     const itemsSold = filteredSales.length;
 
-    return { totalSales, totalCosts, netProfit, itemsSold };
+    return { totalSales, totalCosts, netProfit, itemsSold, totalPendiente };
   })();
 
   const handleDateClick = (value) => {
@@ -168,7 +169,7 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
         {[
           { label: 'Ventas Totales', value: `$${stats.totalSales.toLocaleString()}`, icon: 'payments', color: 'text-primary', bg: 'bg-primary/10', trend: 'Ingresos Brutos' },
           { label: 'Ganancia Neta', value: `$${stats.netProfit.toLocaleString()}`, icon: 'trending_up', color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: 'Utilidad Real' },
-          { label: 'Costo Total', value: `$${stats.totalCosts.toLocaleString()}`, icon: 'outbound', color: 'text-orange-500', bg: 'bg-orange-500/10', trend: 'Inversión Stock' },
+          { label: 'Por Pagar', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'money_off', color: 'text-rose-500', bg: 'bg-rose-500/10', trend: 'Deuda Clientes' },
           { label: 'Unidades Vendidas', value: stats.itemsSold.toString(), icon: 'shopping_bag', color: 'text-slate-800', bg: 'bg-slate-100', trend: 'Volumen Transaccional', action: () => setIsBreakdownOpen(true) },
         ].map((stat, i) => (
           <div 
@@ -252,9 +253,14 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end gap-1">
                   <p className="text-xl font-black text-slate-900 tracking-tighter">${sale.price.toLocaleString()}</p>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Aprobado</p>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onUpdateSale && onUpdateSale(sale.id, { paid: !sale.paid }); }}
+                    className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md transition-all active:scale-95 ${sale.paid ? 'text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-rose-600 bg-rose-500/10 hover:bg-rose-500/20'}`}
+                  >
+                    {sale.paid ? 'Pagado' : 'Pendiente'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -329,9 +335,14 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale }) =
                   </div>
 
                   <div className="flex items-center gap-8">
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-1">
                       <p className="text-2xl font-black text-primary tracking-tighter leading-none">${item.price.toLocaleString()}</p>
-                      <p className="text-[10px] text-emerald-500 font-black uppercase mt-1.5 tracking-widest">Aprobado</p>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onUpdateSale && onUpdateSale(item.id, { paid: !item.paid }); }}
+                        className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md transition-all active:scale-95 ${item.paid ? 'text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-rose-600 bg-rose-500/10 hover:bg-rose-500/20'}`}
+                      >
+                        {item.paid ? 'Pagado' : 'Pendiente'}
+                      </button>
                     </div>
                     {onDeleteSale && (
                       <button 
