@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
 
@@ -20,6 +20,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     ...accounts.map(acc => acc.profile).filter(Boolean)
   ])).sort((a, b) => a.localeCompare(b));
 
+  const fileInputRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isManageListsOpen, setIsManageListsOpen] = useState(false);
   const [showCustomPlatform, setShowCustomPlatform] = useState(false);
@@ -34,11 +35,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
   const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
-
     service: '',
     email: '',
     profile: '',
     pass: '',
+    pin: '',
     price: '',
     cost: '',
     uses: '3',
@@ -47,6 +48,72 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   });
 
 
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const rows = text.split('\n').map(row => row.split(','));
+      
+      let startIndex = 0;
+      if (rows.length > 0 && rows[0][0] && rows[0][0].toLowerCase().includes('plataforma')) {
+        startIndex = 1;
+      }
+      
+      let baseId = accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
+      const newAccounts = [];
+      const newPlatforms = new Set(platforms);
+      const newProviders = new Set(providers);
+
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 4) continue;
+        
+        const service = row[0]?.trim();
+        const profile = row[1]?.trim();
+        const email = row[2]?.trim();
+        const pass = row[3]?.trim();
+        const pin = row[4]?.trim() || '';
+        const price = parseInt(row[5]) || 0;
+        const cost = parseInt(row[6]) || 0;
+        const provider = row[7]?.trim() || '';
+        const uses = parseInt(row[8]) || 3;
+
+        if (!service || !email) continue;
+
+        if (service) newPlatforms.add(service);
+        if (provider) newProviders.add(provider);
+
+        newAccounts.push({
+          id: baseId++,
+          service,
+          profile,
+          email,
+          pass,
+          pin,
+          price,
+          cost,
+          provider,
+          uses,
+          status: uses > 0 ? 'Available' : 'Sold',
+          originalUses: uses
+        });
+      }
+
+      if (newAccounts.length > 0) {
+        setAccounts(prev => [...newAccounts, ...prev]);
+        setPlatforms(Array.from(newPlatforms));
+        setProviders(Array.from(newProviders));
+        alert(`¡Se importaron ${newAccounts.length} cuentas con éxito!`);
+      }
+      
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -140,6 +207,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       email: account.email,
       profile: account.profile,
       pass: account.pass,
+      pin: account.pin || '',
       price: account.price,
       cost: account.cost || '',
       uses: account.uses.toString(),
@@ -164,7 +232,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     setShowCustomProfile(false);
     setEditingAccount(null);
     setIsBulkMode(false);
-    setFormData({ service: '', email: '', profile: '', pass: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
+    setFormData({ service: '', email: '', profile: '', pass: '', pin: '', price: '', cost: '', uses: '3', status: 'Available', provider: '' });
   };
 
   const handleEditPlatformName = (oldName, newName) => {
@@ -246,6 +314,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         </div>
   
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="glass transition-all flex items-center justify-center gap-2 active:scale-95 px-6 py-3 rounded-2xl hover:bg-black/5 border border-slate-200"
+              title="Formato CSV: Plataforma,Perfil,Correo,Contraseña,PIN,Precio,Costo,Proveedor,Cupos"
+            >
+              <span className="material-symbols-outlined text-xl text-emerald-500 font-bold">upload_file</span>
+              <span className="font-bold text-on-surface">Importar CSV</span>
+            </button>
             <button 
               onClick={() => setIsManageListsOpen(true)}
               className="glass transition-all flex items-center justify-center gap-3 active:scale-95 px-6 py-3 rounded-2xl hover:bg-black/5"
@@ -511,17 +588,30 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Secret Code (Password)</label>
-                    <input 
-                      required
-                      name="pass"
-                      type="text"
-                      value={formData.pass}
-                      onChange={handleInputChange}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Password</label>
+                      <input 
+                        required
+                        name="pass"
+                        type="text"
+                        value={formData.pass}
+                        onChange={handleInputChange}
+                        placeholder="••••••••"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">PIN</label>
+                      <input 
+                        name="pin"
+                        type="text"
+                        value={formData.pin}
+                        onChange={handleInputChange}
+                        placeholder="0000"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
   
@@ -678,7 +768,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                    <div>
                      <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identidad</span>
                      <p className="text-[11px] font-bold text-on-surface truncate opacity-90">{acc.email}</p>
-                     <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">{acc.pass}</p>
+                     <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">
+                       {acc.pass} {acc.pin && <span className="text-slate-400 ml-2">PIN: {acc.pin}</span>}
+                     </p>
                    </div>
                    <div className="text-right flex flex-col justify-center">
                      <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Cupos</span>
@@ -720,6 +812,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 <th className="px-4 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Correo</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-primary uppercase tracking-wider">Contraseña</th>
+                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">PIN</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Precio Venta</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Costo</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Proveedor</th>
@@ -757,6 +850,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
+                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5">
                         <span className="font-black text-primary text-base">{totalSlots}</span>
                       </td>
@@ -787,6 +881,9 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-[11px] text-primary font-bold tracking-widest uppercase">{acc.pass}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-[11px] text-slate-500 font-bold tracking-widest">{acc.pin || '-'}</p>
                         </td>
                         <td className="px-6 py-4">
                           <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price.toLocaleString()}</p>
