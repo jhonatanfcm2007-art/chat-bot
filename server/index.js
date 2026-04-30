@@ -568,9 +568,8 @@ app.post('/webhook', async (req, res) => {
                     allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
-                // Permitir entrega automática si no es consulta de precio, no es solo nombre de producto y no se ha entregado antes.
-                // Eliminamos la restricción estricta de "containsExplicitConfirmation" para que la IA pueda tomar la decisión libremente
-                const canAutoDeliver = !isPricingInquiry && !isOnlyProductName && !credentialsSentInChat(refreshedChat.messages);
+                // Restauramos el candado de seguridad: SOLO permitir entrega automática si el cliente dijo palabras de confirmación explícita
+                const canAutoDeliver = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation && !credentialsSentInChat(refreshedChat.messages);
                 
                 const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
                 const forceDelivery = canAutoDeliver && /\[ENTREGAR_AHORA\]/i.test(aiReply);
