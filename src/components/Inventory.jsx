@@ -223,6 +223,18 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     setAccounts(accounts.filter(acc => acc.id !== id));
   };
 
+  const handleCopyAccount = (acc) => {
+    const data = `Plataforma: ${acc.service}
+Perfil: ${acc.profile}
+Correo: ${acc.email}
+Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
+    
+    navigator.clipboard.writeText(data).then(() => {
+      alert('¡Información de la cuenta copiada al portapapeles!');
+    }).catch(() => {
+      alert('Error al copiar información');
+    });
+  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -793,6 +805,13 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                      Vender
                    </button>
                    <button 
+                     onClick={() => handleCopyAccount(acc)}
+                     className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-primary hover:bg-primary/10 border border-white/5 transition-all"
+                     title="Copiar datos"
+                   >
+                     <span className="material-symbols-outlined text-xl">content_copy</span>
+                   </button>
+                   <button 
                      onClick={() => handleEditAccount(acc)}
                      className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-white hover:bg-white/10 border border-white/5 transition-all"
                    >
@@ -919,6 +938,13 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                               title="Vender"
                             >
                               <span className="material-symbols-outlined text-lg">shopping_cart</span>
+                            </button>
+                            <button 
+                              onClick={() => handleCopyAccount(acc)}
+                              className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
+                              title="Copiar Info"
+                            >
+                              <span className="material-symbols-outlined text-lg">content_copy</span>
                             </button>
                             <button 
                               onClick={() => handleEditAccount(acc)}
