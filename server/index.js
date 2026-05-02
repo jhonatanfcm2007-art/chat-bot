@@ -102,7 +102,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Solo si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, añade [ENTREGAR_AHORA].\n3. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero: 'Perfecto, ¿te gustaría que te active esas 4 para que las pruebes?'\n\n### SI ES SOPORTE:\n1. NO intentes vender. Identifica el error y ofrece ayuda técnica.\n2. NUNCA pongas etiquetas [ENTREGAR_AHORA] en soporte.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Si el cliente envía varios mensajes seguidos, responde a todos en uno solo.\n3. Métodos de pago: Nequi, Daviplata o Bancolombia."
+        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero.\n\n### SI ES SOPORTE:\n1. NO intentes vender. Identifica el error y ofrece ayuda técnica.\n2. NUNCA pongas etiquetas ocultas en soporte.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Si el cliente envía varios mensajes seguidos, responde a todos en uno solo.\n3. Métodos de pago: Nequi, Daviplata o Bancolombia."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -568,11 +568,14 @@ app.post('/webhook', async (req, res) => {
                     allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
-                // Restauramos el candado de seguridad: SOLO permitir entrega automática si el cliente dijo palabras de confirmación explícita
-                const canAutoDeliver = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation && !credentialsSentInChat(refreshedChat.messages);
+                // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
+                const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
+                
+                // Permitimos la entrega si GPT lo decidió explícitamente, O si pasamos las pruebas heurísticas locales
+                const canAutoDeliver = (!isPricingInquiry && !isOnlyProductName && (containsExplicitConfirmation || gptDecidedToDeliver)) && !credentialsSentInChat(refreshedChat.messages);
                 
                 const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
-                const forceDelivery = canAutoDeliver && /\[ENTREGAR_AHORA\]/i.test(aiReply);
+                const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
 
                 if (hasPurchaseIntent) {
                     if (!refreshedChat.tags?.includes('pago-pendiente')) {
