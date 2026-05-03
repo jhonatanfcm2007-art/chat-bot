@@ -388,8 +388,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
   
         {/* Add/Edit Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-surface w-full max-w-md rounded-[2.5rem] shadow-2xl border border-outline-variant p-10 animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
+            <div className="bg-surface w-full max-w-md rounded-[2.5rem] shadow-2xl border border-outline-variant p-6 md:p-10 animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto custom-scrollbar my-4">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black text-on-surface tracking-tight">
                   {editingAccount ? 'Update Account' : 'Register Service'}
@@ -640,8 +640,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
   
         {/* Manage Lists Modal */}
         {isManageListsOpen && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-surface w-full max-w-2xl rounded-[3rem] shadow-2xl border border-slate-200 p-10 animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-surface w-full max-w-2xl rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-200 p-6 md:p-10 animate-in zoom-in-95 duration-200 max-h-[85vh] h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-black text-on-surface tracking-tight uppercase">Master Config</h2>
                 <button 
