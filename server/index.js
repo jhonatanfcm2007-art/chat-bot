@@ -102,7 +102,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero.\n\n### SI ES SOPORTE:\n1. NO intentes vender ni responder a problemas técnicos complejos.\n2. Si el cliente reporta un problema, un pago, o pide ayuda humana, INCLUYE SIEMPRE la etiqueta [APAGAR_BOT_SOPORTE] al final de tu respuesta para que un humano lo atienda.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Métodos de pago: Nequi, Daviplata o Bancolombia."
+        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. PROHIBIDO INVENTAR CUENTAS: NUNCA inventes correos ni contraseñas. NO uses placeholders como '[tu usuario]'. Solo usa las etiquetas y el sistema interno entregará la cuenta real por ti.\n4. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero.\n\n### SI ES SOPORTE:\n1. NO intentes vender ni responder a problemas técnicos complejos.\n2. Si el cliente reporta un problema, un pago, o pide ayuda humana, INCLUYE SIEMPRE la etiqueta [APAGAR_BOT_SOPORTE] al final de tu respuesta para que un humano lo atienda.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Métodos de pago: Nequi, Daviplata o Bancolombia."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -195,7 +195,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
     try {
         let productsToDeliver = chat.pendingProducts?.length > 0 ? chat.pendingProducts : null;
 
-        if (!productsToDeliver) {
+        if (!productsToDeliver || productsToDeliver.length === 0) {
             // Solo buscamos productos en los últimos mensajes del USUARIO para evitar falsos positivos con lo que el bot ofrece
             const userText = (chat.messages || [])
                 .filter(m => m.role === 'user')
@@ -204,8 +204,13 @@ async function executeDelivery(to, mode = 'deliver_first') {
                 .join(' ');
             
             // Si el usuario mencionó específicamente un servicio que tenemos, lo marcamos
+            // Búsqueda relajada para evitar fallos si el usuario no pone el '+' de 'Disney+'
             productsToDeliver = inventory
-                .filter(a => userText.includes(a.service.toLowerCase()))
+                .filter(a => {
+                    const servClean = a.service.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const uTextClean = userText.replace(/[^a-z0-9]/g, '');
+                    return uTextClean.includes(servClean) || userText.includes(a.service.toLowerCase());
+                })
                 .map(a => a.service)
                 .filter((v, i, arr) => arr.indexOf(v) === i);
         }
@@ -227,7 +232,11 @@ async function executeDelivery(to, mode = 'deliver_first') {
                 continue;
             }
 
-            const accIndex = inventory.findIndex(a => a.service.toLowerCase().includes(serviceName.toLowerCase()) && (parseInt(a.uses) > 0));
+            const accIndex = inventory.findIndex(a => {
+                const s1 = a.service.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const s2 = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return (s1.includes(s2) || s2.includes(s1)) && (parseInt(a.uses) > 0);
+            });
             if (accIndex !== -1) {
                 const acc = inventory[accIndex];
                 const salePrice = chat.pendingTotal ? Math.round(parseInt(chat.pendingTotal) / productsToDeliver.length) : (parseFloat(acc.price) || 0);
