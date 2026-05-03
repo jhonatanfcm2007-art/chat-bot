@@ -328,7 +328,8 @@ const credentialsSentInChat = (messages) => {
         return text.includes('📧 *correo:*') || 
                text.includes('🔑 *clave:*') || 
                text.includes('aquí tienes tus cuentas activas') ||
-               text.includes('nota de seguridad: como soy un asistente virtual');
+               text.includes('nota de seguridad: como soy un asistente virtual') ||
+               (text.includes('correo:') && (text.includes('contraseña:') || text.includes('clave:')));
     });
 };
 
