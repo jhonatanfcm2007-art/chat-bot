@@ -102,7 +102,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero.\n\n### SI ES SOPORTE:\n1. NO intentes vender. Identifica el error y ofrece ayuda técnica.\n2. NUNCA pongas etiquetas ocultas en soporte.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Si el cliente envía varios mensajes seguidos, responde a todos en uno solo.\n3. Métodos de pago: Nequi, Daviplata o Bancolombia."
+        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. Si el cliente lista plataformas después de que ofreciste 'activar primero', NO asumas que es un sí. Confirma primero.\n\n### SI ES SOPORTE:\n1. NO intentes vender ni responder a problemas técnicos complejos.\n2. Si el cliente reporta un problema, un pago, o pide ayuda humana, INCLUYE SIEMPRE la etiqueta [APAGAR_BOT_SOPORTE] al final de tu respuesta para que un humano lo atienda.\n\n### REGLAS SOBRE PAGOS:\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Métodos de pago: Nequi, Daviplata o Bancolombia."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -568,6 +568,31 @@ app.post('/webhook', async (req, res) => {
                     allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
                 }
                 const aiReply = await getAIResponse(msgBodyLower, allMessages);
+                
+                // --- APAGADO POR IA ---
+                const gptRequestedSupport = /\[APAGAR_BOT_SOPORTE\]/i.test(aiReply);
+                if (gptRequestedSupport) {
+                    if (!refreshedChat.tags?.includes('soporte')) {
+                        refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+                    }
+                    refreshedChat.aiDisabled = true;
+                    saveChats(chats);
+                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                    io.emit('ai_state_updated', { chatId: from, disabled: true });
+                    
+                    const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
+                    await sendMessageToCloudAPI(from, supportMsg);
+                    
+                    const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                    refreshedChat.messages.push(botMsg);
+                    saveChats(chats); io.emit('message', botMsg);
+
+                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
+                    
+                    delete aiTimers[from];
+                    return; // Detener flujo
+                }
+
                 // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
                 const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
                 
@@ -592,7 +617,7 @@ app.post('/webhook', async (req, res) => {
                     setTimeout(() => executeDelivery(from, 'auto'), 500);
                 }
 
-                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]/gi, '').trim();
+                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
                 await delay(1500);
                 await sendMessageToCloudAPI(from, cleanReply);
 
