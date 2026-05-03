@@ -301,7 +301,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         </div>
       </section>
 
-      <section className={`flex-grow flex flex-col relative overflow-hidden bg-[#f7f4f0] ${selectedChat ? 'flex' : 'hidden md:flex'}`}>
+      <section className={`flex-grow flex flex-col relative overflow-hidden bg-[#f7f4f0] ${selectedChat && !showContactInfo ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
             <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200 z-10">
@@ -417,9 +417,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       {/* Right Sidebar - Info and Actions */}
       {selectedChat && activeChatData && (
         <section className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white flex flex-col relative overflow-hidden ${
-          showContactInfo ? 'w-80 flex-shrink-0 visible opacity-100' : 'w-0 invisible opacity-0 border-none'
+          showContactInfo ? 'w-full md:w-80 flex-shrink-0 visible opacity-100' : 'w-0 invisible opacity-0 border-none'
         }`}>
-          <div className="p-8 flex flex-col items-center text-center border-b border-slate-50">
+          <div className="p-8 flex flex-col items-center text-center border-b border-slate-50 relative">
+            <button 
+              onClick={() => setShowContactInfo(false)}
+              className="md:hidden absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-slate-500 rounded-full bg-slate-100 hover:bg-slate-200"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold mb-4">
                {activeChatData.customerName.charAt(0)}
             </div>
