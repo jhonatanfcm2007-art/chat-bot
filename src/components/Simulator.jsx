@@ -9,6 +9,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [openTagMenu, setOpenTagMenu] = useState(null);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const chatEndRef = useRef(null);
 
   const TAG_UI = {
@@ -397,7 +398,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           <img 
                             src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
                             alt="Media adjunta" 
-                            className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer"
+                            onClick={() => setFullscreenImage(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`)}
+                            className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
                           />
                         </div>
                       )}
@@ -576,6 +578,27 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             </button>
           </div>
         </section>
+      )}
+
+      {/* Lightbox Modal */}
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center cursor-zoom-out p-4"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur transition-all"
+            onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}
+          >
+            <span className="material-symbols-outlined text-2xl">close</span>
+          </button>
+          <img 
+            src={fullscreenImage} 
+            alt="Imagen a pantalla completa" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );
