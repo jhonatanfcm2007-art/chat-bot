@@ -403,8 +403,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           />
                         </div>
                       )}
+                      
+                      {msg.fileUrl && msg.content?.includes('[AUDIO]') && (
+                        <div className="mb-2 w-full max-w-[240px]">
+                           <audio controls className="w-full h-10" src={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${serverUrl}${msg.fileUrl}`} />
+                        </div>
+                      )}
 
-                      <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">
+                        {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
+                      </p>
                       
                       <div className="flex justify-end items-center gap-1 mt-1">
                         <span className="text-[9px] text-slate-400 font-medium">

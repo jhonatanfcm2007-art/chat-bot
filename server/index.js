@@ -455,6 +455,23 @@ app.post('/webhook', async (req, res) => {
                                 }
                             });
                         }
+
+                        // OpenAI Whisper transcription for audio
+                        if (msg.type === 'audio' && openai) {
+                            try {
+                                const transcription = await openai.audio.transcriptions.create({
+                                    file: fs.createReadStream(filePath),
+                                    model: "whisper-1",
+                                    language: "es"
+                                });
+                                if (transcription && transcription.text) {
+                                    msgBody = `[AUDIO]: ${transcription.text}`;
+                                    console.log(`🎙️ Transcripción de ${customerName}: ${transcription.text}`);
+                                }
+                            } catch (err) {
+                                console.error('❌ [ERROR] Transcripción Whisper falló:', err.message);
+                            }
+                        }
                     } else {
                         console.error(`❌ [ERROR] Falló descarga de ${msg.type}. Revisa logs de downloadMetaMedia.`);
                         msgBody += ' (⚠️ Error de descarga)';
