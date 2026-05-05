@@ -349,9 +349,44 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
             <div className="flex-grow overflow-y-auto flex flex-col relative group whatsapp-pattern custom-scrollbar">
               <div className="p-6 md:p-10 space-y-4 flex flex-col relative z-20">
-                {activeChatData.messages.map((msg, idx) => (
-                  <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                    <div className={`max-w-[75%] md:max-w-[60%] transition-all relative ${
+                {activeChatData.messages.map((msg, idx) => {
+                  const currentMsgDate = msg.timestampRaw ? new Date(Number(msg.timestampRaw)) : null;
+                  const prevMsg = idx > 0 ? activeChatData.messages[idx - 1] : null;
+                  const prevMsgDate = prevMsg && prevMsg.timestampRaw ? new Date(Number(prevMsg.timestampRaw)) : null;
+                  
+                  let showDatePill = false;
+                  let dateString = '';
+                  
+                  if (currentMsgDate) {
+                     if (!prevMsgDate || currentMsgDate.toDateString() !== prevMsgDate.toDateString()) {
+                        showDatePill = true;
+                        const today = new Date();
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        if (currentMsgDate.toDateString() === today.toDateString()) {
+                           dateString = 'Hoy';
+                        } else if (currentMsgDate.toDateString() === yesterday.toDateString()) {
+                           dateString = 'Ayer';
+                        } else {
+                           dateString = currentMsgDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        }
+                     }
+                  }
+
+                  const timeString = currentMsgDate ? currentMsgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (msg.time || '11:09');
+
+                  return (
+                  <React.Fragment key={idx}>
+                    {showDatePill && (
+                      <div className="flex justify-center my-4">
+                        <span className="bg-white/80 backdrop-blur text-slate-500 text-[11px] font-bold px-4 py-1.5 rounded-xl shadow-sm border border-slate-100 uppercase tracking-widest">
+                          {dateString}
+                        </span>
+                      </div>
+                    )}
+                    <div className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
+                      <div className={`max-w-[75%] md:max-w-[60%] transition-all relative ${
                       msg.role === 'user' 
                         ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
                         : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
@@ -371,7 +406,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       
                       <div className="flex justify-end items-center gap-1 mt-1">
                         <span className="text-[9px] text-slate-400 font-medium">
-                          {msg.time || '11:09'}
+                          {timeString}
                         </span>
                         {msg.role !== 'user' && (
                            <span className="material-symbols-outlined text-[10px] text-primary">done_all</span>
@@ -379,7 +414,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       </div>
                     </div>
                   </div>
-                ))}
+                  </React.Fragment>
+                  );
+                })}
                 <div ref={chatEndRef} />
               </div>
             </div>
