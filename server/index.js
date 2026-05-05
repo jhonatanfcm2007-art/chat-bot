@@ -624,17 +624,22 @@ app.post('/webhook', async (req, res) => {
                     }
                 }
 
-                if (forceDelivery) {
-                    setTimeout(() => executeDelivery(from, 'auto'), 500);
-                }
-
                 const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
-                await delay(1500);
-                await sendMessageToCloudAPI(from, cleanReply);
-
-                const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
-                refreshedChat.messages.push(botMsg);
-                saveChats(chats); io.emit('message', botMsg);
+                
+                if (forceDelivery) {
+                    // Si el bot va a entregar, evitamos que envíe mensajes de relleno/alucinados
+                    // Dejamos que executeDelivery hable por el bot
+                    setTimeout(() => executeDelivery(from, 'auto'), 500);
+                } else {
+                    await delay(1500);
+                    if (cleanReply) {
+                        await sendMessageToCloudAPI(from, cleanReply);
+                        const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                        refreshedChat.messages.push(botMsg);
+                        saveChats(chats); io.emit('message', botMsg);
+                    }
+                }
+                
                 scheduleRecovery(from);
                 
                 delete aiTimers[from];
