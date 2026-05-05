@@ -87,9 +87,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       };
     })
     .filter(chat => {
-      const nameMatch = (chat.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const fromMatch = (chat.from || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const searchMatch = nameMatch || fromMatch;
+      const sTerm = searchTerm.toLowerCase();
+      const nameMatch = (chat.customerName || '').toLowerCase().includes(sTerm);
+      const fromMatch = (chat.from || '').toLowerCase().includes(sTerm);
+      
+      const messagesMatch = chat.messages && chat.messages.some(m => 
+        (m.content || '').toLowerCase().includes(sTerm) || 
+        (m.body || '').toLowerCase().includes(sTerm)
+      );
+
+      const searchMatch = nameMatch || fromMatch || messagesMatch;
       
       const tagMatch = filterTag === 'all' || 
                        chat.tags.includes(filterTag) || 
