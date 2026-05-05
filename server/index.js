@@ -248,7 +248,8 @@ async function executeDelivery(to, mode = 'deliver_first') {
                     reference: ref, service: acc.service, price: salePrice, cost: acc.cost, provider: acc.provider, 
                     date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
                     customer: chat.customerName, customerId: to,
-                    email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || ''
+                    email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || '',
+                    paid: mode !== 'deliver_first'
                 });
 
                 deliveredSales.push(acc.service);
@@ -780,7 +781,31 @@ io.on('connection', (socket) => {
     });
 
     socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history)));
-    socket.on('update_chat_tags', ({ chatId, tags }) => { if (chats[chatId]) { chats[chatId].tags = tags; saveChats(chats); io.emit('tag_updated', { from: chatId, tags }); } });
+    socket.on('update_chat_tags', ({ chatId, tags }) => { 
+        if (chats[chatId]) { 
+            chats[chatId].tags = tags; 
+            saveChats(chats); 
+            
+            // Sincronizar estado de ventas basado en la etiqueta
+            if (tags.includes('pagado')) {
+                const customerSales = sales.filter(s => s.customerId === chatId && !s.paid);
+                if (customerSales.length > 0) {
+                    customerSales.forEach(s => s.paid = true);
+                    saveSales(sales);
+                    io.emit('sales_updated', sales);
+                }
+            } else if (tags.includes('pago-pendiente')) {
+                const customerSales = sales.filter(s => s.customerId === chatId && s.paid);
+                if (customerSales.length > 0) {
+                    customerSales.forEach(s => s.paid = false);
+                    saveSales(sales);
+                    io.emit('sales_updated', sales);
+                }
+            }
+            
+            io.emit('tag_updated', { from: chatId, tags }); 
+        } 
+    });
     socket.on('send_message', async ({ to, content }) => {
         if (/^r$/i.test(content.trim())) { await executeDelivery(to, 'deliver_first'); return; }
         await sendMessageToCloudAPI(to, content);
