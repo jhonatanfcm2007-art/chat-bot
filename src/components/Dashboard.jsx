@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-
-const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale, onUpdateSale }) => {
-
+const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale }) => {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
     start: today,
@@ -35,8 +33,21 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale, onU
     const totalPendiente = filteredSales.reduce((sum, s) => s.paid ? sum : sum + (parseFloat(s.price) || 0), 0);
     const netProfit = totalSales - totalCosts;
     const itemsSold = filteredSales.length;
+    
+    const cuentasPendientes = filteredSales.filter(s => !s.paid).length;
+    
+    // Calcular chats nuevos/activos
+    const startObj = new Date(dateRange.start);
+    startObj.setHours(0,0,0,0);
+    const endObj = new Date(dateRange.end);
+    endObj.setHours(23,59,59,999);
+    
+    const chatsActivos = Object.values(chats || {}).filter(chat => {
+       const d = new Date(chat.updatedAt || 0);
+       return d >= startObj && d <= endObj;
+    }).length;
 
-    return { totalSales, totalCosts, netProfit, itemsSold, totalPendiente };
+    return { totalSales, totalCosts, netProfit, itemsSold, totalPendiente, cuentasPendientes, chatsActivos };
   })();
 
   const handleDateClick = (value) => {
@@ -165,12 +176,14 @@ const Dashboard = ({ accounts, salesHistory, onNavigateToChat, onDeleteSale, onU
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
         {[
           { label: 'Ventas Totales', value: `$${stats.totalSales.toLocaleString()}`, icon: 'payments', color: 'text-primary', bg: 'bg-primary/10', trend: 'Ingresos Brutos' },
           { label: 'Ganancia Neta', value: `$${stats.netProfit.toLocaleString()}`, icon: 'trending_up', color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: 'Utilidad Real' },
-          { label: 'Por Pagar', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'money_off', color: 'text-rose-500', bg: 'bg-rose-500/10', trend: 'Deuda Clientes' },
           { label: 'Unidades Vendidas', value: stats.itemsSold.toString(), icon: 'shopping_bag', color: 'text-slate-800', bg: 'bg-slate-100', trend: 'Volumen Transaccional', action: () => setIsBreakdownOpen(true) },
+          { label: 'Deuda por Cobrar ($)', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'account_balance_wallet', color: 'text-rose-500', bg: 'bg-rose-500/10', trend: 'Valor Pendiente' },
+          { label: 'Cuentas Fíadas', value: `${stats.cuentasPendientes}`, icon: 'money_off', color: 'text-amber-500', bg: 'bg-amber-500/10', trend: 'Cuentas sin pago' },
+          { label: 'Chats Nuevos', value: stats.chatsActivos.toString(), icon: 'forum', color: 'text-indigo-500', bg: 'bg-indigo-500/10', trend: 'Interacciones hoy' },
         ].map((stat, i) => (
           <div 
             key={i} 

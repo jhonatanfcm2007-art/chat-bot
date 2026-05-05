@@ -473,7 +473,7 @@ function App() {
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} />;
     }
   };
 
