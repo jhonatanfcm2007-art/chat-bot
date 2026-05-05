@@ -41,7 +41,7 @@ console.log('--- [SISTEMA] Diagnóstico de Variables ---');
 console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.env.OPENAI_API_KEY.substring(0, 10)}...)` : '❌ FALTANTE');
 console.log('WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
 console.log('Phone ID:', PHONE_ID ? '✅ Detectado' : '❌ FALTANTE');
-console.log('Admin Phone:', ADMIN_PHONE ? '✅ Detectado' : '❌ FALTANTE');
+console.log('Admin Phone:', ADMIN_PHONE ? `✅ Detectado (${ADMIN_PHONE})` : '❌ FALTANTE');
 
 // URL pública del backend (Railway la provee automáticamente)
 const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN 
@@ -824,13 +824,18 @@ io.on('connection', (socket) => {
 });
 
 async function sendMessageToCloudAPI(to, text) {
-    if (!WHATSAPP_TOKEN || !PHONE_ID) return;
+    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
     try {
-        await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: text } })
+            body: JSON.stringify({ messaging_product: "whatsapp", to: cleanTo, type: "text", text: { body: text } })
         });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [META ERROR] al enviar a ${cleanTo}:`, errData);
+        }
     } catch (err) { console.error('Meta send error:', err); }
 }
 
