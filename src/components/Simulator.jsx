@@ -393,11 +393,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
                       
                       {msg.imageUrl && (
-                        <div className="rounded-lg overflow-hidden mb-1">
+                        <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5">
                           <img 
                             src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
-                            alt="" 
-                            className="max-w-full h-auto cursor-pointer"
+                            alt="Media adjunta" 
+                            className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer"
                           />
                         </div>
                       )}
