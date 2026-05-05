@@ -43,7 +43,10 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
     endObj.setHours(23,59,59,999);
     
     const chatsActivos = Object.values(chats || {}).filter(chat => {
-       const d = new Date(chat.updatedAt || 0);
+       const msgs = chat.messages || [];
+       if (msgs.length === 0) return false;
+       const firstMsg = msgs.find(m => m.role === 'user') || msgs[0];
+       const d = new Date(Number(firstMsg.timestampRaw || chat.updatedAt || 0));
        return d >= startObj && d <= endObj;
     }).length;
 
