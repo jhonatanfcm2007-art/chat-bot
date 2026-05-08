@@ -1,0 +1,67 @@
+[
+  {
+    "id": 9,
+    "service": "Netflix",
+    "email": "jhonatanfcm2007@gmail.com",
+    "profile": "1",
+    "pass": "12",
+    "price": 11,
+    "cost": 0,
+    "uses": 2,
+    "status": "Available",
+    "provider": "Proveedor Externo",
+    "originalUses": 3
+  },
+  {
+    "id": 6,
+    "service": "Disney+",
+    "email": "jhonatanfcm2007@gmail.com",
+    "profile": "5",
+    "pass": "12",
+    "price": 11000,
+    "cost": 0,
+    "uses": 0,
+    "status": "Sold",
+    "provider": "Proveedor Externo",
+    "originalUses": 1
+  },
+  {
+    "id": 7,
+    "service": "Disney+",
+    "email": "jhonatanfcm2007@gmail.com",
+    "profile": "6",
+    "pass": "12",
+    "price": 11000,
+    "cost": 0,
+    "uses": 1,
+    "status": "Available",
+    "provider": "Proveedor Externo",
+    "originalUses": 1
+  },
+  {
+    "id": 8,
+    "service": "Disney+",
+    "email": "jhonatanfcm2007@gmail.com",
+    "profile": "7",
+    "pass": "12",
+    "price": 11000,
+    "cost": 0,
+    "uses": 1,
+    "status": "Available",
+    "provider": "Proveedor Externo",
+    "originalUses": 1
+  },
+  {
+    "id": 1,
+    "service": "Disney+",
+    "email": "jhonatanfcm2007@gmail.com",
+    "profile": "1",
+    "pass": "12",
+    "price": 111000,
+    "cost": 0,
+    "uses": 3,
+    "status": "Available",
+    "provider": "Proveedor Externo",
+    "originalUses": 3
+  }
+]

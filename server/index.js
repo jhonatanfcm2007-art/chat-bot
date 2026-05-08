@@ -249,7 +249,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
                     date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
                     customer: chat.customerName, customerId: to,
                     email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || '',
-                    paid: mode !== 'deliver_first'
+                    paid: mode === 'deliver_and_paid' || mode === 'confirm_payment'
                 });
 
                 deliveredSales.push(acc.service);
@@ -624,8 +624,9 @@ app.post('/webhook', async (req, res) => {
                 // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
                 const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
                 
-                // Permitimos la entrega si GPT lo decidió explícitamente, O si pasamos las pruebas heurísticas locales
-                const canAutoDeliver = (!isPricingInquiry && !isOnlyProductName && (containsExplicitConfirmation || gptDecidedToDeliver)) && !credentialsSentInChat(refreshedChat.messages);
+                // Permitimos la entrega si pasamos las pruebas heurísticas locales, o si GPT lo decidió explícitamente (tiene prioridad)
+                const localDecision = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation;
+                const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat.messages);
                 
                 const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
                 const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
@@ -886,7 +887,7 @@ async function getAIResponse(message, history = []) {
             : "Cliente nuevo (sin compras previas).";
 
         // Regla inquebrantable de seguridad para evitar alucinaciones
-        const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS:\nNUNCA inventes ni pidas correos, contraseñas, perfiles o PINs al cliente. NUNCA digas que vas a 'crear' o 'configurar' una cuenta. Si el cliente pide algo que requiere stock y no se ha entregado o el cliente ya pagó y espera la cuenta, simplemente notifícalo a un humano usando la etiqueta [APAGAR_BOT_SOPORTE]. Solo usa [ENTREGAR_AHORA] para cuentas en el flujo de venta inicial, el sistema interno hará el resto.";
+        const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS Y ENTREGA:\n1. NUNCA, BAJO NINGUNA CIRCUNSTANCIA, inventes correos, usuarios, contraseñas, perfiles o PINs. NO ENVÍES DATOS DE ACCESO EN TEXTO.\n2. Si el cliente pregunta cómo entrar, pide sus datos de acceso, o dice 'listo'/'ok' tras enviar un comprobante, Y AÚN NO SE LE HAN ENTREGADO LAS CUENTAS, debes responder ÚNICAMENTE con las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombrePlataforma]. (El sistema extraerá la cuenta real del inventario y se la enviará automáticamente).\n3. Si el cliente pide su cuenta y no sabes qué plataforma es, usa [APAGAR_BOT_SOPORTE] para que un humano revise.\n4. NUNCA digas 'tu cuenta está activada' o 'te envié la información por mensaje'. El sistema se encarga de todo.";
 
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
@@ -896,7 +897,23 @@ async function getAIResponse(message, history = []) {
                 { role: "user", content: message }
             ]
         });
-        return comp.choices[0].message.content;
+        
+        let reply = comp.choices[0].message.content;
+        
+        // Bloqueo duro por código para evitar alucinaciones
+        if (/(usuario|correo|email|contraseña|clave|password):\s*(?!.*(te envié|sistema))/i.test(reply) || /te envié la información por mensaje/i.test(reply)) {
+            console.log('⚠️ [SISTEMA] Alucinación detectada y bloqueada:', reply);
+            
+            // Si GPT decidió entregar la cuenta, conservamos las etiquetas para que el sistema haga la entrega real
+            const tagsMatch = reply.match(/\[(ENTREGAR_AHORA|PRODUCTOS:[^\]]+|PAGO_PENDIENTE)\]/gi);
+            if (tagsMatch) {
+                reply = "Dame un momento, el sistema está procesando tu entrega... 😊 " + tagsMatch.join(' ');
+            } else {
+                reply = "[APAGAR_BOT_SOPORTE]";
+            }
+        }
+        
+        return reply;
     } catch (e) { 
         console.error('❌ OpenAI API Error:', e.message);
         return `⚠️ Error IA: ${e.message || 'Sin respuesta del cerebro'}`; 

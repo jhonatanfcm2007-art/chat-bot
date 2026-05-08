@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1777313382495,
+    "reference": "NETF-2704-1309",
+    "service": "Netflix",
+    "price": 11,
+    "cost": 0,
+    "provider": "Proveedor Externo",
+    "date": "2026-04-27",
+    "customer": "Juan Pérez",
+    "customerId": "573105779631",
+    "email": "jhonatanfcm2007@gmail.com",
+    "pass": "12",
+    "profile": "1",
+    "pin": "",
+    "expiration": ""
+  },
+  {
+    "id": 1777312824381,
+    "reference": "DISN-2704-1300",
+    "service": "Disney+",
+    "price": 11000,
+    "cost": 0,
+    "provider": "Proveedor Externo",
+    "date": "2026-04-27",
+    "customer": "Venta Directa",
+    "customerId": null,
+    "email": "jhonatanfcm2007@gmail.com",
+    "pass": "12",
+    "profile": "5",
+    "pin": "",
+    "expiration": ""
+  }
+]
