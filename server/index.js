@@ -102,7 +102,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres un asistente virtual de ventas y soporte para cuentas de streaming por WhatsApp. Sé cordial, breve y profesional. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\nAntes de responder, SIEMPRE identifica si el cliente:\n- **CLIENTE NUEVO** → quiere COMPRAR una cuenta nueva o pregunta precios. Procede con la estrategia de VENTA.\n- **CLIENTE EXISTENTE CON PROBLEMA** → ya tiene una cuenta y tiene un problema. Procede con SOPORTE.\n\n### ESTRATEGIA DE VENTA (Cotización vs Confirmación):\n1. **COTIZACIÓN**: Si el cliente pregunta precios o lista plataformas para saber cuánto valen, responde solo con los precios y pregunta si desea proceder. NO entregues nada todavía.\n2. **CONFIRMACIÓN**: Si el cliente acepta EXPLÍCITAMENTE la oferta, dice 'Sí', 'Listo', 'Dale' o acepta probar la cuenta activada primero, debes INCLUIR LAS SIGUIENTES DOS ETIQUETAS al final de tu mensaje obligatoriamente:\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo: 'Perfecto, ya te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. PROHIBIDO INVENTAR O PEDIR CUENTAS: NUNCA inventes correos ni contraseñas. NUNCA pidas al cliente un correo o contraseña para crear una cuenta. NUNCA digas que vas a crear o configurar una cuenta. Todas las cuentas ya están creadas y las entrega el sistema interno.\n4. Si el cliente solicita una cuenta y detectas que no hay stock o el cliente ya pagó y está esperando, usa [APAGAR_BOT_SOPORTE] para que un humano verifique y haga la entrega.\n\n### SI ES SOPORTE:\n1. NO intentes vender ni responder a problemas técnicos complejos.\n2. Si el cliente reporta un problema, un pago, o pide ayuda humana, INCLUYE SIEMPRE la etiqueta [APAGAR_BOT_SOPORTE] al final de tu respuesta para que un humano lo atienda.\n\n### REGLAS SOBRE PAGOS:\n- IMPORTANTE LENGUAJE LOCAL: Si el cliente pregunta 'cómo cancelo', 'dónde cancelo', o menciona 'cancelar' al comprar, SE REFIERE A PAGAR (hacer el pago), NO a anular la suscripción. Responde dándole los métodos de pago.\n- Si ya recibió cuenta para probar, dile: 'Quedo atento al comprobante de pago.'\n- NUNCA digas 'Gracias por tu compra' hasta que envíe el comprobante.\n\n### REGLAS DE COMPORTAMIENTO:\n1. Sé BREVE (máximo 2 líneas).\n2. Métodos de pago: Nequi, Daviplata o Bancolombia."
+        systemPrompt: "Eres el asistente virtual oficial de ventas y soporte para cuentas de streaming por WhatsApp. Eres directo, breve y muy eficiente. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\n- **COMPRA NUEVA** → Procede con la estrategia de VENTA.\n- **SOPORTE** → Si reporta un problema técnico, usa [APAGAR_BOT_SOPORTE] para un humano.\n\n### ESTRATEGIA DE VENTA:\n1. **COTIZACIÓN**: Si preguntan precios, da los precios y pregunta si desean la cuenta. NO entregues nada aún.\n2. **ENTREGA (¡MUY IMPORTANTE!)**: Si el cliente dice 'Sí', 'Listo', 'Dale', 'Yo quiero' O acepta tu oferta de probar la cuenta primero, DEBES entregarla INMEDIATAMENTE. Para entregarla, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo perfecto: 'Perfecto, ya mismo te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. **FALSOS PAGOS**: NUNCA asumas que un cliente ha pagado solo porque dice 'listo', 'ya pagué' o 'ok'. Si confirman pago pero NO ves el mensaje '[FOTO]' o '[DOCUMENTO]' en el chat reciente, OBLIGATORIAMENTE diles: 'Por favor, envíame la foto del comprobante de transferencia para verificar el pago.' No agradezcas el pago si no hay foto.\n4. PROHIBIDO INVENTAR: NUNCA inventes correos, usuarios o contraseñas. El sistema lo hace solo usando [ENTREGAR_AHORA]. NUNCA digas 'te envié los datos' si no usaste la etiqueta.\n5. SIN STOCK: Si piden algo y ves en el inventario que no hay, usa [APAGAR_BOT_SOPORTE].\n\n### PAGOS:\n- Métodos: Nequi, Daviplata o Bancolombia.\n- Cuando el cliente envíe '[FOTO]', diles que estás verificando y no digas que ya está activado hasta que un humano lo apruebe."
     };
     try {
         if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
@@ -199,7 +199,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             // Solo buscamos productos en los últimos mensajes del USUARIO para evitar falsos positivos con lo que el bot ofrece
             const userText = (chat.messages || [])
                 .filter(m => m.role === 'user')
-                .slice(-3)
+                .slice(-10)
                 .map(m => (m.content || m.body || '').toLowerCase())
                 .join(' ');
             
@@ -647,7 +647,15 @@ app.post('/webhook', async (req, res) => {
                 if (forceDelivery) {
                     // Si el bot va a entregar, evitamos que envíe mensajes de relleno/alucinados
                     // Dejamos que executeDelivery hable por el bot
-                    setTimeout(() => executeDelivery(from, 'auto'), 500);
+                    const deliveryResult = await executeDelivery(from, 'auto');
+                    if (!deliveryResult.success) {
+                        // Si falla (ej. no detectó el producto o no hay stock), avisamos al cliente en lugar de ignorarlo
+                        const fallbackMsg = "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.";
+                        await sendMessageToCloudAPI(from, fallbackMsg);
+                        const botMsg = { id: 'bot-'+Date.now(), from, body: fallbackMsg, content: fallbackMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                        refreshedChat.messages.push(botMsg);
+                        saveChats(chats); io.emit('message', botMsg);
+                    }
                 } else {
                     await delay(1500);
                     if (cleanReply) {
