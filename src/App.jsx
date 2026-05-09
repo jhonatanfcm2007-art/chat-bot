@@ -445,6 +445,7 @@ function App() {
             setPlatforms={setPlatforms}
             providers={providers}
             setProviders={setProviders}
+            salesHistory={salesHistory}
           />
         );
       case 'simulator':

@@ -897,10 +897,12 @@ async function getAIResponse(message, history = []) {
         // Regla inquebrantable de seguridad para evitar alucinaciones
         const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS Y ENTREGA:\n1. NUNCA, BAJO NINGUNA CIRCUNSTANCIA, inventes correos, usuarios, contraseñas, perfiles o PINs. NO ENVÍES DATOS DE ACCESO EN TEXTO.\n2. Si el cliente pregunta cómo entrar, pide sus datos de acceso, o dice 'listo'/'ok' tras enviar un comprobante, Y AÚN NO SE LE HAN ENTREGADO LAS CUENTAS, debes responder ÚNICAMENTE con las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombrePlataforma]. (El sistema extraerá la cuenta real del inventario y se la enviará automáticamente).\n3. Si el cliente pide su cuenta y no sabes qué plataforma es, usa [APAGAR_BOT_SOPORTE] para que un humano revise.\n4. NUNCA digas 'tu cuenta está activada' o 'te envié la información por mensaje'. El sistema se encarga de todo.";
 
+        const mathRules = "\n\n### REGLAS DE CÁLCULO (COMBOS):\n1. Si el cliente pide varios servicios, DEBES sumar sus precios individuales EXACTAMENTE como aparecen en el 'Stock actual'.\n2. PROHIBIDO inventar precios de 'combo'. Si Netflix vale 9.000 y Disney 11.000, el total ES 20.000. No redondees ni subas el precio.\n3. Antes de responder un total, realiza la suma paso a paso mentalmente. Error en la suma = Pérdida de cliente.";
+
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `${settings.systemPrompt}${antiHallucinationRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea: ${inv}` },
+                { role: "system", content: `${settings.systemPrompt}${antiHallucinationRules}${mathRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
                 { role: "user", content: message }
             ]
