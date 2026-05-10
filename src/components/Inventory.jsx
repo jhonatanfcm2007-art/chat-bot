@@ -822,12 +822,12 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                      <span className="material-symbols-outlined text-lg">shopping_bag</span>
                      Vender
                    </button>
-                     <button 
+                    <button 
                       onClick={() => handleShowHistory(acc)}
                       className="w-14 h-14 bg-blue-500/10 flex items-center justify-center rounded-2xl text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500/20 transition-all"
-                      title="Historial de entregas"
+                      title="Ver a quién se le vendió"
                     >
-                      <span className="material-symbols-outlined text-xl">history</span>
+                      <span className="material-symbols-outlined text-xl">receipt_long</span>
                     </button>
                     <button 
                       onClick={() => handleCopyAccount(acc)}
@@ -967,9 +967,9 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                             <button 
                               onClick={() => handleShowHistory(acc)}
                               className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-xl text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
-                              title="Historial de Entregas"
+                              title="Ver a quién se le vendió"
                             >
-                              <span className="material-symbols-outlined text-lg">history</span>
+                              <span className="material-symbols-outlined text-lg">receipt_long</span>
                             </button>
                             <button 
                               onClick={() => handleCopyAccount(acc)}
