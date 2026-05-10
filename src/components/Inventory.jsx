@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
 
-const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [] }) => {
+const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat }) => {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   
@@ -1042,11 +1042,25 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{sale.customerId || 'Manual'}</p>
                           </div>
                         </div>
-                        <div className="text-right w-full md:w-auto">
-                          <p className="text-xs font-black text-primary tracking-tighter">${sale.price?.toLocaleString()}</p>
-                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                            {new Date(sale.id).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-xs font-black text-primary tracking-tighter">${sale.price?.toLocaleString()}</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                              {new Date(sale.id).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          {sale.customerId && (
+                            <button 
+                              onClick={() => {
+                                setHistoryModalOpen(false);
+                                onNavigateToChat(sale.customerId);
+                              }}
+                              className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm border border-primary/20"
+                              title="Ir al chat"
+                            >
+                              <span className="material-symbols-outlined text-lg">chat</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

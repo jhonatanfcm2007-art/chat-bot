@@ -446,6 +446,7 @@ function App() {
             providers={providers}
             setProviders={setProviders}
             salesHistory={salesHistory}
+            onNavigateToChat={handleNavigateToChat}
           />
         );
       case 'simulator':
