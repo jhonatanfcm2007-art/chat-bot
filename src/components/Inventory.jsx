@@ -1009,6 +1009,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
               <p className="text-on-surface font-black text-lg tracking-tight uppercase">Base de datos vacía</p>
             </div>
           )}
+        </div>
+        
         {/* History Modal */}
         {historyModalOpen && selectedHistory && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
