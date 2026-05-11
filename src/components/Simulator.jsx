@@ -535,7 +535,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                               <p className="text-[10px] text-slate-400 font-medium">{sale.date}</p>
                            </div>
                         </div>
-                        <span className="text-[11px] font-bold text-tertiary">Vendido</span>
+                        <span className={`text-[11px] font-bold ${sale.paid ? 'text-tertiary' : 'text-orange-500 animate-pulse'}`}>
+                          {sale.paid ? 'Vendido' : 'Pendiente de Pago'}
+                        </span>
                       </div>
                       
                       <div className="space-y-2 bg-slate-50 rounded-xl p-3 border border-slate-100">
@@ -570,6 +572,40 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <div className="text-center py-10 opacity-30">
                     <span className="material-symbols-outlined text-4xl mb-2">history</span>
                     <p className="text-[10px] font-bold uppercase tracking-widest">Sin ventas previas</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Multimedia Gallery */}
+            <div className="pt-4">
+              <h4 className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-4 px-2 flex items-center justify-between">
+                Archivos y Comprobantes
+                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
+                  {activeChatData.messages.filter(m => m.imageUrl).length}
+                </span>
+              </h4>
+              <div className="grid grid-cols-3 gap-2 px-1 pb-6">
+                {activeChatData.messages
+                  .filter(m => m.imageUrl)
+                  .reverse()
+                  .map((msg, i) => (
+                    <div 
+                      key={i} 
+                      className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => setFullscreenImage(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`)}
+                    >
+                      <img 
+                        src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
+                        alt="Comprobante" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))
+                }
+                {activeChatData.messages.filter(m => m.imageUrl).length === 0 && (
+                  <div className="col-span-3 py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin multimedia</p>
                   </div>
                 )}
               </div>

@@ -363,8 +363,8 @@ function App() {
     let prefix = cleanService.substring(0, 4);
     if (prefix.length < 3) prefix = prefix.padEnd(3, 'X');
     
-    const reference = `${prefix}-${dd}${mm}-${hh}${mins}`;
-
+    const reference = `${prefix}-${dd}${mm}-${hh}-${mins}`;
+    
     const newSale = {
       id: Date.now(),
       reference: reference,
@@ -379,7 +379,9 @@ function App() {
       pass: account.pass || '',
       profile: account.profile || '',
       pin: account.pin || '',
-      expiration: account.expiration || ''
+      expiration: account.expiration || '',
+      accountId: account.id,
+      paid: false
     };
 
     setSalesHistory([newSale, ...salesHistory]);
@@ -433,10 +435,15 @@ function App() {
     }
   };
 
-  const handleMarkSaleAsSuccess = (saleId) => {
+  const handleMarkSaleAsSuccess = (saleId, accountId) => {
     setSalesHistory(prev => prev.map(sale => 
-      sale.id === saleId ? { ...sale, status: 'paid' } : sale
+      sale.id === saleId ? { ...sale, status: 'paid', paid: true } : sale
     ));
+    if (accountId) {
+      setAccounts(prev => prev.map(acc => 
+        acc.id === accountId ? { ...acc, exitosas: (parseInt(acc.exitosas) || 0) + 1 } : acc
+      ));
+    }
   };
 
   const handleMarkSaleAsFailed = (saleId, accountId) => {

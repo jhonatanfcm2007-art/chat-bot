@@ -869,7 +869,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
 
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">PIN</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Precio Venta</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-error uppercase tracking-wider">Fallidas</th>
+                 <th className="px-6 py-5 text-[11px] font-bold text-tertiary uppercase tracking-wider">Exitosas</th>
+                 <th className="px-6 py-5 text-[11px] font-bold text-error uppercase tracking-wider">Fallidas</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Proveedor</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cupos</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado</th>
@@ -981,6 +982,11 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                               </td>
                               <td className="px-6 py-4">
                                 <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price?.toLocaleString()}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`font-black text-xs ${acc.exitosas > 0 ? 'text-tertiary' : 'text-slate-300'}`}>
+                                  {acc.exitosas || 0}
+                                </span>
                               </td>
                               <td className="px-6 py-4">
                                 <span className={`font-black text-xs ${acc.failed > 0 ? 'text-error' : 'text-slate-300'}`}>
@@ -1107,14 +1113,9 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                           <div className="flex gap-2">
                             {/* Éxito */}
                             <button 
-                              onClick={() => {
-                                onMarkSaleAsSuccess(sale.id);
-                                alert('Venta marcada como exitosa ✅');
-                              }}
-                              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                                sale.status === 'paid' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-emerald-50 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-100'
-                              }`}
-                              title="Marcar como Pagada"
+                              onClick={() => onMarkSaleAsSuccess(sale.id, selectedHistory.account.id)}
+                              className="w-9 h-9 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
+                              title="Marcar como exitosa"
                             >
                               <span className="material-symbols-outlined text-lg">check_circle</span>
                             </button>

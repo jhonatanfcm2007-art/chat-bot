@@ -249,6 +249,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
                     date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
                     customer: chat.customerName, customerId: to,
                     email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || '',
+                    accountId: acc.id,
                     paid: mode === 'deliver_and_paid' || mode === 'confirm_payment'
                 });
 
