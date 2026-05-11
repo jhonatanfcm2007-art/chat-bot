@@ -322,6 +322,7 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
     }, {});
 
   const [expandedGroups, setExpandedGroups] = useState([]);
+  const [expandedEmails, setExpandedEmails] = useState([]);
   
     const toggleGroup = (platform) => {
       setExpandedGroups(prev => 
@@ -329,11 +330,21 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
       );
     };
 
-    // Agrupar cuentas por servicio
+    const toggleEmail = (emailKey) => {
+      setExpandedEmails(prev => 
+        prev.includes(emailKey) ? prev.filter(e => e !== emailKey) : [...prev, emailKey]
+      );
+    };
+
+    // Agrupar cuentas por servicio y luego por correo
     const groupedAccounts = accounts.reduce((acc, curr) => {
       const platform = curr.service || 'Otros';
-      if (!acc[platform]) acc[platform] = [];
-      acc[platform].push(curr);
+      const email = curr.email || 'Sin Correo';
+      
+      if (!acc[platform]) acc[platform] = {};
+      if (!acc[platform][email]) acc[platform][email] = [];
+      
+      acc[platform][email].push(curr);
       return acc;
     }, {});
 
@@ -866,9 +877,10 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-body text-center">
-              {Object.entries(groupedAccounts).map(([platform, platformAccounts]) => {
+              {Object.entries(groupedAccounts).map(([platform, emailsGroup]) => {
                 const isExpanded = expandedGroups.includes(platform);
-                const totalSlots = platformAccounts.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
+                const allAccountsInPlatform = Object.values(emailsGroup).flat();
+                const totalSlots = allAccountsInPlatform.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
                 
                 return (
                   <React.Fragment key={platform}>
@@ -884,7 +896,7 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                            </button>
                            <span className="font-black text-slate-800 tracking-tight flex items-center gap-2">
                              {platform}
-                             <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">{platformAccounts.length} CTS</span>
+                             <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">{allAccountsInPlatform.length} PERFILES</span>
                            </span>
                         </div>
                       </td>
@@ -910,94 +922,138 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                       </td>
                     </tr>
 
-                    {/* Individual Account Rows (Only visible if expanded) */}
-                    {isExpanded && platformAccounts.map((acc) => (
-                      <tr key={acc.id} className="bg-white/50 hover:bg-slate-50 transition-all group animate-in slide-in-from-top-1 duration-200">
-                        <td className="px-6 py-4 pl-14">
-                          <div className="flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                             <span className="font-bold text-slate-400 text-xs">{acc.service}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 font-bold text-slate-600 tracking-tight">#{acc.profile}</td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs font-semibold text-slate-600">{acc.email}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-[11px] text-primary font-bold tracking-widest uppercase">{acc.pass}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-[11px] text-slate-500 font-bold tracking-widest">{acc.pin || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price.toLocaleString()}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`font-black text-xs ${acc.failed > 0 ? 'text-error' : 'text-slate-300'}`}>
-                            {acc.failed || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                            {acc.provider || 'Directo'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 justify-center">
-                            <span className="text-sm font-bold text-slate-700 leading-none">{acc.uses}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase border transition-colors ${
-                            acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary border-tertiary/20' : 'bg-error/10 text-error border-error/20'
-                          }`}>
-                            {acc.status === 'Available' ? 'DISPONIBLE' : 'AGOTADO'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right pr-12">
-                          <div className="flex gap-2 justify-end">
-                            <button 
-                              onClick={() => onSale(acc)}
-                              disabled={acc.uses <= 0}
-                              className={`w-9 h-9 rounded-xl transition-all flex items-center justify-center border ${
-                                acc.uses > 0 ? 'bg-primary text-white border-primary/20 hover:scale-110 shadow-md shadow-primary/10' : 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed'
-                              }`}
-                              title="Vender"
-                            >
-                              <span className="material-symbols-outlined text-lg">shopping_cart</span>
-                            </button>
-                            <button 
-                              onClick={() => handleShowHistory(acc)}
-                              className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-xl text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
-                              title="Ver a quién se le vendió"
-                            >
-                              <span className="material-symbols-outlined text-lg">receipt_long</span>
-                            </button>
-                            <button 
-                              onClick={() => handleCopyAccount(acc)}
-                              className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
-                              title="Copiar Info"
-                            >
-                              <span className="material-symbols-outlined text-lg">content_copy</span>
-                            </button>
-                            <button 
-                              onClick={() => handleEditAccount(acc)}
-                              className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-all"
-                              title="Editar"
-                            >
-                              <span className="material-symbols-outlined text-lg">edit</span>
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteAccount(acc.id)}
-                              className="w-9 h-9 bg-error/5 border border-error/10 rounded-xl text-error/60 hover:bg-error hover:text-white transition-all"
-                              title="Eliminar"
-                            >
-                              <span className="material-symbols-outlined text-lg">delete</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {/* Nested Email Groups */}
+                    {isExpanded && Object.entries(emailsGroup).map(([email, emailAccounts]) => {
+                      const emailKey = `${platform}-${email}`;
+                      const isEmailExpanded = expandedEmails.includes(emailKey);
+                      const emailSlots = emailAccounts.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
+
+                      return (
+                        <React.Fragment key={emailKey}>
+                          {/* Email Header Row */}
+                          <tr 
+                            className={`bg-slate-50/50 hover:bg-slate-100 transition-all cursor-pointer border-l-4 ${isEmailExpanded ? 'border-primary' : 'border-slate-200'}`}
+                            onClick={() => toggleEmail(emailKey)}
+                          >
+                            <td className="px-6 py-4 pl-12">
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-slate-400">
+                                  {isEmailExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
+                                </span>
+                                <span className="text-xs font-black text-slate-600 truncate max-w-[200px]">{email}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4 text-xs font-bold text-slate-500">{email}</td>
+                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+                            <td className="px-6 py-4">
+                              <span className="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">{emailSlots}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[8px] font-black uppercase px-2 py-1 rounded ${emailSlots > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {emailSlots > 0 ? 'ACTIVA' : 'AGOTADA'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right pr-12">
+                              <span className="text-[10px] font-black text-primary/50 uppercase tracking-widest">{isEmailExpanded ? 'Cerrar' : 'Ver Perfiles'}</span>
+                            </td>
+                          </tr>
+
+                          {/* Individual Account Rows */}
+                          {isEmailExpanded && emailAccounts.map((acc) => (
+                            <tr key={acc.id} className="bg-white hover:bg-slate-50 transition-all group animate-in slide-in-from-top-1 duration-200 border-l-4 border-slate-100">
+                              <td className="px-6 py-4 pl-20">
+                                <div className="flex items-center gap-2">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                   <span className="font-bold text-slate-400 text-xs">{acc.service}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 font-bold text-slate-600 tracking-tight">#{acc.profile}</td>
+                              <td className="px-6 py-4">
+                                <p className="text-[10px] font-semibold text-slate-400">{acc.email}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-[11px] text-primary font-bold tracking-widest uppercase">{acc.pass}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-[11px] text-slate-500 font-bold tracking-widest">{acc.pin || '-'}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price?.toLocaleString()}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`font-black text-xs ${acc.failed > 0 ? 'text-error' : 'text-slate-300'}`}>
+                                  {acc.failed || 0}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                                  {acc.provider || 'Directo'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2 justify-center">
+                                  <span className="text-sm font-bold text-slate-700 leading-none">{acc.uses}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase border transition-colors ${
+                                  acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary border-tertiary/20' : 'bg-error/10 text-error border-error/20'
+                                }`}>
+                                  {acc.status === 'Available' ? 'DISPONIBLE' : 'AGOTADO'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right pr-12">
+                                <div className="flex gap-2 justify-end">
+                                  <button 
+                                    onClick={() => onSale(acc)}
+                                    disabled={acc.uses <= 0}
+                                    className={`w-9 h-9 rounded-xl transition-all flex items-center justify-center border ${
+                                      acc.uses > 0 ? 'bg-primary text-white border-primary/20 hover:scale-110 shadow-md shadow-primary/10' : 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed'
+                                    }`}
+                                    title="Vender"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">shopping_cart</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleShowHistory(acc)}
+                                    className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-xl text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
+                                    title="Ver a quién se le vendió"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">receipt_long</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleCopyAccount(acc)}
+                                    className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
+                                    title="Copiar Info"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">content_copy</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleEditAccount(acc)}
+                                    className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-all"
+                                    title="Editar"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteAccount(acc.id)}
+                                    className="w-9 h-9 bg-error/5 border border-error/10 rounded-xl text-error/60 hover:bg-error hover:text-white transition-all"
+                                    title="Eliminar"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                   </React.Fragment>
                 );
               })}
