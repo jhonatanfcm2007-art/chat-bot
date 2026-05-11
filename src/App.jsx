@@ -426,6 +426,13 @@ function App() {
     }
   };
 
+  const handleNavigateToChat = (customerId) => {
+    if (customerId) {
+       setActiveTab('simulator');
+       setSelectedChat(customerId);
+    }
+  };
+
   const handleMarkSaleAsSuccess = (saleId) => {
     setSalesHistory(prev => prev.map(sale => 
       sale.id === saleId ? { ...sale, status: 'paid' } : sale
