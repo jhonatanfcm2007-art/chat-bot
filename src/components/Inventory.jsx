@@ -2,11 +2,10 @@ import React, { useState, useRef } from 'react';
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
 
-const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat, onMarkSaleAsSuccess, onMarkSaleAsFailed, chats = {} }) => {
+const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat, onMarkSaleAsSuccess, onMarkSaleAsFailed, chats = {}, onSendMessage }) => {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [previewChatId, setPreviewChatId] = useState(null);
-  
   // Computar de forma dinámica las opciones basándose en los datos persistentes del servidor y lo que ya existe
   const availablePlatforms = Array.from(new Set([
     ...platforms,
@@ -1171,12 +1170,22 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                 )}
               </div>
               
-              <div className="p-6 bg-white border-t border-slate-100 flex justify-center">
+              <div className="p-6 bg-white border-t border-slate-100 flex gap-3">
+                 <button 
+                  onClick={() => {
+                    onSendMessage({ to: previewChatId, content: '⚠️ *Recordatorio de Pago:* Recuerda hacer el pago para no perder el acceso a tu cuenta. Quedo atento al comprobante para validar tu servicio. 🙏' });
+                    alert('Recordatorio enviado con éxito 📩');
+                  }}
+                  className="flex-grow bg-emerald-500 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">notifications_active</span>
+                  Enviar Recordatorio
+                </button>
                  <button 
                   onClick={() => setPreviewChatId(null)}
-                  className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px]"
+                  className="px-6 bg-slate-900 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px]"
                 >
-                  Cerrar Vista Previa
+                  Cerrar
                 </button>
               </div>
             </div>

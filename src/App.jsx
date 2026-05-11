@@ -472,6 +472,7 @@ function App() {
             onMarkSaleAsSuccess={handleMarkSaleAsSuccess}
             onMarkSaleAsFailed={handleMarkSaleAsFailed}
             chats={chats}
+            onSendMessage={handleSendMessage}
           />
         );
       case 'simulator':
