@@ -1080,18 +1080,25 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                               <span className="material-symbols-outlined text-lg">block</span>
                             </button>
 
-                            {/* Chat */}
-                            {sale.customerId && (
-                              <button 
-                                onClick={() => {
-                                  setPreviewChatId(sale.customerId);
-                                }}
-                                className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
-                                title="Vista previa del chat"
-                              >
-                                <span className="material-symbols-outlined text-lg">visibility</span>
-                              </button>
-                            )}
+                            {/* Chat Button Logic */}
+                            {(() => {
+                              const effectiveChatId = sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from;
+                              
+                              if (effectiveChatId) {
+                                return (
+                                  <button 
+                                    onClick={() => {
+                                      setPreviewChatId(effectiveChatId);
+                                    }}
+                                    className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
+                                    title="Vista previa del chat"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">visibility</span>
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -1148,9 +1155,9 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                           ? 'bg-white text-slate-700 border border-slate-100 rounded-tl-none' 
                           : 'bg-primary text-white rounded-tr-none'
                       }`}>
-                        {m.type === 'image' ? (
+                        {m.type === 'image' || m.imageUrl ? (
                           <div className="space-y-2">
-                             <img src={m.content} alt="Comprobante" className="rounded-lg w-full max-h-60 object-cover border border-black/5 cursor-pointer" onClick={() => window.open(m.content, '_blank')} />
+                             <img src={m.imageUrl || m.content} alt="Comprobante" className="rounded-lg w-full max-h-60 object-cover border border-black/5 cursor-pointer" onClick={() => window.open(m.imageUrl || m.content, '_blank')} />
                              {m.caption && <p className="opacity-90">{m.caption}</p>}
                           </div>
                         ) : (
