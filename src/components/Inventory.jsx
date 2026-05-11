@@ -2,9 +2,10 @@ import React, { useState, useRef } from 'react';
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
 
-const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat, onMarkSaleAsSuccess, onMarkSaleAsFailed }) => {
+const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat, onMarkSaleAsSuccess, onMarkSaleAsFailed, chats = {} }) => {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
+  const [previewChatId, setPreviewChatId] = useState(null);
   
   // Computar de forma dinámica las opciones basándose en los datos persistentes del servidor y lo que ya existe
   const availablePlatforms = Array.from(new Set([
@@ -1084,13 +1085,12 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                             {sale.customerId && (
                               <button 
                                 onClick={() => {
-                                  setHistoryModalOpen(false);
-                                  onNavigateToChat(sale.customerId);
+                                  setPreviewChatId(sale.customerId);
                                 }}
                                 className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
-                                title="Ir al chat"
+                                title="Vista previa del chat"
                               >
-                                <span className="material-symbols-outlined text-lg">chat</span>
+                                <span className="material-symbols-outlined text-lg">visibility</span>
                               </button>
                             )}
                           </div>
@@ -1117,7 +1117,73 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
             </div>
           </div>
         )}
+
+        {/* Chat Preview Modal */}
+        {previewChatId && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-slate-200">
+              <div className="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined">chat</span>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-on-surface uppercase text-sm tracking-widest">Vista Previa</h3>
+                    <p className="text-[10px] font-bold text-slate-400">{chats[previewChatId]?.customerName || previewChatId}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setPreviewChatId(null)}
+                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-on-surface transition-all"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              
+              <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/50 custom-scrollbar">
+                {chats[previewChatId]?.messages?.length > 0 ? (
+                  chats[previewChatId].messages.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium shadow-sm ${
+                        m.role === 'user' 
+                          ? 'bg-white text-slate-700 border border-slate-100 rounded-tl-none' 
+                          : 'bg-primary text-white rounded-tr-none'
+                      }`}>
+                        {m.type === 'image' ? (
+                          <div className="space-y-2">
+                             <img src={m.content} alt="Comprobante" className="rounded-lg w-full max-h-60 object-cover border border-black/5 cursor-pointer" onClick={() => window.open(m.content, '_blank')} />
+                             {m.caption && <p className="opacity-90">{m.caption}</p>}
+                          </div>
+                        ) : (
+                          <p>{m.content}</p>
+                        )}
+                        <p className={`text-[8px] mt-1 opacity-50 font-bold uppercase tracking-widest ${m.role === 'user' ? 'text-slate-400' : 'text-white'}`}>
+                          {new Date(m.timestampRaw || Date.now()).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-40 flex flex-col items-center justify-center text-slate-300 gap-2">
+                    <span className="material-symbols-outlined text-4xl">history</span>
+                    <p className="text-[10px] font-black uppercase tracking-widest">Sin mensajes recientes</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 bg-white border-t border-slate-100 flex justify-center">
+                 <button 
+                  onClick={() => setPreviewChatId(null)}
+                  className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px]"
+                >
+                  Cerrar Vista Previa
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
