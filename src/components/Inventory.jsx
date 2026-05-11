@@ -865,8 +865,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                 <tr className="bg-slate-50 border-b border-slate-200 text-center">
                   <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Plataforma</th>
                 <th className="px-4 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Correo</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-primary uppercase tracking-wider">Contraseña</th>
+
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">PIN</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Precio Venta</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-error uppercase tracking-wider">Fallidas</th>
@@ -902,7 +902,7 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                       </td>
                       <td className="px-4 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
+
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
                       <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
@@ -944,8 +944,8 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                               </div>
                             </td>
                             <td className="px-4 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4 text-xs font-bold text-slate-500">{email}</td>
                             <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
+
                             <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
                             <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
                             <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
@@ -973,9 +973,6 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                                 </div>
                               </td>
                               <td className="px-4 py-4 font-bold text-slate-600 tracking-tight">#{acc.profile}</td>
-                              <td className="px-6 py-4">
-                                <p className="text-[10px] font-semibold text-slate-400">{acc.email}</p>
-                              </td>
                               <td className="px-6 py-4">
                                 <p className="text-[11px] text-primary font-bold tracking-widest uppercase">{acc.pass}</p>
                               </td>
