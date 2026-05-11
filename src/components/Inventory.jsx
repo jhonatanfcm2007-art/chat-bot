@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 
 const PREDEFINED_PROFILES = ['1', '2', '3', '4', '5'];
 
-const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat }) => {
+const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, providers, setProviders, salesHistory = [], onNavigateToChat, onMarkSaleAsSuccess, onMarkSaleAsFailed }) => {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   
@@ -858,7 +858,7 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                 <th className="px-6 py-5 text-[11px] font-bold text-primary uppercase tracking-wider">Contraseña</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">PIN</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Precio Venta</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Costo</th>
+                <th className="px-6 py-5 text-[11px] font-bold text-error uppercase tracking-wider">Fallidas</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Proveedor</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cupos</th>
                 <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado</th>
@@ -933,7 +933,9 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                           <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price.toLocaleString()}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-semibold text-slate-400 leading-none text-xs transition-opacity group-hover:text-slate-600">${acc.cost?.toLocaleString() || 0}</p>
+                          <span className={`font-black text-xs ${acc.failed > 0 ? 'text-error' : 'text-slate-300'}`}>
+                            {acc.failed || 0}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
@@ -1049,18 +1051,49 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
                               {new Date(sale.id).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
-                          {sale.customerId && (
+                          <div className="flex gap-2">
+                            {/* Éxito */}
                             <button 
                               onClick={() => {
-                                setHistoryModalOpen(false);
-                                onNavigateToChat(sale.customerId);
+                                onMarkSaleAsSuccess(sale.id);
+                                alert('Venta marcada como exitosa ✅');
                               }}
-                              className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm border border-primary/20"
-                              title="Ir al chat"
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                                sale.status === 'paid' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-emerald-50 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-100'
+                              }`}
+                              title="Marcar como Pagada"
                             >
-                              <span className="material-symbols-outlined text-lg">chat</span>
+                              <span className="material-symbols-outlined text-lg">check_circle</span>
                             </button>
-                          )}
+                            
+                            {/* Falla */}
+                            <button 
+                              onClick={() => {
+                                if(window.confirm('¿Marcar como FALLIDA? Esto devolverá el cupo al inventario automáticamente.')) {
+                                  onMarkSaleAsFailed(sale.id, selectedHistory.account.id);
+                                  setHistoryModalOpen(false);
+                                }
+                              }}
+                              className="w-9 h-9 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                              title="Marcar como Fallida (Devolver Cupo)"
+                            >
+                              <span className="material-symbols-outlined text-lg">block</span>
+                            </button>
+
+                            {/* Chat */}
+                            {sale.customerId && (
+                              <button 
+                                onClick={() => {
+                                  setHistoryModalOpen(false);
+                                  onNavigateToChat(sale.customerId);
+                                }}
+                                className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
+                                title="Ir al chat"
+                              >
+                                <span className="material-symbols-outlined text-lg">chat</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

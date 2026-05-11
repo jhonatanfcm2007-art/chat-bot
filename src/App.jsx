@@ -426,11 +426,26 @@ function App() {
     }
   };
 
-  const handleNavigateToChat = (customerId) => {
-    if (customerId) {
-       setActiveTab('simulator');
-       setSelectedChat(customerId);
-    }
+  const handleMarkSaleAsSuccess = (saleId) => {
+    setSalesHistory(prev => prev.map(sale => 
+      sale.id === saleId ? { ...sale, status: 'paid' } : sale
+    ));
+  };
+
+  const handleMarkSaleAsFailed = (saleId, accountId) => {
+    setSalesHistory(prev => prev.filter(sale => sale.id !== saleId));
+    setAccounts(prev => prev.map(acc => {
+      if (acc.id === accountId) {
+        const newUses = (parseInt(acc.uses) || 0) + 1;
+        return { 
+          ...acc, 
+          uses: newUses, 
+          failed: (parseInt(acc.failed) || 0) + 1,
+          status: 'Available'
+        };
+      }
+      return acc;
+    }));
   };
 
   const renderContent = () => {
@@ -447,6 +462,8 @@ function App() {
             setProviders={setProviders}
             salesHistory={salesHistory}
             onNavigateToChat={handleNavigateToChat}
+            onMarkSaleAsSuccess={handleMarkSaleAsSuccess}
+            onMarkSaleAsFailed={handleMarkSaleAsFailed}
           />
         );
       case 'simulator':
