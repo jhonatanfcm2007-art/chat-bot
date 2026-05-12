@@ -269,14 +269,11 @@ async function executeDelivery(to, mode = 'deliver_first') {
             }
             await sendMessageToCloudAPI(to, totalMsg);
 
-            chat.tags = (chat.tags || []).filter(t => t !== 'pago-pendiente');
+            // Gestión de etiquetas
             if (mode === 'deliver_and_paid') {
-                chat.tags = (chat.tags || []).filter(t => t !== 'entregado' && t !== 'pago-pendiente');
-                if (!chat.tags.includes('pagado')) chat.tags.push('pagado');
+                chat.tags = ['pagado'];
             } else {
-                chat.tags = (chat.tags || []).filter(t => t !== 'pagado');
-                if (!chat.tags.includes('entregado')) chat.tags.push('entregado');
-                if (!chat.tags.includes('pago-pendiente')) chat.tags.push('pago-pendiente');
+                chat.tags = ['pago-pendiente'];
             }
             chat.pendingProducts = [];
             chat.pendingTotal = null;
