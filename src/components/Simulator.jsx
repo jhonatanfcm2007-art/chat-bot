@@ -61,6 +61,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     }
   };
 
+  const formatMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const base = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
+
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
   const chatSessions = Object.entries(chats)
@@ -410,9 +418,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       {msg.imageUrl && (
                         <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5">
                           <img 
-                            src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
+                            src={formatMediaUrl(msg.imageUrl)} 
                             alt="Media adjunta" 
-                            onClick={() => setFullscreenImage(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`)}
+                            onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                             className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
                           />
                         </div>
@@ -420,7 +428,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       
                       {msg.fileUrl && msg.content?.includes('[AUDIO]') && (
                         <div className="mb-2 w-full max-w-[240px]">
-                           <audio controls className="w-full h-10" src={msg.fileUrl.startsWith('http') ? msg.fileUrl : `${serverUrl}${msg.fileUrl}`} />
+                           <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
                         </div>
                       )}
 
@@ -607,10 +615,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     <div 
                       key={i} 
                       className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => setFullscreenImage(msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`)}
+                      onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                     >
                       <img 
-                        src={msg.imageUrl.startsWith('http') ? msg.imageUrl : `${serverUrl}${msg.imageUrl}`} 
+                        src={formatMediaUrl(msg.imageUrl)} 
                         alt="Comprobante" 
                         className="w-full h-full object-cover"
                       />
