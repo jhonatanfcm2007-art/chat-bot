@@ -428,6 +428,17 @@ function App() {
     }
   };
 
+  const handleBulkDelete = (chatIds) => {
+    if (!chatIds || chatIds.length === 0) return;
+    if (window.confirm(`¿Estás seguro de que quieres eliminar permanentemente estos ${chatIds.length} chats? Esta acción no se puede deshacer.`)) {
+      chatIds.forEach(id => {
+        socket.emit('delete_chat', id);
+      });
+      // Opcionalmente podríamos emitir un evento bulk si el servidor lo soporta, 
+      // pero usar delete_chat existente es más seguro por ahora.
+    }
+  };
+
   const handleNavigateToChat = (customerId) => {
     if (customerId) {
        setActiveTab('simulator');
@@ -494,6 +505,7 @@ function App() {
             onSale={handleSale}
             onUpdateTag={handleUpdateChatTag}
             onDeleteChat={handleDeleteChat}
+            onBulkDelete={handleBulkDelete}
             onToggleAI={handleToggleAI}
             serverUrl={SERVER_URL}
           />

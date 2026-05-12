@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onToggleAI, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onBulkDelete, onToggleAI, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -188,6 +188,20 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         <span className="text-[11px] font-black text-slate-600 tracking-widest uppercase">{style.label}</span>
                       </div>
                     ))}
+                    
+                    {filterTag !== 'all' && chatSessions.length > 0 && (
+                      <div 
+                        className="mt-2 pt-2 border-t border-slate-100 px-4 py-3 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-3 text-red-500"
+                        onClick={() => {
+                          onBulkDelete(chatSessions.map(c => c.from));
+                          setIsFilterMenuOpen(false);
+                          setFilterTag('all');
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
+                        <span className="text-[10px] font-black tracking-widest uppercase">Limpiar {TAG_UI[filterTag]?.label} ({chatSessions.length})</span>
+                      </div>
+                    )}
                   </div>
                 )}
              </div>
