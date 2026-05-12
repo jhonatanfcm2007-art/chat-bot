@@ -573,7 +573,15 @@ app.post('/webhook', async (req, res) => {
                     const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
                     // Entregar si hubo oferta de activación reciente o si pide explícitamente enviar
                     if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000 || msgBodyLower.includes('activa') || msgBodyLower.includes('envia'))) {
-                        await executeDelivery(from, 'auto');
+                        try {
+                            await executeDelivery(from, 'auto');
+                        } catch (err) {
+                            console.error('Delivery Error:', err);
+                            refreshedChat.aiDisabled = true;
+                            io.emit('ai_state_updated', { chatId: from, disabled: true });
+                            await sendMessageToCloudAPI(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
+                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *ERROR DE ENTREGA* con *${customerName}*. La IA se ha apagado.`);
+                        }
                         delete aiTimers[from];
                         return;
                     }
@@ -582,9 +590,17 @@ app.post('/webhook', async (req, res) => {
                 // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
                 const activateRegex = /activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela|enviame|mándame|pásame/i;
                 if (!credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
-                    await executeDelivery(from, 'auto');
-                    refreshedChat.activationNotifySent = true;
-                    refreshedChat.activationOfferedAt = Date.now();
+                    try {
+                        await executeDelivery(from, 'auto');
+                        refreshedChat.activationNotifySent = true;
+                        refreshedChat.activationOfferedAt = Date.now();
+                    } catch (err) {
+                        console.error('Activation Delivery Error:', err);
+                        refreshedChat.aiDisabled = true;
+                        io.emit('ai_state_updated', { chatId: from, disabled: true });
+                        await sendMessageToCloudAPI(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
+                        if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *ERROR DE ACTIVACIÓN* con *${customerName}*. La IA se ha apagado.`);
+                    }
                     delete aiTimers[from];
                     return; // Detener para que la IA no responda duplicado
                 }
