@@ -6,7 +6,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [previewChatId, setPreviewChatId] = useState(null);
-  // Computar de forma dinámica las opciones basándose en los datos persistentes del servidor y lo que ya existe
+  
   const availablePlatforms = Array.from(new Set([
     ...platforms,
     ...accounts.map(acc => acc.service).filter(Boolean)
@@ -48,8 +48,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
     status: 'Available',
     provider: ''
   });
-
-
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -129,18 +127,15 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
     const usesCount = parseInt(formData.uses) || 0;
     
-    // Si es una plataforma nueva que no estaba en la lista, guardarla
     if (serviceName) {
       setPlatforms(prev => prev.includes(serviceName) ? prev : [...prev, serviceName]);
     }
 
-    // Si es un proveedor nuevo que no estaba en la lista, guardarlo
     if (formData.provider) {
       setProviders(prev => prev.includes(formData.provider) ? prev : [...prev, formData.provider]);
     }
 
     if (editingAccount) {
-      // Update existing
       setAccounts(prev => prev.map(acc => 
         acc.id === editingAccount.id ? { 
           ...acc, 
@@ -153,7 +148,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         } : acc
       ));
     } else if (isBulkMode) {
-      // Logic for Bulk Mode (Type 2)
       const rangeMatch = bulkRange.match(/(\d+)-(\d+)/);
       if (!rangeMatch) {
          alert('Por favor usa formato de rango válido (ej: 1-7)');
@@ -185,7 +179,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       }
       setAccounts(prev => [...newAccounts, ...prev]);
     } else {
-      // Individual Mode (Type 1)
       const newAcc = {
         id: accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1,
         ...formData,
@@ -198,7 +191,6 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       };
       setAccounts(prev => [newAcc, ...prev]);
     }
-
     closeModal();
   };
 
@@ -216,25 +208,17 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       status: account.status,
       provider: account.provider || ''
     });
-
     setIsModalOpen(true);
   };
-
 
   const handleDeleteAccount = (id) => {
     setAccounts(accounts.filter(acc => acc.id !== id));
   };
 
   const handleCopyAccount = (acc) => {
-    const data = `Plataforma: ${acc.service}
-Perfil: ${acc.profile}
-Correo: ${acc.email}
-Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
-    
+    const data = `Plataforma: ${acc.service}\nPerfil: ${acc.profile}\nCorreo: ${acc.email}\nContraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
     navigator.clipboard.writeText(data).then(() => {
-      alert('¡Información de la cuenta copiada al portapapeles!');
-    }).catch(() => {
-      alert('Error al copiar información');
+      alert('¡Información de la cuenta copiada!');
     });
   };
 
@@ -252,7 +236,6 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
   };
 
   const handleShowHistory = (acc) => {
-    // Filtrar el historial de ventas para esta cuenta específica (mismo email y perfil)
     const accountHistory = salesHistory.filter(sale => 
       sale.email?.toLowerCase() === acc.email?.toLowerCase() && 
       sale.profile?.toString() === acc.profile?.toString() &&
@@ -301,21 +284,12 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
     }
   };
 
-  // Metrics calculation
-  const totalAvailableAccounts = accounts.filter(a => a.status === 'Available').length;
-  const totalAvailableSlots = accounts
-    .filter(a => a.status === 'Available')
-    .reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
-
   const statsByService = accounts
     .filter(a => a.status === 'Available' && (parseInt(a.uses) || 0) > 0)
     .reduce((acc, curr) => {
       const normalizedName = curr.service.trim().toLowerCase();
       if (!acc[normalizedName]) {
-        acc[normalizedName] = {
-          displayName: curr.service.trim(),
-          totalSlots: 0
-        };
+        acc[normalizedName] = { displayName: curr.service.trim(), totalSlots: 0 };
       }
       acc[normalizedName].totalSlots += (parseInt(curr.uses) || 0);
       return acc;
@@ -324,732 +298,126 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
   const [expandedGroups, setExpandedGroups] = useState([]);
   const [expandedEmails, setExpandedEmails] = useState([]);
   
-    const toggleGroup = (platform) => {
-      setExpandedGroups(prev => 
-        prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
-      );
-    };
+  const toggleGroup = (platform) => {
+    setExpandedGroups(prev => prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]);
+  };
 
-    const toggleEmail = (emailKey) => {
-      setExpandedEmails(prev => 
-        prev.includes(emailKey) ? prev.filter(e => e !== emailKey) : [...prev, emailKey]
-      );
-    };
+  const toggleEmail = (emailKey) => {
+    setExpandedEmails(prev => prev.includes(emailKey) ? prev.filter(e => e !== emailKey) : [...prev, emailKey]);
+  };
 
-    // Agrupar cuentas por servicio y luego por correo
-    const groupedAccounts = accounts.reduce((acc, curr) => {
-      const platform = curr.service || 'Otros';
-      const email = curr.email || 'Sin Correo';
-      
-      if (!acc[platform]) acc[platform] = {};
-      if (!acc[platform][email]) acc[platform][email] = [];
-      
-      acc[platform][email].push(curr);
-      return acc;
-    }, {});
+  const groupedAccounts = accounts.reduce((acc, curr) => {
+    const platform = curr.service || 'Otros';
+    const email = curr.email || 'Sin Correo';
+    if (!acc[platform]) acc[platform] = {};
+    if (!acc[platform][email]) acc[platform][email] = [];
+    acc[platform][email].push(curr);
+    return acc;
+  }, {});
 
-    return (
-      <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-          <div>
+  return (
+    <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+        <h1 className="text-3xl font-black text-on-surface tracking-tighter uppercase">Inventory Manager</h1>
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
+          <button onClick={() => fileInputRef.current?.click()} className="glass flex items-center justify-center gap-2 px-6 py-3 rounded-2xl hover:bg-black/5 border border-slate-200">
+            <span className="material-symbols-outlined text-xl text-emerald-500 font-bold">upload_file</span>
+            <span className="font-bold text-on-surface">Importar CSV</span>
+          </button>
+          <button onClick={() => setIsManageListsOpen(true)} className="glass flex items-center justify-center gap-3 px-6 py-3 rounded-2xl hover:bg-black/5">
+            <span className="material-symbols-outlined text-xl text-primary font-bold">tune</span>
+            <span className="font-bold text-on-surface">Lists</span>
+          </button>
+          <button onClick={() => { closeModal(); setIsModalOpen(true); }} className="bg-primary text-on-primary font-black px-8 py-3 rounded-2xl shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+            <span className="material-symbols-outlined text-xl">add_circle</span>
+            Add Account
+          </button>
         </div>
-  
-          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="glass transition-all flex items-center justify-center gap-2 active:scale-95 px-6 py-3 rounded-2xl hover:bg-black/5 border border-slate-200"
-              title="Formato CSV: Plataforma,Perfil,Correo,Contraseña,PIN,Precio,Costo,Proveedor,Cupos"
-            >
-              <span className="material-symbols-outlined text-xl text-emerald-500 font-bold">upload_file</span>
-              <span className="font-bold text-on-surface">Importar CSV</span>
-            </button>
-            <button 
-              onClick={() => setIsManageListsOpen(true)}
-              className="glass transition-all flex items-center justify-center gap-3 active:scale-95 px-6 py-3 rounded-2xl hover:bg-black/5"
-            >
-              <span className="material-symbols-outlined text-xl text-primary font-bold">tune</span>
-              <span className="font-bold text-on-surface">Configure Lists</span>
-            </button>
-            <button 
-              onClick={() => { closeModal(); setIsModalOpen(true); }}
-              className="bg-primary text-on-primary font-black px-8 py-3 rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-            >
-              <span className="material-symbols-outlined text-xl">add_circle</span>
-              Add Account
-            </button>
+      </div>
+
+      <div className="mb-10 w-full overflow-hidden">
+        <div className="bg-white border-2 border-slate-200 rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 h-full flex items-center px-6 border-r-2 border-slate-200 flex-shrink-0">
+            <h2 className="text-on-surface font-black text-xs tracking-[0.2em] uppercase">Stock</h2>
           </div>
-        </div>
-  
-        {/* Summary Dashboard */}
-        <div className="mb-10 w-full overflow-hidden">
-          <div className="bg-white border-2 border-slate-200 rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden shadow-sm">
-            {/* Main Stats Header */}
-            <div className="bg-slate-50 h-full flex items-center px-6 md:px-10 relative z-10 border-r-2 border-slate-200 flex-shrink-0">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-              <div className="relative z-10 flex items-center gap-3">
-                <div className="w-8 h-8 md:w-9 md:h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
-                  <span className="material-symbols-outlined text-lg md:text-xl">database</span>
-                </div>
-                <h2 className="text-on-surface font-black text-xs md:text-sm tracking-[0.2em] uppercase leading-none mt-0.5">Stock</h2>
+          <div className="flex-grow h-full flex gap-4 items-center px-6 overflow-x-auto custom-scrollbar">
+            {Object.entries(statsByService).map(([key, data]) => (
+              <div key={key} className="flex items-center gap-2 flex-shrink-0 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase">{data.displayName}</span>
+                <span className="text-sm font-black text-on-surface">{data.totalSlots}</span>
               </div>
-            </div>
-  
-            {/* Platform Bubbles Area */}
-            <div className="flex-grow h-full flex gap-4 md:gap-5 items-center px-6 md:px-8 overflow-x-auto custom-scrollbar scrollbar-hide">
-              {Object.entries(statsByService).length > 0 ? (
-                Object.entries(statsByService).map(([key, data]) => (
-                  <div key={key} className="flex items-center gap-3 flex-shrink-0 bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-2 hover:bg-white hover:border-primary/20 transition-all cursor-default group shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.3)] group-hover:scale-125 transition-transform"></span>
-                    <span className="text-[10px] md:text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-80 group-hover:opacity-100">{data.displayName}</span>
-                    <span className="text-sm md:text-base font-black text-on-surface leading-none ml-1">{data.totalSlots}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-3 text-on-surface-variant/40 flex-shrink-0 pl-2">
-                  <span className="material-symbols-outlined text-lg animate-spin">sync</span>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em]">Synchronizing Vault...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-  
-        {/* Add/Edit Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
-            <div className="bg-surface w-full max-w-md rounded-[2.5rem] shadow-2xl border border-outline-variant p-6 md:p-10 animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto custom-scrollbar my-4">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-black text-on-surface tracking-tight">
-                  {editingAccount ? 'Update Account' : 'Register Service'}
-                </h2>
-                <button 
-                  onClick={closeModal}
-                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                >
-                  <span className="material-symbols-outlined text-on-surface opacity-60 hover:opacity-100">close</span>
-                </button>
-              </div>
-              
-              <form onSubmit={handleAddAccount} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Platform / Service</label>
-                    
-                    <div className="flex gap-2">
-                      {!showCustomPlatform ? (
-                        <>
-                          <select 
-                            required
-                            name="service"
-                            value={formData.service}
-                            onChange={handleInputChange}
-                            className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                          >
-                            <option value="" disabled className="text-on-surface">Select platform...</option>
-                            {availablePlatforms.map(platform => (
-                              <option key={platform} value={platform} className="text-on-surface">{platform}</option>
-                            ))}
-                          </select>
-                          <button 
-                            type="button"
-                            onClick={() => { setShowCustomPlatform(true); setFormData(prev => ({...prev, service: ''})); }}
-                            className="bg-primary/20 text-primary px-5 rounded-2xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
-                          >
-                            <span className="material-symbols-outlined font-black">add</span>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <input 
-                            required
-                            name="service"
-                            value={formData.service}
-                            onChange={handleInputChange}
-                            placeholder="Platform name..."
-                            className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
-                          />
-                          <button 
-                            type="button"
-                            onClick={() => { setShowCustomPlatform(false); setFormData(prev => ({...prev, service: ''})); }}
-                            className="bg-slate-100 text-on-surface/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-slate-200"
-                          >
-                            <span className="material-symbols-outlined text-lg">close</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-  
-                  <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Provider</label>
-                    <div className="flex gap-2">
-                      {!showCustomProvider ? (
-                        <>
-                          <select 
-                            name="provider"
-                            value={formData.provider}
-                            onChange={handleInputChange}
-                            className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                          >
-                            <option value="" disabled className="text-on-surface">Select provider...</option>
-                            {availableProviders.map(provider => (
-                              <option key={provider} value={provider} className="text-on-surface">{provider}</option>
-                            ))}
-                          </select>
-                          <button 
-                            type="button"
-                            onClick={() => { setShowCustomProvider(true); setFormData(prev => ({...prev, provider: ''})); }}
-                            className="bg-primary/20 text-primary px-5 rounded-2xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
-                          >
-                            <span className="material-symbols-outlined font-black">add</span>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <input 
-                            name="provider"
-                            value={formData.provider}
-                            onChange={handleInputChange}
-                            placeholder="Provider name..."
-                            className="flex-grow bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
-                          />
-                          <button 
-                            type="button"
-                            onClick={() => { setShowCustomProvider(false); setFormData(prev => ({...prev, provider: ''})); }}
-                            className="bg-slate-100 text-on-surface/40 px-5 rounded-2xl flex items-center justify-center hover:bg-error/10 hover:text-error transition-all border border-slate-200"
-                          >
-                            <span className="material-symbols-outlined text-lg">close</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-  
-                  {!editingAccount && (
-                    <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isBulkMode ? 'bg-primary text-on-primary' : 'bg-slate-200 text-on-surface-variant'}`}>
-                          <span className="material-symbols-outlined text-sm">{isBulkMode ? 'layers' : 'person'}</span>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface">Tipo de Registro</p>
-                          <p className="text-[9px] font-bold text-on-surface-variant opacity-60">{isBulkMode ? 'Modo Masivo (7 Perfiles)' : 'Registro Individual'}</p>
-                        </div>
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={() => setIsBulkMode(!isBulkMode)}
-                        className={`relative w-12 h-6 rounded-full transition-all duration-300 ${isBulkMode ? 'bg-primary' : 'bg-slate-300'}`}
-                      >
-                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isBulkMode ? 'left-7' : 'left-1'}`}></div>
-                      </button>
-                    </div>
-                  )}
-  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
-                        {isBulkMode ? 'Rango Perfiles' : 'Profile Num'}
-                      </label>
-                      {isBulkMode ? (
-                        <input 
-                          required
-                          value={bulkRange}
-                          onChange={(e) => setBulkRange(e.target.value)}
-                          placeholder="1-7"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
-                        />
-                      ) : (
-                        <select 
-                          required={!isBulkMode}
-                          name="profile"
-                          value={formData.profile}
-                          onChange={handleInputChange}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled className="text-on-surface">N#</option>
-                          {availableProfiles.map(p => (
-                            <option key={p} value={p} className="text-on-surface">{p}</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
-                        {isBulkMode ? 'Cupos x Perfil' : 'Total Slots'}
-                      </label>
-                      <input 
-                        name="uses"
-                        type="number"
-                        value={formData.uses}
-                        onChange={handleInputChange}
-                        placeholder={isBulkMode ? "1" : "3"}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                    </div>
-                  </div>
-  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">
-                        {isBulkMode ? 'Costo Total (Combo)' : 'Cost (Full)'}
-                      </label>
-                      <input 
-                        name="cost"
-                        type="number"
-                        value={formData.cost}
-                        onChange={handleInputChange}
-                        placeholder="8000"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Price (Unit)</label>
-                      <input 
-                        name="price"
-                        type="number"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        placeholder="12000"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                    </div>
-                  </div>
-  
-                  <div>
-                    <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Credentials (Email)</label>
-                    <input 
-                      required
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="example@stream.com"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">Password</label>
-                      <input 
-                        required
-                        name="pass"
-                        type="text"
-                        value={formData.pass}
-                        onChange={handleInputChange}
-                        placeholder="••••••••"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-2.5 ml-1 opacity-50">PIN</label>
-                      <input 
-                        name="pin"
-                        type="text"
-                        value={formData.pin}
-                        onChange={handleInputChange}
-                        placeholder="0000"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-  
-                <button 
-                  type="submit"
-                  className="w-full bg-primary text-on-primary font-black py-4 rounded-[1.5rem] shadow-2xl shadow-primary/20 mt-6 hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
-                >
-                  {editingAccount ? 'Finalize Changes' : 'Seal Account'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-  
-        {/* Manage Lists Modal */}
-        {isManageListsOpen && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-surface w-full max-w-2xl rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-200 p-6 md:p-10 animate-in zoom-in-95 duration-200 max-h-[85vh] h-[80vh] flex flex-col">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-black text-on-surface tracking-tight uppercase">Master Config</h2>
-                <button 
-                  onClick={() => setIsManageListsOpen(false)}
-                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
-                >
-                  <span className="material-symbols-outlined text-on-surface/60">close</span>
-                </button>
-              </div>
-  
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-y-auto custom-scrollbar pr-4">
-                {/* Platforms Section */}
-                <div>
-                  <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                    <span className="material-symbols-outlined text-lg">category</span>
-                    Platforms
-                  </h3>
-                    <div className="flex gap-2 mb-4 bg-primary/5 p-2 rounded-2xl border border-dashed border-primary/20 group focus-within:border-primary/40 transition-all">
-                      <input 
-                        type="text"
-                        placeholder="Add Platform..."
-                        value={newPlatformInput}
-                        onChange={(e) => setNewPlatformInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddPlatform()}
-                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40"
-                      />
-                      <button 
-                        onClick={handleAddPlatform}
-                        className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center hover:bg-primary/30 transition-all border border-primary/20"
-                      >
-                        <span className="material-symbols-outlined text-lg">add</span>
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {platforms.map(platform => (
-                        <div key={platform} className="flex items-center gap-3 group bg-slate-50 p-2 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
-                          <input 
-                            type="text"
-                            defaultValue={platform}
-                            onBlur={(e) => handleEditPlatformName(platform, e.target.value)}
-                            className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 transition-all"
-                          />
-                          <button 
-                            onClick={() => handleDeletePlatform(platform)}
-                            className="w-10 h-10 flex items-center justify-center text-on-surface/10 group-hover:text-error transition-all"
-                          >
-                            <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                </div>
-  
-                {/* Providers Section */}
-                <div>
-                  <h3 className="text-xs font-black text-tertiary uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                    <span className="material-symbols-outlined text-lg">group</span>
-                    Suppliers
-                  </h3>
-                    <div className="flex gap-2 mb-4 bg-tertiary/5 p-2 rounded-2xl border border-dashed border-tertiary/20 group focus-within:border-tertiary/40 transition-all">
-                      <input 
-                        type="text"
-                        placeholder="Add Supplier..."
-                        value={newProviderInput}
-                        onChange={(e) => setNewProviderInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddProvider()}
-                        className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 placeholder:text-on-surface-variant/40"
-                      />
-                      <button 
-                        onClick={handleAddProvider}
-                        className="w-10 h-10 bg-tertiary/20 text-tertiary rounded-xl flex items-center justify-center hover:bg-tertiary/30 transition-all border border-tertiary/20"
-                      >
-                        <span className="material-symbols-outlined text-lg">add</span>
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {providers.map(provider => (
-                        <div key={provider} className="flex items-center gap-3 group bg-slate-50 p-2 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
-                          <input 
-                            type="text"
-                            defaultValue={provider}
-                            onBlur={(e) => handleEditProviderName(provider, e.target.value)}
-                            className="flex-grow bg-transparent border-none rounded-xl py-2.5 px-4 text-xs font-black text-on-surface focus:ring-0 transition-all"
-                          />
-                          <button 
-                            onClick={() => handleDeleteProvider(provider)}
-                            className="w-10 h-10 flex items-center justify-center text-on-surface/10 group-hover:text-error transition-all"
-                          >
-                            <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                </div>
-              </div>
-  
-              <div className="mt-10 pt-8 border-t border-slate-200 flex justify-end">
-                <button 
-                  onClick={() => setIsManageListsOpen(false)}
-                  className="bg-primary text-on-primary font-black px-10 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs"
-                >
-                  Close & Sync
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-  
-        <div>
-          {/* Mobile View */}
-          <div className="md:hidden space-y-6">
-            {accounts.map((acc) => (
-              <div key={acc.id} className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 shadow-xl relative overflow-hidden group hover:border-primary/20 transition-all">
-                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${acc.status === 'Available' ? 'bg-tertiary group-hover:w-2' : 'bg-error/50'}`}></div>
-                 
-                 <div className="flex justify-between items-start mb-6">
-                   <div className="flex items-center gap-4">
-                     <div>
-                       <h3 className="font-black text-on-surface text-lg tracking-tight">{acc.service}</h3>
-                       <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em] opacity-40 mt-1">{acc.provider || 'Independiente'}</p>
-                     </div>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-xl font-black text-on-surface tracking-tighter">${acc.price.toLocaleString()}</p>
-                      <div className="flex justify-end mt-2">
-                         <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border transition-all ${
-                          acc.status === 'Available' ? 'bg-tertiary/20 text-tertiary border-tertiary/20' : 'bg-error/20 text-error border-error/20'
-                        }`}>
-                          {acc.status === 'Available' ? 'Disponible' : 'No Disponible'}
-                        </span>
-                      </div>
-                   </div>
-                 </div>
-  
-                 <div className="grid grid-cols-2 gap-6 py-6 border-y border-slate-200 mb-6 bg-white/5 rounded-2xl px-6">
-                   <div>
-                     <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-2 opacity-30">Identidad</span>
-                     <p className="text-[11px] font-bold text-on-surface truncate opacity-90">{acc.email}</p>
-                     <p className="text-[10px] text-primary font-black tracking-widest mt-1.5 uppercase">
-                       {acc.pass} {acc.pin && <span className="text-slate-400 ml-2">PIN: {acc.pin}</span>}
-                     </p>
-                   </div>
-                   <div className="text-right flex flex-col justify-center">
-                     <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-[0.2em] block mb-1 opacity-30">Cupos</span>
-                     <div className="flex items-center justify-end gap-2.5">
-                       <span className="text-2xl font-black text-on-surface leading-none">{acc.uses}</span>
-                       <span className={`w-2 h-2 rounded-full ${acc.uses > 0 ? 'bg-tertiary shadow-[0_0_8px_rgba(45,212,191,0.3)] animate-pulse' : 'bg-on-surface-variant/10'}`}></span>
-                     </div>
-                   </div>
-                 </div>
-  
-                 <div className="flex gap-3">
-                   <button 
-                     onClick={() => onSale(acc)}
-                     disabled={acc.uses <= 0}
-                     className={`flex-grow flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
-                       acc.uses > 0 ? 'bg-primary text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02]' : 'bg-white/5 text-white/10 cursor-not-allowed border border-white/5'
-                     }`}
-                   >
-                     <span className="material-symbols-outlined text-lg">shopping_bag</span>
-                     Vender
-                   </button>
-                    <button 
-                      onClick={() => handleShowHistory(acc)}
-                      className="w-14 h-14 bg-blue-500/10 flex items-center justify-center rounded-2xl text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500/20 transition-all"
-                      title="Ver a quién se le vendió"
-                    >
-                      <span className="material-symbols-outlined text-xl">receipt_long</span>
-                    </button>
-                    <button 
-                      onClick={() => handleCopyAccount(acc)}
-                      className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-primary hover:bg-primary/10 border border-white/5 transition-all"
-                      title="Copiar datos"
-                    >
-                      <span className="material-symbols-outlined text-xl">content_copy</span>
-                    </button>
-                    <button 
-                      onClick={() => handleEditAccount(acc)}
-                      className="w-14 h-14 bg-white/5 flex items-center justify-center rounded-2xl text-on-surface-variant/40 hover:text-white hover:bg-white/10 border border-white/5 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-xl">edit</span>
-                    </button>
-                  </div>
-               </div>
             ))}
           </div>
-  
-          {/* Desktop View */}
-          <div className="hidden md:block bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-center">
-                  <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Plataforma</th>
-                <th className="px-4 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-primary uppercase tracking-wider">Contraseña</th>
+        </div>
+      </div>
 
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">PIN</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Precio Venta</th>
-                 <th className="px-6 py-5 text-[11px] font-bold text-tertiary uppercase tracking-wider">Exitosas</th>
-                 <th className="px-6 py-5 text-[11px] font-bold text-error uppercase tracking-wider">Fallidas</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Proveedor</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cupos</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right pr-12">Acciones</th>
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden mb-10">
+        <div className="overflow-x-auto custom-scrollbar hidden md:block">
+          <table className="w-full text-left border-collapse min-w-[1200px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Servicio / Email</th>
+                <th className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase">Perfil</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Contraseña</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">PIN</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Precio</th>
+                <th className="px-6 py-5 text-[11px] font-black text-tertiary uppercase">Éxito</th>
+                <th className="px-6 py-5 text-[11px] font-black text-error uppercase">Falla</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Prov.</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Cupos</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Estado</th>
+                <th className="px-6 py-5 text-right pr-12 text-[11px] font-black text-slate-400 uppercase">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-body text-center">
+            <tbody className="divide-y divide-slate-100">
               {Object.entries(groupedAccounts).map(([platform, emailsGroup]) => {
                 const isExpanded = expandedGroups.includes(platform);
                 const allAccountsInPlatform = Object.values(emailsGroup).flat();
                 const totalSlots = allAccountsInPlatform.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
-                
                 return (
                   <React.Fragment key={platform}>
-                    {/* Platform Summary Row */}
-                    <tr 
-                      className={`cursor-pointer transition-all ${isExpanded ? 'bg-primary/5' : 'hover:bg-slate-50'}`}
-                      onClick={() => toggleGroup(platform)}
-                    >
+                    <tr className={`cursor-pointer ${isExpanded ? 'bg-primary/5' : 'hover:bg-slate-50'}`} onClick={() => toggleGroup(platform)}>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
-                           <button className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
-                             <span className="material-symbols-outlined text-lg font-bold">{isExpanded ? 'remove' : 'add'}</span>
-                           </button>
-                           <span className="font-black text-slate-800 tracking-tight flex items-center gap-2">
-                             {platform}
-                             <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">{allAccountsInPlatform.length} PERFILES</span>
-                           </span>
+                          <span className={`material-symbols-outlined transition-all ${isExpanded ? 'rotate-90' : ''}`}>chevron_right</span>
+                          <span className="font-black text-slate-800 text-xs uppercase">{platform} ({allAccountsInPlatform.length})</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5 text-slate-400 text-[10px] font-black uppercase tracking-widest italic">—</td>
-                      <td className="px-6 py-5">
-                        <span className="font-black text-primary text-base">{totalSlots}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase border transition-colors ${
-                          totalSlots > 0 ? 'bg-tertiary/10 text-tertiary border-tertiary/20' : 'bg-error/10 text-error border-error/20'
-                        }`}>
-                          {totalSlots > 0 ? 'STOCK DISPONIBLE' : 'SIN STOCK'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 text-right pr-12">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isExpanded ? 'Cerrar Detalles' : 'Ver Detalles'}</span>
-                      </td>
+                      <td colSpan="7" className="px-4 py-5 italic text-[10px] text-slate-400 text-center">Resumen</td>
+                      <td className="px-6 py-5"><span className="font-black text-primary">{totalSlots}</span></td>
+                      <td className="px-6 py-5"><span className={`text-[9px] font-black uppercase px-2 py-1 rounded border ${totalSlots > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>{totalSlots > 0 ? 'STOCK' : 'AGOTADO'}</span></td>
+                      <td className="px-6 py-5 text-right pr-12"><span className="text-[10px] font-black text-slate-300 uppercase">{isExpanded ? 'Cerrar' : 'Ver'}</span></td>
                     </tr>
-
-                    {/* Nested Email Groups */}
                     {isExpanded && Object.entries(emailsGroup).map(([email, emailAccounts]) => {
                       const emailKey = `${platform}-${email}`;
                       const isEmailExpanded = expandedEmails.includes(emailKey);
                       const emailSlots = emailAccounts.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
-
                       return (
                         <React.Fragment key={emailKey}>
-                          {/* Email Header Row */}
-                          <tr 
-                            className={`bg-slate-50/50 hover:bg-slate-100 transition-all cursor-pointer border-l-4 ${isEmailExpanded ? 'border-primary' : 'border-slate-200'}`}
-                            onClick={() => toggleEmail(emailKey)}
-                          >
-                            <td className="px-6 py-4 pl-12">
-                              <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-sm text-slate-400">
-                                  {isEmailExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
-                                </span>
-                                <span className="text-xs font-black text-slate-600 truncate max-w-[200px]">{email}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-
-                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4 italic text-[10px] text-slate-400 font-bold uppercase">—</td>
-                            <td className="px-6 py-4">
-                              <span className="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">{emailSlots}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`text-[8px] font-black uppercase px-2 py-1 rounded ${emailSlots > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                {emailSlots > 0 ? 'ACTIVA' : 'AGOTADA'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right pr-12">
-                              <span className="text-[10px] font-black text-primary/50 uppercase tracking-widest">{isEmailExpanded ? 'Cerrar' : 'Ver Perfiles'}</span>
-                            </td>
+                          <tr className={`bg-slate-50/50 cursor-pointer border-l-4 ${isEmailExpanded ? 'border-primary' : 'border-slate-200'}`} onClick={() => toggleEmail(emailKey)}>
+                            <td className="px-6 py-4 pl-12 text-xs font-bold text-slate-500 truncate">{email}</td>
+                            <td colSpan="7"></td>
+                            <td className="px-6 py-4"><span className="text-xs font-black bg-white px-2 py-1 rounded border shadow-sm">{emailSlots}</span></td>
+                            <td colSpan="2" className="px-6 py-4 text-right pr-12"><span className="text-[10px] font-black text-primary/40 uppercase">{isEmailExpanded ? 'Ocultar' : 'Perfiles'}</span></td>
                           </tr>
-
-                          {/* Individual Account Rows */}
-                          {isEmailExpanded && emailAccounts.map((acc) => (
-                            <tr key={acc.id} className="bg-white hover:bg-slate-50 transition-all group animate-in slide-in-from-top-1 duration-200 border-l-4 border-slate-100">
-                              <td className="px-6 py-4 pl-20">
-                                <div className="flex items-center gap-2">
-                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                                   <span className="font-bold text-slate-400 text-xs">{acc.service}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-4 font-bold text-slate-600 tracking-tight">#{acc.profile}</td>
-                              <td className="px-6 py-4">
-                                <p className="text-[11px] text-primary font-bold tracking-widest uppercase">{acc.pass}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <p className="text-[11px] text-slate-500 font-bold tracking-widest">{acc.pin || '-'}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <p className="font-bold text-slate-800 leading-none text-[15px] tracking-tight">${acc.price?.toLocaleString()}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`font-black text-xs ${acc.exitosas > 0 ? 'text-tertiary' : 'text-slate-300'}`}>
-                                  {acc.exitosas || 0}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`font-black text-xs ${acc.failed > 0 ? 'text-error' : 'text-slate-300'}`}>
-                                  {acc.failed || 0}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                  {acc.provider || 'Directo'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-2 justify-center">
-                                  <span className="text-sm font-bold text-slate-700 leading-none">{acc.uses}</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase border transition-colors ${
-                                  acc.status === 'Available' ? 'bg-tertiary/10 text-tertiary border-tertiary/20' : 'bg-error/10 text-error border-error/20'
-                                }`}>
-                                  {acc.status === 'Available' ? 'DISPONIBLE' : 'AGOTADO'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-right pr-12">
-                                <div className="flex gap-2 justify-end">
-                                  <button 
-                                    onClick={() => onSale(acc)}
-                                    disabled={acc.uses <= 0}
-                                    className={`w-9 h-9 rounded-xl transition-all flex items-center justify-center border ${
-                                      acc.uses > 0 ? 'bg-primary text-white border-primary/20 hover:scale-110 shadow-md shadow-primary/10' : 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed'
-                                    }`}
-                                    title="Vender"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">shopping_cart</span>
-                                  </button>
-                                  <button 
-                                    onClick={() => handleShowHistory(acc)}
-                                    className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-xl text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
-                                    title="Ver a quién se le vendió"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">receipt_long</span>
-                                  </button>
-                                  <button 
-                                    onClick={() => handleCopyAccount(acc)}
-                                    className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
-                                    title="Copiar Info"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">content_copy</span>
-                                  </button>
-                                  <button 
-                                    onClick={() => handleEditAccount(acc)}
-                                    className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-all"
-                                    title="Editar"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">edit</span>
-                                  </button>
-                                  <button 
-                                    onClick={() => handleDeleteAccount(acc.id)}
-                                    className="w-9 h-9 bg-error/5 border border-error/10 rounded-xl text-error/60 hover:bg-error hover:text-white transition-all"
-                                    title="Eliminar"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                  </button>
+                          {isEmailExpanded && emailAccounts.map(acc => (
+                            <tr key={acc.id} className="bg-white hover:bg-slate-50 border-l-4 border-slate-100">
+                              <td className="px-6 py-4 pl-20 text-[10px] font-bold text-slate-400 uppercase">{acc.service}</td>
+                              <td className="px-4 py-4 font-black text-slate-600">#{acc.profile}</td>
+                              <td className="px-6 py-4 text-[11px] text-primary font-bold tracking-widest">{acc.pass}</td>
+                              <td className="px-6 py-4 text-[11px] text-slate-500 font-bold">{acc.pin || '-'}</td>
+                              <td className="px-6 py-4 font-black text-slate-800">${acc.price?.toLocaleString()}</td>
+                              <td className="px-6 py-4 font-black text-xs text-tertiary">{acc.exitosas || 0}</td>
+                              <td className="px-6 py-4 font-black text-xs text-error">{acc.failed || 0}</td>
+                              <td className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase bg-slate-50 px-2 py-1 rounded">{acc.provider || 'Directo'}</td>
+                              <td className="px-6 py-4 font-black text-primary">{acc.uses}</td>
+                              <td className="px-6 py-4"><span className={`text-[8px] font-black uppercase px-2 py-1 rounded ${acc.status === 'Available' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{acc.status === 'Available' ? 'Ok' : 'Sold'}</span></td>
+                              <td className="px-6 py-4 text-right pr-4">
+                                <div className="flex justify-end gap-1">
+                                  <button onClick={() => handleShowHistory(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-all"><span className="material-symbols-outlined text-lg">history</span></button>
+                                  <button onClick={() => handleEditAccount(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-all"><span className="material-symbols-outlined text-lg">edit</span></button>
+                                  <button onClick={() => onSale(acc)} disabled={parseInt(acc.uses) <= 0} className={`p-1.5 rounded-lg ${parseInt(acc.uses) > 0 ? 'text-primary' : 'text-slate-200'}`}><span className="material-symbols-outlined text-lg">sell</span></button>
                                 </div>
                               </td>
                             </tr>
@@ -1062,198 +430,190 @@ Contraseña: ${acc.pass}${acc.pin ? '\nPIN: ' + acc.pin : ''}`;
               })}
             </tbody>
           </table>
-          {accounts.length === 0 && (
-            <div className="p-20 text-center flex flex-col items-center gap-4 bg-slate-50">
-              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center border border-slate-200">
-                <span className="material-symbols-outlined text-4xl text-on-surface-variant/20 font-thin">inventory</span>
-              </div>
-              <p className="text-on-surface font-black text-lg tracking-tight uppercase">Base de datos vacía</p>
-            </div>
-          )}
         </div>
 
-        {/* History Modal */}
-        {historyModalOpen && selectedHistory && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-surface w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-200 p-6 md:p-10 animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-              <div className="flex justify-between items-center mb-8">
-                <div>
-                  <h2 className="text-2xl font-black text-on-surface tracking-tight uppercase">Historial de Entrega</h2>
-                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{selectedHistory.account.service} - Perfil #{selectedHistory.account.profile}</p>
-                </div>
-                <button 
-                  onClick={() => setHistoryModalOpen(false)}
-                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
-                >
-                  <span className="material-symbols-outlined text-on-surface/60">close</span>
-                </button>
-              </div>
-
-              <div className="flex-grow overflow-y-auto custom-scrollbar pr-2">
-                {selectedHistory.history.length > 0 ? (
-                  <div className="space-y-4">
-                    {selectedHistory.history.map((sale, idx) => (
-                      <div key={idx} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/20 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
-                            <span className="material-symbols-outlined text-lg">person</span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-on-surface">{sale.customer || 'Venta Directa'}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{sale.customerId || 'Manual'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-xs font-black text-primary tracking-tighter">${sale.price?.toLocaleString()}</p>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                              {new Date(sale.id).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            {/* Éxito */}
-                            <button 
-                              onClick={() => onMarkSaleAsSuccess(sale.id, selectedHistory.account.id)}
-                              className="w-9 h-9 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
-                              title="Marcar como exitosa"
-                            >
-                              <span className="material-symbols-outlined text-lg">check_circle</span>
-                            </button>
-                            
-                            {/* Falla */}
-                            <button 
-                              onClick={() => {
-                                if(window.confirm('¿Marcar como FALLIDA? Esto devolverá el cupo al inventario automáticamente.')) {
-                                  onMarkSaleAsFailed(sale.id, selectedHistory.account.id);
-                                  setHistoryModalOpen(false);
-                                }
-                              }}
-                              className="w-9 h-9 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
-                              title="Marcar como Fallida (Devolver Cupo)"
-                            >
-                              <span className="material-symbols-outlined text-lg">block</span>
-                            </button>
-
-                            {/* Chat Button Logic */}
-                            {(() => {
-                              const effectiveChatId = sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from;
-                              
-                              if (effectiveChatId) {
-                                return (
-                                  <button 
-                                    onClick={() => {
-                                      setPreviewChatId(effectiveChatId);
-                                    }}
-                                    className="w-9 h-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
-                                    title="Vista previa del chat"
-                                  >
-                                    <span className="material-symbols-outlined text-lg">visibility</span>
-                                  </button>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="h-60 flex flex-col items-center justify-center gap-4 opacity-30">
-                    <span className="material-symbols-outlined text-6xl">history</span>
-                    <p className="text-xs font-black uppercase tracking-[0.3em]">Sin registros de venta para este perfil</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-slate-200 flex justify-end">
-                <button 
-                  onClick={() => setHistoryModalOpen(false)}
-                  className="bg-primary text-on-primary font-black px-10 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs"
-                >
-                  Entendido
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Chat Preview Modal */}
-        {previewChatId && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-slate-200">
-              <div className="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined">chat</span>
-                  </div>
-                  <div>
-                    <h3 className="font-black text-on-surface uppercase text-sm tracking-widest">Vista Previa</h3>
-                    <p className="text-[10px] font-bold text-slate-400">{chats[previewChatId]?.customerName || previewChatId}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setPreviewChatId(null)}
-                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-on-surface transition-all"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              
-              <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/50 custom-scrollbar">
-                {chats[previewChatId]?.messages?.length > 0 ? (
-                  chats[previewChatId].messages.map((m, i) => (
-                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium shadow-sm ${
-                        m.role === 'user' 
-                          ? 'bg-white text-slate-700 border border-slate-100 rounded-tl-none' 
-                          : 'bg-primary text-white rounded-tr-none'
-                      }`}>
-                        {m.type === 'image' || m.imageUrl ? (
-                          <div className="space-y-2">
-                             <img src={m.imageUrl || m.content} alt="Comprobante" className="rounded-lg w-full max-h-60 object-cover border border-black/5 cursor-pointer" onClick={() => window.open(m.imageUrl || m.content, '_blank')} />
-                             {m.caption && <p className="opacity-90">{m.caption}</p>}
-                          </div>
-                        ) : (
-                          <p>{m.content}</p>
-                        )}
-                        <p className={`text-[8px] mt-1 opacity-50 font-bold uppercase tracking-widest ${m.role === 'user' ? 'text-slate-400' : 'text-white'}`}>
-                          {new Date(m.timestampRaw || Date.now()).toLocaleTimeString()}
-                        </p>
-                      </div>
+        <div className="md:hidden divide-y divide-slate-100">
+          {Object.entries(groupedAccounts).map(([platform, emailsGroup]) => {
+            const isExpanded = expandedGroups.includes(platform);
+            const allAccountsInPlatform = Object.values(emailsGroup).flat();
+            const totalSlots = allAccountsInPlatform.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
+            return (
+              <div key={platform}>
+                <div className={`p-5 flex items-center justify-between ${isExpanded ? 'bg-primary/5' : ''}`} onClick={() => toggleGroup(platform)}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined">dataset</span></div>
+                    <div>
+                      <h3 className="font-black text-slate-800 uppercase text-xs">{platform}</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">{totalSlots} cupos</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="h-40 flex flex-col items-center justify-center text-slate-300 gap-2">
-                    <span className="material-symbols-outlined text-4xl">history</span>
-                    <p className="text-[10px] font-black uppercase tracking-widest">Sin mensajes recientes</p>
+                  </div>
+                  <span className={`material-symbols-outlined text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>expand_more</span>
+                </div>
+                {isExpanded && (
+                  <div className="divide-y divide-slate-50 bg-slate-50/50">
+                    {Object.entries(emailsGroup).map(([email, emailAccounts]) => {
+                      const emailKey = `${platform}-${email}`;
+                      const isEmailExpanded = expandedEmails.includes(emailKey);
+                      const emailSlots = emailAccounts.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
+                      return (
+                        <div key={emailKey}>
+                          <div className="p-4 pl-8 flex items-center justify-between" onClick={() => toggleEmail(emailKey)}>
+                            <span className="text-[10px] font-bold text-slate-500 truncate max-w-[200px]">{email}</span>
+                            <span className="text-[10px] font-black bg-white px-2 py-0.5 rounded border">{emailSlots}</span>
+                          </div>
+                          {isEmailExpanded && (
+                            <div className="p-3 space-y-3 bg-white">
+                              {emailAccounts.map(acc => (
+                                <div key={acc.id} className="p-5 rounded-[2rem] border border-slate-100 bg-slate-50/50">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                      <span className="text-[9px] font-black text-slate-400 uppercase">Perfil #{acc.profile}</span>
+                                      <h4 className="text-sm font-black text-slate-800">${acc.price?.toLocaleString()}</h4>
+                                    </div>
+                                    <span className={`text-[8px] font-black px-2 py-1 rounded-lg border ${parseInt(acc.uses) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>{parseInt(acc.uses) > 0 ? `${acc.uses} DISP.` : 'OFF'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="bg-white p-3 rounded-2xl border border-slate-100" onClick={() => { navigator.clipboard.writeText(acc.pass); alert('¡Clave copiada!'); }}>
+                                      <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">Pass</span>
+                                      <span className="text-[10px] font-bold text-primary block truncate">{acc.pass}</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-2xl border border-slate-100" onClick={() => { if(acc.pin) { navigator.clipboard.writeText(acc.pin); alert('¡PIN copiado!'); } }}>
+                                      <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">PIN</span>
+                                      <span className="text-[10px] font-bold text-slate-600 block">{acc.pin || '-'}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                                    <div className="flex gap-4">
+                                      <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Ventas</span><span className="text-[11px] font-black text-tertiary">{acc.exitosas || 0}</span></div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button onClick={() => handleShowHistory(acc)} className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center"><span className="material-symbols-outlined text-lg">history</span></button>
+                                      <button onClick={() => handleEditAccount(acc)} className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center"><span className="material-symbols-outlined text-lg">edit</span></button>
+                                      <button onClick={() => onSale(acc)} disabled={parseInt(acc.uses) <= 0} className={`w-9 h-9 rounded-xl flex items-center justify-center ${parseInt(acc.uses) > 0 ? 'bg-primary text-white' : 'bg-slate-200 text-white'}`}><span className="material-symbols-outlined text-lg">sell</span></button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-              
-              <div className="p-6 bg-white border-t border-slate-100 flex gap-3">
-                 <button 
-                  onClick={() => {
-                    onSendMessage({ to: previewChatId, content: '⚠️ *Recordatorio de Pago:* Recuerda hacer el pago para no perder el acceso a tu cuenta. Quedo atento al comprobante para validar tu servicio. 🙏' });
-                    alert('Recordatorio enviado con éxito 📩');
-                  }}
-                  className="flex-grow bg-emerald-500 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-sm">notifications_active</span>
-                  Enviar Recordatorio
-                </button>
-                 <button 
-                  onClick={() => setPreviewChatId(null)}
-                  className="px-6 bg-slate-900 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-[10px]"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
+      {isManageListsOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border p-8 flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black uppercase">Master Config</h2>
+              <button onClick={() => setIsManageListsOpen(false)}><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-2">
+              <div>
+                <h3 className="text-xs font-black text-primary uppercase mb-4">Platforms</h3>
+                <div className="flex gap-2 mb-4">
+                  <input type="text" placeholder="Add..." value={newPlatformInput} onChange={(e) => setNewPlatformInput(e.target.value)} className="flex-grow bg-slate-50 border p-2 rounded-xl text-xs" />
+                  <button onClick={handleAddPlatform} className="bg-primary/20 text-primary p-2 rounded-xl"><span className="material-symbols-outlined">add</span></button>
+                </div>
+                <div className="space-y-2">
+                  {platforms.map(p => (
+                    <div key={p} className="flex justify-between bg-slate-50 p-2 rounded-xl text-[10px] font-bold">
+                      <span>{p}</span>
+                      <button onClick={() => handleDeletePlatform(p)} className="text-error opacity-20 hover:opacity-100"><span className="material-symbols-outlined text-sm">delete</span></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xs font-black text-tertiary uppercase mb-4">Suppliers</h3>
+                <div className="flex gap-2 mb-4">
+                  <input type="text" placeholder="Add..." value={newProviderInput} onChange={(e) => setNewProviderInput(e.target.value)} className="flex-grow bg-slate-50 border p-2 rounded-xl text-xs" />
+                  <button onClick={handleAddProvider} className="bg-tertiary/20 text-tertiary p-2 rounded-xl"><span className="material-symbols-outlined">add</span></button>
+                </div>
+                <div className="space-y-2">
+                  {providers.map(p => (
+                    <div key={p} className="flex justify-between bg-slate-50 p-2 rounded-xl text-[10px] font-bold">
+                      <span>{p}</span>
+                      <button onClick={() => handleDeleteProvider(p)} className="text-error opacity-20 hover:opacity-100"><span className="material-symbols-outlined text-sm">delete</span></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setIsManageListsOpen(false)} className="bg-primary text-white font-black py-4 rounded-2xl mt-8 uppercase text-xs">Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {historyModalOpen && selectedHistory && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-black uppercase">Historial de Entrega</h2>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{selectedHistory.account.service} - Perfil #{selectedHistory.account.profile}</p>
+              </div>
+              <button onClick={() => setHistoryModalOpen(false)} className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="flex-grow overflow-y-auto space-y-4 pr-2">
+              {selectedHistory.history.length > 0 ? (
+                selectedHistory.history.map((sale, idx) => (
+                  <div key={idx} className="bg-slate-50 border rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-black text-slate-700">{sale.customer || 'Venta Directa'}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(sale.id).toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => onMarkSaleAsSuccess(sale.id, selectedHistory.account.id)} className="w-8 h-8 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center border border-emerald-100"><span className="material-symbols-outlined text-lg">check</span></button>
+                      <button onClick={() => { if(window.confirm('¿Marcar como FALLIDA?')) onMarkSaleAsFailed(sale.id, selectedHistory.account.id); }} className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center border border-rose-100"><span className="material-symbols-outlined text-lg">block</span></button>
+                      {(sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from) && (
+                        <button onClick={() => setPreviewChatId(sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from)} className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/20"><span className="material-symbols-outlined text-lg">visibility</span></button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="h-40 flex flex-col items-center justify-center opacity-20">
+                  <span className="material-symbols-outlined text-4xl">history</span>
+                  <p className="text-[10px] font-black uppercase">Sin registros</p>
+                </div>
+              )}
+            </div>
+            <button onClick={() => setHistoryModalOpen(false)} className="bg-primary text-white font-black py-4 rounded-2xl mt-8 uppercase text-xs">Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {previewChatId && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] flex flex-col max-h-[80vh] overflow-hidden">
+            <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
+              <h3 className="font-black uppercase text-sm tracking-widest">Vista Previa Chat</h3>
+              <button onClick={() => setPreviewChatId(null)}><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/50 custom-scrollbar">
+              {chats[previewChatId]?.messages?.map((m, i) => (
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-[85%] p-4 rounded-2xl text-[11px] font-bold shadow-sm ${m.role === 'user' ? 'bg-white text-slate-700' : 'bg-primary text-white'}`}>
+                    {m.imageUrl ? <img src={m.imageUrl} alt="img" className="rounded-lg mb-2 max-h-40" /> : <p>{m.content}</p>}
+                    <p className="text-[8px] mt-1 opacity-40 uppercase">{new Date(m.timestampRaw || Date.now()).toLocaleTimeString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-6 bg-white border-t flex gap-3">
+               <button onClick={() => { onSendMessage({ to: previewChatId, content: '⚠️ *Recordatorio:* Pendiente tu pago. Quedo atento. 🙏' }); alert('Enviado'); }} className="flex-grow bg-emerald-500 text-white font-black py-4 rounded-2xl uppercase text-[10px]">Recordatorio</button>
+               <button onClick={() => setPreviewChatId(null)} className="px-6 bg-slate-900 text-white font-black py-4 rounded-2xl uppercase text-[10px]">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
