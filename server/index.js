@@ -687,8 +687,7 @@ async function processAIResponse(from, msgBodyLower) {
     scheduleRecovery(from);
     delete aiTimers[from];
 }
-        }
-    }
+
 app.post('/webhook/messenger', async (req, res) => {
     const body = req.body;
     if (body.object === 'page') {
