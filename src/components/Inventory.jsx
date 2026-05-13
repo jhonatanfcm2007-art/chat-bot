@@ -318,7 +318,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   return (
     <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-        <h1 className="text-3xl font-black text-on-surface tracking-tighter uppercase">Inventory Manager</h1>
+        <h1 className="text-3xl font-black text-on-surface tracking-tighter uppercase">Gestor de Inventario</h1>
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="glass flex items-center justify-center gap-2 px-6 py-3 rounded-2xl hover:bg-black/5 border border-slate-200">
@@ -327,11 +327,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           </button>
           <button onClick={() => setIsManageListsOpen(true)} className="glass flex items-center justify-center gap-3 px-6 py-3 rounded-2xl hover:bg-black/5">
             <span className="material-symbols-outlined text-xl text-primary font-bold">tune</span>
-            <span className="font-bold text-on-surface">Lists</span>
+            <span className="font-bold text-on-surface">Listas</span>
           </button>
           <button onClick={() => { closeModal(); setIsModalOpen(true); }} className="bg-primary text-on-primary font-black px-8 py-3 rounded-2xl shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
             <span className="material-symbols-outlined text-xl">add_circle</span>
-            Add Account
+            Agregar Cuenta
           </button>
         </div>
       </div>
@@ -506,6 +506,102 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           })}
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border p-8 flex flex-col max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black uppercase">{editingAccount ? 'Editar Cuenta' : 'Agregar Cuenta'}</h2>
+              <button onClick={closeModal}><span className="material-symbols-outlined">close</span></button>
+            </div>
+            {!editingAccount && (
+              <div className="flex items-center gap-4 mb-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={isBulkMode} onChange={(e) => setIsBulkMode(e.target.checked)} className="w-4 h-4 accent-primary" />
+                  <span className="text-xs font-bold text-slate-500">Modo Masivo</span>
+                </label>
+                {isBulkMode && (
+                  <input type="text" value={bulkRange} onChange={(e) => setBulkRange(e.target.value)} placeholder="1-7" className="bg-slate-50 border p-2 rounded-xl text-xs w-20 text-center font-bold" />
+                )}
+              </div>
+            )}
+            <form onSubmit={handleAddAccount} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Plataforma</label>
+                {showCustomPlatform ? (
+                  <input type="text" name="service" value={formData.service} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+                ) : (
+                  <div className="flex gap-2">
+                    <select name="service" value={formData.service} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomPlatform(true); setFormData(p => ({...p, service: ''})); } else { handleInputChange(e); }}} className="flex-grow bg-slate-50 border p-3 rounded-xl text-sm" required>
+                      <option value="">Seleccionar...</option>
+                      {availablePlatforms.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value="__custom__">+ Otra</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Correo</label>
+                <input type="text" name="email" value={formData.email} onChange={handleInputChange} placeholder="correo@ejemplo.com" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+              </div>
+              {!isBulkMode && (
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Perfil</label>
+                  {showCustomProfile ? (
+                    <input type="text" name="profile" value={formData.profile} onChange={handleInputChange} placeholder="#" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                  ) : (
+                    <select name="profile" value={formData.profile} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProfile(true); setFormData(p => ({...p, profile: ''})); } else { handleInputChange(e); }}} className="w-full bg-slate-50 border p-3 rounded-xl text-sm">
+                      <option value="">Seleccionar...</option>
+                      {availableProfiles.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value="__custom__">+ Otro</option>
+                    </select>
+                  )}
+                </div>
+              )}
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Contraseña</label>
+                <input type="text" name="pass" value={formData.pass} onChange={handleInputChange} placeholder="****" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">PIN</label>
+                <input type="text" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="Opcional" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Precio</label>
+                <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="$" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Costo</label>
+                <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} placeholder="$" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Cupos</label>
+                <input type="number" name="uses" value={formData.uses} onChange={handleInputChange} className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Proveedor</label>
+                {showCustomProvider ? (
+                  <input type="text" name="provider" value={formData.provider} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                ) : (
+                  <select name="provider" value={formData.provider} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProvider(true); setFormData(p => ({...p, provider: ''})); } else { handleInputChange(e); }}} className="w-full bg-slate-50 border p-3 rounded-xl text-sm">
+                    <option value="">Seleccionar...</option>
+                    {availableProviders.map(p => <option key={p} value={p}>{p}</option>)}
+                    <option value="__custom__">+ Otro</option>
+                  </select>
+                )}
+              </div>
+              <div className="md:col-span-2 mt-4 flex gap-3">
+                <button type="submit" className="flex-grow bg-primary text-white font-black py-4 rounded-2xl uppercase text-xs">
+                  {editingAccount ? 'Guardar Cambios' : (isBulkMode ? `Crear Perfiles ${bulkRange}` : 'Agregar Cuenta')}
+                </button>
+                {editingAccount && (
+                  <button type="button" onClick={() => { handleDeleteAccount(editingAccount.id); closeModal(); }} className="bg-rose-500 text-white font-black py-4 px-6 rounded-2xl uppercase text-xs">Eliminar</button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {isManageListsOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
