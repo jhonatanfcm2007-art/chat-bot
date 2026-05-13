@@ -311,19 +311,28 @@ async function executeDelivery(to, mode = 'deliver_first') {
             }
             return { success: true };
         } else {
-            // MENSAJE DE ESPERA AL CLIENTE SI NO HAY STOCK
-            const holdingMsg = `¡Listo! Dame un momento y te envío los datos de acceso para que los pruebes. Estoy preparando tu cuenta... 😊`;
-            await smartSendMessage(to, holdingMsg);
+            // SIN STOCK - Enviar UN solo mensaje y APAGAR la IA
+            const noStockMsg = `Hola ${chat.customerName}, en este momento no tenemos disponibilidad para lo que necesitas. 😔 Un asesor te contactará pronto para ayudarte. ¡Gracias por tu paciencia!`;
+            await smartSendMessage(to, noStockMsg);
             
             const holdBotMsg = {
-                id: 'hold-' + Date.now(), from: to, body: holdingMsg, content: holdingMsg,
+                id: 'hold-' + Date.now(), from: to, body: noStockMsg, content: noStockMsg,
                 isMe: true, role: 'bot', timestampRaw: Date.now(),
                 timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
             };
             chat.messages.push(holdBotMsg);
-            saveChats(chats); io.emit('message', holdBotMsg);
+            
+            // APAGAR LA IA para que no repita el mensaje
+            chat.aiDisabled = true;
+            if (!chat.tags?.includes('soporte')) {
+                chat.tags = [...(chat.tags || []), 'soporte'];
+            }
+            saveChats(chats);
+            io.emit('message', holdBotMsg);
+            io.emit('ai_state_updated', { chatId: to, disabled: true });
+            io.emit('tag_updated', { from: to, tags: chat.tags });
 
-            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *SIN STOCK* para entregar a *${chat.customerName}*. Repón inventario pronto.`);
+            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *SIN STOCK* para *${chat.customerName}*. La IA se ha apagado. Repón inventario.`);
             return { success: false, error: 'No stock' };
         }
     } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
@@ -668,11 +677,17 @@ async function processAIResponse(from, msgBodyLower) {
     if (forceDelivery) {
         const deliveryResult = await executeDelivery(from, 'auto');
         if (!deliveryResult.success) {
-            const fallbackMsg = "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.";
-            await smartSendMessage(from, fallbackMsg);
-            const botMsg = { id: 'bot-'+Date.now(), from, body: fallbackMsg, content: fallbackMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-            refreshedChat.messages.push(botMsg);
-            saveChats(chats); io.emit('message', botMsg);
+            // executeDelivery ya envió el mensaje y apagó la IA si fue por falta de stock.
+            // Solo necesitamos apagar aquí si fue otro tipo de error.
+            if (!refreshedChat.aiDisabled) {
+                refreshedChat.aiDisabled = true;
+                if (!refreshedChat.tags?.includes('soporte')) {
+                    refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+                }
+                saveChats(chats);
+                io.emit('ai_state_updated', { chatId: from, disabled: true });
+                io.emit('tag_updated', { from, tags: refreshedChat.tags });
+            }
         }
     } else {
         await delay(1500);
