@@ -662,13 +662,19 @@ async function processAIResponse(from, msgBodyLower) {
     const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
 
     if (hasPurchaseIntent) {
-        if (!refreshedChat.tags?.includes('pago-pendiente')) {
+        // Guardar productos detectados para que executeDelivery los use
+        const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
+        const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
+        if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
+        if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
+        
+        // SOLO poner etiqueta si NO vamos a intentar entrega inmediata
+        // Si forceDelivery es true, executeDelivery pondrá la etiqueta correcta según el resultado
+        if (!forceDelivery && !refreshedChat.tags?.includes('pago-pendiente')) {
             refreshedChat.tags = [...(refreshedChat.tags || []), 'pago-pendiente'];
-            const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
-            const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
-            if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
-            if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
             saveChats(chats); io.emit('tag_updated', { from, tags: refreshedChat.tags });
+        } else {
+            saveChats(chats);
         }
     }
 
