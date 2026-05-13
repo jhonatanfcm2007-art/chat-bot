@@ -37,6 +37,10 @@ const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
+// Configuración Messenger
+const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
+const MESSENGER_VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || VERIFY_TOKEN;
+
 console.log('--- [SISTEMA] Diagnóstico de Variables ---');
 console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.env.OPENAI_API_KEY.substring(0, 10)}...)` : '❌ FALTANTE');
 console.log('WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
@@ -216,7 +220,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
         }
 
         if (!productsToDeliver || productsToDeliver.length === 0) {
-            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ No detecté productos para entregar a *${chat.customerName}*.`);
+            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ No detecté productos para entregar a *${chat.customerName}*.`);
             return { success: false, error: 'No products detected' };
         }
 
@@ -267,7 +271,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             if (pendingToDeliverAfterPayment.length > 0) {
                 totalMsg += `🤖 *Nota de seguridad:* Como soy un asistente virtual con Inteligencia Artificial, por seguridad el sistema me permite activarte solo una (1) cuenta primero para que pruebes.\n\nCon esto puedes verificar que somos totalmente serios. No estoy programado para estafar, así que puedes estar totalmente tranquilo. 😊\n\nLas demás cuentas (${pendingToDeliverAfterPayment.join(', ')}) se te enviarán automáticamente una vez realices el pago total.\n\n`;
             }
-            await sendMessageToCloudAPI(to, totalMsg);
+            await smartSendMessage(to, totalMsg);
 
             // Gestión de etiquetas
             if (mode === 'deliver_and_paid') {
@@ -293,7 +297,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             // COBRO AUTOMÁTICO
             const paymentMsg = `¡Cuentas listas! 🚀 Ya puedes probarlas.\n\nProcede con el pago y envía el comprobante para validar tu garantía:\n\n💰 *Nequi:* 3105779631\n🔑 *Llave bre-b:* 3213434397\n\n¡Quedo atento! 😊`;
             await delay(2000);
-            await sendMessageToCloudAPI(to, paymentMsg);
+            await smartSendMessage(to, paymentMsg);
 
             const cobroMsg = { ...botMsgData, id: 'cobro-' + Date.now(), body: paymentMsg, content: paymentMsg };
             chat.messages.push(cobroMsg);
@@ -309,7 +313,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
         } else {
             // MENSAJE DE ESPERA AL CLIENTE SI NO HAY STOCK
             const holdingMsg = `¡Listo! Dame un momento y te envío los datos de acceso para que los pruebes. Estoy preparando tu cuenta... 😊`;
-            await sendMessageToCloudAPI(to, holdingMsg);
+            await smartSendMessage(to, holdingMsg);
             
             const holdBotMsg = {
                 id: 'hold-' + Date.now(), from: to, body: holdingMsg, content: holdingMsg,
@@ -319,7 +323,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             chat.messages.push(holdBotMsg);
             saveChats(chats); io.emit('message', holdBotMsg);
 
-            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *SIN STOCK* para entregar a *${chat.customerName}*. Repón inventario pronto.`);
+            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *SIN STOCK* para entregar a *${chat.customerName}*. Repón inventario pronto.`);
             return { success: false, error: 'No stock' };
         }
     } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
@@ -342,10 +346,17 @@ const credentialsSentInChat = (messages) => {
     });
 };
 
-// --- WEBHOOK META ---
+// --- WEBHOOK META (WHATSAPP) ---
 app.get('/webhook', (req, res) => {
     const challenge = req.query['hub.challenge'];
     if (req.query['hub.verify_token'] === VERIFY_TOKEN) res.status(200).send(challenge);
+    else res.sendStatus(403);
+});
+
+// --- WEBHOOK META (MESSENGER) ---
+app.get('/webhook/messenger', (req, res) => {
+    const challenge = req.query['hub.challenge'];
+    if (req.query['hub.verify_token'] === MESSENGER_VERIFY_TOKEN) res.status(200).send(challenge);
     else res.sendStatus(403);
 });
 
@@ -381,18 +392,18 @@ app.post('/webhook', async (req, res) => {
                     target.updatedAt = Date.now();
                     saveChats(chats); io.emit('tag_updated', { from: target.from, tags: target.tags });
                     const confirmMsg = '✅ *¡Pago confirmado!* Muchas gracias 🎉';
-                    await sendMessageToCloudAPI(target.from, confirmMsg);
+                    await smartSendMessage(target.from, confirmMsg);
                     const botMsg = { id: 'conf-'+Date.now(), from: target.from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
                     target.messages.push({ ...botMsg, content: confirmMsg });
                     io.emit('message', botMsg);
-                    sendMessageToCloudAPI(ADMIN_PHONE, `✅ PAGO CONFIRMADO de ${target.customerName}.`);
+                    smartSendMessage(ADMIN_PHONE, `✅ PAGO CONFIRMADO de ${target.customerName}.`);
                     lastReceiptFrom = null;
                 } else {
                     await executeDelivery(target.from, mode);
                     if (lastReceiptFrom === target.from) lastReceiptFrom = null;
                 }
             } else {
-                sendMessageToCloudAPI(ADMIN_PHONE, `ℹ️ Sin pendientes.`);
+                smartSendMessage(ADMIN_PHONE, `ℹ️ Sin pendientes.`);
             }
             res.sendStatus(200); return;
         }
@@ -446,7 +457,7 @@ app.post('/webhook', async (req, res) => {
                             analyzeReceipt(buffer).then(isReceipt => {
                                 if (isReceipt) {
                                     lastReceiptFrom = from;
-                                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responda con *r* para confirmar.`);
+                                    if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responda con *r* para confirmar.`);
                                     if (!currentChat.tags?.includes('pago-pendiente')) {
                                         currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
                                         saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
@@ -515,180 +526,265 @@ app.post('/webhook', async (req, res) => {
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
             saveChats(chats); io.emit('message', { ...newMessage, customerName });
 
-            if (aiTimers[from]) clearTimeout(aiTimers[from]);
-            
-            // Verificación de si el bot está apagado para este chat específico
-            if (currentChat.aiDisabled) {
-                console.log(`ℹ️ [SISTEMA] IA desactivada para ${customerName}. Ignorando IA...`);
-                res.sendStatus(200);
-                return;
-            }
-
-            aiTimers[from] = setTimeout(async () => {
-                const refreshedChat = chats[from];
-                const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
-                if (!lastUserMsg) return;
-
-                const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
-
-                // Detección de soporte (cliente existente con problema)
-                const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
-                const isSupport = supportRegex.test(msgBodyLower);
-
-                if (isSupport) {
-                    if (!refreshedChat.tags?.includes('soporte')) {
-                        refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
-                    }
-                    refreshedChat.aiDisabled = true; // Apagar IA
-                    saveChats(chats);
-                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
-                    io.emit('ai_state_updated', { chatId: from, disabled: true });
-                    
-                    const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
-                    await sendMessageToCloudAPI(from, supportMsg);
-                    
-                    const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-                    refreshedChat.messages.push(botMsg);
-                    saveChats(chats); io.emit('message', botMsg);
-
-                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
-                    
-                    delete aiTimers[from];
-                    return; // Detener flujo IA y no llamar a OpenAI
-                }
-
-                const isPricingInquiry = (/\?|qué val|que val|precio|costo|cuánto|cuanto|valor|promoción|promo|descuento/i.test(msgBodyLower));
-                
-                // Nueva protección: ¿El mensaje es SOLO el nombre de una plataforma?
-                const platformNames = getPlatformNames();
-                const isOnlyProductName = platformNames.includes(msgBodyLower) || platformNames.some(p => msgBodyLower === `quiere ${p}` || msgBodyLower === `quiero ${p}`);
-
-                // Auto-confirmación (ahora detecta la palabra en cualquier parte de la frase)
-                const confirmWords = /\b(si|sí|dale|ok|listo|recibido|proceder|hagale|hágale|de una|deuna|ready|mándala|mandala|pásala|pasala|manda|pasa|venda|véndame|activar|activa|pruébala|pruebala|probar|enviamelas|envialas|enviame)\b/i;
-                const containsExplicitConfirmation = confirmWords.test(msgBodyLower);
-
-                if (!isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation) {
-                    const offeredAt = refreshedChat.activationOfferedAt || 0;
-                    const recoveredAt = refreshedChat.recoverySentAt || 0;
-                    const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
-                    // Entregar si hubo oferta de activación reciente o si pide explícitamente enviar
-                    if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000 || msgBodyLower.includes('activa') || msgBodyLower.includes('envia'))) {
-                        try {
-                            await executeDelivery(from, 'auto');
-                        } catch (err) {
-                            console.error('Delivery Error:', err);
-                            refreshedChat.aiDisabled = true;
-                            io.emit('ai_state_updated', { chatId: from, disabled: true });
-                            await sendMessageToCloudAPI(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
-                            if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *ERROR DE ENTREGA* con *${customerName}*. La IA se ha apagado.`);
-                        }
-                        delete aiTimers[from];
-                        return;
-                    }
-                }
-                
-                // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
-                const activateRegex = /activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela|enviame|mándame|pásame/i;
-                if (!credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
-                    try {
-                        await executeDelivery(from, 'auto');
-                        refreshedChat.activationNotifySent = true;
-                        refreshedChat.activationOfferedAt = Date.now();
-                    } catch (err) {
-                        console.error('Activation Delivery Error:', err);
-                        refreshedChat.aiDisabled = true;
-                        io.emit('ai_state_updated', { chatId: from, disabled: true });
-                        await sendMessageToCloudAPI(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
-                        if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `❌ *ERROR DE ACTIVACIÓN* con *${customerName}*. La IA se ha apagado.`);
-                    }
-                    delete aiTimers[from];
-                    return; // Detener para que la IA no responda duplicado
-                }
-
-                // Respuesta IA - Pasar contexto según la situación del chat
-                const allMessages = refreshedChat.messages.slice(-15);
-                if (credentialsSentInChat(refreshedChat.messages)) {
-                    allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
-                }
-                const aiReply = await getAIResponse(msgBodyLower, allMessages);
-                
-                // --- APAGADO POR IA ---
-                const gptRequestedSupport = /\[APAGAR_BOT_SOPORTE\]/i.test(aiReply);
-                if (gptRequestedSupport) {
-                    if (!refreshedChat.tags?.includes('soporte')) {
-                        refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
-                    }
-                    refreshedChat.aiDisabled = true;
-                    saveChats(chats);
-                    io.emit('tag_updated', { from, tags: refreshedChat.tags });
-                    io.emit('ai_state_updated', { chatId: from, disabled: true });
-                    
-                    const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
-                    await sendMessageToCloudAPI(from, supportMsg);
-                    
-                    const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-                    refreshedChat.messages.push(botMsg);
-                    saveChats(chats); io.emit('message', botMsg);
-
-                    if (ADMIN_PHONE) sendMessageToCloudAPI(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
-                    
-                    delete aiTimers[from];
-                    return; // Detener flujo
-                }
-
-                // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
-                const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
-                
-                // Permitimos la entrega si pasamos las pruebas heurísticas locales, o si GPT lo decidió explícitamente (tiene prioridad)
-                const localDecision = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation;
-                const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat.messages);
-                
-                const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
-                const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
-
-                if (hasPurchaseIntent) {
-                    if (!refreshedChat.tags?.includes('pago-pendiente')) {
-                        refreshedChat.tags = [...(refreshedChat.tags || []), 'pago-pendiente'];
-                        const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
-                        const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
-                        if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
-                        if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
-                        saveChats(chats); io.emit('tag_updated', { from, tags: refreshedChat.tags });
-                    }
-                }
-
-                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
-                
-                if (forceDelivery) {
-                    // Si el bot va a entregar, evitamos que envíe mensajes de relleno/alucinados
-                    // Dejamos que executeDelivery hable por el bot
-                    const deliveryResult = await executeDelivery(from, 'auto');
-                    if (!deliveryResult.success) {
-                        // Si falla (ej. no detectó el producto o no hay stock), avisamos al cliente en lugar de ignorarlo
-                        const fallbackMsg = "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.";
-                        await sendMessageToCloudAPI(from, fallbackMsg);
-                        const botMsg = { id: 'bot-'+Date.now(), from, body: fallbackMsg, content: fallbackMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-                        refreshedChat.messages.push(botMsg);
-                        saveChats(chats); io.emit('message', botMsg);
-                    }
-                } else {
-                    await delay(1500);
-                    if (cleanReply) {
-                        await sendMessageToCloudAPI(from, cleanReply);
-                        const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
-                        refreshedChat.messages.push(botMsg);
-                        saveChats(chats); io.emit('message', botMsg);
-                    }
-                }
-                
-                scheduleRecovery(from);
-                
-                delete aiTimers[from];
-            }, 15000); 
+            handleIncomingMessage(from);
         }
     }
     res.sendStatus(200);
 });
+
+// Función centralizada para procesar la IA y lógica de negocio
+async function processAIResponse(from, msgBodyLower) {
+    const refreshedChat = chats[from];
+    const customerName = refreshedChat.customerName;
+
+    // Detección de soporte (cliente existente con problema)
+    const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
+    const isSupport = supportRegex.test(msgBodyLower);
+
+    if (isSupport) {
+        if (!refreshedChat.tags?.includes('soporte')) {
+            refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+        }
+        refreshedChat.aiDisabled = true; // Apagar IA
+        saveChats(chats);
+        io.emit('tag_updated', { from, tags: refreshedChat.tags });
+        io.emit('ai_state_updated', { chatId: from, disabled: true });
+        
+        const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
+        await smartSendMessage(from, supportMsg);
+        
+        const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+        refreshedChat.messages.push(botMsg);
+        saveChats(chats); io.emit('message', botMsg);
+
+        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
+        
+        delete aiTimers[from];
+        return; // Detener flujo IA y no llamar a OpenAI
+    }
+
+    const isPricingInquiry = (/\?|qué val|que val|precio|costo|cuánto|cuanto|valor|promoción|promo|descuento/i.test(msgBodyLower));
+    
+    // Nueva protección: ¿El mensaje es SOLO el nombre de una plataforma?
+    const platformNames = getPlatformNames();
+    const isOnlyProductName = platformNames.includes(msgBodyLower) || platformNames.some(p => msgBodyLower === `quiere ${p}` || msgBodyLower === `quiero ${p}`);
+
+    // Auto-confirmación (ahora detecta la palabra en cualquier parte de la frase)
+    const confirmWords = /\b(si|sí|dale|ok|listo|recibido|proceder|hagale|hágale|de una|deuna|ready|mándala|mandala|pásala|pasala|manda|pasa|venda|véndame|activar|activa|pruébala|pruebala|probar|enviamelas|envialas|enviame)\b/i;
+    const containsExplicitConfirmation = confirmWords.test(msgBodyLower);
+
+    if (!isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation) {
+        const offeredAt = refreshedChat.activationOfferedAt || 0;
+        const recoveredAt = refreshedChat.recoverySentAt || 0;
+        const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
+        // Entregar si hubo oferta de activación reciente o si pide explícitamente enviar
+        if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000 || msgBodyLower.includes('activa') || msgBodyLower.includes('envia'))) {
+            try {
+                await executeDelivery(from, 'auto');
+            } catch (err) {
+                console.error('Delivery Error:', err);
+                refreshedChat.aiDisabled = true;
+                io.emit('ai_state_updated', { chatId: from, disabled: true });
+                await smartSendMessage(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
+                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *ERROR DE ENTREGA* con *${customerName}*. La IA se ha apagado.`);
+            }
+            delete aiTimers[from];
+            return;
+        }
+    }
+    
+    // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
+    const activateRegex = /activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela|enviame|mándame|pásame/i;
+    if (!credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
+        try {
+            await executeDelivery(from, 'auto');
+            refreshedChat.activationNotifySent = true;
+            refreshedChat.activationOfferedAt = Date.now();
+        } catch (err) {
+            console.error('Activation Delivery Error:', err);
+            refreshedChat.aiDisabled = true;
+            io.emit('ai_state_updated', { chatId: from, disabled: true });
+            await smartSendMessage(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
+            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *ERROR DE ACTIVACIÓN* con *${customerName}*. La IA se ha apagado.`);
+        }
+        delete aiTimers[from];
+        return; // Detener para que la IA no responda duplicado
+    }
+
+    // Respuesta IA - Pasar contexto según la situación del chat
+    const allMessages = refreshedChat.messages.slice(-15);
+    if (credentialsSentInChat(refreshedChat.messages)) {
+        allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
+    }
+    const aiReply = await getAIResponse(msgBodyLower, allMessages);
+    
+    // --- APAGADO POR IA ---
+    const gptRequestedSupport = /\[APAGAR_BOT_SOPORTE\]/i.test(aiReply);
+    if (gptRequestedSupport) {
+        if (!refreshedChat.tags?.includes('soporte')) {
+            refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
+        }
+        refreshedChat.aiDisabled = true;
+        saveChats(chats);
+        io.emit('tag_updated', { from, tags: refreshedChat.tags });
+        io.emit('ai_state_updated', { chatId: from, disabled: true });
+        
+        const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
+        await smartSendMessage(from, supportMsg);
+        
+        const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+        refreshedChat.messages.push(botMsg);
+        saveChats(chats); io.emit('message', botMsg);
+
+        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
+        
+        delete aiTimers[from];
+        return; // Detener flujo
+    }
+
+    // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
+    const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
+    
+    // Permitimos la entrega si pasamos las pruebas heurísticas locales, o si GPT lo decidió explícitamente (tiene prioridad)
+    const localDecision = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation;
+    const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat.messages);
+    
+    const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
+    const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
+
+    if (hasPurchaseIntent) {
+        if (!refreshedChat.tags?.includes('pago-pendiente')) {
+            refreshedChat.tags = [...(refreshedChat.tags || []), 'pago-pendiente'];
+            const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
+            const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
+            if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
+            if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
+            saveChats(chats); io.emit('tag_updated', { from, tags: refreshedChat.tags });
+        }
+    }
+
+    const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
+    
+    if (forceDelivery) {
+        const deliveryResult = await executeDelivery(from, 'auto');
+        if (!deliveryResult.success) {
+            const fallbackMsg = "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.";
+            await smartSendMessage(from, fallbackMsg);
+            const botMsg = { id: 'bot-'+Date.now(), from, body: fallbackMsg, content: fallbackMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
+            refreshedChat.messages.push(botMsg);
+            saveChats(chats); io.emit('message', botMsg);
+        }
+    } else {
+        await delay(1500);
+        if (cleanReply) {
+            await smartSendMessage(from, cleanReply);
+            const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+            refreshedChat.messages.push(botMsg);
+            saveChats(chats); io.emit('message', botMsg);
+        }
+    }
+    
+    scheduleRecovery(from);
+    delete aiTimers[from];
+}
+        }
+    }
+app.post('/webhook/messenger', async (req, res) => {
+    const body = req.body;
+    if (body.object === 'page') {
+        body.entry.forEach(async (entry) => {
+            const webhook_event = entry.messaging[0];
+            const sender_psid = webhook_event.sender.id;
+
+            if (webhook_event.message && webhook_event.message.text) {
+                const msgBody = webhook_event.message.text;
+                
+                if (!chats[sender_psid]) {
+                    chats[sender_psid] = { 
+                        from: sender_psid, 
+                        customerName: `Messenger User ${sender_psid.substring(0,4)}`, 
+                        messages: [],
+                        platform: 'messenger' // Identificador clave
+                    };
+                }
+                const currentChat = chats[sender_psid];
+                currentChat.platform = 'messenger'; // Asegurar plataforma
+
+                const newMessage = { 
+                    id: webhook_event.message.mid, 
+                    from: sender_psid, 
+                    body: msgBody, 
+                    content: msgBody, 
+                    timestampRaw: Date.now(), 
+                    role: 'user',
+                    platform: 'messenger'
+                };
+
+                currentChat.messages.push(newMessage);
+                currentChat.updatedAt = Date.now();
+                saveChats(chats);
+                io.emit('message', { ...newMessage, customerName: currentChat.customerName });
+
+                // Aquí reutilizamos TODA tu lógica de IA existente (aiTimers, executeDelivery, etc.)
+                // Solo necesitamos que sendMessageToCloudAPI sea inteligente.
+                handleIncomingMessage(sender_psid);
+            }
+        });
+        res.status(200).send('EVENT_RECEIVED');
+    } else {
+        res.sendStatus(404);
+    }
+});
+
+// Función auxiliar para unificar la lógica de IA (Refactorización)
+function handleIncomingMessage(from) {
+    if (aiTimers[from]) clearTimeout(aiTimers[from]);
+    
+    const currentChat = chats[from];
+    if (currentChat.aiDisabled) return;
+
+    aiTimers[from] = setTimeout(async () => {
+        const refreshedChat = chats[from];
+        const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
+        if (!lastUserMsg) return;
+
+        const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
+
+        // Lógica de Soporte, Venta, etc. (La misma que ya tienes)
+        // ... (Para brevedad, la lógica sigue igual pero ahora llama a un sendMessage unificado)
+        processAIResponse(from, msgBodyLower);
+    }, 15000);
+}
+
+// Nueva función de envío unificada
+async function smartSendMessage(to, text) {
+    const chat = chats[to];
+    const platform = chat?.platform || 'whatsapp';
+
+    if (platform === 'messenger') {
+        return sendMessageToMessengerAPI(to, text);
+    } else {
+        return sendMessageToCloudAPI(to, text);
+    }
+}
+
+async function sendMessageToMessengerAPI(psid, text) {
+    if (!MESSENGER_PAGE_TOKEN || !psid) return;
+    try {
+        const res = await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${MESSENGER_PAGE_TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: { id: psid },
+                message: { text: text }
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [MESSENGER ERROR] al enviar a ${psid}:`, errData);
+        }
+    } catch (err) { console.error('Messenger send error:', err); }
+}
 
 async function downloadMetaMedia(mediaId) {
     try {
@@ -854,7 +950,7 @@ io.on('connection', (socket) => {
     });
     socket.on('send_message', async ({ to, content }) => {
         if (/^r$/i.test(content.trim())) { await executeDelivery(to, 'deliver_first'); return; }
-        await sendMessageToCloudAPI(to, content);
+        await smartSendMessage(to, content);
         const m = { id: 'man-'+Date.now(), from: to, body: content, content, isMe: true, role: 'bot', timestampRaw: Date.now() };
         if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
         chats[to].messages.push(m); chats[to].updatedAt = Date.now(); 
