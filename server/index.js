@@ -273,6 +273,9 @@ async function executeDelivery(to, mode = 'deliver_first') {
             }
             await smartSendMessage(to, totalMsg);
 
+            // Marcar que se entregaron credenciales
+            chat.credentialsDelivered = true;
+
             // Gestión de etiquetas
             if (mode === 'deliver_and_paid') {
                 chat.tags = ['pagado'];
@@ -341,17 +344,64 @@ async function executeDelivery(to, mode = 'deliver_first') {
 
 
 // Helper global: detectar si ya se enviaron credenciales o se cobró en este chat
-const credentialsSentInChat = (messages) => {
+const credentialsSentInChat = (chatOrMessages) => {
+    // Aceptar tanto el objeto chat completo como solo el array de mensajes
+    let messages, chat;
+    if (Array.isArray(chatOrMessages)) {
+        messages = chatOrMessages;
+        chat = null;
+    } else if (chatOrMessages && chatOrMessages.messages) {
+        messages = chatOrMessages.messages;
+        chat = chatOrMessages;
+    } else {
+        return false;
+    }
+
+    // 1. Si el chat tiene el flag explícito (venta manual desde el panel), siempre true
+    if (chat && chat.credentialsDelivered) return true;
+
     if (!messages || !Array.isArray(messages)) return false;
+    
     return messages.some(m => {
-        if (m.role !== 'bot' && !m.isMe) return false; // Solo chequear mensajes del bot
+        if (m.role !== 'bot' && !m.isMe) return false; // Solo chequear mensajes del bot/admin
         const text = (m.body || m.content || '').toLowerCase();
-        // Buscar explícitamente el formato exacto en el que el bot entrega las cuentas
-        return text.includes('📧 *correo:*') || 
-               text.includes('🔑 *clave:*') || 
-               text.includes('aquí tienes tus cuentas activas') ||
-               text.includes('nota de seguridad: como soy un asistente virtual') ||
-               (text.includes('correo:') && (text.includes('contraseña:') || text.includes('clave:')));
+        
+        // Formato automático del bot
+        if (text.includes('📧 *correo:*') || 
+            text.includes('🔑 *clave:*') || 
+            text.includes('aquí tienes tus cuentas activas') ||
+            text.includes('nota de seguridad: como soy un asistente virtual')) {
+            return true;
+        }
+        
+        // Credenciales manuales del admin (cualquier combinación de datos de acceso)
+        if ((text.includes('correo:') || text.includes('correo :') || text.includes('email:')) && 
+            (text.includes('contraseña:') || text.includes('contraseña :') || 
+             text.includes('clave:') || text.includes('clave :') || 
+             text.includes('pass:') || text.includes('password:'))) {
+            return true;
+        }
+        
+        // Patrones comunes de entrega manual
+        if (text.includes('datos de acceso') || 
+            text.includes('tus credenciales') ||
+            text.includes('aquí están los datos') ||
+            text.includes('aqui estan los datos') ||
+            text.includes('te envío los datos') ||
+            text.includes('te envio los datos') ||
+            text.includes('perfil:') && (text.includes('pin:') || text.includes('clave:'))) {
+            return true;
+        }
+        
+        // Mensaje de cobro (indica que ya se entregó)
+        if (text.includes('procede con el pago') || 
+            text.includes('puedes hacer el pago') ||
+            text.includes('envía el comprobante') ||
+            text.includes('envia el comprobante')) {
+            return true;
+        }
+        
+        return false;
     });
 };
 
@@ -382,7 +432,7 @@ app.post('/webhook', async (req, res) => {
             let target = null; let mode = null;
             if (lastReceiptFrom && chats[lastReceiptFrom]) {
                 target = chats[lastReceiptFrom];
-                const alreadyDelivered = target.tags?.includes('entregado') || credentialsSentInChat(target.messages);
+                const alreadyDelivered = target.tags?.includes('entregado') || credentialsSentInChat(target);
                 mode = alreadyDelivered ? 'confirm_payment' : 'deliver_and_paid';
             }
             if (!target) {
@@ -585,7 +635,7 @@ async function processAIResponse(from, msgBodyLower) {
     if (!isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation) {
         const offeredAt = refreshedChat.activationOfferedAt || 0;
         const recoveredAt = refreshedChat.recoverySentAt || 0;
-        const alreadyDelivered = credentialsSentInChat(refreshedChat.messages);
+        const alreadyDelivered = credentialsSentInChat(refreshedChat);
         // Entregar si hubo oferta de activación reciente o si pide explícitamente enviar
         if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000 || msgBodyLower.includes('activa') || msgBodyLower.includes('envia'))) {
             try {
@@ -604,7 +654,7 @@ async function processAIResponse(from, msgBodyLower) {
     
     // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
     const activateRegex = /activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela|enviame|mándame|pásame/i;
-    if (!credentialsSentInChat(refreshedChat.messages) && activateRegex.test(msgBodyLower)) {
+    if (!credentialsSentInChat(refreshedChat) && activateRegex.test(msgBodyLower)) {
         try {
             await executeDelivery(from, 'auto');
             refreshedChat.activationNotifySent = true;
@@ -622,7 +672,7 @@ async function processAIResponse(from, msgBodyLower) {
 
     // Respuesta IA - Pasar contexto según la situación del chat
     const allMessages = refreshedChat.messages.slice(-15);
-    if (credentialsSentInChat(refreshedChat.messages)) {
+    if (credentialsSentInChat(refreshedChat)) {
         allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
     }
     const aiReply = await getAIResponse(msgBodyLower, allMessages);
@@ -656,7 +706,7 @@ async function processAIResponse(from, msgBodyLower) {
     
     // Permitimos la entrega si pasamos las pruebas heurísticas locales, o si GPT lo decidió explícitamente (tiene prioridad)
     const localDecision = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation;
-    const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat.messages);
+    const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat);
     
     const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
     const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
@@ -974,6 +1024,15 @@ io.on('connection', (socket) => {
         const m = { id: 'man-'+Date.now(), from: to, body: content, content, isMe: true, role: 'bot', timestampRaw: Date.now() };
         if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
         chats[to].messages.push(m); chats[to].updatedAt = Date.now(); 
+        
+        // Si el admin envió credenciales manualmente, marcar el chat
+        const lowerContent = content.toLowerCase();
+        if ((lowerContent.includes('correo') || lowerContent.includes('email')) && 
+            (lowerContent.includes('clave') || lowerContent.includes('contraseña') || lowerContent.includes('pass'))) {
+            chats[to].credentialsDelivered = true;
+            console.log(`✅ [SISTEMA] Credenciales manuales detectadas para ${chats[to].customerName}. Flag activado.`);
+        }
+        
         if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
         saveChats(chats); io.emit('message', m);
         scheduleRecovery(to);
