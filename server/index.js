@@ -144,6 +144,7 @@ const getPlatformNames = () => platforms.map(p => p.toLowerCase());
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 const recoveryTimers = {};
+const paymentReminderTimers = {};
 
 function scheduleRecovery(to) {
     if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
@@ -188,6 +189,42 @@ function scheduleRecovery(to) {
     }, 120000);
 }
 
+// Timer de cobro automático: 20 minutos después de entregar credenciales
+function schedulePaymentReminder(to) {
+    if (paymentReminderTimers[to]) clearTimeout(paymentReminderTimers[to]);
+    
+    paymentReminderTimers[to] = setTimeout(async () => {
+        const c = chats[to];
+        if (!c) { delete paymentReminderTimers[to]; return; }
+        
+        // Solo enviar si NO ha pagado aún
+        const hasPaid = (c.tags || []).includes('pagado');
+        if (hasPaid) { delete paymentReminderTimers[to]; return; }
+        
+        // Solo enviar si la IA no está apagada (para no molestar en soporte)
+        if (c.aiDisabled) { delete paymentReminderTimers[to]; return; }
+        
+        const reminderMsg = `¡Hola ${c.customerName}! 👋 Te recuerdo que ya tienes tu cuenta activa para que la pruebes. 😊\n\nPara validar tu garantía y mantener el acceso, realiza el pago y envíanos el comprobante:\n\n💰 *Nequi:* 3105779631\n🔑 *Llave bre-b:* 3213434397\n\n¡Quedo atento! 🙏`;
+        
+        await smartSendMessage(to, reminderMsg);
+        const botMsg = { 
+            id: 'pay-rem-'+Date.now(), from: to, body: reminderMsg, content: reminderMsg, 
+            isMe: true, role: 'bot', timestampRaw: Date.now(),
+            timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        };
+        c.messages.push(botMsg);
+        c.paymentReminderSent = true;
+        saveChats(chats);
+        io.emit('message', botMsg);
+        
+        console.log(`💰 [COBRO AUTO] Recordatorio de pago enviado a ${c.customerName}`);
+        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `💰 Recordatorio de pago enviado automáticamente a *${c.customerName}*.`);
+        
+        delete paymentReminderTimers[to];
+    }, 20 * 60 * 1000); // 20 minutos
+    
+    console.log(`⏰ [COBRO AUTO] Timer de cobro programado para ${chats[to]?.customerName} en 20 minutos.`);
+}
 
 // --- CENTRAL DELIVERY FUNCTION ---
 async function executeDelivery(to, mode = 'deliver_first') {
@@ -306,6 +343,9 @@ async function executeDelivery(to, mode = 'deliver_first') {
             chat.messages.push(cobroMsg);
             saveChats(chats);
             io.emit('message', cobroMsg);
+            
+            // Programar recordatorio de pago
+            schedulePaymentReminder(to);
             scheduleRecovery(to);
 
             if (ADMIN_PHONE) {
@@ -456,6 +496,11 @@ app.post('/webhook', async (req, res) => {
                     target.messages.push({ ...botMsg, content: confirmMsg });
                     io.emit('message', botMsg);
                     smartSendMessage(ADMIN_PHONE, `✅ PAGO CONFIRMADO de ${target.customerName}.`);
+                    // Cancelar timer de cobro si existe
+                    if (paymentReminderTimers[target.from]) {
+                        clearTimeout(paymentReminderTimers[target.from]);
+                        delete paymentReminderTimers[target.from];
+                    }
                     lastReceiptFrom = null;
                 } else {
                     await executeDelivery(target.from, mode);
@@ -511,18 +556,26 @@ app.post('/webhook', async (req, res) => {
                         fs.writeFileSync(filePath, buffer);
                         mediaUrl = `${BACKEND_URL}/uploads/${fileName}`;
                         
-                        // GPT analysis if image
+                        // GPT Vision analysis si es imagen
                         if (msg.type === 'image') {
-                            analyzeReceipt(buffer).then(isReceipt => {
-                                if (isReceipt) {
+                            try {
+                                const visionResult = await analyzeImage(buffer);
+                                // Guardar el resultado del análisis en el mensaje para que la IA lo sepa
+                                if (visionResult.isReceipt) {
                                     lastReceiptFrom = from;
+                                    currentChat.lastImageAnalysis = 'COMPROBANTE_DE_PAGO';
                                     if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responda con *r* para confirmar.`);
                                     if (!currentChat.tags?.includes('pago-pendiente')) {
                                         currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
                                         saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
                                     }
+                                } else {
+                                    currentChat.lastImageAnalysis = visionResult.description;
                                 }
-                            });
+                            } catch (vErr) {
+                                console.error('Vision analysis error:', vErr);
+                                currentChat.lastImageAnalysis = 'No se pudo analizar la imagen';
+                            }
                         }
 
                         // OpenAI Whisper transcription for audio
@@ -675,6 +728,15 @@ async function processAIResponse(from, msgBodyLower) {
     if (credentialsSentInChat(refreshedChat)) {
         allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
     }
+    
+    // Pasar información de análisis de imagen si existe
+    if (refreshedChat.lastImageAnalysis) {
+        allMessages.push({ role: 'system', content: `CONTEXTO VISUAL: La última imagen enviada por el usuario fue analizada por visión artificial como: "${refreshedChat.lastImageAnalysis}". Si NO es un comprobante de pago, responde según lo que la imagen realmente muestra. Si ES un comprobante, di que estás verificándolo.` });
+        // Limpiar después de usar para que no afecte mensajes futuros
+        delete refreshedChat.lastImageAnalysis;
+        saveChats(chats);
+    }
+
     const aiReply = await getAIResponse(msgBodyLower, allMessages);
     
     // --- APAGADO POR IA ---
@@ -908,22 +970,37 @@ async function downloadMetaMedia(mediaId) {
     }
 }
 
-async function analyzeReceipt(buffer) {
-    if (!openai) return false;
+// Análisis visual completo de imágenes con GPT Vision
+async function analyzeImage(buffer) {
+    if (!openai) return { isReceipt: false, description: 'Sin OpenAI' };
     try {
         const base64 = buffer.toString('base64');
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // Cambiado a mini por rapidez y costo, soporta visión
+            model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: "Eres un experto en validar comprobantes de transferencia (Nequi, Bancolombia, etc). Responde 'COMPROBANTE_VALIDO' si ves un recibo de pago real, o 'OTRO' si es cualquier otra cosa." },
+                { role: "system", content: `Eres un asistente de análisis visual. Analiza la imagen y responde en este formato EXACTO:
+TIPO: [COMPROBANTE_PAGO | MEME | CAPTURA_PANTALLA | SELFIE | PRODUCTO | OTRO]
+DESCRIPCION: [Breve descripción de 1 línea de lo que ves]
+
+Un COMPROBANTE_PAGO es un recibo de transferencia bancaria (Nequi, Bancolombia, Daviplata, etc) con montos, fechas y nombres. Si no tiene esas características, NO es un comprobante.` },
                 { role: "user", content: [
-                    { type: "text", text: "¿Es esto un comprobante de pago?" },
+                    { type: "text", text: "Analiza esta imagen." },
                     { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
                 ]}
-            ]
+            ],
+            max_tokens: 150
         });
-        return response.choices[0].message.content.includes('COMPROBANTE_VALIDO');
-    } catch (err) { console.error('GPT Vision error:', err); return false; }
+        const reply = response.choices[0].message.content;
+        const isReceipt = reply.includes('COMPROBANTE_PAGO');
+        const descMatch = reply.match(/DESCRIPCION:\s*(.+)/i);
+        const description = descMatch ? descMatch[1].trim() : reply.split('\n').pop().trim();
+        
+        console.log(`👁️ [VISION] Resultado: ${isReceipt ? 'COMPROBANTE' : 'OTRO'} - ${description}`);
+        return { isReceipt, description };
+    } catch (err) { 
+        console.error('GPT Vision error:', err); 
+        return { isReceipt: false, description: 'Error de análisis' };
+    }
 }
 
 // --- API & SOCKETS ---
