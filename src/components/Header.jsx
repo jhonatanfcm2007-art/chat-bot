@@ -13,11 +13,11 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
   return (
     <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 z-50 fixed top-0 w-full">
       {/* 1. Logo - Left */}
-      <div className="flex items-center gap-2 cursor-pointer min-w-[200px]" onClick={() => onTabChange('simulator')}>
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
-          <span className="material-symbols-outlined text-lg">smart_toy</span>
+      <div className="flex items-center gap-2.5 cursor-pointer min-w-[200px]" onClick={() => onTabChange('simulator')}>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden shadow-md shadow-primary/10 border border-primary/20 bg-white">
+          <img src="/logo.png" alt="Vault X" className="w-7 h-7 object-contain" />
         </div>
-        <span className="text-lg font-bold tracking-tight text-slate-800">Chat<span className="text-primary">Bot</span></span>
+        <span className="text-lg font-black tracking-tight text-slate-800">Vault <span className="text-primary">X</span></span>
       </div>
 
       {/* 2. Nav Menu - Centered */}

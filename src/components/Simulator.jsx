@@ -61,6 +61,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     }
   };
 
+  const formatChatTime = (timestamp) => {
+    if (!timestamp || timestamp < 1000000) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 86400000);
+    const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (msgDay.getTime() === today.getTime()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (msgDay.getTime() === yesterday.getTime()) {
+      return 'Ayer';
+    } else if (now.getTime() - date.getTime() < 7 * 86400000) {
+      const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      return dias[date.getDay()];
+    } else {
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear().toString().slice(-2)}`;
+    }
+  };
+
   const formatMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -302,7 +322,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         )}
 
                         <span className="text-[10px] text-slate-400 font-medium">
-                          {chat.updatedAt && chat.updatedAt > 1000000 ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          {formatChatTime(chat.activityTime > 0 ? chat.activityTime : chat.updatedAt)}
                         </span>
                       </div>
                     </div>

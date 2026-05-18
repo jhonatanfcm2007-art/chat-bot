@@ -11,8 +11,8 @@ const Sidebar = ({ activeTab, onTabChange }) => {
   return (
     <aside className="bg-surface/80 backdrop-blur-2xl w-64 h-full flex flex-col py-8 z-40 hidden md:flex font-body text-sm relative border-r border-white/5">
       <div className="px-8 mb-12 flex items-center gap-4 relative">
-        <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/5 border border-primary/20">
-          <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20 overflow-hidden bg-white/5">
+          <img src="/logo.png" alt="Vault X" className="w-9 h-9 object-contain" />
         </div>
         <div>
           <h2 className="text-lg font-black text-on-surface leading-none tracking-tight font-headline uppercase">Vault <span className="text-primary">X</span></h2>
