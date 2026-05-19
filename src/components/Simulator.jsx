@@ -462,9 +462,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                             onError={(e) => {
                               // Si falla la URL original, intentar con la ruta proxy como fallback
                               const original = e.target.src;
-                              if (!original.includes('/api/media/') && msg.id) {
-                                // Intentar a través del proxy con el ID del mensaje como mediaId
-                                const proxyUrl = formatMediaUrl(`/api/media/${msg.id}`);
+                              if (!original.includes('/api/media/') && msg.mediaId) {
+                                // Intentar a través del proxy con el ID del media como mediaId
+                                const proxyUrl = formatMediaUrl(`/api/media/${msg.mediaId}`);
                                 e.target.src = proxyUrl;
                               } else {
                                 // Si ya falló el proxy, mostrar placeholder

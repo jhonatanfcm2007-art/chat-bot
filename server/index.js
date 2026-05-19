@@ -65,7 +65,7 @@ const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -603,11 +603,64 @@ app.post('/webhook', async (req, res) => {
                                 if (visionResult.isReceipt) {
                                     lastReceiptFrom = from;
                                     currentChat.lastImageAnalysis = 'COMPROBANTE_DE_PAGO';
-                                    if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `📄 *COMPROBANTE RECIBIDO* de *${customerName}*. Responda con *r* para confirmar.`);
+                                    
+                                    // Cambiar etiqueta a 'pago-pendiente' inicialmente
                                     if (!currentChat.tags?.includes('pago-pendiente')) {
                                         currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
-                                        saveChats(chats); io.emit('tag_updated', { from, tags: currentChat.tags });
                                     }
+
+                                    // Lógica de Pago Automático y Entrega
+                                    const alreadyDelivered = currentChat.tags?.includes('entregado') || credentialsSentInChat(currentChat);
+                                    
+                                    if (alreadyDelivered) {
+                                        // Confirmar el pago de ventas existentes
+                                        currentChat.tags = (currentChat.tags || []).filter(t => t !== 'entregado' && t !== 'pago-pendiente');
+                                        if (!currentChat.tags.includes('pagado')) {
+                                            currentChat.tags.push('pagado');
+                                        }
+                                        currentChat.updatedAt = Date.now();
+                                        saveChats(chats);
+                                        io.emit('tag_updated', { from, tags: currentChat.tags });
+
+                                        // Sincronizar estado de ventas a pagado
+                                        const customerSales = sales.filter(s => s.customerId === from && !s.paid);
+                                        if (customerSales.length > 0) {
+                                            customerSales.forEach(s => s.paid = true);
+                                            saveSales(sales);
+                                            io.emit('sales_updated', sales);
+                                        }
+
+                                        const confirmMsg = '✅ *¡Pago verificado automáticamente!* Muchas gracias por tu compra. 🎉';
+                                        await smartSendMessage(from, confirmMsg);
+                                        const botMsg = { id: 'conf-'+Date.now(), from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
+                                        currentChat.messages.push({ ...botMsg, content: confirmMsg });
+                                        io.emit('message', botMsg);
+
+                                        if (ADMIN_PHONE) {
+                                            await smartSendMessage(ADMIN_PHONE, `✅ *PAGO AUTO-CONFIRMADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
+                                        }
+                                        
+                                        // Cancelar recordatorio de pago si existe
+                                        if (paymentReminderTimers[from]) {
+                                            clearTimeout(paymentReminderTimers[from]);
+                                            delete paymentReminderTimers[from];
+                                        }
+                                    } else {
+                                        // Aún no tiene cuenta entregada. Intentamos entregarla ahora y marcar como pagada.
+                                        console.log(`🤖 [AUTO] Intentando entrega y pago automático para ${customerName}`);
+                                        const deliveryResult = await executeDelivery(from, 'deliver_and_paid');
+                                        if (deliveryResult.success) {
+                                            if (ADMIN_PHONE) {
+                                                await smartSendMessage(ADMIN_PHONE, `✅ *ENTREGA Y PAGO AUTO-CONFIRMADO* para *${customerName}* (${from}).`);
+                                            }
+                                        } else {
+                                            console.error(`❌ [AUTO] Falló executeDelivery para ${customerName}:`, deliveryResult.error);
+                                            if (ADMIN_PHONE) {
+                                                await smartSendMessage(ADMIN_PHONE, `⚠️ *PAGO DETECTADO* de *${customerName}* (${from}) pero falló la entrega: ${deliveryResult.error}`);
+                                            }
+                                        }
+                                    }
+                                    saveChats(chats);
                                 } else {
                                     currentChat.lastImageAnalysis = visionResult.description;
                                 }
@@ -645,7 +698,9 @@ app.post('/webhook', async (req, res) => {
 
             const mediaId = msg.type !== 'text' ? msg[msg.type]?.id : null;
             const newMessage = { 
-                id: msg.id, from, 
+                id: msg.id, 
+                mediaId: mediaId,
+                from, 
                 body: msgBody, content: msgBody, 
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
                     ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
@@ -916,13 +971,23 @@ function handleIncomingMessage(from) {
 
     aiTimers[from] = setTimeout(async () => {
         const refreshedChat = chats[from];
+        
+        // Evitar que la IA responda si el último mensaje ya es del bot/sistema
+        const messages = refreshedChat.messages || [];
+        if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg.role === 'bot' || lastMsg.isMe) {
+                console.log(`ℹ️ [SISTEMA] Ignorando respuesta de IA para ${refreshedChat.customerName} porque el último mensaje ya es del bot.`);
+                delete aiTimers[from];
+                return;
+            }
+        }
+
         const lastUserMsg = refreshedChat.messages.filter(m => m.role === 'user').slice(-1)[0];
         if (!lastUserMsg) return;
 
         const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
 
-        // Lógica de Soporte, Venta, etc. (La misma que ya tienes)
-        // ... (Para brevedad, la lógica sigue igual pero ahora llama a un sendMessage unificado)
         processAIResponse(from, msgBodyLower);
     }, 15000);
 }
@@ -1017,11 +1082,17 @@ async function analyzeImage(buffer) {
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `Eres un asistente de análisis visual. Analiza la imagen y responde en este formato EXACTO:
+                { role: "system", content: `Eres un asistente de análisis visual experto en verificar comprobantes de pago de servicios bancarios colombianos (Nequi, Bancolombia, Daviplata, etc.).
+Analiza la imagen y responde en este formato EXACTO:
 TIPO: [COMPROBANTE_PAGO | MEME | CAPTURA_PANTALLA | SELFIE | PRODUCTO | OTRO]
 DESCRIPCION: [Breve descripción de 1 línea de lo que ves]
 
-Un COMPROBANTE_PAGO es un recibo de transferencia bancaria (Nequi, Bancolombia, Daviplata, etc) con montos, fechas y nombres. Si no tiene esas características, NO es un comprobante.` },
+Un COMPROBANTE_PAGO es un recibo real de transferencia bancaria. Para ser válido, DEBE mostrar claramente la mayor parte de la siguiente información:
+1. El logo o nombre del banco/billetera (Nequi, Bancolombia, Daviplata, etc.)
+2. El monto de la transacción (dinero transferido)
+3. La fecha y hora de la transacción
+4. Un número de referencia, ID de transacción, aprobación, o número de comprobante.
+Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, un meme, un saldo de cuenta sin transferencia, o una imagen borrosa donde no se leen los datos, clasifícala como OTRO.` },
                 { role: "user", content: [
                     { type: "text", text: "Analiza esta imagen." },
                     { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
