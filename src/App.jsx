@@ -12,7 +12,7 @@ const SERVER_URL = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? w
 const socket = io(SERVER_URL);
 
 function App() {
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState('simulator');
   const [chats, setChats] = useState({});
   const [selectedChat, setSelectedChat] = useState(null);
   const [settings, setSettings] = useState({ systemPrompt: '' });
