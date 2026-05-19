@@ -83,10 +83,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const formatMediaUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http')) return url;
+    
+    // Si ya es una URL absoluta correcta del mismo servidor, usarla tal cual
+    if (url.startsWith('http')) {
+      // Normalizar URLs antiguas: si apuntan al dominio de Railway pero la imagen está en /uploads o /api,
+      // convertirlas a rutas relativas para que el frontend use su propio origin
+      try {
+        const parsed = new URL(url);
+        if (parsed.pathname.startsWith('/uploads/') || parsed.pathname.startsWith('/api/media/')) {
+          // Usar el serverUrl como base
+          const base = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
+          return `${base}${parsed.pathname}`;
+        }
+      } catch(e) {}
+      return url;
+    }
+    
+    // Ruta relativa: prepend el serverUrl del socket
     const base = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${base}${path}`;
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${cleanPath}`;
   };
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
@@ -436,12 +452,27 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
                       
                       {msg.imageUrl && (
-                        <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5">
+                        <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5 min-h-[80px]">
                           <img 
                             src={formatMediaUrl(msg.imageUrl)} 
-                            alt="Media adjunta" 
+                            alt="Imagen" 
                             onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                             className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
+                            loading="lazy"
+                            onError={(e) => {
+                              // Si falla la URL original, intentar con la ruta proxy como fallback
+                              const original = e.target.src;
+                              if (!original.includes('/api/media/') && msg.id) {
+                                // Intentar a través del proxy con el ID del mensaje como mediaId
+                                const proxyUrl = formatMediaUrl(`/api/media/${msg.id}`);
+                                e.target.src = proxyUrl;
+                              } else {
+                                // Si ya falló el proxy, mostrar placeholder
+                                e.target.onerror = null;
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-3xl mb-1">image_not_supported</span><span class="text-[10px] font-bold">Imagen no disponible</span></div>';
+                              }
+                            }}
                           />
                         </div>
                       )}

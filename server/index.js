@@ -70,7 +70,11 @@ const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
-app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/uploads', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    next();
+}, express.static(UPLOADS_DIR));
 
 app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
 
@@ -138,6 +142,41 @@ let chats = loadChats();
 let settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
+
+// MIGRACIÓN: Normalizar URLs de imágenes antiguas a rutas relativas
+(function migrateMediaUrls() {
+    let fixed = 0;
+    for (const chatId in chats) {
+        const chat = chats[chatId];
+        if (!chat.messages) continue;
+        for (const msg of chat.messages) {
+            // Normalizar imageUrl
+            if (msg.imageUrl && msg.imageUrl.startsWith('http')) {
+                try {
+                    const parsed = new URL(msg.imageUrl);
+                    if (parsed.pathname.startsWith('/uploads/') || parsed.pathname.startsWith('/api/media/')) {
+                        msg.imageUrl = parsed.pathname;
+                        fixed++;
+                    }
+                } catch(e) {}
+            }
+            // Normalizar fileUrl
+            if (msg.fileUrl && msg.fileUrl.startsWith('http')) {
+                try {
+                    const parsed = new URL(msg.fileUrl);
+                    if (parsed.pathname.startsWith('/uploads/') || parsed.pathname.startsWith('/api/media/')) {
+                        msg.fileUrl = parsed.pathname;
+                        fixed++;
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+    if (fixed > 0) {
+        saveChats(chats);
+        console.log(`🔧 [MIGRACIÓN] ${fixed} URLs de media normalizadas a rutas relativas.`);
+    }
+})();
 
 const getPlatformNames = () => platforms.map(p => p.toLowerCase());
 
@@ -554,7 +593,7 @@ app.post('/webhook', async (req, res) => {
                         const fileName = `${Date.now()}-${from}.${ext}`;
                         const filePath = path.join(UPLOADS_DIR, fileName);
                         fs.writeFileSync(filePath, buffer);
-                        mediaUrl = `${BACKEND_URL}/uploads/${fileName}`;
+                        mediaUrl = `/uploads/${fileName}`;
                         
                         // GPT Vision analysis si es imagen
                         if (msg.type === 'image') {
@@ -609,10 +648,10 @@ app.post('/webhook', async (req, res) => {
                 id: msg.id, from, 
                 body: msgBody, content: msgBody, 
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
-                    ? (mediaUrl || (mediaId ? `${BACKEND_URL}/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
                 fileUrl: (msg.type === 'document' || msg.type === 'audio') 
-                    ? (mediaUrl || (mediaId ? `${BACKEND_URL}/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
                 timestampRaw: Date.now(), role: 'user' 
             };
