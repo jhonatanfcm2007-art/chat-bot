@@ -165,6 +165,19 @@ function App() {
       });
     });
 
+    socket.on('message_deleted', ({ chatId, messageId }) => {
+      setChats(prev => {
+        if (!prev[chatId]) return prev;
+        return {
+          ...prev,
+          [chatId]: {
+            ...prev[chatId],
+            messages: prev[chatId].messages.filter(m => m.id !== messageId && m.timestampRaw !== messageId)
+          }
+        };
+      });
+    });
+
     return () => {
       socket.off('message');
       socket.off('initial_chats');
@@ -174,6 +187,7 @@ function App() {
       socket.off('tag_updated');
       socket.off('platforms_updated');
       socket.off('providers_updated');
+      socket.off('message_deleted');
     };
   }, []);
   
@@ -428,6 +442,12 @@ function App() {
     }
   };
 
+  const handleDeleteMessage = (chatId, messageId) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este mensaje?')) {
+      socket.emit('delete_message', { chatId, messageId });
+    }
+  };
+
   const handleBulkClearTags = (chatIds) => {
     if (!chatIds || chatIds.length === 0) return;
     if (window.confirm(`¿Deseas quitar las etiquetas de estos ${chatIds.length} chats? Las conversaciones NO se borrarán.`)) {
@@ -503,6 +523,7 @@ function App() {
             onSale={handleSale}
             onUpdateTag={handleUpdateChatTag}
             onDeleteChat={handleDeleteChat}
+            onDeleteMessage={handleDeleteMessage}
             onBulkClearTags={handleBulkClearTags}
             onToggleAI={handleToggleAI}
             serverUrl={SERVER_URL}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onBulkClearTags, onToggleAI, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -444,59 +444,69 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         </span>
                       </div>
                     )}
-                    <div className={`flex flex-col ${msg.role === 'user' ? 'items-start' : 'items-end'}`}>
-                      <div className={`max-w-[75%] md:max-w-[60%] transition-all relative ${
-                      msg.role === 'user' 
-                        ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
-                        : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
-                    } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
-                      
-                      {msg.imageUrl && (
-                        <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5 min-h-[80px]">
-                          <img 
-                            src={formatMediaUrl(msg.imageUrl)} 
-                            alt="Imagen" 
-                            onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
-                            className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
-                            loading="lazy"
-                            onError={(e) => {
-                              // Si falla la URL original, intentar con la ruta proxy como fallback
-                              const original = e.target.src;
-                              if (!original.includes('/api/media/') && msg.mediaId) {
-                                // Intentar a través del proxy con el ID del media como mediaId
-                                const proxyUrl = formatMediaUrl(`/api/media/${msg.mediaId}`);
-                                e.target.src = proxyUrl;
-                              } else {
-                                // Si ya falló el proxy, mostrar placeholder
-                                e.target.onerror = null;
-                                e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-3xl mb-1">image_not_supported</span><span class="text-[10px] font-bold">Imagen no disponible</span></div>';
-                              }
-                            }}
-                          />
-                        </div>
-                      )}
-                      
-                      {msg.fileUrl && msg.content?.includes('[AUDIO]') && (
-                        <div className="mb-2 w-full max-w-[240px]">
-                           <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
-                        </div>
-                      )}
+                    <div className={`w-full flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`flex items-center gap-2 group max-w-[75%] md:max-w-[60%] ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
+                        <div className={`transition-all relative ${
+                          msg.role === 'user' 
+                            ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
+                            : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
+                        } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
+                          
+                          {msg.imageUrl && (
+                            <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5 min-h-[80px]">
+                              <img 
+                                src={formatMediaUrl(msg.imageUrl)} 
+                                alt="Imagen" 
+                                onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
+                                className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
+                                loading="lazy"
+                                onError={(e) => {
+                                  // Si falla la URL original, intentar con la ruta proxy como fallback
+                                  const original = e.target.src;
+                                  if (!original.includes('/api/media/') && msg.mediaId) {
+                                    // Intentar a través del proxy con el ID del media como mediaId
+                                    const proxyUrl = formatMediaUrl(`/api/media/${msg.mediaId}`);
+                                    e.target.src = proxyUrl;
+                                  } else {
+                                    // Si ya falló el proxy, mostrar placeholder
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-3xl mb-1">image_not_supported</span><span class="text-[10px] font-bold">Imagen no disponible</span></div>';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {msg.fileUrl && msg.content?.includes('[AUDIO]') && (
+                            <div className="mb-2 w-full max-w-[240px]">
+                               <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
+                            </div>
+                          )}
 
-                      <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">
-                        {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
-                      </p>
-                      
-                      <div className="flex justify-end items-center gap-1 mt-1">
-                        <span className="text-[9px] text-slate-400 font-medium">
-                          {timeString}
-                        </span>
-                        {msg.role !== 'user' && (
-                           <span className="material-symbols-outlined text-[10px] text-primary">done_all</span>
-                        )}
+                          <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">
+                            {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
+                          </p>
+                          
+                          <div className="flex justify-end items-center gap-1 mt-1">
+                            <span className="text-[9px] text-slate-400 font-medium">
+                              {timeString}
+                            </span>
+                            {msg.role !== 'user' && (
+                               <span className="material-symbols-outlined text-[10px] text-primary">done_all</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => onDeleteMessage && onDeleteMessage(selectedChat, msg.id || msg.timestampRaw)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-400 hover:text-rose-500 p-1.5 rounded-full hover:bg-slate-200/50 flex items-center justify-center cursor-pointer flex-shrink-0"
+                          title="Eliminar mensaje para mí"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
                       </div>
                     </div>
-                  </div>
                   </React.Fragment>
                   );
                 })}

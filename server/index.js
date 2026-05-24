@@ -1171,6 +1171,15 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('delete_message', ({ chatId, messageId }) => {
+        if (chats[chatId] && chats[chatId].messages) {
+            chats[chatId].messages = chats[chatId].messages.filter(m => m.id !== messageId && m.timestampRaw !== messageId);
+            saveChats(chats);
+            io.emit('message_deleted', { chatId, messageId });
+            console.log(`🗑️ [SISTEMA] Mensaje ${messageId} del chat ${chatId} eliminado.`);
+        }
+    });
+
     socket.on('toggle_ai', ({ chatId, disabled }) => {
         if (chats[chatId]) {
             chats[chatId].aiDisabled = disabled;
