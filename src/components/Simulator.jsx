@@ -9,6 +9,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [openTagMenu, setOpenTagMenu] = useState(null);
+  const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const chatEndRef = useRef(null);
 
@@ -31,6 +32,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     const handleCloseMenu = () => {
       setOpenTagMenu(null);
       setIsFilterMenuOpen(false);
+      setActiveMessageMenu(null);
     };
     window.addEventListener('click', handleCloseMenu);
     return () => window.removeEventListener('click', handleCloseMenu);
@@ -445,7 +447,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       </div>
                     )}
                     <div className={`w-full flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <div className={`flex items-center gap-2 group max-w-[75%] md:max-w-[60%] ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
+                      <div className={`flex items-center gap-2 group max-w-[75%] md:max-w-[60%] relative ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
                         <div className={`transition-all relative ${
                           msg.role === 'user' 
                             ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
@@ -498,13 +500,41 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           </div>
                         </div>
 
-                        <button 
-                          onClick={() => onDeleteMessage && onDeleteMessage(selectedChat, msg.id || msg.timestampRaw)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-400 hover:text-rose-500 p-1.5 rounded-full hover:bg-slate-200/50 flex items-center justify-center cursor-pointer flex-shrink-0"
-                          title="Eliminar mensaje para mí"
-                        >
-                          <span className="material-symbols-outlined text-base">delete</span>
-                        </button>
+                        {/* Three dots button */}
+                        <div className="relative">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMessageMenu(
+                                activeMessageMenu && activeMessageMenu.index === idx 
+                                  ? null 
+                                  : { index: idx, messageId: msg.id || msg.timestampRaw }
+                              );
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-200/50 flex items-center justify-center cursor-pointer flex-shrink-0"
+                            title="Opciones"
+                          >
+                            <span className="material-symbols-outlined text-base">more_vert</span>
+                          </button>
+
+                          {activeMessageMenu && activeMessageMenu.index === idx && (
+                            <div 
+                              className={`absolute bg-white rounded-xl shadow-2xl border border-slate-100 py-1 z-50 min-w-[140px] animate-in fade-in zoom-in-95 duration-100 ${msg.role === 'user' ? 'left-0 mt-1' : 'right-0 mt-1'}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={() => {
+                                  onDeleteMessage && onDeleteMessage(selectedChat, activeMessageMenu.messageId);
+                                  setActiveMessageMenu(null);
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors text-[11px] font-bold text-red-500 flex items-center gap-2 uppercase tracking-wider"
+                              >
+                                <span className="material-symbols-outlined text-sm">delete</span>
+                                Eliminar para mí
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </React.Fragment>
