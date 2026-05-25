@@ -65,6 +65,7 @@ const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
+const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -135,6 +136,14 @@ function loadProviders() {
 }
 function saveProviders(data) { fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2)); }
 
+function loadCampaigns() {
+    try {
+        if (fs.existsSync(CAMPAIGNS_FILE)) return JSON.parse(fs.readFileSync(CAMPAIGNS_FILE, 'utf-8'));
+    } catch (err) { console.error('Error loading campaigns:', err); }
+    return [];
+}
+function saveCampaigns(data) { fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify(data, null, 2)); }
+
 // --- DATA INITIALIZATION ---
 let inventory = loadInventory();
 let sales = loadSales();
@@ -142,6 +151,7 @@ let chats = loadChats();
 let settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
+let campaigns = loadCampaigns();
 
 // MIGRACIÓN: Normalizar URLs de imágenes antiguas a rutas relativas
 (function migrateMediaUrls() {
@@ -1139,6 +1149,89 @@ app.get('/api/media/:mediaId', async (req, res) => {
     }
 });
 
+// --- LOGICA DE CAMPAÑAS MASIVAS ---
+const activeCampaigns = {};
+
+async function processCampaign(campaignId) {
+    if (activeCampaigns[campaignId]) return;
+    activeCampaigns[campaignId] = true;
+    console.log(`📢 [CAMPAÑAS] Iniciando procesamiento de campaña ${campaignId}`);
+
+    while (activeCampaigns[campaignId]) {
+        const campaign = campaigns.find(c => c.id === campaignId);
+        if (!campaign || campaign.status !== 'processing') {
+            console.log(`📢 [CAMPAÑAS] Deteniendo procesamiento de campaña ${campaignId}. Estado actual: ${campaign ? campaign.status : 'inexistente'}`);
+            delete activeCampaigns[campaignId];
+            break;
+        }
+
+        const nextContact = campaign.contacts.find(c => c.status === 'pending');
+        if (!nextContact) {
+            campaign.status = 'completed';
+            saveCampaigns(campaigns);
+            io.emit('campaigns_updated', campaigns);
+            delete activeCampaigns[campaignId];
+            console.log(`📢 [CAMPAÑAS] Campaña ${campaignId} completada.`);
+            break;
+        }
+
+        try {
+            const targetChat = chats[nextContact.chatId];
+            const customerName = targetChat?.customerName || nextContact.name || 'Cliente';
+            const parsedMessage = campaign.message.replace(/\{\{\s*nombre\s*\}\}/gi, customerName);
+
+            console.log(`📡 [CAMPAÑAS] Enviando mensaje a ${nextContact.name} (${nextContact.chatId})`);
+            await smartSendMessage(nextContact.chatId, parsedMessage);
+
+            const m = {
+                id: 'camp-' + Date.now() + '-' + Math.random(),
+                from: nextContact.chatId,
+                body: parsedMessage,
+                content: parsedMessage,
+                isMe: true,
+                role: 'bot',
+                timestampRaw: Date.now(),
+                timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            if (!chats[nextContact.chatId]) {
+                chats[nextContact.chatId] = { from: nextContact.chatId, customerName, messages: [] };
+            }
+            chats[nextContact.chatId].messages.push(m);
+            chats[nextContact.chatId].updatedAt = Date.now();
+            saveChats(chats);
+            io.emit('message', { ...m, customerName });
+
+            nextContact.status = 'sent';
+            campaign.sentCount++;
+        } catch (err) {
+            console.error(`❌ [CAMPAÑAS ERROR] al enviar a ${nextContact.chatId}:`, err);
+            nextContact.status = 'failed';
+            nextContact.error = err.message || 'Error desconocido';
+            campaign.failedCount++;
+        }
+
+        saveCampaigns(campaigns);
+        io.emit('campaigns_updated', campaigns);
+
+        // Espera con delay dinámico y aleatorio +/- 20%
+        const baseDelay = (campaign.delay || 20) * 1000;
+        const randomDelay = Math.floor(baseDelay * (0.8 + Math.random() * 0.4));
+        
+        let elapsed = 0;
+        const interval = 1000;
+        while (elapsed < randomDelay) {
+            await delay(interval);
+            elapsed += interval;
+            const currentCampaign = campaigns.find(c => c.id === campaignId);
+            if (!currentCampaign || currentCampaign.status !== 'processing') {
+                delete activeCampaigns[campaignId];
+                return;
+            }
+        }
+    }
+}
+
 app.get('/api/inventory', (req, res) => res.json(inventory));
 app.post('/api/inventory', (req, res) => { inventory = req.body; saveInventory(inventory); io.emit('inventory_updated', inventory); res.json({success:true}); });
 app.get('/api/sales', (req, res) => res.json(sales));
@@ -1155,6 +1248,82 @@ io.on('connection', (socket) => {
     socket.emit('initial_settings', settings);
     socket.emit('platforms_updated', platforms);
     socket.emit('providers_updated', providers);
+    socket.emit('campaigns_updated', campaigns);
+
+    socket.on('create_campaign', (data) => {
+        const targets = [];
+        const isAll = data.targetTags === 'all' || (Array.isArray(data.targetTags) && data.targetTags.includes('all'));
+        
+        Object.keys(chats).forEach(chatId => {
+            if (ADMIN_PHONE && chatId === ADMIN_PHONE) return;
+            const chat = chats[chatId];
+            const tags = chat.tags || [];
+            
+            let matches = false;
+            if (isAll) {
+                matches = true;
+            } else if (Array.isArray(data.targetTags)) {
+                matches = data.targetTags.some(t => tags.includes(t));
+            }
+            
+            if (matches) {
+                targets.push({
+                    chatId: chatId,
+                    name: chat.customerName || chatId,
+                    status: 'pending'
+                });
+            }
+        });
+        
+        const newCampaign = {
+            id: 'camp-' + Date.now(),
+            name: data.name,
+            message: data.message,
+            targetTags: data.targetTags,
+            delay: parseInt(data.delay) || 20,
+            status: 'pending',
+            totalContacts: targets.length,
+            sentCount: 0,
+            failedCount: 0,
+            contacts: targets,
+            createdAt: Date.now()
+        };
+        
+        campaigns.push(newCampaign);
+        saveCampaigns(campaigns);
+        io.emit('campaigns_updated', campaigns);
+    });
+
+    socket.on('start_campaign', (campaignId) => {
+        const campaign = campaigns.find(c => c.id === campaignId);
+        if (campaign && (campaign.status === 'pending' || campaign.status === 'paused')) {
+            campaign.status = 'processing';
+            saveCampaigns(campaigns);
+            io.emit('campaigns_updated', campaigns);
+            processCampaign(campaignId);
+        }
+    });
+
+    socket.on('pause_campaign', (campaignId) => {
+        const campaign = campaigns.find(c => c.id === campaignId);
+        if (campaign && campaign.status === 'processing') {
+            campaign.status = 'paused';
+            saveCampaigns(campaigns);
+            io.emit('campaigns_updated', campaigns);
+            if (activeCampaigns[campaignId]) {
+                delete activeCampaigns[campaignId];
+            }
+        }
+    });
+
+    socket.on('delete_campaign', (campaignId) => {
+        campaigns = campaigns.filter(c => c.id !== campaignId);
+        saveCampaigns(campaigns);
+        io.emit('campaigns_updated', campaigns);
+        if (activeCampaigns[campaignId]) {
+            delete activeCampaigns[campaignId];
+        }
+    });
 
     socket.on('sync_settings', (data) => { settings = data; saveSettings(settings); });
     socket.on('sync_inventory', (data) => { inventory = data; saveInventory(inventory); socket.broadcast.emit('inventory_updated', inventory); });

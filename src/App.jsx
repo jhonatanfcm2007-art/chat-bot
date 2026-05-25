@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Simulator from './components/Simulator';
 import AIAssistant from './components/AIAssistant';
+import Campaigns from './components/Campaigns';
 
 import io from 'socket.io-client';
 
@@ -19,6 +20,7 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [providers, setProviders] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   
   // Estados para controlar que los datos ya se cargaron inicialmente
   const [initialized, setInitialized] = useState({
@@ -178,6 +180,12 @@ function App() {
       });
     });
 
+    socket.on('campaigns_updated', (data) => {
+      if (Array.isArray(data)) {
+        setCampaigns(data);
+      }
+    });
+
     return () => {
       socket.off('message');
       socket.off('initial_chats');
@@ -188,6 +196,7 @@ function App() {
       socket.off('platforms_updated');
       socket.off('providers_updated');
       socket.off('message_deleted');
+      socket.off('campaigns_updated');
     };
   }, []);
   
@@ -533,6 +542,14 @@ function App() {
         return (
           <AIAssistant 
             settings={settings}
+            socket={socket}
+          />
+        );
+      case 'campaigns':
+        return (
+          <Campaigns 
+            campaigns={campaigns}
+            chats={chats}
             socket={socket}
           />
         );
