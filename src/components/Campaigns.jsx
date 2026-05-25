@@ -4,6 +4,7 @@ const Campaigns = ({ campaigns, chats, socket }) => {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [selectedTags, setSelectedTags] = useState(['all']);
+  const [excludedTags, setExcludedTags] = useState([]);
   const [delaySecs, setDelaySecs] = useState(20);
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [previewName, setPreviewName] = useState('Juan');
@@ -44,20 +45,40 @@ const Campaigns = ({ campaigns, chats, socket }) => {
     }
   };
 
+  const handleExcludeTagToggle = (tag) => {
+    setExcludedTags(prev => {
+      if (prev.includes(tag)) {
+        return prev.filter(t => t !== tag);
+      } else {
+        return [...prev, tag];
+      }
+    });
+  };
+
   // Get recipient count based on selection
   const getRecipientCount = () => {
     const isAll = selectedTags.includes('all');
     let count = 0;
     Object.keys(chats).forEach(chatId => {
-      // Exclude admin
       const chat = chats[chatId];
+      const tags = chat.tags || [];
+      
+      let matches = false;
       if (isAll) {
-        count++;
+        matches = true;
       } else {
-        const tags = chat.tags || [];
-        if (selectedTags.some(t => tags.includes(t))) {
-          count++;
+        matches = selectedTags.some(t => tags.includes(t));
+      }
+      
+      if (matches && excludedTags.length > 0) {
+        const isExcluded = excludedTags.some(t => tags.includes(t));
+        if (isExcluded) {
+          matches = false;
         }
+      }
+      
+      if (matches) {
+        count++;
       }
     });
     return count;
@@ -71,12 +92,14 @@ const Campaigns = ({ campaigns, chats, socket }) => {
       name,
       message,
       targetTags: selectedTags,
+      excludeTags: excludedTags,
       delay: delaySecs
     });
 
     setName('');
     setMessage('');
     setSelectedTags(['all']);
+    setExcludedTags([]);
     setDelaySecs(20);
     setIsCreatedSuccess(true);
     setTimeout(() => setIsCreatedSuccess(false), 3000);
@@ -142,7 +165,7 @@ const Campaigns = ({ campaigns, chats, socket }) => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-wider text-on-surface-variant mb-1">Segmentación de Clientes</label>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-on-surface-variant mb-1">Segmentación de Clientes (Incluir)</label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       <button
                         type="button"
@@ -166,6 +189,29 @@ const Campaigns = ({ campaigns, chats, socket }) => {
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
                               selectedTags.includes(tag) 
                                 ? 'bg-primary text-white' 
+                                : 'bg-white text-on-surface-variant border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {tag} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-on-surface-variant mb-1">Excluir Clientes Con Etiquetas</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {allTags.map(tag => {
+                        const count = Object.values(chats).filter(c => c.tags?.includes(tag)).length;
+                        return (
+                          <button
+                            key={'exclude-' + tag}
+                            type="button"
+                            onClick={() => handleExcludeTagToggle(tag)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                              excludedTags.includes(tag) 
+                                ? 'bg-red-500 text-white shadow-sm' 
                                 : 'bg-white text-on-surface-variant border border-slate-200 hover:bg-slate-50'
                             }`}
                           >
@@ -338,7 +384,18 @@ const Campaigns = ({ campaigns, chats, socket }) => {
                   {/* Stats header */}
                   <div className="mb-6 flex-shrink-0">
                     <span className="block text-[8px] font-black uppercase tracking-wider text-on-surface-variant mb-1">Detalle de Ejecución</span>
-                    <h4 className="font-black text-lg text-on-surface truncate mb-3">{selectedCampaign.name}</h4>
+                    <h4 className="font-black text-lg text-on-surface truncate mb-1">{selectedCampaign.name}</h4>
+                    
+                    <div className="flex flex-wrap gap-1.5 mb-4 text-[9px] font-extrabold uppercase">
+                      <span className="bg-primary/15 text-primary px-2.5 py-1 rounded-md">
+                        Incluye: {selectedCampaign.targetTags === 'all' || (Array.isArray(selectedCampaign.targetTags) && selectedCampaign.targetTags.includes('all')) ? 'Todos' : (Array.isArray(selectedCampaign.targetTags) ? selectedCampaign.targetTags.join(', ') : selectedCampaign.targetTags)}
+                      </span>
+                      {selectedCampaign.excludeTags && selectedCampaign.excludeTags.length > 0 && (
+                        <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-md">
+                          Excluye: {selectedCampaign.excludeTags.join(', ')}
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-3 gap-2.5">
                       <div className="bg-white border border-slate-100 p-3 rounded-2xl text-center">

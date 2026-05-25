@@ -1266,6 +1266,14 @@ io.on('connection', (socket) => {
                 matches = data.targetTags.some(t => tags.includes(t));
             }
             
+            // Lógica de exclusión
+            if (matches && Array.isArray(data.excludeTags) && data.excludeTags.length > 0) {
+                const isExcluded = data.excludeTags.some(t => tags.includes(t));
+                if (isExcluded) {
+                    matches = false;
+                }
+            }
+            
             if (matches) {
                 targets.push({
                     chatId: chatId,
@@ -1280,6 +1288,7 @@ io.on('connection', (socket) => {
             name: data.name,
             message: data.message,
             targetTags: data.targetTags,
+            excludeTags: data.excludeTags || [],
             delay: parseInt(data.delay) || 20,
             status: 'pending',
             totalContacts: targets.length,
