@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
@@ -457,24 +457,23 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           {(msg.imageUrl || msg.imageBase64) && (
                             <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5 min-h-[80px]">
                               <img 
-                                src={msg.imageBase64 || formatMediaUrl(msg.imageUrl)} 
+                                src={getImageSrc(msg, selectedChat)} 
                                 alt="Imagen" 
-                                onClick={() => setFullscreenImage(msg.imageBase64 || formatMediaUrl(msg.imageUrl))}
+                                onClick={() => setFullscreenImage(getImageSrc(msg, selectedChat))}
                                 className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
                                 loading="lazy"
                                 onError={(e) => {
-                                  // Solo intentar fallbacks si no tenemos base64
-                                  if (msg.imageBase64) { e.target.onerror = null; return; }
-                                  const original = e.target.src;
-                                  if (!original.includes('/api/media/') && msg.mediaId) {
-                                    // Intentar a través del proxy con el ID del media como mediaId
-                                    const proxyUrl = formatMediaUrl(`/api/media/${msg.mediaId}`);
-                                    e.target.src = proxyUrl;
-                                  } else {
-                                    // Si ya falló el proxy, mostrar placeholder
-                                    e.target.onerror = null;
-                                    e.target.style.display = 'none';
-                                    e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-3xl mb-1">image_not_supported</span><span class="text-[10px] font-bold">Imagen no disponible</span></div>';
+                                  const t = e.target;
+                                  // Fallback 1: usar imageBase64 inline si existe
+                                  if (msg.imageBase64 && t.src !== msg.imageBase64) {
+                                    t.src = msg.imageBase64;
+                                    return;
+                                  }
+                                  // Fallback 2: mostrar placeholder si todo fallo
+                                  t.onerror = null;
+                                  t.style.display = "none";
+                                  if (t.parentElement) {
+                                    t.parentElement.innerHTML = "<div style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;color:#94a3b8;gap:4px\"><span class=\"material-symbols-outlined\" style=\"font-size:28px\">broken_image</span><span style=\"font-size:10px;font-weight:700\">Imagen no disponible</span></div>";
                                   }
                                 }}
                               />
@@ -707,10 +706,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     <div 
                       key={i} 
                       className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => setFullscreenImage(msg.imageBase64 || formatMediaUrl(msg.imageUrl))}
+                      onClick={() => setFullscreenImage(getImageSrc(msg, selectedChat))}
                     >
                       <img 
-                        src={msg.imageBase64 || formatMediaUrl(msg.imageUrl)} 
+                        src={getImageSrc(msg, selectedChat)} 
                         alt="Comprobante" 
                         className="w-full h-full object-cover"
                       />

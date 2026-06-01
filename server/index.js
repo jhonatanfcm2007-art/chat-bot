@@ -24,7 +24,8 @@ const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    maxHttpBufferSize: 50 * 1024 * 1024  // 50MB para soportar imágenes grandes
 });
 
 const openai = (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 20)
@@ -1160,6 +1161,56 @@ Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, u
 }
 
 // --- API & SOCKETS ---
+// Endpoint dedicado para servir imagenes por chatId + msgId
+// Busca en: 1) base64 en chats.json  2) disco  3) devuelve 404
+app.get('/api/image/:chatId/:msgId', (req, res) => {
+    try {
+        const chatId = decodeURIComponent(req.params.chatId);
+        const msgId = req.params.msgId;
+        const chat = chats[chatId];
+        if (!chat || !chat.messages) return res.status(404).send('Chat no encontrado');
+
+        const msg = chat.messages.find(function(m) {
+            return m.id === msgId || String(m.timestampRaw) === msgId || String(m.id) === msgId;
+        });
+        if (!msg) return res.status(404).send('Mensaje no encontrado');
+
+        // 1. Prioridad: base64 inline almacenado
+        if (msg.imageBase64) {
+            const matches = msg.imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+            if (matches) {
+                const mimeType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                res.setHeader('Content-Type', mimeType);
+                res.setHeader('Cache-Control', 'public, max-age=604800');
+                return res.send(buffer);
+            }
+        }
+
+        // 2. Fallback: leer desde disco y guardar base64
+        if (msg.imageUrl && msg.imageUrl.startsWith('/uploads/')) {
+            const filePath = path.join(DATA_DIR, msg.imageUrl);
+            if (fs.existsSync(filePath)) {
+                const buffer = fs.readFileSync(filePath);
+                try {
+                    const ext = msg.imageUrl.split('.').pop().toLowerCase();
+                    const mimeType = ext === 'webp' ? 'image/webp' : (ext === 'png' ? 'image/png' : 'image/jpeg');
+                    msg.imageBase64 = 'data:' + mimeType + ';base64,' + buffer.toString('base64');
+                    saveChats(chats);
+                } catch(e) {}
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=604800');
+                return res.send(buffer);
+            }
+        }
+
+        res.status(404).send('Imagen no disponible');
+    } catch(err) {
+        console.error('Error en /api/image:', err.message);
+        res.status(500).send('Error interno');
+    }
+});
+
 app.get('/api/media/:mediaId', async (req, res) => {
     const { mediaId } = req.params;
     if (!WHATSAPP_TOKEN) return res.status(500).send('No token');
