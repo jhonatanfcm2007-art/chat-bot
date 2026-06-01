@@ -1149,6 +1149,48 @@ Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, u
 }
 
 // --- API & SOCKETS ---
+app.get('/api/diagnostico', async (req, res) => {
+    const results = {
+        tokenConfigured: !!WHATSAPP_TOKEN,
+        phoneIdConfigured: !!PHONE_ID,
+        openaiKeyConfigured: !!process.env.OPENAI_API_KEY,
+        uploadsDirExists: fs.existsSync(UPLOADS_DIR),
+        uploadsDirWritable: false,
+        metaApiConnection: 'unknown',
+        metaApiError: null
+    };
+
+    try {
+        const testFile = path.join(UPLOADS_DIR, 'test.txt');
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        results.uploadsDirWritable = true;
+    } catch (e) {
+        results.uploadsDirWritable = false;
+        results.uploadsDirError = e.message;
+    }
+
+    if (WHATSAPP_TOKEN) {
+        try {
+            const metaRes = await fetch(`https://graph.facebook.com/v20.0/1041155805754038`, {
+                headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+            });
+            const data = await metaRes.json();
+            if (metaRes.ok) {
+                results.metaApiConnection = 'OK';
+            } else {
+                results.metaApiConnection = 'FAILED';
+                results.metaApiError = data.error || data;
+            }
+        } catch (e) {
+            results.metaApiConnection = 'ERROR';
+            results.metaApiError = e.message;
+        }
+    }
+
+    res.json(results);
+});
+
 app.get('/api/media/:mediaId', async (req, res) => {
     const { mediaId } = req.params;
     if (!WHATSAPP_TOKEN) return res.status(500).send('No token');
