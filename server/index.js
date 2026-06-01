@@ -77,7 +77,14 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static(UPLOADS_DIR));
 
-app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
+// Servir archivos estáticos del frontend en producción
+const DIST_DIR = path.join(__dirname, '../dist');
+if (fs.existsSync(DIST_DIR)) {
+    console.log('✅ [SISTEMA] Sirviendo archivos estáticos del frontend desde:', DIST_DIR);
+    app.use(express.static(DIST_DIR));
+} else {
+    app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
+}
 
 function loadInventory() {
     try {
@@ -1492,6 +1499,15 @@ async function getAIResponse(message, history = []) {
         console.error('❌ OpenAI API Error:', e.message);
         return `⚠️ Error IA: ${e.message || 'Sin respuesta del cerebro'}`; 
     }
+}
+
+if (fs.existsSync(DIST_DIR)) {
+    app.get(/.*/, (req, res, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/socket.io')) {
+            return next();
+        }
+        res.sendFile(path.join(DIST_DIR, 'index.html'));
+    });
 }
 
 const PORT = process.env.PORT || 3000;
