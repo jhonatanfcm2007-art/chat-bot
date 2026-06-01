@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config(); 
 
 import express from 'express';
@@ -78,7 +78,25 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static(UPLOADS_DIR));
 
-app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
+// Servir el frontend compilado desde el backend (para que todo este en el mismo dominio)
+const FRONTEND_DIST = path.join(__dirname, '../dist');
+if (fs.existsSync(FRONTEND_DIST)) {
+    app.use(express.static(FRONTEND_DIST));
+    // Para rutas SPA: cualquier ruta que no sea API devuelve index.html
+    app.get('/{*splat}', (req, res, next) => {
+        if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.startsWith('/webhook')) {
+            return next();
+        }
+        const indexPath = path.join(FRONTEND_DIST, 'index.html');
+        if (fs.existsSync(indexPath)) {
+            res.sendFile(indexPath);
+        } else {
+            next();
+        }
+    });
+} else {
+    app.get('/', (req, res) => res.send('Backend Chatbot CRM running'));
+}
 
 function loadInventory() {
     try {
@@ -1163,7 +1181,7 @@ Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, u
 // --- API & SOCKETS ---
 // Endpoint dedicado para servir imagenes por chatId + msgId
 // Busca en: 1) base64 en chats.json  2) disco  3) devuelve 404
-app.get('/api/image/:chatId/:msgId', (req, res) => {
+app.get('/api/image/:chatId/:msgId', async (req, res) => {
     try {
         const chatId = decodeURIComponent(req.params.chatId);
         const msgId = req.params.msgId;
@@ -1201,6 +1219,29 @@ app.get('/api/image/:chatId/:msgId', (req, res) => {
                 res.setHeader('Content-Type', 'image/jpeg');
                 res.setHeader('Cache-Control', 'public, max-age=604800');
                 return res.send(buffer);
+            }
+        }
+
+        // 3. Ultimo fallback: intentar re-descargar desde Meta si tiene mediaId
+        if (msg.mediaId && WHATSAPP_TOKEN) {
+            try {
+                console.log('[/api/image] Intentando re-descarga desde Meta para mediaId:', msg.mediaId);
+                const buffer = await downloadMetaMedia(msg.mediaId);
+                if (buffer) {
+                    const mimeType = 'image/jpeg';
+                    msg.imageBase64 = 'data:' + mimeType + ';base64,' + buffer.toString('base64');
+                    if (!msg.imageUrl || !msg.imageUrl.startsWith('/uploads/')) {
+                        const fileName = Date.now() + '-rec.' + (msg.mediaId ? 'jpg' : 'jpg');
+                        const filePath = path.join(UPLOADS_DIR, fileName);
+                        try { fs.writeFileSync(filePath, buffer); msg.imageUrl = '/uploads/' + fileName; } catch(e) {}
+                    }
+                    saveChats(chats);
+                    res.setHeader('Content-Type', mimeType);
+                    res.setHeader('Cache-Control', 'public, max-age=604800');
+                    return res.send(buffer);
+                }
+            } catch(metaErr) {
+                console.error('[/api/image] Re-descarga Meta fallida:', metaErr.message);
             }
         }
 
