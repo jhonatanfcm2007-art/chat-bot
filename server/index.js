@@ -738,7 +738,8 @@ app.post('/webhook', async (req, res) => {
             
             // --- MANEJO DE AUDIO (Whisper) ---
             if (msg.type === 'audio' && newMessage.fileUrl) {
-                const filePath = path.join(__dirname, newMessage.fileUrl);
+                const fileName = path.basename(newMessage.fileUrl);
+                const filePath = path.join(UPLOADS_DIR, fileName);
                 if (fs.existsSync(filePath)) {
                     console.log(`🎙️ Transcribiendo audio de ${customerName}...`);
                     try {
@@ -1206,6 +1207,7 @@ app.get('/api/media/:mediaId', async (req, res) => {
         else if (buffer[0] === 0x89 && buffer[1] === 0x50) contentType = 'image/png';
         else if (buffer[0] === 0x52 && buffer[1] === 0x49) contentType = 'image/webp';
         else if (buffer[0] === 0x47 && buffer[1] === 0x49) contentType = 'image/gif';
+        else if (buffer[0] === 0x4F && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53) contentType = 'audio/ogg';
         
         res.setHeader('Content-Type', contentType);
         res.setHeader('Cache-Control', 'public, max-age=86400');

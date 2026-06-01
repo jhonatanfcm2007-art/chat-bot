@@ -481,7 +481,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                             </div>
                           )}
                           
-                          {msg.fileUrl && msg.content?.includes('[AUDIO]') && (
+                          {msg.fileUrl && (msg.fileUrl.endsWith('.ogg') || msg.fileUrl.endsWith('.opus') || msg.fileUrl.endsWith('.mp3') || msg.content?.includes('[AUDIO]') || msg.content?.includes('🎙️ (Audio)')) && (
                             <div className="mb-2 w-full max-w-[240px]">
                                <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
                             </div>
