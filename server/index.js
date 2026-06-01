@@ -188,6 +188,34 @@ let campaigns = loadCampaigns();
     }
 })();
 
+
+// MIGRACION 2: Convertir imagenes en disco a base64 inline para persistencia
+(function migrateImagesToBase64() {
+    var converted = 0;
+    for (var chatId in chats) {
+        var chat = chats[chatId];
+        if (!chat.messages) continue;
+        for (var j = 0; j < chat.messages.length; j++) {
+            var msg = chat.messages[j];
+            if (msg.imageUrl && msg.imageUrl.startsWith('/uploads/') && !msg.imageBase64) {
+                try {
+                    var filePath = path.join(DATA_DIR, msg.imageUrl);
+                    if (fs.existsSync(filePath)) {
+                        var buffer = fs.readFileSync(filePath);
+                        var ext = msg.imageUrl.split('.').pop().toLowerCase();
+                        var mimeType = ext === 'webp' ? 'image/webp' : (ext === 'png' ? 'image/png' : 'image/jpeg');
+                        msg.imageBase64 = 'data:' + mimeType + ';base64,' + buffer.toString('base64');
+                        converted++;
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+    if (converted > 0) {
+        saveChats(chats);
+        console.log('[MIGRACION 2] ' + converted + ' imagenes convertidas a base64 inline para persistencia.');
+    }
+})();
 const getPlatformNames = () => platforms.map(p => p.toLowerCase());
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -199,7 +227,7 @@ function scheduleRecovery(to) {
     if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
     
     const chat = chats[to];
-    if (!chat) return;
+    if (!chat || chat.isBlocked) return;
 
     // No programar si ya tiene etiquetas de compra o pago en progreso
     const hasActiveTransaction = (chat.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
@@ -207,7 +235,7 @@ function scheduleRecovery(to) {
 
     recoveryTimers[to] = setTimeout(async () => {
         const c = chats[to];
-        if (!c) return;
+        if (!c || c.isBlocked) return;
         
         // Verificar de nuevo al momento de ejecutar
         const stillEligible = !(c.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
@@ -244,7 +272,7 @@ function schedulePaymentReminder(to) {
     
     paymentReminderTimers[to] = setTimeout(async () => {
         const c = chats[to];
-        if (!c) { delete paymentReminderTimers[to]; return; }
+        if (!c || c.isBlocked) { delete paymentReminderTimers[to]; return; }
         
         // Solo enviar si NO ha pagado aún
         const hasPaid = (c.tags || []).includes('pagado');
@@ -591,6 +619,7 @@ app.post('/webhook', async (req, res) => {
             const currentChat = chats[from];
             
             // Descarga de Multimedia
+            let imageBase64 = null; // Para almacenar la imagen inline y que sea siempre visible
             if (['image', 'sticker', 'document', 'audio'].includes(msg.type)) {
                 const mediaData = msg[msg.type];
                 const mediaId = mediaData.id;
@@ -604,6 +633,12 @@ app.post('/webhook', async (req, res) => {
                         const filePath = path.join(UPLOADS_DIR, fileName);
                         fs.writeFileSync(filePath, buffer);
                         mediaUrl = `/uploads/${fileName}`;
+                        
+                        // Guardar imagen como base64 inline para visualización persistente
+                        if (msg.type === 'image' || msg.type === 'sticker') {
+                            const mimeType = msg.type === 'sticker' ? 'image/webp' : 'image/jpeg';
+                            imageBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+                        }
                         
                         // GPT Vision analysis si es imagen
                         if (msg.type === 'image') {
@@ -715,6 +750,7 @@ app.post('/webhook', async (req, res) => {
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
                     ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
+                imageBase64: imageBase64 || null, // Base64 inline para visualización persistente
                 fileUrl: (msg.type === 'document' || msg.type === 'audio') 
                     ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
@@ -977,7 +1013,7 @@ function handleIncomingMessage(from) {
     if (aiTimers[from]) clearTimeout(aiTimers[from]);
     
     const currentChat = chats[from];
-    if (currentChat.aiDisabled) return;
+    if (currentChat.aiDisabled || currentChat.isBlocked) return;
 
     aiTimers[from] = setTimeout(async () => {
         const refreshedChat = chats[from];
@@ -1363,6 +1399,15 @@ io.on('connection', (socket) => {
             chats[chatId].aiDisabled = disabled;
             saveChats(chats);
             io.emit('ai_state_updated', { chatId, disabled });
+        }
+    });
+
+    socket.on('toggle_block', ({ chatId, blocked }) => {
+        if (chats[chatId]) {
+            chats[chatId].isBlocked = blocked;
+            saveChats(chats);
+            io.emit('block_state_updated', { chatId, blocked });
+            console.log(`🚫 [SISTEMA] Chat de ${chatId} ${blocked ? 'bloqueado' : 'desbloqueado'}.`);
         }
     });
 
