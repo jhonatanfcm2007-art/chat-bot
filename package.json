@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "app-chatbot",
   "private": true,
   "version": "0.0.0",
@@ -8,9 +8,7 @@
     "dev:bot": "node server/index.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "cd server && node index.js",
-    "build:full": "vite build && cd server && npm install"
+    "preview": "vite preview"
   },
   "dependencies": {
     "clsx": "^2.1.1",
