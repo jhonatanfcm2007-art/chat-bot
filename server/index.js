@@ -520,6 +520,14 @@ app.post('/webhook', async (req, res) => {
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
         const from = msg.from;
+        
+        // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
+        if (chats[from]?.isBlocked) {
+            console.log(`🔒 [BLOQUEO] Mensaje entrante de WhatsApp ${from} descartado porque el contacto está bloqueado.`);
+            res.sendStatus(200);
+            return;
+        }
+
         const contacts = body.entry[0].changes[0].value.contacts;
         const customerName = contacts?.[0]?.profile?.name || from;
 
@@ -938,6 +946,12 @@ app.post('/webhook/messenger', async (req, res) => {
         body.entry.forEach(async (entry) => {
             const webhook_event = entry.messaging[0];
             const sender_psid = webhook_event.sender.id;
+
+            // Descarte de mensajes reales para bloqueo estricto (Messenger)
+            if (chats[sender_psid]?.isBlocked) {
+                console.log(`🔒 [BLOQUEO] Mensaje entrante de Messenger ${sender_psid} descartado porque el contacto está bloqueado.`);
+                return;
+            }
 
             if (webhook_event.message && webhook_event.message.text) {
                 const msgBody = webhook_event.message.text;
