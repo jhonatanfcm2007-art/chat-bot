@@ -186,19 +186,6 @@ function App() {
       }
     });
 
-    socket.on('block_state_updated', (data) => {
-      setChats(prev => {
-        if (!prev[data.chatId]) return prev;
-        return {
-          ...prev,
-          [data.chatId]: {
-            ...prev[data.chatId],
-            isBlocked: data.blocked
-          }
-        };
-      });
-    });
-
     return () => {
       socket.off('message');
       socket.off('initial_chats');
@@ -210,7 +197,6 @@ function App() {
       socket.off('providers_updated');
       socket.off('message_deleted');
       socket.off('campaigns_updated');
-      socket.off('block_state_updated');
     };
   }, []);
   

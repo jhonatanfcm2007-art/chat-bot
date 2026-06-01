@@ -452,19 +452,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           msg.role === 'user' 
                             ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
                             : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
-                        } ${(msg.imageUrl || msg.imageBase64) ? 'p-1' : 'px-4 py-2'}`}>
+                        } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
                           
-                          {(msg.imageUrl || msg.imageBase64) && (
+                          {msg.imageUrl && (
                             <div className="rounded-lg overflow-hidden mb-1 flex justify-center bg-black/5 min-h-[80px]">
                               <img 
-                                src={msg.imageBase64 || formatMediaUrl(msg.imageUrl)} 
+                                src={formatMediaUrl(msg.imageUrl)} 
                                 alt="Imagen" 
-                                onClick={() => setFullscreenImage(msg.imageBase64 || formatMediaUrl(msg.imageUrl))}
+                                onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                                 className="max-w-full max-h-[250px] md:max-h-[300px] object-contain cursor-pointer transition-transform hover:scale-[1.02]"
                                 loading="lazy"
                                 onError={(e) => {
-                                  // Solo intentar fallbacks si no tenemos base64
-                                  if (msg.imageBase64) { e.target.onerror = null; return; }
+                                  // Si falla la URL original, intentar con la ruta proxy como fallback
                                   const original = e.target.src;
                                   if (!original.includes('/api/media/') && msg.mediaId) {
                                     // Intentar a través del proxy con el ID del media como mediaId
@@ -701,23 +700,23 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </h4>
               <div className="grid grid-cols-3 gap-2 px-1 pb-6">
                 {activeChatData.messages
-                  .filter(m => m.imageUrl || m.imageBase64)
+                  .filter(m => m.imageUrl)
                   .reverse()
                   .map((msg, i) => (
                     <div 
                       key={i} 
                       className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => setFullscreenImage(msg.imageBase64 || formatMediaUrl(msg.imageUrl))}
+                      onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                     >
                       <img 
-                        src={msg.imageBase64 || formatMediaUrl(msg.imageUrl)} 
+                        src={formatMediaUrl(msg.imageUrl)} 
                         alt="Comprobante" 
                         className="w-full h-full object-cover"
                       />
                     </div>
                   ))
                 }
-                {activeChatData.messages.filter(m => m.imageUrl || m.imageBase64).length === 0 && (
+                {activeChatData.messages.filter(m => m.imageUrl).length === 0 && (
                   <div className="col-span-3 py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin multimedia</p>
                   </div>
