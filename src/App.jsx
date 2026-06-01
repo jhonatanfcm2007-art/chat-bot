@@ -167,6 +167,19 @@ function App() {
       });
     });
 
+    socket.on('block_state_updated', (data) => {
+      setChats(prev => {
+        if (!prev[data.chatId]) return prev;
+        return {
+          ...prev,
+          [data.chatId]: {
+            ...prev[data.chatId],
+            isBlocked: data.blocked
+          }
+        };
+      });
+    });
+
     socket.on('message_deleted', ({ chatId, messageId }) => {
       setChats(prev => {
         if (!prev[chatId]) return prev;
@@ -195,6 +208,7 @@ function App() {
       socket.off('tag_updated');
       socket.off('platforms_updated');
       socket.off('providers_updated');
+      socket.off('block_state_updated');
       socket.off('message_deleted');
       socket.off('campaigns_updated');
     };
@@ -330,6 +344,16 @@ function App() {
         });
       });
 
+      socket.on('block_state_updated', ({ chatId, blocked }) => {
+        setChats(prev => {
+          if (!prev[chatId]) return prev;
+          return {
+            ...prev,
+            [chatId]: { ...prev[chatId], isBlocked: blocked }
+          };
+        });
+      });
+
       socket.on('chat_deleted', (chatId) => {
         setChats(prev => {
           const newChats = { ...prev };
@@ -343,6 +367,7 @@ function App() {
     return () => {
       socket.off('sales_updated');
       socket.off('ai_state_updated');
+      socket.off('block_state_updated');
       socket.off('chat_deleted');
     };
   }, []);
@@ -451,6 +476,23 @@ function App() {
     }
   };
 
+  const handleToggleBlock = (chatId, blocked) => {
+    const action = blocked ? 'bloquear' : 'desbloquear';
+    if (window.confirm(`¿Estás seguro de que quieres ${action} a este contacto?`)) {
+      socket.emit('toggle_block', { chatId, blocked });
+      setChats(prev => {
+        if (!prev[chatId]) return prev;
+        return {
+          ...prev,
+          [chatId]: {
+            ...prev[chatId],
+            isBlocked: blocked
+          }
+        };
+      });
+    }
+  };
+
   const handleDeleteMessage = (chatId, messageId) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este mensaje?')) {
       socket.emit('delete_message', { chatId, messageId });
@@ -535,6 +577,7 @@ function App() {
             onDeleteMessage={handleDeleteMessage}
             onBulkClearTags={handleBulkClearTags}
             onToggleAI={handleToggleAI}
+            onToggleBlock={handleToggleBlock}
             serverUrl={SERVER_URL}
           />
         );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
@@ -296,7 +296,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   </div>
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-0.5">
-                      <h4 className={`font-bold truncate text-[13px] ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
+                      <h4 className={`font-bold truncate text-[13px] ${isSelected ? 'text-slate-800' : 'text-slate-700'} flex items-center gap-1`}>
+                        {chat.isBlocked && <span className="material-symbols-outlined text-[12px] text-red-500 font-bold">block</span>}
                         {chat.customerName}
                       </h4>
                       <div className="flex items-center gap-2">
@@ -545,29 +546,36 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             </div>
 
             <footer className="p-4 bg-white border-t border-slate-200">
-               <div className="flex items-center gap-3">
-                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                     <span className="material-symbols-outlined text-2xl">mood</span>
-                  </button>
-                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                     <span className="material-symbols-outlined text-2xl">attach_file</span>
-                  </button>
-                  <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
-                    <input 
-                      className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
-                      placeholder="Escribe un mensaje..." 
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    />
-                  </div>
-                  <button 
-                    onClick={handleSend}
-                    className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
-                  >
-                    <span className="material-symbols-outlined text-xl">send</span>
-                  </button>
-               </div>
+               {activeChatData.isBlocked ? (
+                 <div className="flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 text-xs font-semibold uppercase tracking-wider">
+                   <span className="material-symbols-outlined text-sm">block</span>
+                   Contacto bloqueado
+                 </div>
+               ) : (
+                 <div className="flex items-center gap-3">
+                    <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                       <span className="material-symbols-outlined text-2xl">mood</span>
+                    </button>
+                    <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                       <span className="material-symbols-outlined text-2xl">attach_file</span>
+                    </button>
+                    <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
+                      <input 
+                        className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
+                        placeholder="Escribe un mensaje..." 
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                      />
+                    </div>
+                    <button 
+                      onClick={handleSend}
+                      className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                    >
+                      <span className="material-symbols-outlined text-xl">send</span>
+                    </button>
+                 </div>
+               )}
             </footer>
           </>
         ) : (
@@ -732,6 +740,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             >
               <span className="material-symbols-outlined text-lg">delete</span>
               Eliminar Chat
+            </button>
+            <button 
+              onClick={() => onToggleBlock && onToggleBlock(selectedChat, !activeChatData.isBlocked)}
+              className={`w-full mt-3 flex items-center justify-center gap-2 py-4 rounded-2xl border transition-all font-black text-[11px] uppercase tracking-widest shadow-sm active:scale-95 ${
+                activeChatData.isBlocked
+                  ? 'text-emerald-600 border-emerald-100 hover:text-white hover:bg-emerald-600 hover:border-emerald-600 hover:shadow-emerald-600/20'
+                  : 'text-orange-600 border-orange-100 hover:text-white hover:bg-orange-600 hover:border-orange-600 hover:shadow-orange-600/20'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">
+                {activeChatData.isBlocked ? 'lock_open' : 'block'}
+              </span>
+              {activeChatData.isBlocked ? 'Desbloquear Persona' : 'Bloquear Persona'}
             </button>
           </div>
         </section>

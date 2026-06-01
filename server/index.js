@@ -984,6 +984,10 @@ function handleIncomingMessage(from) {
     if (aiTimers[from]) clearTimeout(aiTimers[from]);
     
     const currentChat = chats[from];
+    if (currentChat.isBlocked) {
+        console.log(`ℹ️ [SISTEMA] Mensaje entrante de ${from} ignorado porque el contacto está bloqueado.`);
+        return;
+    }
     if (currentChat.aiDisabled) return;
 
     aiTimers[from] = setTimeout(async () => {
@@ -1370,6 +1374,15 @@ io.on('connection', (socket) => {
             chats[chatId].aiDisabled = disabled;
             saveChats(chats);
             io.emit('ai_state_updated', { chatId, disabled });
+        }
+    });
+
+    socket.on('toggle_block', ({ chatId, blocked }) => {
+        if (chats[chatId]) {
+            chats[chatId].isBlocked = blocked;
+            saveChats(chats);
+            io.emit('block_state_updated', { chatId, blocked });
+            console.log(`🔒 [SISTEMA] Chat de ${chatId} ${blocked ? 'bloqueado' : 'desbloqueado'}.`);
         }
     });
 
