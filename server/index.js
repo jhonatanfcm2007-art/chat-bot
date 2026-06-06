@@ -1040,6 +1040,74 @@ async function smartSendMessage(to, text) {
     }
 }
 
+async function smartSendImage(to, imageUrl, caption, origin) {
+    const chat = chats[to];
+    const platform = chat?.platform || 'whatsapp';
+    
+    const baseUrl = origin || BACKEND_URL || '';
+    const fullImageUrl = imageUrl.startsWith('http') 
+        ? imageUrl 
+        : `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`;
+
+    if (platform === 'messenger') {
+        return sendImageToMessengerAPI(to, fullImageUrl);
+    } else {
+        return sendImageToCloudAPI(to, fullImageUrl, caption);
+    }
+}
+
+async function sendImageToCloudAPI(to, imageUrl, caption) {
+    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
+    try {
+        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        console.log(`📡 [META] Enviando imagen a ${cleanTo}: ${imageUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messaging_product: "whatsapp",
+                to: cleanTo,
+                type: "image",
+                image: {
+                    link: imageUrl,
+                    ...(caption ? { caption } : {})
+                }
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [META ERROR] al enviar imagen a ${cleanTo}:`, errData);
+        }
+    } catch (err) { console.error('Meta send image error:', err); }
+}
+
+async function sendImageToMessengerAPI(psid, imageUrl) {
+    if (!MESSENGER_PAGE_TOKEN || !psid) return;
+    try {
+        console.log(`📡 [MESSENGER] Enviando imagen a ${psid}: ${imageUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${MESSENGER_PAGE_TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: { id: psid },
+                message: {
+                    attachment: {
+                        type: "image",
+                        payload: {
+                            url: imageUrl,
+                            is_reusable: true
+                        }
+                    }
+                }
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [MESSENGER ERROR] al enviar imagen a ${psid}:`, errData);
+        }
+    } catch (err) { console.error('Messenger send image error:', err); }
+}
+
 async function sendMessageToMessengerAPI(psid, text) {
     if (!MESSENGER_PAGE_TOKEN || !psid) return;
     try {
@@ -1148,6 +1216,28 @@ Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, u
         return { isReceipt: false, description: 'Error de análisis' };
     }
 }
+
+app.post('/api/upload', (req, res) => {
+    const { filename, base64 } = req.body;
+    if (!filename || !base64) {
+        return res.status(400).send('Missing filename or base64 data');
+    }
+    try {
+        const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        
+        const ext = filename.split('.').pop() || 'png';
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+        const filePath = path.join(UPLOADS_DIR, uniqueName);
+        
+        fs.writeFileSync(filePath, buffer);
+        console.log(`📁 [SISTEMA] Imagen subida y guardada en: ${filePath}`);
+        res.json({ url: `/uploads/${uniqueName}` });
+    } catch (e) {
+        console.error('Upload error:', e);
+        res.status(500).send('Upload failed');
+    }
+});
 
 // --- API & SOCKETS ---
 app.get('/api/diagnostico', async (req, res) => {
@@ -1470,19 +1560,46 @@ io.on('connection', (socket) => {
             io.emit('tag_updated', { from: chatId, tags }); 
         } 
     });
-    socket.on('send_message', async ({ to, content }) => {
-        if (/^r$/i.test(content.trim())) { await executeDelivery(to, 'deliver_first'); return; }
-        await smartSendMessage(to, content);
-        const m = { id: 'man-'+Date.now(), from: to, body: content, content, isMe: true, role: 'bot', timestampRaw: Date.now() };
+    socket.on('send_message', async ({ to, content, imageUrl, origin }) => {
+        if (content && /^r$/i.test(content.trim())) { await executeDelivery(to, 'deliver_first'); return; }
+        
+        let m;
+        if (imageUrl) {
+            await smartSendImage(to, imageUrl, content, origin);
+            m = { 
+                id: 'man-'+Date.now(), 
+                from: to, 
+                body: content || '[Imagen]', 
+                content: content || '[Imagen]', 
+                imageUrl: imageUrl,
+                isMe: true, 
+                role: 'bot', 
+                timestampRaw: Date.now() 
+            };
+        } else {
+            await smartSendMessage(to, content);
+            m = { 
+                id: 'man-'+Date.now(), 
+                from: to, 
+                body: content, 
+                content, 
+                isMe: true, 
+                role: 'bot', 
+                timestampRaw: Date.now() 
+            };
+        }
+        
         if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
         chats[to].messages.push(m); chats[to].updatedAt = Date.now(); 
         
         // Si el admin envió credenciales manualmente, marcar el chat
-        const lowerContent = content.toLowerCase();
-        if ((lowerContent.includes('correo') || lowerContent.includes('email')) && 
-            (lowerContent.includes('clave') || lowerContent.includes('contraseña') || lowerContent.includes('pass'))) {
-            chats[to].credentialsDelivered = true;
-            console.log(`✅ [SISTEMA] Credenciales manuales detectadas para ${chats[to].customerName}. Flag activado.`);
+        if (content) {
+            const lowerContent = content.toLowerCase();
+            if ((lowerContent.includes('correo') || lowerContent.includes('email')) && 
+                (lowerContent.includes('clave') || lowerContent.includes('contraseña') || lowerContent.includes('pass'))) {
+                chats[to].credentialsDelivered = true;
+                console.log(`✅ [SISTEMA] Credenciales manuales detectadas para ${chats[to].customerName}. Flag activado.`);
+            }
         }
         
         if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);

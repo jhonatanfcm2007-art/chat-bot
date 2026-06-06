@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl }) => {
   const [inputValue, setInputValue] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState('');
+  const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
@@ -38,10 +41,69 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     return () => window.removeEventListener('click', handleCloseMenu);
   }, []);
 
-  const handleSend = () => {
-    if (!inputValue.trim() || !selectedChat) return;
-    onSendMessage({ to: selectedChat, content: inputValue });
+  useEffect(() => {
+    setSelectedFile(null);
+    setFilePreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [selectedChat]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      alert('Solo se pueden enviar imágenes');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSelectedFile(file);
+      setFilePreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSend = async () => {
+    if ((!inputValue.trim() && !filePreview) || !selectedChat) return;
+    
+    let uploadedImageUrl = null;
+    
+    if (filePreview) {
+      try {
+        const response = await fetch(`${serverUrl}/api/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: selectedFile.name,
+            base64: filePreview
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          uploadedImageUrl = data.url;
+        } else {
+          alert('Error al subir la imagen');
+          return;
+        }
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        alert('Error de conexión al subir la imagen');
+        return;
+      }
+    }
+    
+    onSendMessage({ 
+      to: selectedChat, 
+      content: inputValue, 
+      imageUrl: uploadedImageUrl,
+      origin: window.location.origin
+    });
+    
     setInputValue('');
+    setSelectedFile(null);
+    setFilePreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const parseTimeString = (timeStr) => {
@@ -552,28 +614,57 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                    Contacto bloqueado
                  </div>
                ) : (
-                 <div className="flex items-center gap-3">
-                    <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                       <span className="material-symbols-outlined text-2xl">mood</span>
-                    </button>
-                    <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                       <span className="material-symbols-outlined text-2xl">attach_file</span>
-                    </button>
-                    <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
-                      <input 
-                        className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
-                        placeholder="Escribe un mensaje..." 
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      />
+                 <div className="flex flex-col gap-3">
+                    {/* Vista previa de imagen seleccionada */}
+                    {filePreview && (
+                      <div className="relative self-start p-2 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3 animate-in fade-in duration-300">
+                        <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                        <div className="flex flex-col justify-center">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Imagen lista para enviar</span>
+                          <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{selectedFile?.name}</span>
+                        </div>
+                        <button 
+                          onClick={() => { setSelectedFile(null); setFilePreview(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                          className="w-8 h-8 rounded-full bg-slate-200/50 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-lg">close</span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-3">
+                       <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                          <span className="material-symbols-outlined text-2xl">mood</span>
+                       </button>
+                       <button 
+                         onClick={() => fileInputRef.current?.click()}
+                         className={`text-slate-400 hover:text-slate-600 transition-colors ${filePreview ? 'text-primary' : ''}`}
+                       >
+                          <span className="material-symbols-outlined text-2xl">attach_file</span>
+                       </button>
+                       <input 
+                         type="file" 
+                         ref={fileInputRef} 
+                         onChange={handleFileChange} 
+                         accept="image/*" 
+                         className="hidden" 
+                       />
+                       <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
+                         <input 
+                           className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
+                           placeholder={filePreview ? "Añadir un comentario..." : "Escribe un mensaje..."} 
+                           value={inputValue}
+                           onChange={(e) => setInputValue(e.target.value)}
+                           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                         />
+                       </div>
+                       <button 
+                         onClick={handleSend}
+                         className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                       >
+                         <span className="material-symbols-outlined text-xl">send</span>
+                       </button>
                     </div>
-                    <button 
-                      onClick={handleSend}
-                      className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
-                    >
-                      <span className="material-symbols-outlined text-xl">send</span>
-                    </button>
                  </div>
                )}
             </footer>
