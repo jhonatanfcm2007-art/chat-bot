@@ -3,11 +3,13 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import InstallPrompt from './InstallPrompt';
+import NotificationPrompt from './NotificationPrompt';
 
-const Layout = ({ children, activeTab, onTabChange, notifications, onNotificationClick, onClearNotifications }) => {
+const Layout = ({ children, activeTab, onTabChange, notifications, onNotificationClick, onClearNotifications, serverUrl }) => {
   return (
     <div className="bg-background text-on-surface font-body h-screen flex flex-col overflow-hidden relative selection:bg-primary/20">
       <InstallPrompt />
+      <NotificationPrompt serverUrl={serverUrl} />
       <Header 
         activeTab={activeTab} 
         onTabChange={onTabChange}

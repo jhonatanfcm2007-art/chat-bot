@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config(); 
 
 import express from 'express';
+import webpush from 'web-push';
 import { Server } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
@@ -70,6 +71,87 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+// --- CONFIGURACIÓN DE NOTIFICACIONES PUSH ---
+const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
+const SUBSCRIPTIONS_FILE = path.join(DATA_DIR, 'push_subscriptions.json');
+
+let vapidKeys;
+if (fs.existsSync(VAPID_FILE)) {
+    try {
+        vapidKeys = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf-8'));
+        console.log('🔑 [PUSH] Llaves VAPID cargadas con éxito.');
+    } catch (e) {
+        console.error('❌ [PUSH] Error leyendo vapid.json, regenerando...', e);
+    }
+}
+
+if (!vapidKeys) {
+    vapidKeys = webpush.generateVAPIDKeys();
+    try {
+        fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2));
+        console.log('🔑 [PUSH] Nuevas llaves VAPID generadas y guardadas.');
+    } catch (e) {
+        console.error('❌ [PUSH] No se pudieron guardar las llaves VAPID:', e);
+    }
+}
+
+// Configurar web-push
+webpush.setVapidDetails(
+    'mailto:soporte@streamingcrm.com',
+    vapidKeys.publicKey,
+    vapidKeys.privateKey
+);
+
+function loadPushSubscriptions() {
+    try {
+        if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
+            return JSON.parse(fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf-8'));
+        }
+    } catch (err) {
+        console.error('Error loading push subscriptions:', err);
+    }
+    return [];
+}
+
+function savePushSubscriptions(subs) {
+    try {
+        fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2));
+    } catch (err) {
+        console.error('Error saving push subscriptions:', err);
+    }
+}
+
+let pushSubscriptions = loadPushSubscriptions();
+
+async function sendPushNotification(title, body, url = '/') {
+    if (pushSubscriptions.length === 0) return;
+    
+    const payload = JSON.stringify({
+        title,
+        body,
+        icon: '/app_icon.png',
+        badge: '/app_icon.png',
+        url
+    });
+    
+    console.log(`📡 [PUSH] Enviando notificación push a ${pushSubscriptions.length} dispositivos...`);
+    
+    const sendPromises = pushSubscriptions.map(async (subscription) => {
+        try {
+            await webpush.sendNotification(subscription, payload);
+        } catch (error) {
+            console.error('❌ [PUSH] Error enviando a suscripción:', error.endpoint, error.statusCode);
+            if (error.statusCode === 410 || error.statusCode === 404) {
+                pushSubscriptions = pushSubscriptions.filter(sub => sub.endpoint !== subscription.endpoint);
+                savePushSubscriptions(pushSubscriptions);
+                console.log(`📡 [PUSH] Suscripción expirada eliminada. Restantes: ${pushSubscriptions.length}`);
+            }
+        }
+    });
+    
+    await Promise.all(sendPromises);
+}
 
 app.use('/uploads', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -758,6 +840,13 @@ app.post('/webhook', async (req, res) => {
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
             saveChats(chats); io.emit('message', { ...newMessage, customerName });
 
+            // Enviar notificación Push flotante al celular
+            sendPushNotification(
+                `${customerName} (WhatsApp)`,
+                newMessage.body || 'Nuevo mensaje recibido',
+                '/'
+            ).catch(err => console.error('Error sending push notification:', err));
+
             handleIncomingMessage(from);
         }
     }
@@ -982,6 +1071,13 @@ app.post('/webhook/messenger', async (req, res) => {
                 currentChat.updatedAt = Date.now();
                 saveChats(chats);
                 io.emit('message', { ...newMessage, customerName: currentChat.customerName });
+
+                // Enviar notificación Push flotante al celular
+                sendPushNotification(
+                    `${currentChat.customerName} (Messenger)`,
+                    newMessage.body || 'Nuevo mensaje recibido',
+                    '/'
+                ).catch(err => console.error('Error sending push notification:', err));
 
                 // Aquí reutilizamos TODA tu lógica de IA existente (aiTimers, executeDelivery, etc.)
                 // Solo necesitamos que sendMessageToCloudAPI sea inteligente.
@@ -1216,6 +1312,35 @@ Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, u
         return { isReceipt: false, description: 'Error de análisis' };
     }
 }
+
+app.get('/api/vapid-public-key', (req, res) => {
+    res.json({ publicKey: vapidKeys.publicKey });
+});
+
+app.post('/api/push-subscribe', (req, res) => {
+    const subscription = req.body;
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Suscripción inválida' });
+    }
+    const exists = pushSubscriptions.some(sub => sub.endpoint === subscription.endpoint);
+    if (!exists) {
+        pushSubscriptions.push(subscription);
+        savePushSubscriptions(pushSubscriptions);
+        console.log(`📡 [PUSH] Nueva suscripción registrada. Total: ${pushSubscriptions.length}`);
+    }
+    res.status(201).json({ success: true });
+});
+
+app.post('/api/push-unsubscribe', (req, res) => {
+    const subscription = req.body;
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Suscripción inválida' });
+    }
+    pushSubscriptions = pushSubscriptions.filter(sub => sub.endpoint !== subscription.endpoint);
+    savePushSubscriptions(pushSubscriptions);
+    console.log(`📡 [PUSH] Suscripción eliminada. Total: ${pushSubscriptions.length}`);
+    res.json({ success: true });
+});
 
 app.post('/api/upload', (req, res) => {
     const { filename, base64 } = req.body;

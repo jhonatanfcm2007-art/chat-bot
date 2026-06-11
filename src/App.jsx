@@ -53,6 +53,19 @@ function App() {
     setNotifications([]);
   };
 
+  // Registrar Service Worker para PWA
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+          console.log('✅ Service Worker registrado con éxito:', reg.scope);
+        })
+        .catch(err => {
+          console.error('❌ Falló el registro del Service Worker:', err);
+        });
+    }
+  }, []);
+
   useEffect(() => {
     socket.on('initial_chats', (data) => {
       console.log('Received initial history:', data);
@@ -610,6 +623,7 @@ function App() {
       notifications={notifications}
       onNotificationClick={handleNotificationClick}
       onClearNotifications={handleClearNotifications}
+      serverUrl={SERVER_URL}
     >
       {renderContent()}
     </Layout>
