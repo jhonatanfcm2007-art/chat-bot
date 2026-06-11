@@ -599,6 +599,7 @@ function App() {
           <AIAssistant 
             settings={settings}
             socket={socket}
+            serverUrl={SERVER_URL}
           />
         );
       case 'campaigns':

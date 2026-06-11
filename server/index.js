@@ -200,10 +200,15 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres el asistente virtual oficial de ventas y soporte para cuentas de streaming por WhatsApp. Eres directo, breve y muy eficiente. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\n- **COMPRA NUEVA** → Procede con la estrategia de VENTA.\n- **SOPORTE** → Si reporta un problema técnico, usa [APAGAR_BOT_SOPORTE] para un humano.\n\n### ESTRATEGIA DE VENTA:\n1. **COTIZACIÓN**: Si preguntan precios, da los precios y pregunta si desean la cuenta. NO entregues nada aún.\n2. **ENTREGA (¡MUY IMPORTANTE!)**: Si el cliente dice 'Sí', 'Listo', 'Dale', 'Yo quiero' O acepta tu oferta de probar la cuenta primero, DEBES entregarla INMEDIATAMENTE. Para entregarla, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo perfecto: 'Perfecto, ya mismo te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. **FALSOS PAGOS**: NUNCA asumas que un cliente ha pagado solo porque dice 'listo', 'ya pagué' o 'ok'. Si confirman pago pero NO ves el mensaje '[FOTO]' o '[DOCUMENTO]' en el chat reciente, OBLIGATORIAMENTE diles: 'Por favor, envíame la foto del comprobante de transferencia para verificar el pago.' No agradezcas el pago si no hay foto.\n4. PROHIBIDO INVENTAR: NUNCA inventes correos, usuarios o contraseñas. El sistema lo hace solo usando [ENTREGAR_AHORA]. NUNCA digas 'te envié los datos' si no usaste la etiqueta.\n5. SIN STOCK: Si piden algo y ves en el inventario que no hay, usa [APAGAR_BOT_SOPORTE].\n\n### PAGOS:\n- Métodos: Nequi, Daviplata o Bancolombia.\n- Cuando el cliente envíe '[FOTO]', diles que estás verificando y no digas que ya está activado hasta que un humano lo apruebe."
+        systemPrompt: "Eres el asistente virtual oficial de ventas y soporte para cuentas de streaming por WhatsApp. Eres directo, breve y muy eficiente. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\n- **COMPRA NUEVA** → Procede con la estrategia de VENTA.\n- **SOPORTE** → Si reporta un problema técnico, usa [APAGAR_BOT_SOPORTE] para un humano.\n\n### ESTRATEGIA DE VENTA:\n1. **COTIZACIÓN**: Si preguntan precios, da los precios y pregunta si desean la cuenta. NO entregues nada aún.\n2. **ENTREGA (¡MUY IMPORTANTE!)**: Si el cliente dice 'Sí', 'Listo', 'Dale', 'Yo quiero' O acepta tu oferta de probar la cuenta primero, DEBES entregarla INMEDIATAMENTE. Para entregarla, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo perfecto: 'Perfecto, ya mismo te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. **FALSOS PAGOS**: NUNCA asumas que un cliente ha pagado solo porque dice 'listo', 'ya pagué' o 'ok'. Si confirman pago pero NO ves el mensaje '[FOTO]' o '[DOCUMENTO]' en el chat reciente, OBLIGATORIAMENTE diles: 'Por favor, envíame la foto del comprobante de transferencia para verificar el pago.' No agradezcas el pago si no hay foto.\n4. PROHIBIDO INVENTAR: NUNCA inventes correos, usuarios o contraseñas. El sistema lo hace solo usando [ENTREGAR_AHORA]. NUNCA digas 'te envié los datos' si no usaste la etiqueta.\n5. SIN STOCK: Si piden algo y ves en el inventario que no hay, usa [APAGAR_BOT_SOPORTE].\n\n### PAGOS:\n- Métodos: Nequi, Daviplata o Bancolombia.\n- Cuando el cliente envíe '[FOTO]', diles que estás verificando y no digas que ya está activado hasta que un humano lo apruebe.",
+        welcomeAudioEnabled: false,
+        welcomeAudioUrl: ''
     };
     try {
-        if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+        if (fs.existsSync(SETTINGS_FILE)) {
+            const data = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+            return { ...def, ...data };
+        }
     } catch (err) { console.error('Error loading settings:', err); }
     return def;
 }
@@ -684,8 +689,11 @@ app.post('/webhook', async (req, res) => {
         }
 
         if (msgBody) {
+            const isNewChat = !chats[from];
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
+
+            triggerWelcomeAudioIfNeeded(from, isNewChat);
             
             // Descarga de Multimedia
             if (['image', 'sticker', 'document', 'audio'].includes(msg.type)) {
@@ -1046,6 +1054,7 @@ app.post('/webhook/messenger', async (req, res) => {
             if (webhook_event.message && webhook_event.message.text) {
                 const msgBody = webhook_event.message.text;
                 
+                const isNewChat = !chats[sender_psid];
                 if (!chats[sender_psid]) {
                     chats[sender_psid] = { 
                         from: sender_psid, 
@@ -1056,6 +1065,8 @@ app.post('/webhook/messenger', async (req, res) => {
                 }
                 const currentChat = chats[sender_psid];
                 currentChat.platform = 'messenger'; // Asegurar plataforma
+
+                triggerWelcomeAudioIfNeeded(sender_psid, isNewChat);
 
                 const newMessage = { 
                     id: webhook_event.message.mid, 
@@ -1108,7 +1119,7 @@ function handleIncomingMessage(from) {
         const messages = refreshedChat.messages || [];
         if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
-            if (lastMsg.role === 'bot' || lastMsg.isMe) {
+            if ((lastMsg.role === 'bot' || lastMsg.isMe) && !lastMsg.isWelcomeAudio) {
                 console.log(`ℹ️ [SISTEMA] Ignorando respuesta de IA para ${refreshedChat.customerName} porque el último mensaje ya es del bot.`);
                 delete aiTimers[from];
                 return;
@@ -1134,6 +1145,106 @@ async function smartSendMessage(to, text) {
     } else {
         return sendMessageToCloudAPI(to, text);
     }
+}
+
+async function smartSendAudio(to, audioUrl, origin) {
+    const chat = chats[to];
+    const platform = chat?.platform || 'whatsapp';
+    
+    const baseUrl = origin || BACKEND_URL || '';
+    const fullAudioUrl = audioUrl.startsWith('http') 
+        ? audioUrl 
+        : `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${audioUrl.startsWith('/') ? audioUrl : '/' + audioUrl}`;
+
+    if (platform === 'messenger') {
+        return sendAudioToMessengerAPI(to, fullAudioUrl);
+    } else {
+        return sendAudioToCloudAPI(to, fullAudioUrl);
+    }
+}
+
+function triggerWelcomeAudioIfNeeded(from, isNewChat, origin) {
+    if (isNewChat && settings.welcomeAudioEnabled && settings.welcomeAudioUrl) {
+        const audioUrl = settings.welcomeAudioUrl;
+        console.log(`🎙️ [BIENVENIDA] Enviando audio a ${from} (${audioUrl})`);
+        
+        setTimeout(async () => {
+            try {
+                await smartSendAudio(from, audioUrl, origin);
+                const currentChat = chats[from];
+                if (currentChat) {
+                    const audioMsg = {
+                        id: 'welcome-audio-' + Date.now(),
+                        from,
+                        body: '🎙️ [Audio de Bienvenida]',
+                        content: '🎙️ [Audio de Bienvenida]',
+                        fileUrl: audioUrl,
+                        isMe: true,
+                        role: 'bot',
+                        isWelcomeAudio: true,
+                        timestampRaw: Date.now(),
+                        timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                    };
+                    currentChat.messages.push(audioMsg);
+                    saveChats(chats);
+                    io.emit('message', audioMsg);
+                }
+            } catch (err) {
+                console.error('❌ [BIENVENIDA] Error enviando audio:', err);
+            }
+        }, 1500);
+    }
+}
+
+async function sendAudioToCloudAPI(to, audioUrl) {
+    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
+    try {
+        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        console.log(`📡 [META] Enviando audio a ${cleanTo}: ${audioUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messaging_product: "whatsapp",
+                to: cleanTo,
+                type: "audio",
+                audio: {
+                    link: audioUrl
+                }
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [META ERROR] al enviar audio a ${cleanTo}:`, errData);
+        }
+    } catch (err) { console.error('Meta send audio error:', err); }
+}
+
+async function sendAudioToMessengerAPI(psid, audioUrl) {
+    if (!MESSENGER_PAGE_TOKEN || !psid) return;
+    try {
+        console.log(`📡 [MESSENGER] Enviando audio a ${psid}: ${audioUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${MESSENGER_PAGE_TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: { id: psid },
+                message: {
+                    attachment: {
+                        type: "audio",
+                        payload: {
+                            url: audioUrl,
+                            is_reusable: true
+                        }
+                    }
+                }
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.text();
+            console.error(`❌ [MESSENGER ERROR] al enviar audio a ${psid}:`, errData);
+        }
+    } catch (err) { console.error('Messenger send audio error:', err); }
 }
 
 async function smartSendImage(to, imageUrl, caption, origin) {
