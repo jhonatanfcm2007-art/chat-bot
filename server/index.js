@@ -18,7 +18,8 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -1459,7 +1460,7 @@ app.post('/api/upload', (req, res) => {
         return res.status(400).send('Missing filename or base64 data');
     }
     try {
-        const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+        const cleanBase64 = base64.includes(';base64,') ? base64.split(';base64,')[1] : base64;
         const buffer = Buffer.from(cleanBase64, 'base64');
         
         const ext = filename.split('.').pop() || 'png';
@@ -1467,7 +1468,7 @@ app.post('/api/upload', (req, res) => {
         const filePath = path.join(UPLOADS_DIR, uniqueName);
         
         fs.writeFileSync(filePath, buffer);
-        console.log(`📁 [SISTEMA] Imagen subida y guardada en: ${filePath}`);
+        console.log(`📁 [SISTEMA] Archivo subido y guardado en: ${filePath}`);
         res.json({ url: `/uploads/${uniqueName}` });
     } catch (e) {
         console.error('Upload error:', e);
