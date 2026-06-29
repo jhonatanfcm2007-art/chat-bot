@@ -201,7 +201,7 @@ function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, nul
 
 function loadSettings() {
     const def = { 
-        systemPrompt: "Eres el asistente virtual oficial de ventas y soporte para cuentas de streaming por WhatsApp. Eres directo, breve y muy eficiente. Usa emojis con moderación.\n\n### REGLA FUNDAMENTAL - DETECCIÓN DE INTENCIÓN:\n- **COMPRA NUEVA** → Procede con la estrategia de VENTA.\n- **SOPORTE** → Si reporta un problema técnico, usa [APAGAR_BOT_SOPORTE] para un humano.\n\n### ESTRATEGIA DE VENTA:\n1. **COTIZACIÓN**: Si preguntan precios, da los precios y pregunta si desean la cuenta. NO entregues nada aún.\n2. **ENTREGA (¡MUY IMPORTANTE!)**: Si el cliente dice 'Sí', 'Listo', 'Dale', 'Yo quiero' O acepta tu oferta de probar la cuenta primero, DEBES entregarla INMEDIATAMENTE. Para entregarla, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombrePlataforma]\n   Ejemplo perfecto: 'Perfecto, ya mismo te la activo. [ENTREGAR_AHORA] [PRODUCTOS: Netflix]'\n3. **FALSOS PAGOS**: NUNCA asumas que un cliente ha pagado solo porque dice 'listo', 'ya pagué' o 'ok'. Si confirman pago pero NO ves el mensaje '[FOTO]' o '[DOCUMENTO]' en el chat reciente, OBLIGATORIAMENTE diles: 'Por favor, envíame la foto del comprobante de transferencia para verificar el pago.' No agradezcas el pago si no hay foto.\n4. PROHIBIDO INVENTAR: NUNCA inventes correos, usuarios o contraseñas. El sistema lo hace solo usando [ENTREGAR_AHORA]. NUNCA digas 'te envié los datos' si no usaste la etiqueta.\n5. SIN STOCK: Si piden algo y ves en el inventario que no hay, usa [APAGAR_BOT_SOPORTE].\n\n### PAGOS:\n- Métodos: Nequi, Daviplata o Bancolombia.\n- Cuando el cliente envíe '[FOTO]', diles que estás verificando y no digas que ya está activado hasta que un humano lo apruebe.",
+        systemPrompt: "Eres el asesor comercial virtual oficial de ventas de Shilajit 100% Puro Resina en Colombia por WhatsApp. Eres directo, amable, altamente persuasivo y muy eficiente. Usa emojis con moderación.\n\n### INFORMACIÓN DEL PRODUCTO (SHILAJIT):\n- ¿Qué es?: Es una sustancia natural y milenaria recolectada en las alturas del Himalaya, rica en ácido fúlvico y más de 84 minerales biodisponibles.\n- Beneficios principales: Aumenta la energía y resistencia física, potencia el rendimiento masculino, combate la fatiga y el cansancio, eleva la vitalidad y apoya los niveles naturales de testosterona.\n- Modo de uso: Tomar una pequeña porción del tamaño de un grano de arroz (incluye cuchara dosificadora) disuelta en agua tibia, té, café o leche caliente una o dos veces al día.\n\n### REGLA INQUEBRANTABLE - MÉTODOS DE PAGO Y ENVÍO:\n- ÚNICAMENTE se maneja PAGO CONTRAENTREGA en toda Colombia.\n- El envío es GRATIS a nivel nacional.\n- El cliente paga en efectivo únicamente cuando recibe el producto en la puerta de su casa o trabajo.\n- NUNCA solicites pagos por anticipado ni giros antes de recibir.\n\n### ESTRATEGIA DE VENTA Y CIERRE:\n1. **COTIZACIÓN**: Si preguntan precios, presenta los precios y promociones de forma atractiva resaltando el ahorro en los combos.\n   - 1 Tarro (30g): $89.000 COP\n   - Combo 2 Tarros: $149.000 COP (Ahorra $29.000)\n   - Combo 3 Tarros: $199.000 COP (Máximo Ahorro)\n2. **TOMA DE DATOS PARA DESPACHO (¡MUY IMPORTANTE!)**: Cuando el cliente confirme que quiere pedir (ej: \"quiero uno\", \"envíamelo\", \"quiero el combo 2x\", \"listo\", \"dale\", \"pedir\"), solicítale amablemente los 5 datos necesarios para programar su envío Pago Contraentrega:\n   - 👤 Nombre completo\n   - 📞 Número de celular\n   - 📍 Ciudad y Departamento\n   - 🏠 Dirección exacta y Barrio\n   - 🛒 Producto o Combo elegido\n3. **REGISTRO DE PEDIDO**: Cuando el cliente te entregue sus datos de despacho completos, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombreDelProducto]\n   Ejemplo perfecto: \"¡Excelente decisión! Ya he registrado tu pedido. En breve coordinamos el despacho. [ENTREGAR_AHORA] [PRODUCTOS: Shilajit 100% Puro Resina 30g]\"\n\n### SOPORTE Y ASESORÍA:\n- Si el cliente reporta una novedad de entrega o pregunta por su número de guía, usa [APAGAR_BOT_SOPORTE] para que un humano lo atienda.",
         welcomeAudioEnabled: false,
         welcomeAudioUrl: ''
     };
@@ -219,7 +219,7 @@ function loadPlatforms() {
     try {
         if (fs.existsSync(PLATFORMS_FILE)) return JSON.parse(fs.readFileSync(PLATFORMS_FILE, 'utf-8'));
     } catch (err) {}
-    return ['Netflix', 'Disney+', 'Prime Video', 'HBO Max', 'Paramount', 'Vix', 'Crunchyroll'];
+    return ['Shilajit Resina', 'Combos Promocionales'];
 }
 function savePlatforms(data) { fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2)); }
 
@@ -227,7 +227,7 @@ function loadProviders() {
     try {
         if (fs.existsSync(PROVIDERS_FILE)) return JSON.parse(fs.readFileSync(PROVIDERS_FILE, 'utf-8'));
     } catch (err) {}
-    return ['WebX', 'Proveedor Externo'];
+    return ['Himalaya Natural', 'Laboratorio Oficial'];
 }
 function saveProviders(data) { fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2)); }
 
@@ -320,8 +320,8 @@ function scheduleRecovery(to) {
         });
 
         if (stillEligible && isBotLast && !c.recoverySentAt && !credentialsAlreadySent) {
-            const msgBody = "si estas interesado te la puedo activar primero";
-            await sendMessageToCloudAPI(to, msgBody);
+            const msgBody = "¡Hola! 😊 Si tienes alguna duda sobre el Shilajit o sobre cómo funciona el envío con Pago Contraentrega en tu ciudad, dime con gusto y te asesoro.";
+            await smartSendMessage(to, msgBody);
             const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
             c.messages.push(botMsg);
             c.recoverySentAt = Date.now();
@@ -333,41 +333,9 @@ function scheduleRecovery(to) {
     }, 120000);
 }
 
-// Timer de cobro automático: 20 minutos después de entregar credenciales
+// Timer de cobro automático (Deshabilitado para Pago Contraentrega)
 function schedulePaymentReminder(to) {
-    if (paymentReminderTimers[to]) clearTimeout(paymentReminderTimers[to]);
-    
-    paymentReminderTimers[to] = setTimeout(async () => {
-        const c = chats[to];
-        if (!c) { delete paymentReminderTimers[to]; return; }
-        
-        // Solo enviar si NO ha pagado aún
-        const hasPaid = (c.tags || []).includes('pagado');
-        if (hasPaid) { delete paymentReminderTimers[to]; return; }
-        
-        // Solo enviar si la IA no está apagada (para no molestar en soporte)
-        if (c.aiDisabled) { delete paymentReminderTimers[to]; return; }
-        
-        const reminderMsg = `¡Hola ${c.customerName}! 👋 Te recuerdo que ya tienes tu cuenta activa para que la pruebes. 😊\n\nPara validar tu garantía y mantener el acceso, realiza el pago y envíanos el comprobante:\n\n💰 *Nequi:* 3105779631\n🔑 *Llave bre-b:* 3213434397\n\n¡Quedo atento! 🙏`;
-        
-        await smartSendMessage(to, reminderMsg);
-        const botMsg = { 
-            id: 'pay-rem-'+Date.now(), from: to, body: reminderMsg, content: reminderMsg, 
-            isMe: true, role: 'bot', timestampRaw: Date.now(),
-            timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-        };
-        c.messages.push(botMsg);
-        c.paymentReminderSent = true;
-        saveChats(chats);
-        io.emit('message', botMsg);
-        
-        console.log(`💰 [COBRO AUTO] Recordatorio de pago enviado a ${c.customerName}`);
-        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `💰 Recordatorio de pago enviado automáticamente a *${c.customerName}*.`);
-        
-        delete paymentReminderTimers[to];
-    }, 20 * 60 * 1000); // 20 minutos
-    
-    console.log(`⏰ [COBRO AUTO] Timer de cobro programado para ${chats[to]?.customerName} en 20 minutos.`);
+    return;
 }
 
 // --- CENTRAL DELIVERY FUNCTION ---
@@ -405,18 +373,11 @@ async function executeDelivery(to, mode = 'deliver_first') {
             return { success: false, error: 'No products detected' };
         }
 
-        let totalMsg = `🚀 *¡Hola ${chat.customerName}! Aquí tienes tus cuentas activas:*\n\n`;
         let accountsFound = 0;
+        let totalPrice = 0;
         const deliveredSales = [];
-        const pendingToDeliverAfterPayment = [];
 
         for (const serviceName of productsToDeliver) {
-            // Limitar a 1 si no está pagado
-            if (accountsFound >= 1 && mode !== 'deliver_and_paid') {
-                pendingToDeliverAfterPayment.push(serviceName);
-                continue;
-            }
-
             const accIndex = inventory.findIndex(a => {
                 const s1 = a.service.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const s2 = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -425,6 +386,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             if (accIndex !== -1) {
                 const acc = inventory[accIndex];
                 const salePrice = chat.pendingTotal ? Math.round(parseInt(chat.pendingTotal) / productsToDeliver.length) : (parseFloat(acc.price) || 0);
+                totalPrice += salePrice;
                 const now = new Date();
                 const ref = `${acc.service.substring(0,4).toUpperCase()}-${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
                 
@@ -433,36 +395,26 @@ async function executeDelivery(to, mode = 'deliver_first') {
                     reference: ref, service: acc.service, price: salePrice, cost: acc.cost, provider: acc.provider, 
                     date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
                     customer: chat.customerName, customerId: to,
-                    email: acc.email, pass: acc.pass, profile: acc.profile, pin: acc.pin || '', expiration: acc.expiration || '',
+                    email: 'Pago Contraentrega', pass: 'Pendiente Despacho', profile: acc.profile || 'Shilajit', pin: 'Envío Gratis', expiration: 'Contraentrega',
                     accountId: acc.id,
-                    paid: mode === 'deliver_and_paid' || mode === 'confirm_payment'
+                    paid: false
                 });
 
                 deliveredSales.push(acc.service);
                 acc.uses = parseInt(acc.uses) - 1;
                 if (acc.uses <= 0) acc.status = 'Sold Out';
-
-                totalMsg += `✅ *${acc.service}*\n📧 *Correo:* ${acc.email}\n🔑 *Clave:* ${acc.pass}${acc.profile ? '\n👤 *Perfil:* ' + acc.profile : ''}${acc.pin ? '\n📌 *PIN:* ' + acc.pin : ''}\n\n`;
                 accountsFound++;
             }
         }
 
         if (accountsFound > 0) {
-            totalMsg += `⚠️ No modificar datos para mantener tu garantía.\n\n`;
-            if (pendingToDeliverAfterPayment.length > 0) {
-                totalMsg += `🤖 *Nota de seguridad:* Como soy un asistente virtual con Inteligencia Artificial, por seguridad el sistema me permite activarte solo una (1) cuenta primero para que pruebes.\n\nCon esto puedes verificar que somos totalmente serios. No estoy programado para estafar, así que puedes estar totalmente tranquilo. 😊\n\nLas demás cuentas (${pendingToDeliverAfterPayment.join(', ')}) se te enviarán automáticamente una vez realices el pago total.\n\n`;
-            }
+            const totalMsg = `🚀 *¡Pedido Registrado con Éxito!* 🌿\n\nTu orden de *${deliveredSales.join(', ')}* ha sido programada para despacho inmediato.\n\n🚚 *Método de Envío:* Gratis a nivel nacional.\n💵 *Método de Pago:* Pago Contraentrega ($${totalPrice.toLocaleString('es-CO')}).\n\nRecibirás tu paquete en la puerta de tu casa u oficina de 2 a 4 días hábiles. ¡Muchas gracias por tu compra! 😊`;
+            
             await smartSendMessage(to, totalMsg);
 
-            // Marcar que se entregaron credenciales
+            // Marcar que se procesó el pedido
             chat.credentialsDelivered = true;
-
-            // Gestión de etiquetas
-            if (mode === 'deliver_and_paid') {
-                chat.tags = ['pagado'];
-            } else {
-                chat.tags = ['pago-pendiente'];
-            }
+            chat.tags = ['pago-pendiente'];
             chat.pendingProducts = [];
             chat.pendingTotal = null;
             chat.updatedAt = Date.now();
@@ -478,23 +430,11 @@ async function executeDelivery(to, mode = 'deliver_first') {
             chat.messages.push({ ...botMsgData, content: totalMsg });
             io.emit('message', botMsgData);
 
-            // COBRO AUTOMÁTICO
-            const paymentMsg = `¡Cuentas listas! 🚀 Ya puedes probarlas.\n\nProcede con el pago y envía el comprobante para validar tu garantía:\n\n💰 *Nequi:* 3105779631\n🔑 *Llave bre-b:* 3213434397\n\n¡Quedo atento! 😊`;
-            await delay(2000);
-            await smartSendMessage(to, paymentMsg);
-
-            const cobroMsg = { ...botMsgData, id: 'cobro-' + Date.now(), body: paymentMsg, content: paymentMsg };
-            chat.messages.push(cobroMsg);
-            saveChats(chats);
-            io.emit('message', cobroMsg);
-            
-            // Programar recordatorio de pago
-            schedulePaymentReminder(to);
             scheduleRecovery(to);
 
             if (ADMIN_PHONE) {
-                const notif = mode === 'auto' ? `🚀 *ENTREGA AUTO:* Envié *${deliveredSales.join(', ')}* a *${chat.customerName}* y realicé el cobro.` : `✅ *ENTREGA EXITOSA* a *${chat.customerName}*.`;
-                sendMessageToCloudAPI(ADMIN_PHONE, notif);
+                const notif = `📦 *NUEVO PEDIDO CONTRAENTREGA:* Cliente *${chat.customerName}* (${to}) pidió *${deliveredSales.join(', ')}* ($${totalPrice.toLocaleString('es-CO')}). ¡Revisa los datos de despacho en el chat!`;
+                smartSendMessage(ADMIN_PHONE, notif);
             }
             return { success: true };
         } else {
