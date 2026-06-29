@@ -122,6 +122,26 @@ function App() {
       });
     });
 
+    socket.on('message_status_updated', (data) => {
+      setChats(prev => {
+        if (!prev[data.from]) return prev;
+        const currentChat = prev[data.from];
+        const updatedMessages = currentChat.messages.map(m => {
+          if (m.wamid === data.messageId || m.id === data.messageId || (m.isMe || m.role === 'bot')) {
+            return { ...m, status: data.status };
+          }
+          return m;
+        });
+        return {
+          ...prev,
+          [data.from]: {
+            ...currentChat,
+            messages: updatedMessages
+          }
+        };
+      });
+    });
+
     socket.on('message', (msg) => {
       setChats(prev => {
         const chatId = msg.from;

@@ -558,7 +558,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                               {timeString}
                             </span>
                             {msg.role !== 'user' && (
-                               <span className="material-symbols-outlined text-[10px] text-primary">done_all</span>
+                              <>
+                                {msg.status === 'read' ? (
+                                  <span className="material-symbols-outlined text-[12px] text-[#53bdeb] font-black" title="Leído (Chulitos Azules)">done_all</span>
+                                ) : msg.status === 'delivered' ? (
+                                  <span className="material-symbols-outlined text-[12px] text-slate-400 font-bold" title="Entregado al teléfono">done_all</span>
+                                ) : (
+                                  <span className="material-symbols-outlined text-[12px] text-slate-400 font-bold" title="Enviado por WhatsApp">done</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>

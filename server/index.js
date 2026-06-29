@@ -538,6 +538,32 @@ app.get('/webhook/messenger', (req, res) => {
 
 app.post('/webhook', async (req, res) => {
     const body = req.body;
+    
+    // Procesar actualizaciones de estado (chulitos de lectura / entrega)
+    if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value?.statuses?.[0]) {
+        const statusObj = body.entry[0].changes[0].value.statuses[0];
+        const recipientId = statusObj.recipient_id;
+        const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
+        const messageId = statusObj.id;
+
+        if (recipientId && chats[recipientId]) {
+            const currentChat = chats[recipientId];
+            let messageFound = false;
+            currentChat.messages.forEach(m => {
+                if (m.wamid === messageId || m.id === messageId || (m.isMe || m.role === 'bot')) {
+                    m.status = newStatus;
+                    messageFound = true;
+                }
+            });
+            if (messageFound) {
+                saveChats(chats);
+                io.emit('message_status_updated', { from: recipientId, messageId, status: newStatus });
+            }
+        }
+        res.sendStatus(200);
+        return;
+    }
+
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
         const from = msg.from;
@@ -962,8 +988,8 @@ async function processAIResponse(from, msgBodyLower) {
     } else {
         await delay(1500);
         if (cleanReply) {
-            await smartSendMessage(from, cleanReply);
-            const botMsg = { id: 'bot-'+Date.now(), from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+            const wamid = await smartSendMessage(from, cleanReply);
+            const botMsg = { id: wamid || ('bot-'+Date.now()), wamid: wamid || null, status: 'sent', from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
             refreshedChat.messages.push(botMsg);
             saveChats(chats); io.emit('message', botMsg);
         }
@@ -1781,9 +1807,11 @@ io.on('connection', (socket) => {
                 timestampRaw: Date.now() 
             };
         } else {
-            await smartSendMessage(to, content);
+            const wamid = await smartSendMessage(to, content);
             m = { 
-                id: 'man-'+Date.now(), 
+                id: wamid || ('man-'+Date.now()), 
+                wamid: wamid || null,
+                status: 'sent',
                 from: to, 
                 body: content, 
                 content, 
@@ -1813,7 +1841,7 @@ io.on('connection', (socket) => {
 });
 
 async function sendMessageToCloudAPI(to, text) {
-    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
+    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return null;
     try {
         const cleanTo = String(to).replace(/[^0-9]/g, '');
         const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
@@ -1824,8 +1852,11 @@ async function sendMessageToCloudAPI(to, text) {
         if (!res.ok) {
             const errData = await res.text();
             console.error(`❌ [META ERROR] al enviar a ${cleanTo}:`, errData);
+            return null;
         }
-    } catch (err) { console.error('Meta send error:', err); }
+        const data = await res.json();
+        return data.messages?.[0]?.id || null;
+    } catch (err) { console.error('Meta send error:', err); return null; }
 }
 
 async function getAIResponse(message, history = []) {
