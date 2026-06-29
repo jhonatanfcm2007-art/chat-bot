@@ -1824,12 +1824,14 @@ async function getAIResponse(message, history = []) {
         // Regla inquebrantable de seguridad para evitar alucinaciones
         const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS Y REGISTRO DE PEDIDOS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Cuando el cliente proporcione los 5 datos de envío completos, responde ÚNICAMENTE con las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].\n3. Si el cliente solicita soporte específico sobre su paquete o guía de envío, usa [APAGAR_BOT_SOPORTE].";
 
-        const mathRules = "\n\n### REGLAS DE CÁLCULO (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de combos de Shilajit, informa claramente la oferta disponible (Q199 1 tarro, Q349 2 tarros, Q449 3 tarros).";
+        const mathRules = "\n\n### REGLAS DE CÁLCULO (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de Shilajit en Cápsulas, informa claramente la oferta disponible (Q155 1 tarro, Q244 2 tarros, Q330 3 tarros).";
+
+        const dynamicStrategyRules = "\n\n### ADAPTABILIDAD INTELIGENTE Y VARIACIÓN DE MENSAJES:\nPara maximizar conversiones y sonar totalmente natural en WhatsApp:\n1. Adapta dinámicamente tu estructura y tono según la intención del cliente:\n   - Consultas de Salud/Condiciones (ej: hipertensión, diabetes): Sé empático, aclara que es 100% natural pero recomienda siempre consultar a su médico tratante por precaución.\n   - Preguntas de Precio/Oferta: Sé directo, resalta la gran oferta de los combos (Q244 por 2 tarros o Q330 por 3) y el Envío Gratis.\n   - Indecisión o Confianza: Resalta la seguridad del Pago Contra Entrega en toda Guatemala (paga en efectivo en mano al recibir).\n2. Evita usar plantillas idénticas. Varía la estructura de tus frases para que se sientan frescas, únicas y naturales.";
 
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `${settings.systemPrompt}${antiHallucinationRules}${mathRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
+                { role: "system", content: `${settings.systemPrompt}${antiHallucinationRules}${mathRules}${dynamicStrategyRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
                 { role: "user", content: message }
             ]
