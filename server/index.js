@@ -321,46 +321,7 @@ const recoveryTimers = {};
 const paymentReminderTimers = {};
 
 function scheduleRecovery(to) {
-    if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
-    
-    const chat = chats[to];
-    if (!chat) return;
-
-    // No programar si ya tiene etiquetas de compra o pago en progreso
-    const hasActiveTransaction = (chat.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
-    if (hasActiveTransaction) return;
-
-    recoveryTimers[to] = setTimeout(async () => {
-        const c = chats[to];
-        if (!c) return;
-        
-        // Verificar de nuevo al momento de ejecutar
-        const stillEligible = !(c.tags || []).some(t => ['pagado', 'entregado', 'pago-pendiente'].includes(t));
-        const lastMsg = c.messages[c.messages.length - 1];
-        const isBotLast = lastMsg && (lastMsg.role === 'bot' || lastMsg.isMe);
-
-        // Detectar si ya se enviaron credenciales o solicitud de pago (entrega manual incluida)
-        const credentialsAlreadySent = c.messages.some(m => {
-            const text = (m.body || m.content || '').toLowerCase();
-            return text.includes('correo:') || text.includes('contraseña:') || 
-                   text.includes('clave:') || text.includes('nequi') || 
-                   text.includes('activar primero') || text.includes('datos de acceso') ||
-                   text.includes('puedes hacer el pago') || text.includes('pago vía') ||
-                   text.includes('comprobante');
-        });
-
-        if (stillEligible && isBotLast && !c.recoverySentAt && !credentialsAlreadySent) {
-            const msgBody = "¡Hola! 😊 Si tienes alguna duda sobre el Shilajit o sobre cómo funciona el envío con Pago Contra Entrega en Guatemala, dime con gusto y te asesoro.";
-            await smartSendMessage(to, msgBody);
-            const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
-            c.messages.push(botMsg);
-            c.recoverySentAt = Date.now();
-            c.updatedAt = Date.now();
-            saveChats(chats);
-            io.emit('message', botMsg);
-        }
-        delete recoveryTimers[to];
-    }, 120000);
+    return;
 }
 
 // Timer de cobro automático (Deshabilitado para Pago Contraentrega)
