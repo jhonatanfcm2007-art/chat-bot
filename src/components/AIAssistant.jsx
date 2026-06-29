@@ -7,6 +7,10 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
+  // Estados para modo de edición de prompt (Tarjetas vs Texto Plano)
+  const [editMode, setEditMode] = useState('raw'); // Default a texto plano para poder pegar directo
+  const [rawPrompt, setRawPrompt] = useState('');
+  
   // Estados para Audio e Imagen de Bienvenida
   const [welcomeAudioEnabled, setWelcomeAudioEnabled] = useState(false);
   const [welcomeAudioUrl, setWelcomeAudioUrl] = useState('');
@@ -24,6 +28,7 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
   useEffect(() => {
     if (settings?.systemPrompt) {
       const raw = settings.systemPrompt;
+      setRawPrompt(raw);
       const lines = raw.split('\n');
       const parsedSections = [];
       let currentSection = { title: 'General', content: '', isOpen: true };
@@ -71,16 +76,34 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
     setSections(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSaveSettings = () => {
-    const fullPrompt = sections.map(s => `### ${s.title.toUpperCase()}:\n${s.content}`).join('\n\n');
-    socket.emit('sync_settings', { 
+  const handleSaveSettings = async () => {
+    const fullPrompt = editMode === 'raw' 
+      ? rawPrompt 
+      : sections.map(s => `### ${s.title.toUpperCase()}:\n${s.content}`).join('\n\n');
+      
+    const payload = { 
       ...settings, 
       systemPrompt: fullPrompt,
       welcomeAudioEnabled,
       welcomeAudioUrl,
       welcomeImageEnabled,
       welcomeImageUrl
-    });
+    };
+
+    // 1. Enviar por Socket
+    socket.emit('sync_settings', payload);
+
+    // 2. Enviar por HTTP POST para 100% de garantía de guardado en el servidor
+    try {
+      await fetch(`${serverUrl}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch(e) {
+      console.error('HTTP Save error:', e);
+    }
+
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -213,58 +236,97 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
         
         {/* Card 1: Entrenar IA */}
         <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative overflow-hidden">
-          <div className="flex justify-between items-start mb-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
               <h3 className="font-black text-on-surface text-3xl tracking-tight uppercase">Entrenar IA</h3>
+              <p className="text-xs text-slate-500 mt-1">Elige cómo deseas editar las instrucciones de tu asistente virtual.</p>
             </div>
-            <button 
-              onClick={addSection}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-primary border border-slate-200 rounded-xl hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-wider"
-            >
-              <span className="material-symbols-outlined text-sm">add_circle</span>
-              Añadir punto
-            </button>
+            
+            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              <button 
+                onClick={() => setEditMode('raw')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  editMode === 'raw' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                📝 Texto Completo (Pegar Todo)
+              </button>
+              <button 
+                onClick={() => setEditMode('cards')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  editMode === 'cards' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🗂️ Modo Secciones
+              </button>
+            </div>
           </div>
-          
-          <div className="space-y-4 pr-2 mb-8 max-h-[500px] overflow-y-auto custom-scrollbar">
-            {sections.map((section, idx) => (
-              <div key={idx} className={`border border-slate-100 rounded-2xl transition-all ${section.isOpen ? 'bg-slate-50/30' : 'bg-transparent'}`}>
-                <div 
-                   className="px-6 py-4 flex items-center justify-between cursor-pointer group"
-                   onClick={() => toggleSection(idx)}
+
+          {editMode === 'raw' ? (
+            <div className="mb-8">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Pega aquí tu System Prompt completo:
+              </label>
+              <textarea 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-xs text-slate-800 font-mono leading-relaxed min-h-[400px] focus:ring-2 focus:ring-primary focus:outline-none custom-scrollbar shadow-inner"
+                value={rawPrompt}
+                onChange={(e) => setRawPrompt(e.target.value)}
+                placeholder="Pega aquí todo tu prompt de ventas..."
+              />
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-end mb-4">
+                <button 
+                  onClick={addSection}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-primary border border-slate-200 rounded-xl hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-wider"
                 >
-                  <div className="flex items-center gap-4">
-                    <span className={`material-symbols-outlined text-sm transition-transform ${section.isOpen ? 'rotate-180' : ''}`}>expand_more</span>
-                    <input 
-                      className="bg-transparent border-none p-0 focus:ring-0 font-black text-xs uppercase tracking-widest text-on-surface cursor-text w-full max-w-[200px]"
-                      value={section.title}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => updateSection(idx, 'title', e.target.value)}
-                    />
-                  </div>
-                  {sections.length > 1 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); removeSection(idx); }}
-                      className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-error transition-all"
-                    >
-                      <span className="material-symbols-outlined text-sm">delete</span>
-                    </button>
-                  )}
-                </div>
-                
-                {section.isOpen && (
-                  <div className="px-14 pb-6 animate-in slide-in-from-top-2 duration-300">
-                    <textarea 
-                      className="w-full bg-transparent border-none p-0 text-xs focus:ring-0 resize-none text-on-surface-variant leading-relaxed min-h-[100px] custom-scrollbar outline-none font-sans"
-                      value={section.content}
-                      onChange={(e) => updateSection(idx, 'content', e.target.value)}
-                      placeholder="Indica aquí los detalles de este punto clave..."
-                    />
-                  </div>
-                )}
+                  <span className="material-symbols-outlined text-sm">add_circle</span>
+                  Añadir punto
+                </button>
               </div>
-            ))}
-          </div>
+              
+              <div className="space-y-4 pr-2 mb-8 max-h-[500px] overflow-y-auto custom-scrollbar">
+                {sections.map((section, idx) => (
+                  <div key={idx} className={`border border-slate-100 rounded-2xl transition-all ${section.isOpen ? 'bg-slate-50/30' : 'bg-transparent'}`}>
+                    <div 
+                       className="px-6 py-4 flex items-center justify-between cursor-pointer group"
+                       onClick={() => toggleSection(idx)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className={`material-symbols-outlined text-sm transition-transform ${section.isOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                        <input 
+                          className="bg-transparent border-none p-0 focus:ring-0 font-black text-xs uppercase tracking-widest text-on-surface cursor-text w-full max-w-[200px]"
+                          value={section.title}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                        />
+                      </div>
+                      {sections.length > 1 && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); removeSection(idx); }}
+                          className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-error transition-all"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                      )}
+                    </div>
+                    
+                    {section.isOpen && (
+                      <div className="px-14 pb-6 animate-in slide-in-from-top-2 duration-300">
+                        <textarea 
+                          className="w-full bg-transparent border-none p-0 text-xs focus:ring-0 resize-none text-on-surface-variant leading-relaxed min-h-[100px] custom-scrollbar outline-none font-sans"
+                          value={section.content}
+                          onChange={(e) => updateSection(idx, 'content', e.target.value)}
+                          placeholder="Indica aquí los detalles de este punto clave..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <button 
             onClick={handleSaveSettings}
@@ -275,7 +337,7 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
             }`}
           >
             <span className="material-symbols-outlined font-black text-2xl">{isSaved ? 'verified' : 'save_as'}</span>
-            {isSaved ? 'Protocolos Guardados' : 'Cargar Instrucciones al Bot'}
+            {isSaved ? 'Instrucciones Guardadas con Éxito' : 'Cargar Instrucciones al Bot'}
           </button>
         </div>
 

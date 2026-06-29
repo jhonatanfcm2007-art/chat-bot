@@ -1723,11 +1723,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('sync_settings', (data) => { settings = data; saveSettings(settings); });
+    socket.on('sync_settings', (data) => { 
+        settings = { ...settings, ...data }; 
+        saveSettings(settings); 
+        io.emit('initial_settings', settings);
+    });
     socket.on('sync_inventory', (data) => { inventory = data; saveInventory(inventory); socket.broadcast.emit('inventory_updated', inventory); });
     socket.on('sync_sales', (data) => { sales = data; saveSales(sales); socket.broadcast.emit('sales_updated', sales); });
     socket.on('sync_platforms', (data) => { platforms = data; savePlatforms(platforms); socket.broadcast.emit('platforms_updated', platforms); });
     socket.on('sync_providers', (data) => { providers = data; saveProviders(providers); socket.broadcast.emit('providers_updated', providers); });
+
+app.get('/api/settings', (req, res) => res.json(settings));
+app.post('/api/settings', (req, res) => {
+    settings = { ...settings, ...req.body };
+    saveSettings(settings);
+    io.emit('initial_settings', settings);
+    res.json({ success: true, settings });
+});
     
     socket.on('delete_chat', (chatId) => {
         if (chats[chatId]) {
