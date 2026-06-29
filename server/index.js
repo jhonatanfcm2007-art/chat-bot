@@ -320,9 +320,9 @@ function scheduleRecovery(to) {
         });
 
         if (stillEligible && isBotLast && !c.recoverySentAt && !credentialsAlreadySent) {
-            const msgBody = "¡Hola! 😊 Si tienes alguna duda sobre el Shilajit o sobre cómo funciona el envío con Pago Contraentrega en tu ciudad, dime con gusto y te asesoro.";
+            const msgBody = "¡Hola! 😊 Si tienes alguna duda sobre el Shilajit o sobre cómo funciona el envío con Pago Contra Entrega en Guatemala, dime con gusto y te asesoro.";
             await smartSendMessage(to, msgBody);
-            const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
+            const botMsg = { id: 'rec-'+Date.now(), from: to, body: msgBody, content: msgBody, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
             c.messages.push(botMsg);
             c.recoverySentAt = Date.now();
             c.updatedAt = Date.now();
@@ -393,9 +393,9 @@ async function executeDelivery(to, mode = 'deliver_first') {
                 sales.push({
                     id: 'sale-' + Date.now() + '-' + Math.random(),
                     reference: ref, service: acc.service, price: salePrice, cost: acc.cost, provider: acc.provider, 
-                    date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), 
+                    date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }), 
                     customer: chat.customerName, customerId: to,
-                    email: 'Pago Contraentrega', pass: 'Pendiente Despacho', profile: acc.profile || 'Shilajit', pin: 'Envío Gratis', expiration: 'Contraentrega',
+                    email: 'Pago Contraentrega', pass: 'Pendiente Despacho', profile: acc.profile || 'Shilajit', pin: 'Envío Gratis Guatemala', expiration: 'Contraentrega',
                     accountId: acc.id,
                     paid: false
                 });
@@ -408,7 +408,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
         }
 
         if (accountsFound > 0) {
-            const totalMsg = `🚀 *¡Pedido Registrado con Éxito!* 🌿\n\nTu orden de *${deliveredSales.join(', ')}* ha sido programada para despacho inmediato.\n\n🚚 *Método de Envío:* Gratis a nivel nacional.\n💵 *Método de Pago:* Pago Contraentrega ($${totalPrice.toLocaleString('es-CO')}).\n\nRecibirás tu paquete en la puerta de tu casa u oficina de 2 a 4 días hábiles. ¡Muchas gracias por tu compra! 😊`;
+            const totalMsg = `🚀 *¡Pedido Registrado con Éxito!* 🌿\n\nTu orden de *${deliveredSales.join(', ')}* ha sido programada para despacho inmediato.\n\n🚚 *Método de Envío:* Gratis a nivel nacional en Guatemala.\n💵 *Método de Pago:* Pago Contra Entrega (Q${totalPrice}).\n\nRecibirás tu paquete en la puerta de tu casa u oficina de 1 a 3 días hábiles. ¡Muchas gracias por tu compra! 😊`;
             
             await smartSendMessage(to, totalMsg);
 
@@ -424,7 +424,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
 
             const botMsgData = {
                 id: 'auto-' + Date.now(), from: to, customerName: 'Sistema', body: totalMsg,
-                timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }),
                 timestampRaw: Date.now(), isMe: true, role: 'bot'
             };
             chat.messages.push({ ...botMsgData, content: totalMsg });
@@ -433,7 +433,7 @@ async function executeDelivery(to, mode = 'deliver_first') {
             scheduleRecovery(to);
 
             if (ADMIN_PHONE) {
-                const notif = `📦 *NUEVO PEDIDO CONTRAENTREGA:* Cliente *${chat.customerName}* (${to}) pidió *${deliveredSales.join(', ')}* ($${totalPrice.toLocaleString('es-CO')}). ¡Revisa los datos de despacho en el chat!`;
+                const notif = `📦 *NUEVO PEDIDO GUATEMALA:* Cliente *${chat.customerName}* (${to}) pidió *${deliveredSales.join(', ')}* (Q${totalPrice}). ¡Revisa los datos de despacho en el chat!`;
                 smartSendMessage(ADMIN_PHONE, notif);
             }
             return { success: true };
