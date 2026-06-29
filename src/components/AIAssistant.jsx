@@ -7,13 +7,18 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
-  // Estados para Audio de Bienvenida
+  // Estados para Audio e Imagen de Bienvenida
   const [welcomeAudioEnabled, setWelcomeAudioEnabled] = useState(false);
   const [welcomeAudioUrl, setWelcomeAudioUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+
+  const [welcomeImageEnabled, setWelcomeImageEnabled] = useState(false);
+  const [welcomeImageUrl, setWelcomeImageUrl] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   
   const chatEndRef = useRef(null);
   const audioInputRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   // Parsear el prompt plano en secciones estructuradas
   useEffect(() => {
@@ -37,10 +42,12 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
       setSections(parsedSections);
     }
     
-    // Cargar estados de audio de bienvenida
+    // Cargar estados de audio e imagen de bienvenida
     if (settings) {
       setWelcomeAudioEnabled(settings.welcomeAudioEnabled || false);
       setWelcomeAudioUrl(settings.welcomeAudioUrl || '');
+      setWelcomeImageEnabled(settings.welcomeImageEnabled || false);
+      setWelcomeImageUrl(settings.welcomeImageUrl || '');
     }
   }, [settings]);
 
@@ -70,7 +77,9 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
       ...settings, 
       systemPrompt: fullPrompt,
       welcomeAudioEnabled,
-      welcomeAudioUrl
+      welcomeAudioUrl,
+      welcomeImageEnabled,
+      welcomeImageUrl
     });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
@@ -81,7 +90,20 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
     socket.emit('sync_settings', {
       ...settings,
       welcomeAudioEnabled: val,
-      welcomeAudioUrl
+      welcomeAudioUrl,
+      welcomeImageEnabled,
+      welcomeImageUrl
+    });
+  };
+
+  const handleToggleWelcomeImage = (val) => {
+    setWelcomeImageEnabled(val);
+    socket.emit('sync_settings', {
+      ...settings,
+      welcomeAudioEnabled,
+      welcomeAudioUrl,
+      welcomeImageEnabled: val,
+      welcomeImageUrl
     });
   };
 
@@ -115,8 +137,10 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
           setWelcomeAudioUrl(data.url);
           socket.emit('sync_settings', {
             ...settings,
-            welcomeAudioEnabled: welcomeAudioEnabled,
-            welcomeAudioUrl: data.url
+            welcomeAudioEnabled,
+            welcomeAudioUrl: data.url,
+            welcomeImageEnabled,
+            welcomeImageUrl
           });
           alert('¡Audio de bienvenida subido con éxito!');
         } else {
@@ -127,6 +151,56 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
         alert('Ocurrió un error al subir el audio.');
       } finally {
         setIsUploading(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona una imagen válida (png, jpg, jpeg, webp)');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+      try {
+        const base64Data = event.target.result;
+        
+        const response = await fetch(`${serverUrl}/api/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            base64: base64Data
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWelcomeImageUrl(data.url);
+          socket.emit('sync_settings', {
+            ...settings,
+            welcomeAudioEnabled,
+            welcomeAudioUrl,
+            welcomeImageEnabled,
+            welcomeImageUrl: data.url
+          });
+          alert('¡Imagen de bienvenida subida con éxito!');
+        } else {
+          alert('Error al subir la imagen.');
+        }
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        alert('Ocurrió un error al subir la imagen.');
+      } finally {
+        setIsUploadingImage(false);
       }
     };
 
@@ -290,6 +364,99 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
                 ) : (
                   <div className="mt-2 text-xs text-slate-400 italic">
                     No hay ningún archivo de audio cargado todavía. Sube un archivo para comenzar.
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Imagen de Bienvenida */}
+        <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative overflow-hidden">
+          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="font-black text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Imagen de Producto Original)</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xl">
+                Envía automáticamente la foto de tu producto Shilajit original a todos los clientes nuevos que escriban por primera vez.
+              </p>
+            </div>
+            
+            {/* Toggle Switch */}
+            <button 
+              onClick={() => handleToggleWelcomeImage(!welcomeImageEnabled)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                welcomeImageEnabled ? 'bg-primary' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  welcomeImageEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="space-y-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              
+              {/* Drop area/Button */}
+              <div 
+                onClick={() => imageInputRef.current?.click()}
+                className={`w-full md:w-1/2 border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                  isUploadingImage 
+                    ? 'border-primary bg-primary/5 cursor-wait' 
+                    : 'border-slate-300 hover:border-primary hover:bg-slate-50'
+                }`}
+              >
+                <input 
+                  type="file" 
+                  ref={imageInputRef} 
+                  onChange={handleImageUpload} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+                
+                {isUploadingImage ? (
+                  <>
+                    <svg className="animate-spin h-8 w-8 text-primary mb-3" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-xs font-bold text-slate-600">Subiendo imagen...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">image</span>
+                    <span className="text-xs font-bold text-slate-600 text-center">Haz clic para subir tu foto de producto original</span>
+                    <span className="text-[10px] text-slate-400 mt-1">Formatos admitidos: .png, .jpg, .jpeg, .webp</span>
+                  </>
+                )}
+              </div>
+
+              {/* Status & Preview */}
+              <div className="w-full md:w-1/2 flex flex-col justify-center">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Imagen Activa</span>
+                
+                {welcomeImageUrl ? (
+                  <div className="mt-2 space-y-3">
+                    <div className="flex items-center gap-2 text-xs text-primary font-bold bg-primary/10 px-3 py-2 rounded-xl border border-primary/20 w-fit">
+                      <span className="material-symbols-outlined text-sm">photo_library</span>
+                      <span>Imagen Cargada Correctamente</span>
+                    </div>
+                    
+                    {/* Image Preview */}
+                    <img 
+                      src={welcomeImageUrl.startsWith('http') ? welcomeImageUrl : `${serverUrl}${welcomeImageUrl}`} 
+                      alt="Bienvenida Original" 
+                      className="w-32 h-32 object-cover border border-slate-200 rounded-2xl shadow-sm"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-slate-400 italic">
+                    No hay ninguna imagen cargada todavía. Sube una foto de tu producto original para comenzar.
                   </div>
                 )}
               </div>
