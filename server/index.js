@@ -256,14 +256,14 @@ let campaigns = loadCampaigns();
 
 ### 🎯 REGLAS INQUEBRANTABLES DE CONVERSIÓN Y VENTAS EN WHATSAPP:
 1. **MENSAJES CORTOS Y DIRECTOS (MÁXIMO 2 O 3 LÍNEAS POR MENSAJE)**: NUNCA envíes textos largos ni sermones. Si el cliente pregunta el precio o información, sé directo, conciso y dinámico.
-2. **SIEMPRE TERMINA CON UNA PREGUNTA DE CIERRE O CONVERSACIÓN**: Jamás dejes una respuesta en punto muerto. Termina siempre preguntando cosas como: "¿Te lo programamos a la capital o a departamento?", "¿Aprovechamos la oferta de 2 tarros por Q244?", o "¿A qué dirección te lo enviamos con envío gratis?".
+2. **SIEMPRE TERMINA CON UNA PREGUNTA DE CIERRE O CONVERSACIÓN**: Jamás dejes una respuesta en punto muerto. Termina siempre preguntando cosas como: "¿Te lo programamos a la capital o a departamento?", "¿Aprovechamos la oferta de 2 frascos por Q244?", o "¿A qué dirección te lo enviamos con envío gratis?".
 3. **PUNTO DE DOLOR Y BENEFICIO NÚMERO 1**: Resalta brevemente la máxima potencia para el RENDIMIENTO SEXUAL MASCULINO, erección firme, testosterona y energía física.
 4. **PAGO CONTRA ENTREGA Y ENVÍO GRATIS**: Recalca siempre: ENVÍO GRATIS y PAGO CONTRA ENTREGA en toda Guatemala (pagas en efectivo al recibir en mano).
 
 ### 🇬🇹 PRECIOS EN QUETZALES (Q):
-- 🌿 1 Tarro (60 Cápsulas): Q155 (Envío GRATIS + Pago Contra Entrega)
-- 🎁 Combo 2 Tarros (120 Cápsulas): Q244 (Ahorras Q66 - ¡El Más Vendido!)
-- 🔥 Combo 3 Tarros (180 Cápsulas): Q330 (¡Máximo Ahorro! Q110 c/u)
+- 🌿 1 Frasco (60 Cápsulas): Q155 (Envío GRATIS + Pago Contra Entrega)
+- 🎁 Combo 2 Frascos (120 Cápsulas): Q244 (Ahorras Q66 - ¡El Más Vendido!)
+- 🔥 Combo 3 Frascos (180 Cápsulas): Q330 (¡Máximo Ahorro! Q110 c/u)
 
 ### 🛒 REGISTRO DE PEDIDOS:
 Cuando el cliente pida o entregue sus datos de despacho completos, responde brevemente e incluye ÚNICAMENTE las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].`;
@@ -272,9 +272,9 @@ Cuando el cliente pida o entregue sus datos de despacho completos, responde brev
     saveSettings(settings);
 
     inventory = [
-        { id: 'inv-1', service: 'Shilajit 60 Cápsulas (1 Tarro)', price: 155, cost: 50, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '60 Cápsulas', pin: 'Oferta 1 Tarro', expiration: '2027-12-31' },
-        { id: 'inv-2', service: 'Combo 2x Shilajit Cápsulas (120 Cápsulas)', price: 244, cost: 100, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '2 Tarros (120 Caps)', pin: 'Oferta Especial', expiration: '2027-12-31' },
-        { id: 'inv-3', service: 'Combo 3x Shilajit Cápsulas (180 Cápsulas)', price: 330, cost: 150, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '3 Tarros (180 Caps)', pin: 'Máximo Ahorro', expiration: '2027-12-31' }
+        { id: 'inv-1', service: 'Shilajit 60 Cápsulas (1 Frasco)', price: 155, cost: 50, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '60 Cápsulas', pin: 'Oferta 1 Frasco', expiration: '2027-12-31' },
+        { id: 'inv-2', service: 'Combo 2x Shilajit Cápsulas (120 Cápsulas)', price: 244, cost: 100, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '2 Frascos (120 Caps)', pin: 'Oferta Especial', expiration: '2027-12-31' },
+        { id: 'inv-3', service: 'Combo 3x Shilajit Cápsulas (180 Cápsulas)', price: 330, cost: 150, provider: 'Laboratorio Oficial', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'Envío Gratis Guatemala', profile: '3 Frascos (180 Caps)', pin: 'Máximo Ahorro', expiration: '2027-12-31' }
     ];
     saveInventory(inventory);
     console.log('🔄 [MIGRACIÓN] Inventario forzado a Shilajit Cápsulas Guatemala.');
@@ -1917,9 +1917,9 @@ async function getAIResponse(message, history = []) {
         // Regla inquebrantable de seguridad para evitar alucinaciones
         const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS Y REGISTRO DE PEDIDOS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Cuando el cliente proporcione los 5 datos de envío completos, responde ÚNICAMENTE con las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].\n3. Si el cliente solicita soporte específico sobre su paquete o guía de envío, usa [APAGAR_BOT_SOPORTE].";
 
-        const mathRules = "\n\n### REGLAS DE CÁLCULO Y PRESENTACIÓN (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de Shilajit en Cápsulas, informa claramente la oferta disponible (Q155 1 tarro, Q244 2 tarros, Q330 3 tarros).\n3. ¡OBLIGATORIO!: En CADA cotización u oferta debes recalcar juntos: ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas en efectivo al recibir tu paquete en mano).";
+        const mathRules = "\n\n### REGLAS DE CÁLCULO Y PRESENTACIÓN (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de Shilajit en Cápsulas, informa claramente la oferta disponible (Q155 1 frasco, Q244 2 frascos, Q330 3 frascos).\n3. ¡OBLIGATORIO!: En CADA cotización u oferta debes recalcar juntos: ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas en efectivo al recibir tu paquete en mano).";
 
-        const dynamicStrategyRules = "\n\n### ADAPTABILIDAD INTELIGENTE Y CONDICIONES DE SALUD:\n1. CONDICIONES MÉDICAS (HIPERTENSIÓN, DIABETES, ENFERMEDADES): Si el cliente menciona que sufre de hipertensión, diabetes o cualquier otra condición de salud o enfermedad, DEBES responder con total seguridad que la recomendación médica oficial en su caso es tomar únicamente 1 CÁPSULA DÍA DE POR MEDIO (cada 2 días). Aclara que es 100% natural, seguro y de excelente tolerancia bajo esta indicación.\n2. Preguntas de Precio/Oferta: Sé directo y resalta siempre el combo (Q244 2 tarros o Q330 3 tarros) especificando que incluye ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas al recibir).\n3. Indecisión o Confianza: Resalta la seguridad del Pago Contra Entrega en toda Guatemala (no arriesgas tu dinero, pagas solo al recibir en efectivo).\n4. Evita usar plantillas idénticas. Varía la estructura de tus frases para que se sientan frescas, únicas y naturales.";
+        const dynamicStrategyRules = "\n\n### ADAPTABILIDAD INTELIGENTE Y CONDICIONES DE SALUD:\n1. CONDICIONES MÉDICAS (HIPERTENSIÓN, DIABETES, ENFERMEDADES): Si el cliente menciona que sufre de hipertensión, diabetes o cualquier otra condición de salud o enfermedad, DEBES responder con total seguridad que la recomendación médica oficial en su caso es tomar únicamente 1 CÁPSULA DÍA DE POR MEDIO (cada 2 días). Aclara que es 100% natural, seguro y de excelente tolerancia bajo esta indicación.\n2. Preguntas de Precio/Oferta: Sé directo y resalta siempre el combo (Q244 2 frascos o Q330 3 frascos) especificando que incluye ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas al recibir).\n3. Indecisión o Confianza: Resalta la seguridad del Pago Contra Entrega en toda Guatemala (no arriesgas tu dinero, pagas solo al recibir en efectivo).\n4. Evita usar plantillas idénticas. Varía la estructura de tus frases para que se sientan frescas, únicas y naturales.";
 
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
