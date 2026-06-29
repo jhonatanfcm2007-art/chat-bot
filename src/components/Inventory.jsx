@@ -123,9 +123,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
   const handleAddAccount = (e) => {
     e.preventDefault();
     const serviceName = formData.service.trim();
-    if (!serviceName || !formData.email || !formData.pass) return;
+    if (!serviceName) return;
 
     const usesCount = parseInt(formData.uses) || 0;
+    const finalEmail = formData.email?.trim() || 'N/A';
+    const finalPass = formData.pass?.trim() || 'N/A';
     
     if (serviceName) {
       setPlatforms(prev => prev.includes(serviceName) ? prev : [...prev, serviceName]);
@@ -141,6 +143,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           ...acc, 
           ...formData, 
           service: serviceName,
+          email: finalEmail,
+          pass: finalPass,
           price: parseInt(formData.price) || 0, 
           cost: parseInt(formData.cost) || 0, 
           uses: usesCount,
@@ -169,6 +173,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           id: baseId++,
           ...formData,
           service: serviceName,
+          email: finalEmail,
+          pass: finalPass,
           profile: i.toString(),
           uses: usesCount,
           status: usesCount > 0 ? 'Available' : 'Sold',
@@ -183,6 +189,8 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         id: accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1,
         ...formData,
         service: serviceName,
+        email: finalEmail,
+        pass: finalPass,
         status: usesCount > 0 ? 'Available' : 'Sold',
         uses: usesCount,
         price: parseInt(formData.price) || 0,
@@ -357,11 +365,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
           <table className="w-full text-left border-collapse min-w-[1200px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Servicio / Email</th>
-                <th className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase">Perfil</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Contraseña</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">PIN</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Precio</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Producto / Presentación</th>
+                <th className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase">Variante</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Detalles Envío</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Promoción</th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Precio (Q)</th>
                 <th className="px-6 py-5 text-[11px] font-black text-tertiary uppercase">Éxito</th>
                 <th className="px-6 py-5 text-[11px] font-black text-error uppercase">Falla</th>
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Prov.</th>
@@ -511,7 +519,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border p-8 flex flex-col max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase">{editingAccount ? 'Editar Cuenta' : 'Agregar Cuenta'}</h2>
+              <h2 className="text-xl font-black uppercase">{editingAccount ? 'Editar Producto / Combo' : 'Agregar Producto'}</h2>
               <button onClick={closeModal}><span className="material-symbols-outlined">close</span></button>
             </div>
             {!editingAccount && (
@@ -527,59 +535,59 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
             )}
             <form onSubmit={handleAddAccount} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Plataforma</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Producto / Combo</label>
                 {showCustomPlatform ? (
-                  <input type="text" name="service" value={formData.service} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+                  <input type="text" name="service" value={formData.service} onChange={handleInputChange} placeholder="Ej: Shilajit Resina 30g..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
                 ) : (
                   <div className="flex gap-2">
                     <select name="service" value={formData.service} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomPlatform(true); setFormData(p => ({...p, service: ''})); } else { handleInputChange(e); }}} className="flex-grow bg-slate-50 border p-3 rounded-xl text-sm" required>
                       <option value="">Seleccionar...</option>
                       {availablePlatforms.map(p => <option key={p} value={p}>{p}</option>)}
-                      <option value="__custom__">+ Otra</option>
+                      <option value="__custom__">+ Otro Producto</option>
                     </select>
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Correo</label>
-                <input type="text" name="email" value={formData.email} onChange={handleInputChange} placeholder="correo@ejemplo.com" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Presentación / Detalles</label>
+                <input type="text" name="email" value={formData.email} onChange={handleInputChange} placeholder="Ej: 30 Gramos / Resina Puro" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               {!isBulkMode && (
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Perfil</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Variante / Notas</label>
                   {showCustomProfile ? (
-                    <input type="text" name="profile" value={formData.profile} onChange={handleInputChange} placeholder="#" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                    <input type="text" name="profile" value={formData.profile} onChange={handleInputChange} placeholder="Ej: Tarro 30g" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
                   ) : (
                     <select name="profile" value={formData.profile} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProfile(true); setFormData(p => ({...p, profile: ''})); } else { handleInputChange(e); }}} className="w-full bg-slate-50 border p-3 rounded-xl text-sm">
                       <option value="">Seleccionar...</option>
                       {availableProfiles.map(p => <option key={p} value={p}>{p}</option>)}
-                      <option value="__custom__">+ Otro</option>
+                      <option value="__custom__">+ Otra Variante</option>
                     </select>
                   )}
                 </div>
               )}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Contraseña</label>
-                <input type="text" name="pass" value={formData.pass} onChange={handleInputChange} placeholder="****" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Detalles de Envío</label>
+                <input type="text" name="pass" value={formData.pass} onChange={handleInputChange} placeholder="Ej: Envío Gratis Guatemala" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">PIN</label>
-                <input type="text" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="Opcional" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Promoción / Tag</label>
+                <input type="text" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="Ej: Oferta Especial" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Precio</label>
-                <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="$" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Precio (Q)</label>
+                <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="Q199" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Costo</label>
-                <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} placeholder="$" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Costo (Q)</label>
+                <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} placeholder="Q70" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Cupos</label>
-                <input type="number" name="uses" value={formData.uses} onChange={handleInputChange} className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Stock Disponible</label>
+                <input type="number" name="uses" value={formData.uses} onChange={handleInputChange} placeholder="100" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Proveedor</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Proveedor / Origen</label>
                 {showCustomProvider ? (
                   <input type="text" name="provider" value={formData.provider} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
                 ) : (
@@ -592,7 +600,7 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
               </div>
               <div className="md:col-span-2 mt-4 flex gap-3">
                 <button type="submit" className="flex-grow bg-primary text-white font-black py-4 rounded-2xl uppercase text-xs">
-                  {editingAccount ? 'Guardar Cambios' : (isBulkMode ? `Crear Perfiles ${bulkRange}` : 'Agregar Cuenta')}
+                  {editingAccount ? 'Guardar Cambios' : (isBulkMode ? `Crear Variantes ${bulkRange}` : 'Agregar Producto')}
                 </button>
                 {editingAccount && (
                   <button type="button" onClick={() => { handleDeleteAccount(editingAccount.id); closeModal(); }} className="bg-rose-500 text-white font-black py-4 px-6 rounded-2xl uppercase text-xs">Eliminar</button>

@@ -248,6 +248,42 @@ let platforms = loadPlatforms();
 let providers = loadProviders();
 let campaigns = loadCampaigns();
 
+// MIGRACIÓN OBLIGATORIA A E-COMMERCE GUATEMALA
+(function migrateToEcommerceGuatemala() {
+    const guatemalaPrompt = `Eres el asesor comercial virtual oficial de ventas de Shilajit 100% Puro Resina en Guatemala por WhatsApp. Eres directo, amable, altamente persuasivo y muy eficiente. Usa emojis con moderación.\n\n### INFORMACIÓN DEL PRODUCTO (SHILAJIT):\n- ¿Qué es?: Es una sustancia natural y milenaria recolectada en las alturas del Himalaya, rica en ácido fúlvico y más de 84 minerales biodisponibles.\n- Beneficios principales: Aumenta la energía y resistencia física, potencia el rendimiento masculino, combate la fatiga y el cansancio, eleva la vitalidad y apoya los niveles naturales de testosterona.\n- Modo de uso: Tomar una pequeña porción del tamaño de un grano de arroz (incluye cuchara dosificadora) disuelta en agua tibia, té, café o leche caliente una o dos veces al día.\n\n### REGLA INQUEBRANTABLE - MÉTODOS DE PAGO Y ENVÍO:\n- ÚNICAMENTE se maneja PAGO CONTRA ENTREGA en toda Guatemala.\n- El envío es GRATIS a nivel nacional (Ciudad de Guatemala y departamentos).\n- El cliente paga en efectivo únicamente cuando recibe el paquete en sus manos.\n- NUNCA solicites pagos por anticipado ni depósitos antes de recibir.\n\n### ESTRATEGIA DE VENTA Y CIERRE:\n1. **COTIZACIÓN**: Si preguntan precios, presenta los precios en Quetzales (Q) de forma atractiva resaltando el ahorro en los combos.\n   - 1 Tarro (30g): Q199 (Envío gratis)\n   - Combo 2 Tarros: Q349 (Ahorras Q49)\n   - Combo 3 Tarros: Q449 (Máximo Ahorro)\n2. **TOMA DE DATOS PARA DESPACHO (¡MUY IMPORTANTE!)**: Cuando el cliente confirme que quiere pedir (ej: "quiero uno", "envíamelo", "quiero el combo 2x", "listo", "dale", "pedir"), solicítale amablemente los 5 datos necesarios para programar su envío Pago Contra Entrega:\n   - 👤 Nombre completo\n   - 📞 Número de teléfono o WhatsApp\n   - 📍 Departamento y Municipio\n   - 🏠 Dirección exacta y referencia (Zona/Colonia)\n   - 🛒 Producto o Combo elegido\n3. **REGISTRO DE PEDIDO**: Cuando el cliente te entregue sus datos de despacho completos, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombreDelProducto]\n   Ejemplo perfecto: "¡Excelente decisión! Ya he registrado tu pedido. En breve coordinamos el despacho por mensajería. [ENTREGAR_AHORA] [PRODUCTOS: Shilajit 100% Puro Resina 30g]"\n\n### SOPORTE Y ASESORÍA:\n- Si el cliente reporta una novedad de entrega o pregunta por su número de guía, usa [APAGAR_BOT_SOPORTE] para que un humano lo atienda.`;
+
+    if (!settings.systemPrompt || settings.systemPrompt.includes('streaming') || settings.systemPrompt.includes('Colombia') || settings.systemPrompt.includes('Netflix')) {
+        settings.systemPrompt = guatemalaPrompt;
+        saveSettings(settings);
+        console.log('🔄 [MIGRACIÓN] System Prompt actualizado forzadamente a Guatemala Shilajit.');
+    }
+
+    const hasStreamingInInventory = inventory.some(i => i.service && (i.service.toLowerCase().includes('netflix') || i.service.toLowerCase().includes('disney')));
+    if (inventory.length === 0 || hasStreamingInInventory) {
+        inventory = [
+            { id: 'inv-1', service: 'Shilajit 100% Puro Resina 30g', price: 199, cost: 70, provider: 'Himalaya Natural', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'N/A', profile: '30 Gramos', pin: 'Envío Gratis Guatemala', expiration: '2027-12-31' },
+            { id: 'inv-2', service: 'Combo 2x Shilajit Resina (Oferta Especial)', price: 349, cost: 140, provider: 'Himalaya Natural', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'N/A', profile: '2 Tarros (60g)', pin: 'Envío Gratis Guatemala', expiration: '2027-12-31' },
+            { id: 'inv-3', service: 'Combo 3x Shilajit Resina (Máximo Ahorro)', price: 449, cost: 210, provider: 'Himalaya Natural', uses: 100, originalUses: 100, status: 'Available', email: 'N/A', pass: 'N/A', profile: '3 Tarros (90g)', pin: 'Envío Gratis Guatemala', expiration: '2027-12-31' }
+        ];
+        saveInventory(inventory);
+        console.log('🔄 [MIGRACIÓN] Inventario forzado a Shilajit Guatemala.');
+    }
+
+    let chatsModified = false;
+    for (const chatId in chats) {
+        const chat = chats[chatId];
+        const mentionsStreaming = (chat.messages || []).some(m => (m.body || m.content || '').toLowerCase().includes('netflix') || (m.body || m.content || '').toLowerCase().includes('streaming'));
+        if (mentionsStreaming) {
+            delete chats[chatId];
+            chatsModified = true;
+        }
+    }
+    if (chatsModified) {
+        saveChats(chats);
+        console.log('🔄 [MIGRACIÓN] Memoria de chats de streaming eliminada.');
+    }
+})();
+
 // MIGRACIÓN: Normalizar URLs de imágenes antiguas a rutas relativas
 (function migrateMediaUrls() {
     let fixed = 0;
