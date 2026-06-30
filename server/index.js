@@ -62,6 +62,15 @@ const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN
 console.log('Backend URL:', BACKEND_URL || '⚠️ No configurada (usando rutas relativas)');
 console.log('-----------------------------------------');
 
+app.get('/api/health', async (req, res) => {
+    res.json({ status: 'ok' });
+});
+
+// Endpoint secreto para depurar webhooks de Meta
+app.get('/api/webhook-debug', (req, res) => {
+    res.json(webhookLogs);
+});
+
 // Helper Multi-Línea: Resuelve credenciales según la línea del cliente
 function getWhatsAppCredentials(customerPhone) {
     const chat = chats?.[customerPhone];
@@ -73,6 +82,7 @@ function getWhatsAppCredentials(customerPhone) {
 
 let lastReceiptFrom = null; 
 const aiTimers = {};
+const webhookLogs = []; // Stores last 20 webhooks for debugging
 
 // --- PERSISTENCIA ---
 const DATA_DIR = path.join(__dirname, 'data');
@@ -567,6 +577,10 @@ app.get('/webhook/messenger', (req, res) => {
 
 app.post('/webhook', async (req, res) => {
     const body = req.body;
+    
+    // Debug logger
+    webhookLogs.unshift({ time: new Date().toISOString(), body });
+    if (webhookLogs.length > 20) webhookLogs.pop();
     
     // Procesar actualizaciones de estado (chulitos de lectura / entrega)
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value?.statuses?.[0]) {
