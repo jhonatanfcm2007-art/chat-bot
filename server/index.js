@@ -982,7 +982,7 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
     }
 
-    const aiReply = await getAIResponse(msgBodyLower, allMessages);
+    const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine);
     
     // --- APAGADO POR IA ---
     const gptRequestedSupport = /\[APAGAR_BOT_SOPORTE\]/i.test(aiReply);
@@ -1866,7 +1866,7 @@ app.post('/api/settings', (req, res) => {
         }
     });
 
-    socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history)));
+    socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history, data.waLine || 1)));
     socket.on('update_chat_tags', ({ chatId, tags }) => { 
         if (chats[chatId]) { 
             chats[chatId].tags = tags; 
@@ -1962,7 +1962,7 @@ async function sendMessageToCloudAPI(to, text) {
     } catch (err) { console.error('Meta send error:', err); return null; }
 }
 
-async function getAIResponse(message, history = []) {
+async function getAIResponse(message, history = [], waLine = 1) {
     let activeOpenAI = openai;
     
     // Intento de recuperación si la variable no estaba lista al inicio
