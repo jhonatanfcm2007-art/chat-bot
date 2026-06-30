@@ -593,10 +593,12 @@ app.post('/webhook', async (req, res) => {
     webhookLogs.unshift({ time: new Date().toISOString(), body });
     if (webhookLogs.length > 20) webhookLogs.pop();
     
-    // Procesar actualizaciones de estado (chulitos de lectura / entrega)
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value?.statuses?.[0]) {
         const statusObj = body.entry[0].changes[0].value.statuses[0];
-        const recipientId = statusObj.recipient_id;
+        const originalRecipientId = statusObj.recipient_id;
+        const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
+        const waLine = webhookPhoneId === PHONE_ID_2 ? 2 : 1;
+        const recipientId = waLine === 2 ? `${originalRecipientId}_2` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
 
@@ -620,7 +622,10 @@ app.post('/webhook', async (req, res) => {
 
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
-        const from = msg.from;
+        const originalFrom = msg.from;
+        const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
+        const waLine = webhookPhoneId === PHONE_ID_2 ? 2 : 1;
+        const from = waLine === 2 ? `${originalFrom}_2` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
         if (chats[from]?.isBlocked) {
@@ -1264,7 +1269,7 @@ async function sendAudioToCloudAPI(to, audioUrl) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
     if (!token || !phoneId || !to) return;
     try {
-        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
         console.log(`📡 [META L${line}] Enviando audio a ${cleanTo}: ${audioUrl}`);
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
@@ -1332,7 +1337,7 @@ async function sendImageToCloudAPI(to, imageUrl, caption) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
     if (!token || !phoneId || !to) return;
     try {
-        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
         console.log(`📡 [META L${line}] Enviando imagen a ${cleanTo}: ${imageUrl}`);
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
@@ -1941,7 +1946,7 @@ async function sendMessageToCloudAPI(to, text) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
     if (!token || !phoneId || !to) return null;
     try {
-        const cleanTo = String(to).replace(/[^0-9]/g, '');
+        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

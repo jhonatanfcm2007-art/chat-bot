@@ -713,7 +713,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                {activeChatData.customerName.charAt(0)}
             </div>
             <h2 className="font-bold text-lg text-slate-800 leading-tight">{activeChatData.customerName}</h2>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedChat}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedChat.split('_')[0]}</p>
           </div>
 
           <div className="flex-grow overflow-y-auto p-6 space-y-8 custom-scrollbar">
