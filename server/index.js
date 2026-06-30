@@ -373,7 +373,48 @@ const recoveryTimers = {};
 const paymentReminderTimers = {};
 
 function scheduleRecovery(to) {
-    return;
+    if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
+    const chat = chats[to];
+    if (!chat || chat.aiDisabled) return;
+
+    // Verificar si el último mensaje del bot fue la Etapa 5 (contiene la pregunta de cierre o precios)
+    const lastBotMsg = [...(chat.messages || [])].reverse().find(m => m.role === 'bot');
+    if (lastBotMsg && (lastBotMsg.content.includes("¿Con cuál te gustaría empezar?") || lastBotMsg.content.includes("Q155"))) {
+        
+        // Temporizador de 2.5 horas (2.5 * 60 * 60 * 1000 = 9000000 ms)
+        const delayMs = 9000000;
+        
+        recoveryTimers[to] = setTimeout(async () => {
+            const currentChat = chats[to];
+            if (!currentChat || currentChat.aiDisabled) return;
+
+            // Verificar nuevamente que el cliente no haya respondido (el último mensaje sigue siendo el nuestro)
+            const newLastMsg = [...(currentChat.messages || [])].reverse()[0];
+            if (newLastMsg && newLastMsg.role === 'bot') {
+                console.log(`⏱️ [SEGUIMIENTO] Enviando seguimiento de Etapa 5 a ${currentChat.customerName} (${to})`);
+                const followUpMsg = "Hola de nuevo 👋 Solo quería confirmarte que aún tenemos stock disponible hoy. Muchos clientes en Guatemala ya están sintiendo los resultados — no quiero que te quedes sin tu pedido. ¿Te ayudo a coordinar el envío?";
+                
+                const wamid = await smartSendMessage(to, followUpMsg);
+                const botMsg = { 
+                    id: wamid || ('bot-'+Date.now()), 
+                    wamid: wamid || null, 
+                    status: 'sent', 
+                    from: to, 
+                    body: followUpMsg, 
+                    content: followUpMsg, 
+                    isMe: true, 
+                    role: 'bot', 
+                    timestampRaw: Date.now() 
+                };
+                currentChat.messages.push(botMsg);
+                saveChats(chats);
+                io.emit('message', { ...botMsg, waLine: currentChat.waLine });
+                
+                // Limpiar el temporizador
+                delete recoveryTimers[to];
+            }
+        }, delayMs);
+    }
 }
 
 // Timer de cobro automático (Deshabilitado para Pago Contraentrega)
@@ -1996,7 +2037,50 @@ async function getAIResponse(message, history = [], waLine = 1) {
 
         const mathRules = "\n\n### REGLAS DE CÁLCULO Y PRESENTACIÓN (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de Shilajit en Cápsulas, informa claramente la oferta disponible (Q155 1 frasco, Q244 2 frascos, Q330 3 frascos).\n3. ¡OBLIGATORIO!: En CADA cotización u oferta debes recalcar juntos: ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas en efectivo al recibir tu paquete en mano).";
 
-        const dynamicStrategyRules = "\n\n### ADAPTABILIDAD INTELIGENTE Y CONDICIONES DE SALUD:\n1. CONDICIONES MÉDICAS (HIPERTENSIÓN, DIABETES, ENFERMEDADES): Si el cliente menciona que sufre de hipertensión, diabetes o cualquier otra condición de salud o enfermedad, DEBES responder con total seguridad que la recomendación médica oficial en su caso es tomar únicamente 1 CÁPSULA DÍA DE POR MEDIO (cada 2 días). Aclara que es 100% natural, seguro y de excelente tolerancia bajo esta indicación.\n2. Preguntas de Precio/Oferta: Sé directo y resalta siempre el combo (Q244 2 frascos o Q330 3 frascos) especificando que incluye ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas al recibir).\n3. Indecisión o Confianza: Resalta la seguridad del Pago Contra Entrega en toda Guatemala (no arriesgas tu dinero, pagas solo al recibir en efectivo).\n4. Evita usar plantillas idénticas. Varía la estructura de tus frases para que se sientan frescas, únicas y naturales.";
+        const dynamicStrategyRules = `
+
+### EMBUDO CONVERSACIONAL ESTRICTO (SHILAJIT ULTRA)
+ERES UN EXPERTO EN VENTAS CONSULTIVAS. Tu objetivo es guiar al cliente por un embudo de 5 etapas, avanzando UNA SOLA ETAPA por mensaje. NO TE SALTES ETAPAS (a menos que el cliente muestre urgencia directa por comprar, en ese caso pasa directo a la Etapa 5). Usa EXACTAMENTE los textos indicados.
+
+ETAPA 1 (Primer mensaje del cliente):
+Responde exactamente con:
+"¡Hola! 👋 Qué bueno que escribiste. Antes de contarte todo, quiero asegurarme de darte exactamente lo que necesitas. ¿Me cuentas, qué es lo que más te está afectando últimamente — la energía, el rendimiento o te has sentido más cansado de lo normal?"
+
+ETAPA 2 (Profundizar):
+Si el cliente menciona energía/cansancio:
+"Entiendo perfectamente, y te digo algo — eso que describes no es casualidad ni es 'estrés normal'. ¿Esto lo vienes sintiendo hace cuánto tiempo aproximadamente?"
+Si el cliente menciona rendimiento sexual:
+"Gracias por la confianza, aquí estamos para ayudarte sin juicios 💪 ¿Y esto lo has notado que ha ido empeorando con el tiempo o apareció de repente?"
+(Si menciona otra cosa, adapta suavemente pero haz la pregunta de profundización de cuánto tiempo lleva sintiéndolo).
+
+ETAPA 3 (Explicación científica):
+"Lo que me describes tiene una explicación concreta. Después de los 30 años, los niveles de testosterona caen naturalmente entre 1% y 2% cada año — y eso se traduce exactamente en lo que estás sintiendo: menos energía, menos fuerza, menos rendimiento. El problema es que si no se atiende, ese proceso se acelera y cada año que pasa cuesta más revertirlo. 🔴
+
+La buena noticia es que el cuerpo responde muy bien cuando se le da el apoyo correcto en el momento correcto."
+
+ETAPA 4 (Presentación de la solución):
+"Por eso desarrollamos esta solución 👇
+
+El Shilajit Ultra es un potenciador 100% natural que trabaja directamente sobre tus niveles hormonales para recuperar la energía, la vitalidad y el rendimiento que tenías antes — sin efectos secundarios, sin pastillas químicas.
+
+✅ Más energía desde la primera semana
+✅ Mejor rendimiento físico y sexual
+✅ Fortalece el sistema inmune
+✅ Ingredientes naturales, sin contraindicaciones
+
+📦 Envío GRATIS y pago contra entrega en toda Guatemala 🇬🇹"
+
+ETAPA 5 (Cierre de Venta):
+"Tenemos 3 opciones según tu objetivo:
+🌿 1 Frasco (60 cápsulas): Q155 — ideal para probar
+🎁 Combo 2 Frascos (120 cápsulas): Q244 — el más vendido, ves resultados completos
+🔥 Combo 3 Frascos (180 cápsulas): Q330 — para resultados profundos y duraderos
+
+La mayoría de nuestros clientes que empiezan con 1 frasco terminan pidiendo el combo porque los resultados los convencen 😊
+
+¿Con cuál te gustaría empezar?"
+
+ADAPTABILIDAD DE SALUD: Si el cliente menciona hipertensión, diabetes u otra enfermedad, aclara en la etapa que corresponda que la recomendación médica oficial es tomar ÚNICAMENTE 1 CÁPSULA DÍA DE POR MEDIO y que es seguro.`;
 
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
