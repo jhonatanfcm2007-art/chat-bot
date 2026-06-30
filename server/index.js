@@ -39,14 +39,20 @@ const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
+// Configuración Línea 2 de WhatsApp (Multi-Línea)
+const WHATSAPP_TOKEN_2 = process.env.WHATSAPP_TOKEN_2;
+const PHONE_ID_2 = process.env.WHATSAPP_PHONE_ID_2;
+
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
 const MESSENGER_VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || VERIFY_TOKEN;
 
 console.log('--- [SISTEMA] Diagnóstico de Variables ---');
 console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.env.OPENAI_API_KEY.substring(0, 10)}...)` : '❌ FALTANTE');
-console.log('WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
-console.log('Phone ID:', PHONE_ID ? '✅ Detectado' : '❌ FALTANTE');
+console.log('📱 Línea 1 - WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
+console.log('📱 Línea 1 - Phone ID:', PHONE_ID ? `✅ ${PHONE_ID}` : '❌ FALTANTE');
+console.log('📱 Línea 2 - WhatsApp Token:', WHATSAPP_TOKEN_2 ? '✅ Detectado' : '⚠️ No configurada');
+console.log('📱 Línea 2 - Phone ID:', PHONE_ID_2 ? `✅ ${PHONE_ID_2}` : '⚠️ No configurada');
 console.log('Admin Phone:', ADMIN_PHONE ? `✅ Detectado (${ADMIN_PHONE})` : '❌ FALTANTE');
 
 // URL pública del backend (Railway la provee automáticamente)
@@ -55,6 +61,15 @@ const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN
     : (process.env.BACKEND_URL || '');
 console.log('Backend URL:', BACKEND_URL || '⚠️ No configurada (usando rutas relativas)');
 console.log('-----------------------------------------');
+
+// Helper Multi-Línea: Resuelve credenciales según la línea del cliente
+function getWhatsAppCredentials(customerPhone) {
+    const chat = chats?.[customerPhone];
+    if (chat?.waLine === 2 && WHATSAPP_TOKEN_2 && PHONE_ID_2) {
+        return { token: WHATSAPP_TOKEN_2, phoneId: PHONE_ID_2, line: 2 };
+    }
+    return { token: WHATSAPP_TOKEN, phoneId: PHONE_ID, line: 1 };
+}
 
 let lastReceiptFrom = null; 
 const aiTimers = {};
@@ -667,6 +682,14 @@ app.post('/webhook', async (req, res) => {
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
 
+            // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
+            const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
+            if (webhookPhoneId === PHONE_ID_2) {
+                currentChat.waLine = 2;
+            } else if (!currentChat.waLine) {
+                currentChat.waLine = 1;
+            }
+
             triggerWelcomeAudioIfNeeded(from, isNewChat);
             triggerWelcomeImageIfNeeded(from, isNewChat);
             
@@ -677,7 +700,7 @@ app.post('/webhook', async (req, res) => {
                 console.log(`📥 ${msg.type.toUpperCase()} recibido de ${customerName}. Descargando...`);
                 
                 try {
-                    const buffer = await downloadMetaMedia(mediaId);
+                    const buffer = await downloadMetaMedia(mediaId, from);
                     if (buffer) {
                         const ext = msg.type === 'document' ? (msg.document.filename?.split('.').pop() || 'file') : (msg.type === 'image' ? 'jpg' : (msg.type === 'sticker' ? 'webp' : 'ogg'));
                         const fileName = `${Date.now()}-${from}.${ext}`;
@@ -1205,13 +1228,14 @@ function triggerWelcomeImageIfNeeded(from, isNewChat, origin) {
 }
 
 async function sendAudioToCloudAPI(to, audioUrl) {
-    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
+    const { token, phoneId, line } = getWhatsAppCredentials(to);
+    if (!token || !phoneId || !to) return;
     try {
         const cleanTo = String(to).replace(/[^0-9]/g, '');
-        console.log(`📡 [META] Enviando audio a ${cleanTo}: ${audioUrl}`);
-        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+        console.log(`📡 [META L${line}] Enviando audio a ${cleanTo}: ${audioUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 messaging_product: "whatsapp",
                 to: cleanTo,
@@ -1223,7 +1247,7 @@ async function sendAudioToCloudAPI(to, audioUrl) {
         });
         if (!res.ok) {
             const errData = await res.text();
-            console.error(`❌ [META ERROR] al enviar audio a ${cleanTo}:`, errData);
+            console.error(`❌ [META L${line} ERROR] al enviar audio a ${cleanTo}:`, errData);
         }
     } catch (err) { console.error('Meta send audio error:', err); }
 }
@@ -1272,13 +1296,14 @@ async function smartSendImage(to, imageUrl, caption, origin) {
 }
 
 async function sendImageToCloudAPI(to, imageUrl, caption) {
-    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return;
+    const { token, phoneId, line } = getWhatsAppCredentials(to);
+    if (!token || !phoneId || !to) return;
     try {
         const cleanTo = String(to).replace(/[^0-9]/g, '');
-        console.log(`📡 [META] Enviando imagen a ${cleanTo}: ${imageUrl}`);
-        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+        console.log(`📡 [META L${line}] Enviando imagen a ${cleanTo}: ${imageUrl}`);
+        const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 messaging_product: "whatsapp",
                 to: cleanTo,
@@ -1291,7 +1316,7 @@ async function sendImageToCloudAPI(to, imageUrl, caption) {
         });
         if (!res.ok) {
             const errData = await res.text();
-            console.error(`❌ [META ERROR] al enviar imagen a ${cleanTo}:`, errData);
+            console.error(`❌ [META L${line} ERROR] al enviar imagen a ${cleanTo}:`, errData);
         }
     } catch (err) { console.error('Meta send image error:', err); }
 }
@@ -1341,11 +1366,13 @@ async function sendMessageToMessengerAPI(psid, text) {
     } catch (err) { console.error('Messenger send error:', err); }
 }
 
-async function downloadMetaMedia(mediaId) {
+async function downloadMetaMedia(mediaId, customerPhone) {
+    // Multi-Línea: Usar el token correcto para descargar media
+    const waToken = (customerPhone && chats[customerPhone]?.waLine === 2 && WHATSAPP_TOKEN_2) ? WHATSAPP_TOKEN_2 : WHATSAPP_TOKEN;
     try {
         console.log(`📡 [META] Paso 1: Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
+            headers: { 'Authorization': `Bearer ${waToken}` }
         });
         const data = await response.json();
         
@@ -1362,7 +1389,7 @@ async function downloadMetaMedia(mediaId) {
         
         while (attempts < 5) {
             const mediaRes = await fetch(downloadUrl, {
-                headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` },
+                headers: { 'Authorization': `Bearer ${waToken}` },
                 redirect: 'manual'  // NO seguir redirects automáticamente
             });
             
@@ -1532,7 +1559,7 @@ app.get('/api/media/:mediaId', async (req, res) => {
 
     try {
         // Reutilizamos downloadMetaMedia que ya maneja redirects correctamente
-        const buffer = await downloadMetaMedia(mediaId);
+        const buffer = await downloadMetaMedia(mediaId, null);
         if (!buffer) return res.status(404).send('Media not found or download failed');
         
         // Detectar tipo de contenido por los primeros bytes (magic bytes)
@@ -1867,17 +1894,18 @@ app.post('/api/settings', (req, res) => {
 });
 
 async function sendMessageToCloudAPI(to, text) {
-    if (!WHATSAPP_TOKEN || !PHONE_ID || !to) return null;
+    const { token, phoneId, line } = getWhatsAppCredentials(to);
+    if (!token || !phoneId || !to) return null;
     try {
         const cleanTo = String(to).replace(/[^0-9]/g, '');
-        const res = await fetch(`https://graph.facebook.com/v20.0/${PHONE_ID}/messages`, {
+        const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ messaging_product: "whatsapp", to: cleanTo, type: "text", text: { body: text } })
         });
         if (!res.ok) {
             const errData = await res.text();
-            console.error(`❌ [META ERROR] al enviar a ${cleanTo}:`, errData);
+            console.error(`❌ [META L${line} ERROR] al enviar a ${cleanTo}:`, errData);
             return null;
         }
         const data = await res.json();
