@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const AIAssistant = ({ settings, socket, serverUrl }) => {
+const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   const [sections, setSections] = useState([]);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -26,8 +26,12 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
 
   // Parsear el prompt plano en secciones estructuradas
   useEffect(() => {
-    if (settings?.systemPrompt) {
-      const raw = settings.systemPrompt;
+    if (globalLine === 'all') return;
+    
+    const lineSettings = settings && settings[globalLine] ? settings[globalLine] : settings?.["1"];
+    
+    if (lineSettings?.systemPrompt) {
+      const raw = lineSettings.systemPrompt;
       setRawPrompt(raw);
       const lines = raw.split('\n');
       const parsedSections = [];
@@ -48,13 +52,27 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
     }
     
     // Cargar estados de audio e imagen de bienvenida
-    if (settings) {
-      setWelcomeAudioEnabled(settings.welcomeAudioEnabled || false);
-      setWelcomeAudioUrl(settings.welcomeAudioUrl || '');
-      setWelcomeImageEnabled(settings.welcomeImageEnabled || false);
-      setWelcomeImageUrl(settings.welcomeImageUrl || '');
+    if (lineSettings) {
+      setWelcomeAudioEnabled(lineSettings.welcomeAudioEnabled || false);
+      setWelcomeAudioUrl(lineSettings.welcomeAudioUrl || '');
+      setWelcomeImageEnabled(lineSettings.welcomeImageEnabled || false);
+      setWelcomeImageUrl(lineSettings.welcomeImageUrl || '');
     }
-  }, [settings]);
+  }, [settings, globalLine]);
+
+  if (globalLine === 'all') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 text-center">
+        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-200">
+          <span className="material-symbols-outlined text-4xl text-slate-400">smart_toy</span>
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Selecciona una Línea</h2>
+        <p className="text-slate-500 max-w-md">
+          Por favor, selecciona una línea específica en la esquina superior derecha para configurar su Asistente IA de forma independiente.
+        </p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,14 +109,14 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
     };
 
     // 1. Enviar por Socket
-    socket.emit('sync_settings', payload);
+    socket.emit('sync_settings', { line: globalLine, settings: payload });
 
     // 2. Enviar por HTTP POST para 100% de garantía de guardado en el servidor
     try {
       await fetch(`${serverUrl}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ line: globalLine, settings: payload })
       });
     } catch(e) {
       console.error('HTTP Save error:', e);
@@ -111,22 +129,28 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
   const handleToggleWelcomeAudio = (val) => {
     setWelcomeAudioEnabled(val);
     socket.emit('sync_settings', {
-      ...settings,
-      welcomeAudioEnabled: val,
-      welcomeAudioUrl,
-      welcomeImageEnabled,
-      welcomeImageUrl
+      line: globalLine,
+      settings: {
+        ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+        welcomeAudioEnabled: val,
+        welcomeAudioUrl,
+        welcomeImageEnabled,
+        welcomeImageUrl
+      }
     });
   };
 
   const handleToggleWelcomeImage = (val) => {
     setWelcomeImageEnabled(val);
     socket.emit('sync_settings', {
-      ...settings,
-      welcomeAudioEnabled,
-      welcomeAudioUrl,
-      welcomeImageEnabled: val,
-      welcomeImageUrl
+      line: globalLine,
+      settings: {
+        ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+        welcomeAudioEnabled,
+        welcomeAudioUrl,
+        welcomeImageEnabled: val,
+        welcomeImageUrl
+      }
     });
   };
 
@@ -159,11 +183,14 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
           const data = await response.json();
           setWelcomeAudioUrl(data.url);
           socket.emit('sync_settings', {
-            ...settings,
-            welcomeAudioEnabled,
-            welcomeAudioUrl: data.url,
-            welcomeImageEnabled,
-            welcomeImageUrl
+            line: globalLine,
+            settings: {
+              ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+              welcomeAudioEnabled,
+              welcomeAudioUrl: data.url,
+              welcomeImageEnabled,
+              welcomeImageUrl
+            }
           });
           alert('¡Audio de bienvenida subido con éxito!');
         } else {
@@ -209,11 +236,14 @@ const AIAssistant = ({ settings, socket, serverUrl }) => {
           const data = await response.json();
           setWelcomeImageUrl(data.url);
           socket.emit('sync_settings', {
-            ...settings,
-            welcomeAudioEnabled,
-            welcomeAudioUrl,
-            welcomeImageEnabled,
-            welcomeImageUrl: data.url
+            line: globalLine,
+            settings: {
+              ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+              welcomeAudioEnabled,
+              welcomeAudioUrl,
+              welcomeImageEnabled,
+              welcomeImageUrl: data.url
+            }
           });
           alert('¡Imagen de bienvenida subida con éxito!');
         } else {

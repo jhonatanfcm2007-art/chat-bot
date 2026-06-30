@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Campaigns = ({ campaigns, chats, socket }) => {
+const Campaigns = ({ campaigns, chats, socket, globalLine }) => {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [selectedTags, setSelectedTags] = useState(['all']);
@@ -13,6 +13,7 @@ const Campaigns = ({ campaigns, chats, socket }) => {
   // Extract all unique tags in the system
   const allTags = [];
   Object.values(chats).forEach(chat => {
+    if (globalLine !== 'all' && chat.waLine != globalLine) return; // filter by line
     if (chat.tags && Array.isArray(chat.tags)) {
       chat.tags.forEach(tag => {
         if (!allTags.includes(tag)) {
@@ -23,11 +24,13 @@ const Campaigns = ({ campaigns, chats, socket }) => {
   });
 
   // Automatically select the first campaign if none selected
+  const displayedCampaigns = campaigns.filter(c => globalLine === 'all' || c.waLine == globalLine);
+  
   useEffect(() => {
-    if (campaigns && campaigns.length > 0 && !selectedCampaignId) {
-      setSelectedCampaignId(campaigns[campaigns.length - 1].id);
+    if (displayedCampaigns && displayedCampaigns.length > 0 && !selectedCampaignId) {
+      setSelectedCampaignId(displayedCampaigns[displayedCampaigns.length - 1].id);
     }
-  }, [campaigns]);
+  }, [campaigns, globalLine]);
 
   const handleTagToggle = (tag) => {
     if (tag === 'all') {
@@ -61,6 +64,7 @@ const Campaigns = ({ campaigns, chats, socket }) => {
     let count = 0;
     Object.keys(chats).forEach(chatId => {
       const chat = chats[chatId];
+      if (globalLine !== 'all' && chat.waLine != globalLine) return; // filter by line
       const tags = chat.tags || [];
       
       let matches = false;
@@ -93,7 +97,8 @@ const Campaigns = ({ campaigns, chats, socket }) => {
       message,
       targetTags: selectedTags,
       excludeTags: excludedTags,
-      delay: delaySecs
+      delay: delaySecs,
+      waLine: globalLine
     });
 
     setName('');
@@ -270,14 +275,18 @@ const Campaigns = ({ campaigns, chats, socket }) => {
 
                   <button 
                     type="submit"
+                    disabled={globalLine === 'all'}
+                    title={globalLine === 'all' ? "Selecciona una línea específica para crear la campaña" : ""}
                     className={`w-full py-4 rounded-xl font-black tracking-widest uppercase text-xs transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isCreatedSuccess 
-                        ? 'bg-tertiary text-white' 
-                        : 'bg-primary text-white hover:bg-primary/95 hover:shadow-lg hover:shadow-primary/15'
+                      globalLine === 'all'
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : isCreatedSuccess 
+                          ? 'bg-tertiary text-white' 
+                          : 'bg-primary text-white hover:bg-primary/95 hover:shadow-lg hover:shadow-primary/15'
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm">{isCreatedSuccess ? 'verified' : 'send_and_archive'}</span>
-                    {isCreatedSuccess ? 'Campaña Creada' : 'Guardar y Preparar Campaña'}
+                    {globalLine === 'all' ? 'Selecciona Línea para Crear' : (isCreatedSuccess ? 'Campaña Creada' : 'Guardar y Preparar Campaña')}
                   </button>
                 </form>
               </div>

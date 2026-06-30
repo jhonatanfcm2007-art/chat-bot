@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications }) => {
+const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const menuItems = [
@@ -58,18 +58,57 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
 
         <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
-        <div className="flex items-center gap-3 pl-1">
-          <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold text-slate-800 leading-none">Admin User</p>
-            <p className="text-[10px] text-slate-500 mt-1">Super Administrador</p>
-          </div>
-          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shadow-sm">
-            <img 
-              alt="Avatar" 
-              className="w-full h-full object-cover" 
-              src="https://ui-avatars.com/api/?name=Admin&background=004d4d&color=fff"
-            />
-          </div>
+        <div className="relative">
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-3 pl-1 text-left"
+          >
+            <div className="hidden sm:block">
+              <p className="text-xs font-bold text-slate-800 leading-none">
+                {globalLine === 'all' ? 'Todas las Líneas' : `Línea ${globalLine}`}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-1">
+                {globalLine === 'all' ? 'Vista Global' : (globalLine === 1 ? 'Principal' : 'Secundaria')}
+              </p>
+            </div>
+            <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shadow-sm flex items-center justify-center bg-slate-100 text-slate-600">
+              <span className="material-symbols-outlined text-xl">
+                {globalLine === 'all' ? 'domain' : 'sim_card'}
+              </span>
+            </div>
+          </button>
+
+          {isDropdownOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40"
+                onClick={() => setIsDropdownOpen(false)}
+              ></div>
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg shadow-slate-200/50 border border-slate-200 py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={() => { setGlobalLine('all'); setIsDropdownOpen(false); }}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium flex items-center gap-2 ${globalLine === 'all' ? 'bg-primary/10 text-primary' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">domain</span>
+                  Todas las Líneas
+                </button>
+                <button
+                  onClick={() => { setGlobalLine(1); setIsDropdownOpen(false); }}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium flex items-center gap-2 ${globalLine === 1 ? 'bg-primary/10 text-primary' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">looks_one</span>
+                  Línea 1
+                </button>
+                <button
+                  onClick={() => { setGlobalLine(2); setIsDropdownOpen(false); }}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium flex items-center gap-2 ${globalLine === 2 ? 'bg-primary/10 text-primary' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">looks_two</span>
+                  Línea 2
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

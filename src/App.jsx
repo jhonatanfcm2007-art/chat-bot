@@ -462,7 +462,8 @@ function App() {
       pin: account.pin || '',
       expiration: account.expiration || '',
       accountId: account.id,
-      paid: false
+      paid: false,
+      waLine: customerId && chats[customerId] ? chats[customerId].waLine : null
     };
 
     setSalesHistory([newSale, ...salesHistory]);
@@ -575,6 +576,8 @@ function App() {
     }));
   };
 
+  const [globalLine, setGlobalLine] = useState('all');
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -593,6 +596,7 @@ function App() {
             onMarkSaleAsFailed={handleMarkSaleAsFailed}
             chats={chats}
             onSendMessage={handleSendMessage}
+            globalLine={globalLine}
           />
         );
       case 'simulator':
@@ -612,6 +616,7 @@ function App() {
             onToggleAI={handleToggleAI}
             onToggleBlock={handleToggleBlock}
             serverUrl={SERVER_URL}
+            globalLine={globalLine}
           />
         );
       case 'ai_assistant':
@@ -620,6 +625,7 @@ function App() {
             settings={settings}
             socket={socket}
             serverUrl={SERVER_URL}
+            globalLine={globalLine}
           />
         );
       case 'campaigns':
@@ -628,12 +634,13 @@ function App() {
             campaigns={campaigns}
             chats={chats}
             socket={socket}
+            globalLine={globalLine}
           />
         );
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} globalLine={globalLine} />;
     }
   };
 
@@ -645,6 +652,8 @@ function App() {
       onNotificationClick={handleNotificationClick}
       onClearNotifications={handleClearNotifications}
       serverUrl={SERVER_URL}
+      globalLine={globalLine}
+      setGlobalLine={setGlobalLine}
     >
       {renderContent()}
     </Layout>

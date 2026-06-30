@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale }) => {
+const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale, globalLine }) => {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
     start: today,
@@ -23,8 +23,10 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
   }, []);
 
   const filteredSales = salesHistory.filter(sale => {
-    if (!isFilterActive) return true;
-    return sale.date >= dateRange.start && sale.date <= dateRange.end;
+    if (!isFilterActive) return globalLine === 'all' || sale.waLine == globalLine;
+    const dateMatch = sale.date >= dateRange.start && sale.date <= dateRange.end;
+    const lineMatch = globalLine === 'all' || sale.waLine == globalLine || !sale.waLine; // Si no tiene waLine (ventas antiguas), la mostramos
+    return dateMatch && lineMatch;
   });
 
   const stats = (() => {
@@ -45,6 +47,7 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
     const chatsActivos = Object.values(chats || {}).filter(chat => {
        const msgs = chat.messages || [];
        if (msgs.length === 0) return false;
+       if (globalLine !== 'all' && chat.waLine != globalLine) return false;
        const firstMsg = msgs.find(m => m.role === 'user') || msgs[0];
        const d = new Date(Number(firstMsg.timestampRaw || chat.updatedAt || 0));
        return d >= startObj && d <= endObj;

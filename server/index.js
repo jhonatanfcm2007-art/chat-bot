@@ -225,17 +225,27 @@ function loadChats() {
 function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, null, 2)); }
 
 function loadSettings() {
-    const def = { 
+    const defSingle = { 
         systemPrompt: "Eres el asesor comercial virtual oficial de ventas de Shilajit 100% Puro Resina en Colombia por WhatsApp. Eres directo, amable, altamente persuasivo y muy eficiente. Usa emojis con moderación.\n\n### INFORMACIÓN DEL PRODUCTO (SHILAJIT):\n- ¿Qué es?: Es una sustancia natural y milenaria recolectada en las alturas del Himalaya, rica en ácido fúlvico y más de 84 minerales biodisponibles.\n- Beneficios principales: Aumenta la energía y resistencia física, potencia el rendimiento masculino, combate la fatiga y el cansancio, eleva la vitalidad y apoya los niveles naturales de testosterona.\n- Modo de uso: Tomar una pequeña porción del tamaño de un grano de arroz (incluye cuchara dosificadora) disuelta en agua tibia, té, café o leche caliente una o dos veces al día.\n\n### REGLA INQUEBRANTABLE - MÉTODOS DE PAGO Y ENVÍO:\n- ÚNICAMENTE se maneja PAGO CONTRAENTREGA en toda Colombia.\n- El envío es GRATIS a nivel nacional.\n- El cliente paga en efectivo únicamente cuando recibe el producto en la puerta de su casa o trabajo.\n- NUNCA solicites pagos por anticipado ni giros antes de recibir.\n\n### ESTRATEGIA DE VENTA Y CIERRE:\n1. **COTIZACIÓN**: Si preguntan precios, presenta los precios y promociones de forma atractiva resaltando el ahorro en los combos.\n   - 1 Tarro (30g): $89.000 COP\n   - Combo 2 Tarros: $149.000 COP (Ahorra $29.000)\n   - Combo 3 Tarros: $199.000 COP (Máximo Ahorro)\n2. **TOMA DE DATOS PARA DESPACHO (¡MUY IMPORTANTE!)**: Cuando el cliente confirme que quiere pedir (ej: \"quiero uno\", \"envíamelo\", \"quiero el combo 2x\", \"listo\", \"dale\", \"pedir\"), solicítale amablemente los 5 datos necesarios para programar su envío Pago Contraentrega:\n   - 👤 Nombre completo\n   - 📞 Número de celular\n   - 📍 Ciudad y Departamento\n   - 🏠 Dirección exacta y Barrio\n   - 🛒 Producto o Combo elegido\n3. **REGISTRO DE PEDIDO**: Cuando el cliente te entregue sus datos de despacho completos, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombreDelProducto]\n   Ejemplo perfecto: \"¡Excelente decisión! Ya he registrado tu pedido. En breve coordinamos el despacho. [ENTREGAR_AHORA] [PRODUCTOS: Shilajit 100% Puro Resina 30g]\"\n\n### SOPORTE Y ASESORÍA:\n- Si el cliente reporta una novedad de entrega o pregunta por su número de guía, usa [APAGAR_BOT_SOPORTE] para que un humano lo atienda.",
         welcomeAudioEnabled: false,
         welcomeAudioUrl: '',
         welcomeImageEnabled: false,
         welcomeImageUrl: ''
     };
+    
+    const def = { "1": { ...defSingle }, "2": { ...defSingle } };
+    
     try {
         if (fs.existsSync(SETTINGS_FILE)) {
             const data = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
-            return { ...def, ...data };
+            // Migración: si el JSON antiguo no tiene "1", asumimos que es el formato viejo plano
+            if (!data["1"]) {
+                return { "1": { ...defSingle, ...data }, "2": { ...defSingle } };
+            }
+            return { 
+                "1": { ...defSingle, ...(data["1"] || {}) }, 
+                "2": { ...defSingle, ...(data["2"] || {}) } 
+            };
         }
     } catch (err) { console.error('Error loading settings:', err); }
     return def;
@@ -293,7 +303,8 @@ let campaigns = loadCampaigns();
 ### 🛒 REGISTRO DE PEDIDOS:
 Cuando el cliente pida o entregue sus datos de despacho completos, responde brevemente e incluye ÚNICAMENTE las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].`;
 
-    settings.systemPrompt = guatemalaPrompt;
+    settings["1"].systemPrompt = guatemalaPrompt;
+    settings["2"].systemPrompt = guatemalaPrompt;
     saveSettings(settings);
 
     inventory = [
@@ -1176,8 +1187,12 @@ async function smartSendAudio(to, audioUrl, origin) {
 }
 
 function triggerWelcomeAudioIfNeeded(from, isNewChat, origin) {
-    if (isNewChat && settings.welcomeAudioEnabled && settings.welcomeAudioUrl) {
-        const audioUrl = settings.welcomeAudioUrl;
+    const chat = chats[from];
+    const waLine = chat?.waLine || 1;
+    const lineSettings = settings[waLine] || settings["1"];
+
+    if (isNewChat && lineSettings.welcomeAudioEnabled && lineSettings.welcomeAudioUrl) {
+        const audioUrl = lineSettings.welcomeAudioUrl;
         console.log(`🎙️ [BIENVENIDA] Enviando audio a ${from} (${audioUrl})`);
         
         setTimeout(async () => {
@@ -1209,8 +1224,12 @@ function triggerWelcomeAudioIfNeeded(from, isNewChat, origin) {
 }
 
 function triggerWelcomeImageIfNeeded(from, isNewChat, origin) {
-    if (isNewChat && settings.welcomeImageEnabled && settings.welcomeImageUrl) {
-        const imageUrl = settings.welcomeImageUrl;
+    const chat = chats[from];
+    const waLine = chat?.waLine || 1;
+    const lineSettings = settings[waLine] || settings["1"];
+
+    if (isNewChat && lineSettings.welcomeImageEnabled && lineSettings.welcomeImageUrl) {
+        const imageUrl = lineSettings.welcomeImageUrl;
         console.log(`🖼️ [BIENVENIDA] Enviando imagen de producto original a ${from} (${imageUrl})`);
         
         setTimeout(async () => {
@@ -1701,6 +1720,7 @@ io.on('connection', (socket) => {
         Object.keys(chats).forEach(chatId => {
             if (ADMIN_PHONE && chatId === ADMIN_PHONE) return;
             const chat = chats[chatId];
+            if (data.waLine && data.waLine !== 'all' && chat.waLine != data.waLine) return; // Filtrar por waLine
             const tags = chat.tags || [];
             
             let matches = false;
@@ -1739,7 +1759,8 @@ io.on('connection', (socket) => {
             sentCount: 0,
             failedCount: 0,
             contacts: targets,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            waLine: data.waLine || 1
         };
         
         campaigns.push(newCampaign);
@@ -1779,7 +1800,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('sync_settings', (data) => { 
-        settings = { ...settings, ...data }; 
+        if (data.line) {
+            settings[data.line] = { ...settings[data.line], ...data.settings };
+        } else {
+            // Fallback para clientes antiguos, aunque ya no deberia ocurrir
+            settings["1"] = { ...settings["1"], ...data };
+        }
         saveSettings(settings); 
         io.emit('initial_settings', settings);
     });
@@ -1790,7 +1816,11 @@ io.on('connection', (socket) => {
 
 app.get('/api/settings', (req, res) => res.json(settings));
 app.post('/api/settings', (req, res) => {
-    settings = { ...settings, ...req.body };
+    if (req.body.line) {
+        settings[req.body.line] = { ...settings[req.body.line], ...req.body.settings };
+    } else {
+        settings["1"] = { ...settings["1"], ...req.body };
+    }
     saveSettings(settings);
     io.emit('initial_settings', settings);
     res.json({ success: true, settings });
@@ -1966,7 +1996,7 @@ async function getAIResponse(message, history = []) {
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `${settings.systemPrompt}${antiHallucinationRules}${mathRules}${dynamicStrategyRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
+                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}${antiHallucinationRules}${mathRules}${dynamicStrategyRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
                 { role: "user", content: message }
             ]

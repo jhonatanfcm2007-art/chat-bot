@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl }) => {
+const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine }) => {
   const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
@@ -8,7 +8,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
-  const [lineFilter, setLineFilter] = useState('all'); // 'all', 1, or 2
   const [showContactInfo, setShowContactInfo] = useState(false);
   
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -212,7 +211,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        chat.tags.includes(filterTag) || 
                        (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
       
-      const lineMatch = lineFilter === 'all' || chat.waLine === lineFilter;
+      const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
       
       return searchMatch && tagMatch && lineMatch;
     })
@@ -326,28 +325,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
              </div>
           </div>
           
-          <div className="flex bg-slate-100 p-1 rounded-xl mb-4 text-xs font-bold w-full relative">
-            <button 
-              onClick={() => setLineFilter('all')} 
-              className={`flex-1 py-1.5 rounded-lg transition-all z-10 ${lineFilter === 'all' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Todas
-            </button>
-            <button 
-              onClick={() => setLineFilter(1)} 
-              className={`flex-1 py-1.5 rounded-lg transition-all z-10 flex items-center justify-center gap-1 ${lineFilter === 1 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
-              Línea 1
-            </button>
-            <button 
-              onClick={() => setLineFilter(2)} 
-              className={`flex-1 py-1.5 rounded-lg transition-all z-10 flex items-center justify-center gap-1 ${lineFilter === 2 ? 'bg-white shadow-sm text-[#00a884]' : 'text-slate-500 hover:text-[#00a884]'}`}
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00a884]"></div>
-              Línea 2
-            </button>
-          </div>
+
           
           <div className="relative mb-4">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
