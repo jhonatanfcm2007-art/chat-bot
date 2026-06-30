@@ -1,7 +1,7 @@
 [
   {
     "id": "inv-1",
-    "service": "Shilajit 60 Cápsulas (1 Tarro)",
+    "service": "Shilajit 60 Cápsulas (1 Frasco)",
     "price": 155,
     "cost": 50,
     "provider": "Laboratorio Oficial",
@@ -11,7 +11,7 @@
     "email": "N/A",
     "pass": "Envío Gratis Guatemala",
     "profile": "60 Cápsulas",
-    "pin": "Oferta 1 Tarro",
+    "pin": "Oferta 1 Frasco",
     "expiration": "2027-12-31"
   },
   {
@@ -25,7 +25,7 @@
     "status": "Available",
     "email": "N/A",
     "pass": "Envío Gratis Guatemala",
-    "profile": "2 Tarros (120 Caps)",
+    "profile": "2 Frascos (120 Caps)",
     "pin": "Oferta Especial",
     "expiration": "2027-12-31"
   },
@@ -40,7 +40,7 @@
     "status": "Available",
     "email": "N/A",
     "pass": "Envío Gratis Guatemala",
-    "profile": "3 Tarros (180 Caps)",
+    "profile": "3 Frascos (180 Caps)",
     "pin": "Máximo Ahorro",
     "expiration": "2027-12-31"
   }
