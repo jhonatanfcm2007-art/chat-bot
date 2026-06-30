@@ -664,7 +664,7 @@ app.post('/webhook', async (req, res) => {
                     await smartSendMessage(target.from, confirmMsg);
                     const botMsg = { id: 'conf-'+Date.now(), from: target.from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
                     target.messages.push({ ...botMsg, content: confirmMsg });
-                    io.emit('message', botMsg);
+                    io.emit('message', { ...botMsg, waLine: target.waLine });
                     smartSendMessage(ADMIN_PHONE, `✅ PAGO CONFIRMADO de ${target.customerName}.`);
                     // Cancelar timer de cobro si existe
                     if (paymentReminderTimers[target.from]) {
@@ -874,7 +874,7 @@ app.post('/webhook', async (req, res) => {
             currentChat.messages.push(newMessage);
             currentChat.updatedAt = Date.now();
             if (recoveryTimers[from]) clearTimeout(recoveryTimers[from]);
-            saveChats(chats); io.emit('message', { ...newMessage, customerName });
+            saveChats(chats); io.emit('message', { ...newMessage, customerName, waLine: currentChat.waLine });
 
             // Enviar notificación Push flotante al celular
             sendPushNotification(
@@ -912,7 +912,7 @@ async function processAIResponse(from, msgBodyLower) {
         
         const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
         refreshedChat.messages.push(botMsg);
-        saveChats(chats); io.emit('message', botMsg);
+        saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
 
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
         
@@ -1000,7 +1000,7 @@ async function processAIResponse(from, msgBodyLower) {
         
         const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
         refreshedChat.messages.push(botMsg);
-        saveChats(chats); io.emit('message', botMsg);
+        saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
 
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
@@ -1058,7 +1058,7 @@ async function processAIResponse(from, msgBodyLower) {
             const wamid = await smartSendMessage(from, cleanReply);
             const botMsg = { id: wamid || ('bot-'+Date.now()), wamid: wamid || null, status: 'sent', from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
             refreshedChat.messages.push(botMsg);
-            saveChats(chats); io.emit('message', botMsg);
+            saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
         }
     }
     
@@ -1219,7 +1219,7 @@ function triggerWelcomeAudioIfNeeded(from, isNewChat, origin) {
                     };
                     currentChat.messages.push(audioMsg);
                     saveChats(chats);
-                    io.emit('message', audioMsg);
+                    io.emit('message', { ...audioMsg, waLine: currentChat.waLine });
                 }
             } catch (err) {
                 console.error('❌ [BIENVENIDA] Error enviando audio:', err);
@@ -1256,7 +1256,7 @@ function triggerWelcomeImageIfNeeded(from, isNewChat, origin) {
                     };
                     currentChat.messages.push(imageMsg);
                     saveChats(chats);
-                    io.emit('message', imageMsg);
+                    io.emit('message', { ...imageMsg, waLine: currentChat.waLine });
                 }
             } catch (err) {
                 console.error('❌ [BIENVENIDA] Error enviando imagen:', err);
@@ -1668,7 +1668,7 @@ async function processCampaign(campaignId) {
             chats[nextContact.chatId].messages.push(m);
             chats[nextContact.chatId].updatedAt = Date.now();
             saveChats(chats);
-            io.emit('message', { ...m, customerName });
+            io.emit('message', { ...m, customerName, waLine: chats[nextContact.chatId]?.waLine });
 
             nextContact.status = 'sent';
             campaign.sentCount++;
@@ -1937,7 +1937,7 @@ app.post('/api/settings', (req, res) => {
         }
         
         if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
-        saveChats(chats); io.emit('message', m);
+        saveChats(chats); io.emit('message', { ...m, waLine: chat.waLine });
         scheduleRecovery(to);
     });
 });

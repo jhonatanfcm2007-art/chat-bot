@@ -142,28 +142,32 @@ function App() {
       });
     });
 
-    socket.on('message', (msg) => {
+    socket.on('message', (message) => {
       setChats(prev => {
-        const chatId = msg.from;
-        const chatData = prev[chatId] || { 
-          customerName: msg.customerName, 
+        const chatId = message.from;
+        const currentChat = prev[chatId] || { 
           from: chatId, 
-          messages: [] 
+          customerName: message.customerName || chatId, 
+          messages: [],
+          waLine: message.waLine || 1
         };
         
-        // Evitábamos duplicados por ID si el servidor los envía
-        if (chatData.messages.some(m => m.id === msg.id)) return prev;
+        // Actualizar la línea por si no existía localmente o viene en el evento
+        if (message.waLine) currentChat.waLine = message.waLine;
+        
+        // Evitar duplicados por ID
+        if (currentChat.messages.some(m => m.id === message.id)) return prev;
 
         return {
           ...prev,
           [chatId]: {
-            ...chatData,
+            ...currentChat,
             updatedAt: Date.now(),
-            messages: [...chatData.messages, { 
-              ...msg, 
-              content: msg.body, 
+            messages: [...currentChat.messages, { 
+              ...message, 
+              content: message.body, 
               timestampRaw: Date.now(),
-              role: msg.role || (msg.isMe ? 'bot' : 'user') 
+              role: message.role || (message.isMe ? 'bot' : 'user') 
             }]
           }
         };
