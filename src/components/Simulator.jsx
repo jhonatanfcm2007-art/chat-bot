@@ -8,6 +8,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
+  const [lineFilter, setLineFilter] = useState('all'); // 'all', 1, or 2
   const [showContactInfo, setShowContactInfo] = useState(false);
   
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -211,7 +212,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        chat.tags.includes(filterTag) || 
                        (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
       
-      return searchMatch && tagMatch;
+      const lineMatch = lineFilter === 'all' || chat.waLine === lineFilter;
+      
+      return searchMatch && tagMatch && lineMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
 
@@ -323,6 +326,29 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
              </div>
           </div>
           
+          <div className="flex bg-slate-100 p-1 rounded-xl mb-4 text-xs font-bold w-full relative">
+            <button 
+              onClick={() => setLineFilter('all')} 
+              className={`flex-1 py-1.5 rounded-lg transition-all z-10 ${lineFilter === 'all' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Todas
+            </button>
+            <button 
+              onClick={() => setLineFilter(1)} 
+              className={`flex-1 py-1.5 rounded-lg transition-all z-10 flex items-center justify-center gap-1 ${lineFilter === 1 ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+              Línea 1
+            </button>
+            <button 
+              onClick={() => setLineFilter(2)} 
+              className={`flex-1 py-1.5 rounded-lg transition-all z-10 flex items-center justify-center gap-1 ${lineFilter === 2 ? 'bg-white shadow-sm text-[#00a884]' : 'text-slate-500 hover:text-[#00a884]'}`}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00a884]"></div>
+              Línea 2
+            </button>
+          </div>
+          
           <div className="relative mb-4">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
             <input 
@@ -349,11 +375,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       : 'hover:bg-slate-50'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-sm border-2 border-white shadow-sm overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-sm border-2 border-white shadow-sm overflow-visible relative">
                     {chat.imageUrl ? (
-                      <img src={chat.imageUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={chat.imageUrl} alt="" className="w-full h-full object-cover rounded-full" />
                     ) : (
                       chat.customerName ? chat.customerName.charAt(0).toUpperCase() : '?'
+                    )}
+                    {chat.waLine && (
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black text-white border-2 border-white shadow-sm ${chat.waLine === 2 ? 'bg-[#00a884]' : 'bg-slate-400'}`}>
+                        L{chat.waLine}
+                      </div>
                     )}
                   </div>
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
