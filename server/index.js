@@ -617,49 +617,7 @@ app.post('/webhook', async (req, res) => {
         const customerName = contacts?.[0]?.profile?.name || from;
 
         // Comandos Admin
-        if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text' && /^r$/i.test(msg.text.body.trim())) {
-            let target = null; let mode = null;
-            if (lastReceiptFrom && chats[lastReceiptFrom]) {
-                target = chats[lastReceiptFrom];
-                const alreadyDelivered = target.tags?.includes('entregado') || credentialsSentInChat(target);
-                mode = alreadyDelivered ? 'confirm_payment' : 'deliver_and_paid';
-            }
-            if (!target) {
-                const pending = Object.values(chats).filter(c => c.from !== ADMIN_PHONE && c.pendingProducts?.length > 0 && !c.tags?.includes('entregado')).sort((a,b) => b.updatedAt - a.updatedAt);
-                if (pending.length > 0) { target = pending[0]; mode = 'deliver_first'; }
-            }
-            if (!target) {
-                const tagged = Object.values(chats).filter(c => c.tags?.includes('pago-pendiente')).sort((a,b) => b.updatedAt - a.updatedAt);
-                if (tagged.length > 0) { target = tagged[0]; mode = 'deliver_first'; }
-            }
-
-            if (target) {
-                if (mode === 'confirm_payment') {
-                    target.tags = (target.tags || []).filter(t => t !== 'entregado' && t !== 'pago-pendiente');
-                    target.tags.push('pagado');
-                    target.updatedAt = Date.now();
-                    saveChats(chats); io.emit('tag_updated', { from: target.from, tags: target.tags });
-                    const confirmMsg = '✅ *¡Pago confirmado!* Muchas gracias 🎉';
-                    await smartSendMessage(target.from, confirmMsg);
-                    const botMsg = { id: 'conf-'+Date.now(), from: target.from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
-                    target.messages.push({ ...botMsg, content: confirmMsg });
-                    io.emit('message', { ...botMsg, waLine: target.waLine });
-                    smartSendMessage(ADMIN_PHONE, `✅ PAGO CONFIRMADO de ${target.customerName}.`);
-                    // Cancelar timer de cobro si existe
-                    if (paymentReminderTimers[target.from]) {
-                        clearTimeout(paymentReminderTimers[target.from]);
-                        delete paymentReminderTimers[target.from];
-                    }
-                    lastReceiptFrom = null;
-                } else {
-                    await executeDelivery(target.from, mode);
-                    if (lastReceiptFrom === target.from) lastReceiptFrom = null;
-                }
-            } else {
-                smartSendMessage(ADMIN_PHONE, `ℹ️ Sin pendientes.`);
-            }
-            res.sendStatus(200); return;
-        }
+        // El comando 'r' para entrega manual de credenciales ha sido eliminado.
 
         // Mensajes de Clientes
         // Manejo de Multimedia (Imágenes, Stickers, Documentos)
@@ -731,57 +689,31 @@ app.post('/webhook', async (req, res) => {
                                         currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
                                     }
 
-                                    // Lógica de Pago Automático y Entrega
-                                    const alreadyDelivered = currentChat.tags?.includes('entregado') || credentialsSentInChat(currentChat);
-                                    
-                                    if (alreadyDelivered) {
-                                        // Confirmar el pago de ventas existentes
-                                        currentChat.tags = (currentChat.tags || []).filter(t => t !== 'entregado' && t !== 'pago-pendiente');
-                                        if (!currentChat.tags.includes('pagado')) {
-                                            currentChat.tags.push('pagado');
-                                        }
-                                        currentChat.updatedAt = Date.now();
-                                        saveChats(chats);
-                                        io.emit('tag_updated', { from, tags: currentChat.tags });
-
-                                        // Sincronizar estado de ventas a pagado
-                                        const customerSales = sales.filter(s => s.customerId === from && !s.paid);
-                                        if (customerSales.length > 0) {
-                                            customerSales.forEach(s => s.paid = true);
-                                            saveSales(sales);
-                                            io.emit('sales_updated', sales);
-                                        }
-
-                                        const confirmMsg = '✅ *¡Pago verificado automáticamente!* Muchas gracias por tu compra. 🎉';
-                                        await smartSendMessage(from, confirmMsg);
-                                        const botMsg = { id: 'conf-'+Date.now(), from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
-                                        currentChat.messages.push({ ...botMsg, content: confirmMsg });
-                                        io.emit('message', botMsg);
-
-                                        if (ADMIN_PHONE) {
-                                            await smartSendMessage(ADMIN_PHONE, `✅ *PAGO AUTO-CONFIRMADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
-                                        }
-                                        
-                                        // Cancelar recordatorio de pago si existe
-                                        if (paymentReminderTimers[from]) {
-                                            clearTimeout(paymentReminderTimers[from]);
-                                            delete paymentReminderTimers[from];
-                                        }
-                                    } else {
-                                        // Aún no tiene cuenta entregada. Intentamos entregarla ahora y marcar como pagada.
-                                        console.log(`🤖 [AUTO] Intentando entrega y pago automático para ${customerName}`);
-                                        const deliveryResult = await executeDelivery(from, 'deliver_and_paid');
-                                        if (deliveryResult.success) {
-                                            if (ADMIN_PHONE) {
-                                                await smartSendMessage(ADMIN_PHONE, `✅ *ENTREGA Y PAGO AUTO-CONFIRMADO* para *${customerName}* (${from}).`);
-                                            }
-                                        } else {
-                                            console.error(`❌ [AUTO] Falló executeDelivery para ${customerName}:`, deliveryResult.error);
-                                            if (ADMIN_PHONE) {
-                                                await smartSendMessage(ADMIN_PHONE, `⚠️ *PAGO DETECTADO* de *${customerName}* (${from}) pero falló la entrega: ${deliveryResult.error}`);
-                                            }
-                                        }
+                                    // Confirmar pago sin entregar cuentas (E-commerce simple)
+                                    currentChat.tags = (currentChat.tags || []).filter(t => t !== 'pago-pendiente');
+                                    if (!currentChat.tags.includes('pagado')) {
+                                        currentChat.tags.push('pagado');
                                     }
+                                    currentChat.updatedAt = Date.now();
+                                    
+                                    // Sincronizar estado de ventas a pagado
+                                    const customerSales = sales.filter(s => s.customerId === from && !s.paid);
+                                    if (customerSales.length > 0) {
+                                        customerSales.forEach(s => s.paid = true);
+                                        saveSales(sales);
+                                        io.emit('sales_updated', sales);
+                                    }
+
+                                    const confirmMsg = '✅ *¡Pago verificado!* Muchas gracias por tu compra. 🎉';
+                                    await smartSendMessage(from, confirmMsg);
+                                    const botMsg = { id: 'conf-'+Date.now(), from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
+                                    currentChat.messages.push({ ...botMsg, content: confirmMsg });
+                                    io.emit('message', botMsg);
+
+                                    if (ADMIN_PHONE) {
+                                        await smartSendMessage(ADMIN_PHONE, `✅ *PAGO DETECTADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
+                                    }
+                                    
                                     saveChats(chats);
                                 } else {
                                     currentChat.lastImageAnalysis = visionResult.description;
@@ -1792,7 +1724,7 @@ app.post('/api/settings', (req, res) => {
         } 
     });
     socket.on('send_message', async ({ to, content, imageUrl, origin }) => {
-        if (content && /^r$/i.test(content.trim())) { await executeDelivery(to, 'deliver_first'); return; }
+        if (content && /^r$/i.test(content.trim())) { console.log('El comando r ha sido desactivado'); return; }
         
         let m;
         if (imageUrl) {
