@@ -440,133 +440,53 @@ function schedulePaymentReminder(to) {
     return;
 }
 
-// --- CENTRAL DELIVERY FUNCTION ---
-async function executeDelivery(to, mode = 'deliver_first') {
+// --- REGISTRO DE PEDIDO (E-COMMERCE SIMPLE) ---
+async function registerOrder(to, products, aiReplyText) {
     const chat = chats[to];
-    if (!chat) return { success: false, error: 'Chat not found' };
-    if (chat.isAutoDelivering) return { success: false, error: 'Already delivering' };
+    if (!chat) return;
 
-    chat.isAutoDelivering = true;
-    try {
-        let productsToDeliver = chat.pendingProducts?.length > 0 ? chat.pendingProducts : null;
+    const productList = products || 'Producto solicitado';
+    const now = new Date();
+    const ref = `PED-${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}-${Math.floor(Math.random()*1000)}`;
+    
+    // Registrar la venta
+    sales.push({
+        id: 'sale-' + Date.now(),
+        reference: ref,
+        service: productList,
+        price: 0,
+        date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
+        customer: chat.customerName,
+        customerId: to,
+        paid: false
+    });
+    saveSales(sales);
+    io.emit('sales_updated', sales);
 
-        if (!productsToDeliver || productsToDeliver.length === 0) {
-            // Solo buscamos productos en los últimos mensajes del USUARIO para evitar falsos positivos con lo que el bot ofrece
-            const userText = (chat.messages || [])
-                .filter(m => m.role === 'user')
-                .slice(-10)
-                .map(m => (m.content || m.body || '').toLowerCase())
-                .join(' ');
-            
-            // Si el usuario mencionó específicamente un servicio que tenemos, lo marcamos
-            // Búsqueda relajada para evitar fallos si el usuario no pone el '+' de 'Disney+'
-            productsToDeliver = inventory
-                .filter(a => {
-                    const servClean = a.service.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const uTextClean = userText.replace(/[^a-z0-9]/g, '');
-                    return uTextClean.includes(servClean) || userText.includes(a.service.toLowerCase());
-                })
-                .map(a => a.service)
-                .filter((v, i, arr) => arr.indexOf(v) === i);
-        }
+    // Marcar el pedido en el chat
+    if (!chat.tags?.includes('pedido')) {
+        chat.tags = [...(chat.tags || []).filter(t => t !== 'soporte'), 'pedido'];
+    }
+    chat.orderRegistered = true;
+    chat.updatedAt = Date.now();
+    saveChats(chats);
+    io.emit('tag_updated', { from: to, tags: chat.tags });
 
-        if (!productsToDeliver || productsToDeliver.length === 0) {
-            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ No detecté productos para entregar a *${chat.customerName}*.`);
-            return { success: false, error: 'No products detected' };
-        }
+    // Notificar al admin por WhatsApp
+    if (ADMIN_PHONE) {
+        const lastUserMsgs = (chat.messages || [])
+            .filter(m => m.role === 'user')
+            .slice(-5)
+            .map(m => m.content || m.body)
+            .join('\n');
+        
+        const notif = `📦 *NUEVO PEDIDO*\n👤 *Cliente:* ${chat.customerName}\n📞 *Chat:* ${to}\n🛒 *Producto:* ${productList}\n\n📋 *Datos del cliente:*\n${lastUserMsgs}`;
+        smartSendMessage(ADMIN_PHONE, notif);
+    }
 
-        let accountsFound = 0;
-        let totalPrice = 0;
-        const deliveredSales = [];
-
-        for (const serviceName of productsToDeliver) {
-            const accIndex = inventory.findIndex(a => {
-                const s1 = a.service.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const s2 = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                return (s1.includes(s2) || s2.includes(s1)) && (parseInt(a.uses) > 0);
-            });
-            if (accIndex !== -1) {
-                const acc = inventory[accIndex];
-                const salePrice = chat.pendingTotal ? Math.round(parseInt(chat.pendingTotal) / productsToDeliver.length) : (parseFloat(acc.price) || 0);
-                totalPrice += salePrice;
-                const now = new Date();
-                const ref = `${acc.service.substring(0,4).toUpperCase()}-${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-                
-                sales.push({
-                    id: 'sale-' + Date.now() + '-' + Math.random(),
-                    reference: ref, service: acc.service, price: salePrice, cost: acc.cost, provider: acc.provider, 
-                    date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }), 
-                    customer: chat.customerName, customerId: to,
-                    email: 'Pago Contraentrega', pass: 'Pendiente Despacho', profile: acc.profile || 'Shilajit', pin: 'Envío Gratis Guatemala', expiration: 'Contraentrega',
-                    accountId: acc.id,
-                    paid: false
-                });
-
-                deliveredSales.push(acc.service);
-                acc.uses = parseInt(acc.uses) - 1;
-                if (acc.uses <= 0) acc.status = 'Sold Out';
-                accountsFound++;
-            }
-        }
-
-        if (accountsFound > 0) {
-            const totalMsg = `🚀 *¡Pedido Registrado con Éxito!* 🌿\n\nTu orden de *${deliveredSales.join(', ')}* ha sido programada para despacho inmediato.\n\n🚚 *Método de Envío:* Gratis a nivel nacional en Guatemala.\n💵 *Método de Pago:* Pago Contra Entrega (Q${totalPrice}).\n\nRecibirás tu paquete en la puerta de tu casa u oficina de 1 a 3 días hábiles. ¡Muchas gracias por tu compra! 😊`;
-            
-            await smartSendMessage(to, totalMsg);
-
-            // Marcar que se procesó el pedido
-            chat.credentialsDelivered = true;
-            chat.tags = ['pago-pendiente'];
-            chat.pendingProducts = [];
-            chat.pendingTotal = null;
-            chat.updatedAt = Date.now();
-
-            saveSales(sales); saveInventory(inventory); saveChats(chats);
-            io.emit('sales_updated', sales); io.emit('inventory_updated', inventory); io.emit('tag_updated', { from: to, tags: chat.tags });
-
-            const botMsgData = {
-                id: 'auto-' + Date.now(), from: to, customerName: 'Sistema', body: totalMsg,
-                timestamp: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now(), isMe: true, role: 'bot'
-            };
-            chat.messages.push({ ...botMsgData, content: totalMsg });
-            io.emit('message', botMsgData);
-
-            scheduleRecovery(to);
-
-            if (ADMIN_PHONE) {
-                const notif = `📦 *NUEVO PEDIDO GUATEMALA:* Cliente *${chat.customerName}* (${to}) pidió *${deliveredSales.join(', ')}* (Q${totalPrice}). ¡Revisa los datos de despacho en el chat!`;
-                smartSendMessage(ADMIN_PHONE, notif);
-            }
-            return { success: true };
-        } else {
-            // SIN STOCK - Enviar UN solo mensaje y APAGAR la IA
-            const noStockMsg = `Hola ${chat.customerName}, en este momento no tenemos disponibilidad para lo que necesitas. 😔 Un asesor te contactará pronto para ayudarte. ¡Gracias por tu paciencia!`;
-            await smartSendMessage(to, noStockMsg);
-            
-            const holdBotMsg = {
-                id: 'hold-' + Date.now(), from: to, body: noStockMsg, content: noStockMsg,
-                isMe: true, role: 'bot', timestampRaw: Date.now(),
-                timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-            };
-            chat.messages.push(holdBotMsg);
-            
-            // APAGAR LA IA para que no repita el mensaje
-            chat.aiDisabled = true;
-            if (!chat.tags?.includes('soporte')) {
-                chat.tags = [...(chat.tags || []), 'soporte'];
-            }
-            saveChats(chats);
-            io.emit('message', holdBotMsg);
-            io.emit('ai_state_updated', { chatId: to, disabled: true });
-            io.emit('tag_updated', { from: to, tags: chat.tags });
-
-            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *SIN STOCK* para *${chat.customerName}*. La IA se ha apagado. Repón inventario.`);
-            return { success: false, error: 'No stock' };
-        }
-    } catch (err) { console.error('Delivery logic error:', err); return { success: false, error: err.message }; }
-    finally { chat.isAutoDelivering = false; }
+    console.log(`📦 [PEDIDO] Nuevo pedido de ${chat.customerName}: ${productList}`);
 }
+
 
 
 // Helper global: detectar si ya se enviaron credenciales o se cobró en este chat
@@ -953,15 +873,15 @@ async function processAIResponse(from, msgBodyLower) {
     const refreshedChat = chats[from];
     const customerName = refreshedChat.customerName;
 
-    // Detección de soporte (cliente existente con problema)
-    const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|no (se ve|se puede|anda)|demasiadas|muchas personas|perfil.*(no|bloqueado)|pagué|pagado|ya pag/i;
+    // Detección de soporte (cliente con problema real)
+    const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja/i;
     const isSupport = supportRegex.test(msgBodyLower);
 
     if (isSupport) {
         if (!refreshedChat.tags?.includes('soporte')) {
             refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
         }
-        refreshedChat.aiDisabled = true; // Apagar IA
+        refreshedChat.aiDisabled = true;
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
@@ -976,67 +896,20 @@ async function processAIResponse(from, msgBodyLower) {
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
         
         delete aiTimers[from];
-        return; // Detener flujo IA y no llamar a OpenAI
+        return;
     }
 
-    const isPricingInquiry = (/\?|qué val|que val|precio|costo|cuánto|cuanto|valor|promoción|promo|descuento/i.test(msgBodyLower));
-    
-    // Nueva protección: ¿El mensaje es SOLO el nombre de una plataforma?
-    const platformNames = getPlatformNames();
-    const isOnlyProductName = platformNames.includes(msgBodyLower) || platformNames.some(p => msgBodyLower === `quiere ${p}` || msgBodyLower === `quiero ${p}`);
-
-    // Auto-confirmación (ahora detecta la palabra en cualquier parte de la frase)
-    const confirmWords = /\b(si|sí|dale|ok|listo|recibido|proceder|hagale|hágale|de una|deuna|ready|mándala|mandala|pásala|pasala|manda|pasa|venda|véndame|activar|activa|pruébala|pruebala|probar|enviamelas|envialas|enviame)\b/i;
-    const containsExplicitConfirmation = confirmWords.test(msgBodyLower);
-
-    if (!isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation) {
-        const offeredAt = refreshedChat.activationOfferedAt || 0;
-        const recoveredAt = refreshedChat.recoverySentAt || 0;
-        const alreadyDelivered = credentialsSentInChat(refreshedChat);
-        // Entregar si hubo oferta de activación reciente o si pide explícitamente enviar
-        if (!alreadyDelivered && (Date.now() - offeredAt < 1800000 || Date.now() - recoveredAt < 1800000 || msgBodyLower.includes('activa') || msgBodyLower.includes('envia'))) {
-            try {
-                await executeDelivery(from, 'auto');
-            } catch (err) {
-                console.error('Delivery Error:', err);
-                refreshedChat.aiDisabled = true;
-                io.emit('ai_state_updated', { chatId: from, disabled: true });
-                await smartSendMessage(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
-                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *ERROR DE ENTREGA* con *${customerName}*. La IA se ha apagado.`);
-            }
-            delete aiTimers[from];
-            return;
-        }
-    }
-    
-    // Intención de activación - Solo si NO es soporte y NO se han enviado credenciales
-    const activateRegex = /activ(a|ar|ame|alo)|quiero prob(ar|arla)|déjame prob|me la activas|actívala|actívamela|enviame|mándame|pásame/i;
-    if (!credentialsSentInChat(refreshedChat) && activateRegex.test(msgBodyLower)) {
-        try {
-            await executeDelivery(from, 'auto');
-            refreshedChat.activationNotifySent = true;
-            refreshedChat.activationOfferedAt = Date.now();
-        } catch (err) {
-            console.error('Activation Delivery Error:', err);
-            refreshedChat.aiDisabled = true;
-            io.emit('ai_state_updated', { chatId: from, disabled: true });
-            await smartSendMessage(from, "Lo siento, tuve un pequeño problema técnico procesando tu cuenta. 👩‍💻 Un humano te ayudará en unos momentos.");
-            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ *ERROR DE ACTIVACIÓN* con *${customerName}*. La IA se ha apagado.`);
-        }
-        delete aiTimers[from];
-        return; // Detener para que la IA no responda duplicado
-    }
-
-    // Respuesta IA - Pasar contexto según la situación del chat
+    // Respuesta IA
     const allMessages = refreshedChat.messages.slice(-15);
-    if (credentialsSentInChat(refreshedChat)) {
-        allMessages.push({ role: 'system', content: '✅ CONTEXTO: Ya se enviaron las credenciales de acceso a este cliente y se le hizo el cobro. Estás en la etapa de COBRO/CONFIRMACIÓN. Solo responde preguntas sobre el precio, el pago o el funcionamiento. NUNCA ofrezcas ni entregues otra cuenta.' });
+    
+    // Contexto de pedido registrado
+    if (refreshedChat.orderRegistered) {
+        allMessages.push({ role: 'system', content: 'CONTEXTO: Este cliente ya tiene un pedido registrado. Si pregunta por su pedido, dile que ya está en proceso. Si quiere pedir algo más, toma el nuevo pedido normalmente.' });
     }
     
     // Pasar información de análisis de imagen si existe
     if (refreshedChat.lastImageAnalysis) {
-        allMessages.push({ role: 'system', content: `CONTEXTO VISUAL: La última imagen enviada por el usuario fue analizada por visión artificial como: "${refreshedChat.lastImageAnalysis}". Si NO es un comprobante de pago, responde según lo que la imagen realmente muestra. Si ES un comprobante, di que estás verificándolo.` });
-        // Limpiar después de usar para que no afecte mensajes futuros
+        allMessages.push({ role: 'system', content: `CONTEXTO VISUAL: La última imagen enviada por el usuario fue analizada como: "${refreshedChat.lastImageAnalysis}".` });
         delete refreshedChat.lastImageAnalysis;
         saveChats(chats);
     }
@@ -1044,8 +917,7 @@ async function processAIResponse(from, msgBodyLower) {
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine);
     
     // --- APAGADO POR IA ---
-    const gptRequestedSupport = /\[APAGAR_BOT_SOPORTE\]/i.test(aiReply);
-    if (gptRequestedSupport) {
+    if (/\[APAGAR_BOT_SOPORTE\]/i.test(aiReply)) {
         if (!refreshedChat.tags?.includes('soporte')) {
             refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
         }
@@ -1064,66 +936,34 @@ async function processAIResponse(from, msgBodyLower) {
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
         delete aiTimers[from];
-        return; // Detener flujo
+        return;
     }
 
-    // GPT-4 es inteligente, le damos autoridad a su etiqueta si el prompt está bien configurado
-    const gptDecidedToDeliver = /\[ENTREGAR_AHORA\]/i.test(aiReply);
+    // --- REGISTRO DE PEDIDO ---
+    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(aiReply);
+    const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
     
-    // Permitimos la entrega si pasamos las pruebas heurísticas locales, o si GPT lo decidió explícitamente (tiene prioridad)
-    const localDecision = !isPricingInquiry && !isOnlyProductName && containsExplicitConfirmation;
-    const canAutoDeliver = (localDecision || gptDecidedToDeliver) && !credentialsSentInChat(refreshedChat);
-    
-    const hasPurchaseIntent = canAutoDeliver && (/\[PAGO_PENDIENTE\]/i.test(aiReply) || /\[PRODUCTOS:.+\]/i.test(aiReply));
-    const forceDelivery = canAutoDeliver && gptDecidedToDeliver;
-
-    if (hasPurchaseIntent) {
-        // Guardar productos detectados para que executeDelivery los use
-        const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
-        const totalMatch = aiReply.match(/\[TOTAL:(\d+?)\]/i);
-        if (prodsMatch) refreshedChat.pendingProducts = prodsMatch[1].split(',').map(p => p.trim());
-        if (totalMatch) refreshedChat.pendingTotal = totalMatch[1];
-        
-        // SOLO poner etiqueta si NO vamos a intentar entrega inmediata
-        // Si forceDelivery es true, executeDelivery pondrá la etiqueta correcta según el resultado
-        if (!forceDelivery && !refreshedChat.tags?.includes('pago-pendiente')) {
-            refreshedChat.tags = [...(refreshedChat.tags || []), 'pago-pendiente'];
-            saveChats(chats); io.emit('tag_updated', { from, tags: refreshedChat.tags });
-        } else {
-            saveChats(chats);
-        }
+    if (hasOrderTag && prodsMatch) {
+        const products = prodsMatch[1].trim();
+        await registerOrder(from, products);
     }
 
+    // Limpiar etiquetas internas antes de enviar al cliente
     const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
     
-    if (forceDelivery) {
-        const deliveryResult = await executeDelivery(from, 'auto');
-        if (!deliveryResult.success) {
-            // executeDelivery ya envió el mensaje y apagó la IA si fue por falta de stock.
-            // Solo necesitamos apagar aquí si fue otro tipo de error.
-            if (!refreshedChat.aiDisabled) {
-                refreshedChat.aiDisabled = true;
-                if (!refreshedChat.tags?.includes('soporte')) {
-                    refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
-                }
-                saveChats(chats);
-                io.emit('ai_state_updated', { chatId: from, disabled: true });
-                io.emit('tag_updated', { from, tags: refreshedChat.tags });
-            }
-        }
-    } else {
-        await delay(1500);
-        if (cleanReply) {
-            const wamid = await smartSendMessage(from, cleanReply);
-            const botMsg = { id: wamid || ('bot-'+Date.now()), wamid: wamid || null, status: 'sent', from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
-            refreshedChat.messages.push(botMsg);
-            saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
-        }
+    await delay(1500);
+    if (cleanReply) {
+        const wamid = await smartSendMessage(from, cleanReply);
+        const botMsg = { id: wamid || ('bot-'+Date.now()), wamid: wamid || null, status: 'sent', from, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+        refreshedChat.messages.push(botMsg);
+        saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
     }
     
     scheduleRecovery(from);
     delete aiTimers[from];
 }
+
+
 
 app.post('/webhook/messenger', async (req, res) => {
     const body = req.body;
