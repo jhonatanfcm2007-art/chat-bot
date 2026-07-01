@@ -5,6 +5,7 @@ import Inventory from './components/Inventory';
 import Simulator from './components/Simulator';
 import AIAssistant from './components/AIAssistant';
 import Campaigns from './components/Campaigns';
+import Remarketing from './components/Remarketing';
 
 import io from 'socket.io-client';
 
@@ -641,6 +642,8 @@ function App() {
             globalLine={globalLine}
           />
         );
+      case 'remarketing':
+        return <Remarketing serverUrl={SERVER_URL} />;
       case 'analytics':
       case 'dashboard':
       default:

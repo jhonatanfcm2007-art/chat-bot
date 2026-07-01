@@ -66,6 +66,11 @@ app.get('/api/health', async (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// Endpoint Remarketing
+app.get('/api/customers', (req, res) => {
+    res.json(customersDb);
+});
+
 // Endpoint secreto para depurar webhooks de Meta
 app.get('/api/webhook-debug', (req, res) => {
     res.json(webhookLogs);
@@ -93,6 +98,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
+const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -285,6 +291,19 @@ let platforms = loadPlatforms();
 let providers = loadProviders();
 let campaigns = loadCampaigns();
 
+function loadCustomers() {
+    try {
+        if (fs.existsSync(CUSTOMERS_FILE)) {
+            return JSON.parse(fs.readFileSync(CUSTOMERS_FILE, 'utf-8'));
+        }
+    } catch (e) {
+        console.error('Error loading customers:', e);
+    }
+    return [];
+}
+function saveCustomers(data) { fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(data, null, 2)); }
+let customersDb = loadCustomers();
+
 // CONFIGURACIÓN DE PROMPTS POR LÍNEA (solo se aplica si el prompt está vacío o es el default viejo)
 (function initLinePrompts() {
     const shilajitPrompt = `Eres el asesor comercial virtual oficial de Shilajit Ultra en Cápsulas en Guatemala por WhatsApp. Eres un vendedor estrella: súper amigable, directo, conversacional y ALTAMENTE PERSUASIVO.
@@ -440,39 +459,23 @@ function schedulePaymentReminder(to) {
     return;
 }
 
-// --- REGISTRO DE PEDIDO (E-COMMERCE SIMPLE) ---
+// --- REGISTRO DE PEDIDO (PENDIENTE DE APROBACION) ---
 async function registerOrder(to, products, aiReplyText) {
     const chat = chats[to];
     if (!chat) return;
 
     const productList = products || 'Producto solicitado';
-    const now = new Date();
-    const ref = `PED-${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}-${Math.floor(Math.random()*1000)}`;
     
-    // Registrar la venta
-    sales.push({
-        id: 'sale-' + Date.now(),
-        reference: ref,
-        service: productList,
-        price: 0,
-        date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
-        customer: chat.customerName,
-        customerId: to,
-        paid: false
-    });
-    saveSales(sales);
-    io.emit('sales_updated', sales);
-
-    // Marcar el pedido en el chat
-    if (!chat.tags?.includes('pedido')) {
-        chat.tags = [...(chat.tags || []).filter(t => t !== 'soporte'), 'pedido'];
+    // Marcar el pedido en el chat como pendiente de aprobación
+    if (!chat.tags?.includes('pedido-pendiente')) {
+        chat.tags = [...(chat.tags || []).filter(t => t !== 'soporte' && t !== 'pedido'), 'pedido-pendiente'];
     }
-    chat.orderRegistered = true;
+    chat.pendingApprovalProducts = productList;
     chat.updatedAt = Date.now();
     saveChats(chats);
     io.emit('tag_updated', { from: to, tags: chat.tags });
 
-    // Notificar al admin por WhatsApp
+    // Notificar al admin por WhatsApp para aprobación
     if (ADMIN_PHONE) {
         const lastUserMsgs = (chat.messages || [])
             .filter(m => m.role === 'user')
@@ -480,11 +483,61 @@ async function registerOrder(to, products, aiReplyText) {
             .map(m => m.content || m.body)
             .join('\n');
         
-        const notif = `📦 *NUEVO PEDIDO*\n👤 *Cliente:* ${chat.customerName}\n📞 *Chat:* ${to}\n🛒 *Producto:* ${productList}\n\n📋 *Datos del cliente:*\n${lastUserMsgs}`;
+        const notif = `📦 *NUEVO PEDIDO PENDIENTE DE APROBACIÓN*\n👤 *Cliente:* ${chat.customerName}\n📞 *Chat:* ${to}\n🛒 *Producto:* ${productList}\n\n📋 *Datos del cliente:*\n${lastUserMsgs}\n\n👉 *Para confirmar:* Responde APROBAR ${to}\n👉 *Para cancelar:* Responde RECHAZAR ${to}`;
         smartSendMessage(ADMIN_PHONE, notif);
     }
 
-    console.log(`📦 [PEDIDO] Nuevo pedido de ${chat.customerName}: ${productList}`);
+    console.log(`📦 [PEDIDO PENDIENTE] Pedido de ${chat.customerName}: ${productList}. Esperando aprobación del admin.`);
+}
+
+// --- SHOPIFY INTEGRATION ---
+async function createShopifyOrder(chat, products) {
+    const SHOPIFY_URL = process.env.SHOPIFY_STORE_URL;
+    const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+    if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
+        console.error('❌ Faltan credenciales de Shopify en .env');
+        return { success: false, error: 'Credenciales Shopify no configuradas' };
+    }
+
+    try {
+        const orderData = {
+            order: {
+                line_items: [
+                    {
+                        title: products,
+                        price: 0,
+                        quantity: 1
+                    }
+                ],
+                customer: {
+                    first_name: chat.customerName || 'Cliente WhatsApp',
+                    phone: '+' + chat.from.replace(/\D/g, '')
+                },
+                financial_status: 'pending',
+                tags: 'whatsapp-bot, dropi'
+            }
+        };
+
+        const response = await fetch(`https://${SHOPIFY_URL}/admin/api/2024-01/orders.json`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Access-Token': SHOPIFY_TOKEN
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        const data = await response.json();
+        if (response.ok && data.order) {
+            return { success: true, orderId: data.order.id, orderName: data.order.name };
+        } else {
+            console.error('❌ Error Shopify:', data);
+            return { success: false, error: JSON.stringify(data) };
+        }
+    } catch (e) {
+        console.error('❌ Excepción Shopify:', e);
+        return { success: false, error: e.message };
+    }
 }
 
 
@@ -616,8 +669,70 @@ app.post('/webhook', async (req, res) => {
         const contacts = body.entry[0].changes[0].value.contacts;
         const customerName = contacts?.[0]?.profile?.name || from;
 
-        // Comandos Admin
-        // El comando 'r' para entrega manual de credenciales ha sido eliminado.
+        // Guardar cliente en Remarketing DB
+        if (from !== ADMIN_PHONE && !customersDb.some(c => c.phone === from)) {
+            customersDb.push({ phone: from, name: customerName, firstSeen: Date.now() });
+            saveCustomers(customersDb);
+        }
+
+        // Comandos Admin (Shopify Approval)
+        if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text') {
+            const adminText = msg.text.body.trim();
+            const match = adminText.match(/^(APROBAR|RECHAZAR)\s+(\d+)$/i);
+            if (match) {
+                const action = match[1].toUpperCase();
+                const targetPhone = match[2];
+                const targetChat = chats[targetPhone];
+
+                if (!targetChat) {
+                    smartSendMessage(ADMIN_PHONE, '❌ Chat no encontrado.');
+                    res.sendStatus(200); return;
+                }
+
+                if (action === 'APROBAR') {
+                    smartSendMessage(ADMIN_PHONE, '⏳ Creando pedido en Shopify...');
+                    const shopifyRes = await createShopifyOrder(targetChat, targetChat.pendingApprovalProducts || 'Producto');
+                    
+                    if (shopifyRes.success) {
+                        targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pedido-pendiente');
+                        targetChat.tags.push('pedido');
+                        targetChat.orderRegistered = true;
+                        delete targetChat.pendingApprovalProducts;
+                        saveChats(chats);
+                        io.emit('tag_updated', { from: targetPhone, tags: targetChat.tags });
+                        
+                        smartSendMessage(ADMIN_PHONE, `✅ Pedido ${shopifyRes.orderName} creado en Shopify exitosamente.`);
+                        smartSendMessage(targetPhone, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
+                        
+                        // Guardar en sales para compatibilidad con el frontend antiguo
+                        const now = new Date();
+                        sales.push({
+                            id: 'sale-' + Date.now(),
+                            reference: shopifyRes.orderName,
+                            service: targetChat.pendingApprovalProducts || 'Producto',
+                            price: 0,
+                            date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
+                            customer: targetChat.customerName,
+                            customerId: targetPhone,
+                            paid: false
+                        });
+                        saveSales(sales);
+                        io.emit('sales_updated', sales);
+                    } else {
+                        smartSendMessage(ADMIN_PHONE, `❌ Error en Shopify: ${shopifyRes.error}`);
+                    }
+                } else if (action === 'RECHAZAR') {
+                    targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pedido-pendiente');
+                    delete targetChat.pendingApprovalProducts;
+                    saveChats(chats);
+                    io.emit('tag_updated', { from: targetPhone, tags: targetChat.tags });
+                    smartSendMessage(ADMIN_PHONE, '❌ Pedido rechazado.');
+                    smartSendMessage(targetPhone, '❌ Lo sentimos, no pudimos procesar tu pedido. Comunícate con soporte.');
+                }
+                res.sendStatus(200); return;
+            }
+        }
+
 
         // Mensajes de Clientes
         // Manejo de Multimedia (Imágenes, Stickers, Documentos)
