@@ -1,1 +1,54 @@
-{}
+{
+  "573000": {
+    "from": "573000",
+    "customerName": "Test User",
+    "messages": [
+      {
+        "id": "wamid123",
+        "mediaId": null,
+        "from": "573000",
+        "body": "hola linea 2",
+        "content": "hola linea 2",
+        "imageUrl": null,
+        "fileUrl": null,
+        "timestampRaw": 1782851916219,
+        "role": "user"
+      },
+      {
+        "id": "wamid.HBgGNTczMDAwFQIAERgSQzlDM0IzRTdFN0NCNkVERTI3AA==",
+        "wamid": "wamid.HBgGNTczMDAwFQIAERgSQzlDM0IzRTdFN0NCNkVERTI3AA==",
+        "status": "sent",
+        "from": "573000",
+        "body": "⚠️ Error IA: waLine is not defined",
+        "content": "⚠️ Error IA: waLine is not defined",
+        "isMe": true,
+        "role": "bot",
+        "timestampRaw": 1782851921237
+      },
+      {
+        "id": "wamid123",
+        "mediaId": null,
+        "from": "573000",
+        "body": "hola linea 2",
+        "content": "hola linea 2",
+        "imageUrl": null,
+        "fileUrl": null,
+        "timestampRaw": 1782859603313,
+        "role": "user"
+      },
+      {
+        "id": "wamid.HBgGNTczMDAwFQIAERgSMTg2RERFMzlCNTk3NkIwNkVFAA==",
+        "wamid": "wamid.HBgGNTczMDAwFQIAERgSMTg2RERFMzlCNTk3NkIwNkVFAA==",
+        "status": "sent",
+        "from": "573000",
+        "body": "¡Hola! ¿Cómo puedo ayudarte hoy? 🥳 ¿Te gustaría conocer más sobre Shilajit Ultra en Cápsulas y sus beneficios?",
+        "content": "¡Hola! ¿Cómo puedo ayudarte hoy? 🥳 ¿Te gustaría conocer más sobre Shilajit Ultra en Cápsulas y sus beneficios?",
+        "isMe": true,
+        "role": "bot",
+        "timestampRaw": 1782859611017
+      }
+    ],
+    "waLine": 1,
+    "updatedAt": 1782859603313
+  }
+}
