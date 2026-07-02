@@ -354,6 +354,7 @@ let knowledgeBaseDb = loadKnowledgeBase();
         knowledgeBaseDb = [
             {
                 id: 'prod-1',
+                line: '1',
                 name: 'Shilajit Ultra en Cápsulas',
                 keywords: ['shilajit', 'energia', 'capsulas', 'testosterona', 'rendimiento'],
                 prices: '- 🌿 1 Frasco (60 Cápsulas): Q155\n- 🎁 Combo 2 Frascos: Q244\n- 🔥 Combo 3 Frascos: Q330',
@@ -361,6 +362,7 @@ let knowledgeBaseDb = loadKnowledgeBase();
             },
             {
                 id: 'prod-2',
+                line: '2',
                 name: 'Rodillera Térmica',
                 keywords: ['rodillera', 'rodillas', 'dolor', 'artritis', 'termica'],
                 prices: '- 🦵 1 Rodillera: Q149\n- 🎁 Combo 2 Rodilleras: Q249\n- 🔥 Combo 3 Rodilleras: Q329',
@@ -1944,10 +1946,13 @@ async function getAIResponse(message, history = [], waLine = 1) {
         return "⚠️ Error: El bot no tiene configurada la llave de inteligencia artificial en Railway.";
     }
     try {
-        // Formatear Base de Conocimiento
+        // Formatear Base de Conocimiento filtrando por la línea de WhatsApp (o si es para Ambas)
         let knowledgeContext = "### BASE DE CONOCIMIENTO DE PRODUCTOS:\n";
-        if (knowledgeBaseDb.length > 0) {
-            knowledgeBaseDb.forEach(prod => {
+        
+        const lineProducts = knowledgeBaseDb.filter(p => !p.line || p.line === 'Ambas' || p.line === String(waLine));
+        
+        if (lineProducts.length > 0) {
+            lineProducts.forEach(prod => {
                 knowledgeContext += `\n--- PRODUCTO: ${prod.name} ---\n`;
                 knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
                 knowledgeContext += `Detalles y Beneficios:\n${prod.details}\n`;

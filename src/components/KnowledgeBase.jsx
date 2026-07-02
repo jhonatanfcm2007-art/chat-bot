@@ -56,12 +56,12 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], prices: '', details: '' });
+    setEditingProduct({ name: '', keywords: [], prices: '', details: '', line: 'Ambas' });
     setIsModalOpen(true);
   };
 
   const openEditModal = (product) => {
-    setEditingProduct({ ...product });
+    setEditingProduct({ line: 'Ambas', ...product });
     setIsModalOpen(true);
   };
 
@@ -101,7 +101,14 @@ const KnowledgeBase = ({ serverUrl }) => {
                     <span className="material-symbols-outlined text-primary">inventory_2</span>
                     {p.name}
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <span className={`text-xs px-2 py-1 rounded-md font-semibold border ${
+                      p.line === '1' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
+                      p.line === '2' ? 'bg-purple-50 text-purple-600 border-purple-200' : 
+                      'bg-emerald-50 text-emerald-600 border-emerald-200'
+                    }`}>
+                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : 'Ambas Líneas'}
+                    </span>
                     <button onClick={() => openEditModal(p)} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors">
                       <span className="material-symbols-outlined text-sm">edit</span>
                     </button>
@@ -157,6 +164,20 @@ const KnowledgeBase = ({ serverUrl }) => {
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="Ej. Zapatos Deportivos X"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Asignar a WhatsApp</label>
+                <select 
+                  value={editingProduct.line || 'Ambas'}
+                  onChange={e => setEditingProduct({...editingProduct, line: e.target.value})}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                >
+                  <option value="Ambas">Ambas Líneas (Global)</option>
+                  <option value="1">Línea 1</option>
+                  <option value="2">Línea 2</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">El asistente solo venderá este producto en la línea seleccionada.</p>
               </div>
 
               <div>
