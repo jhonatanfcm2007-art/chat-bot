@@ -6,6 +6,7 @@ import Simulator from './components/Simulator';
 import AIAssistant from './components/AIAssistant';
 import Campaigns from './components/Campaigns';
 import Remarketing from './components/Remarketing';
+import KnowledgeBase from './components/KnowledgeBase';
 
 import io from 'socket.io-client';
 
@@ -644,6 +645,8 @@ function App() {
         );
       case 'remarketing':
         return <Remarketing serverUrl={SERVER_URL} />;
+      case 'knowledge_base':
+        return <KnowledgeBase serverUrl={SERVER_URL} />;
       case 'analytics':
       case 'dashboard':
       default:

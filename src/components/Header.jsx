@@ -9,6 +9,7 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
     { id: 'ai_assistant', icon: 'psychology', label: 'Asistente IA' },
     { id: 'analytics', icon: 'monitoring', label: 'Reportes' },
     { id: 'remarketing', icon: 'group', label: 'Remarketing' },
+    { id: 'knowledge_base', icon: 'menu_book', label: 'Conocimiento' },
   ];
 
   return (

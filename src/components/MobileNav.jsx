@@ -7,6 +7,7 @@ const MobileNav = ({ activeTab, onTabChange }) => {
     { id: 'analytics', icon: 'monitoring', label: 'Analítica' },
     { id: 'ai_assistant', icon: 'psychology', label: 'IA' },
     { id: 'remarketing', icon: 'group', label: 'Clientes' },
+    { id: 'knowledge_base', icon: 'menu_book', label: 'Datos' },
   ];
 
   return (

@@ -71,6 +71,36 @@ app.get('/api/customers', (req, res) => {
     res.json(customersDb);
 });
 
+// Endpoints Base de Conocimiento
+app.get('/api/knowledge-base', (req, res) => {
+    res.json(knowledgeBaseDb);
+});
+
+app.post('/api/knowledge-base', (req, res) => {
+    const newProduct = { ...req.body, id: 'prod-' + Date.now() };
+    knowledgeBaseDb.push(newProduct);
+    saveKnowledgeBase(knowledgeBaseDb);
+    res.json({ success: true, product: newProduct });
+});
+
+app.put('/api/knowledge-base/:id', (req, res) => {
+    const id = req.params.id;
+    const index = knowledgeBaseDb.findIndex(p => p.id === id);
+    if (index !== -1) {
+        knowledgeBaseDb[index] = { ...knowledgeBaseDb[index], ...req.body };
+        saveKnowledgeBase(knowledgeBaseDb);
+        res.json({ success: true, product: knowledgeBaseDb[index] });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
+});
+
+app.delete('/api/knowledge-base/:id', (req, res) => {
+    knowledgeBaseDb = knowledgeBaseDb.filter(p => p.id !== req.params.id);
+    saveKnowledgeBase(knowledgeBaseDb);
+    res.json({ success: true });
+});
+
 // Endpoint secreto para depurar webhooks de Meta
 app.get('/api/webhook-debug', (req, res) => {
     res.json(webhookLogs);
@@ -99,6 +129,7 @@ const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
+const KNOWLEDGE_BASE_FILE = path.join(DATA_DIR, 'knowledge_base.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -304,68 +335,59 @@ function loadCustomers() {
 function saveCustomers(data) { fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(data, null, 2)); }
 let customersDb = loadCustomers();
 
-// CONFIGURACIÓN DE PROMPTS POR LÍNEA (solo se aplica si el prompt está vacío o es el default viejo)
-(function initLinePrompts() {
-    const shilajitPrompt = `Eres el asesor comercial virtual oficial de Shilajit Ultra en Cápsulas en Guatemala por WhatsApp. Eres un vendedor estrella: súper amigable, directo, conversacional y ALTAMENTE PERSUASIVO.
+function loadKnowledgeBase() {
+    try {
+        if (fs.existsSync(KNOWLEDGE_BASE_FILE)) {
+            return JSON.parse(fs.readFileSync(KNOWLEDGE_BASE_FILE, 'utf-8'));
+        }
+    } catch (e) {
+        console.error('Error loading knowledge base:', e);
+    }
+    return [];
+}
+function saveKnowledgeBase(data) { fs.writeFileSync(KNOWLEDGE_BASE_FILE, JSON.stringify(data, null, 2)); }
+let knowledgeBaseDb = loadKnowledgeBase();
 
-### 🎯 REGLAS INQUEBRANTABLES DE CONVERSIÓN Y VENTAS EN WHATSAPP:
-1. **MENSAJES CORTOS Y DIRECTOS (MÁXIMO 2 O 3 LÍNEAS POR MENSAJE)**: NUNCA envíes textos largos ni sermones.
-2. **SIEMPRE TERMINA CON UNA PREGUNTA DE CIERRE O CONVERSACIÓN**: Jamás dejes una respuesta en punto muerto.
-3. **PAGO CONTRA ENTREGA Y ENVÍO GRATIS**: Recalca siempre: ENVÍO GRATIS y PAGO CONTRA ENTREGA en toda Guatemala.
+// MIGRACIÓN A BASE DE CONOCIMIENTO DINÁMICA
+(function initKnowledgeBase() {
+    if (knowledgeBaseDb.length === 0) {
+        knowledgeBaseDb = [
+            {
+                id: 'prod-1',
+                name: 'Shilajit Ultra en Cápsulas',
+                keywords: ['shilajit', 'energia', 'capsulas', 'testosterona', 'rendimiento'],
+                prices: '- 🌿 1 Frasco (60 Cápsulas): Q155\n- 🎁 Combo 2 Frascos: Q244\n- 🔥 Combo 3 Frascos: Q330',
+                details: 'Potenciador 100% natural. Beneficios: más energía, mejor rendimiento físico y sexual, fortalece sistema inmune, eleva testosterona natural.'
+            },
+            {
+                id: 'prod-2',
+                name: 'Rodillera Térmica',
+                keywords: ['rodillera', 'rodillas', 'dolor', 'artritis', 'termica'],
+                prices: '- 🦵 1 Rodillera: Q149\n- 🎁 Combo 2 Rodilleras: Q249\n- 🔥 Combo 3 Rodilleras: Q329',
+                details: 'Rodillera térmica de compresión. Alivia el dolor de rodilla, artritis, inflamación. Tecnología de calor terapéutico. Ideal para deportistas y adultos mayores.'
+            }
+        ];
+        saveKnowledgeBase(knowledgeBaseDb);
+        console.log('✅ [CONFIG] Base de Conocimiento inicializada con productos por defecto.');
+    }
 
-### 🇬🇹 PRECIOS EN QUETZALES (Q):
-- 🌿 1 Frasco (60 Cápsulas): Q155 (Envío GRATIS + Pago Contra Entrega)
-- 🎁 Combo 2 Frascos (120 Cápsulas): Q244 (Ahorras Q66 - ¡El Más Vendido!)
-- 🔥 Combo 3 Frascos (180 Cápsulas): Q330 (¡Máximo Ahorro!)
-
-### PRODUCTO:
-Shilajit Ultra en Cápsulas - Potenciador 100% natural. Beneficios: más energía, mejor rendimiento físico y sexual, fortalece sistema inmune, eleva testosterona natural.
+    // Configurar un prompt base corto si aún no está configurado
+    const basePrompt = `Eres un asesor de ventas virtual experto y persuasivo por WhatsApp. 
+Tu objetivo es identificar qué producto busca el cliente de tu catálogo. 
+Si el cliente no especifica el producto, pregúntale amable y directamente qué busca o ofrécele el catálogo.
+Si el cliente menciona o insinúa uno de los productos de tu Base de Conocimientos, USA ESTRICTAMENTE la información de ese producto para venderle, siguiendo el embudo de ventas.
 
 ### 🛒 REGISTRO DE PEDIDOS:
-Cuando el cliente pida o entregue sus datos de despacho completos, responde brevemente e incluye las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].`;
+Cuando el cliente entregue sus datos de despacho completos, responde brevemente e incluye las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].`;
 
-    const rodilleraPrompt = `Eres el asesor comercial virtual oficial de la Rodillera Térmica en Guatemala por WhatsApp. Eres un vendedor estrella: súper amigable, directo, conversacional y ALTAMENTE PERSUASIVO.
-
-### 🎯 REGLAS INQUEBRANTABLES DE CONVERSIÓN Y VENTAS EN WHATSAPP:
-1. **MENSAJES CORTOS Y DIRECTOS (MÁXIMO 2 O 3 LÍNEAS POR MENSAJE)**: NUNCA envíes textos largos ni sermones.
-2. **SIEMPRE TERMINA CON UNA PREGUNTA DE CIERRE O CONVERSACIÓN**: Jamás dejes una respuesta en punto muerto.
-3. **PAGO CONTRA ENTREGA Y ENVÍO GRATIS**: Recalca siempre: ENVÍO GRATIS y PAGO CONTRA ENTREGA en toda Guatemala.
-
-### PRODUCTO - RODILLERA TÉRMICA:
-- Rodillera térmica de compresión con soporte articular avanzado.
-- Alivia el dolor de rodilla, artritis, inflamación y molestias por desgaste.
-- Tecnología de calor terapéutico que mejora la circulación y reduce la rigidez.
-- Material transpirable, cómodo para uso diario.
-- Ideal para personas con dolor crónico de rodillas, adultos mayores, deportistas y personas que pasan mucho tiempo de pie.
-
-### BENEFICIOS CLAVE:
-✅ Alivio inmediato del dolor de rodilla
-✅ Soporte y estabilidad articular
-✅ Calor terapéutico que reduce inflamación
-✅ Cómoda para usar todo el día
-✅ Sin medicamentos, sin efectos secundarios
-
-### 🇬🇹 PRECIOS EN QUETZALES (Q):
-- 🦵 1 Rodillera Térmica: Q149 (Envío GRATIS + Pago Contra Entrega)
-- 🎁 Combo 2 Rodilleras (ambas rodillas): Q249 (¡El Más Vendido! Ahorras Q49)
-- 🔥 Combo 3 Rodilleras (para toda la familia): Q329 (¡Máximo Ahorro!)
-
-### 🛒 REGISTRO DE PEDIDOS:
-Cuando el cliente pida o entregue sus datos de despacho completos, responde brevemente e incluye las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: Rodillera Térmica].`;
-
-    // Solo actualizar si el prompt actual contiene "Shilajit" en línea 2 (migración de producto incorrecto)
-    if (!settings["2"].systemPrompt || settings["2"].systemPrompt.includes('Shilajit')) {
-        settings["2"].systemPrompt = rodilleraPrompt;
-        console.log('🔄 [CONFIG] Línea 2 configurada para Rodillera Térmica.');
+    if (!settings["1"].systemPrompt || settings["1"].systemPrompt.includes('Shilajit') || settings["1"].systemPrompt.length > 500) {
+        settings["1"].systemPrompt = basePrompt;
+        settings["2"].systemPrompt = basePrompt;
+        saveSettings(settings);
+        console.log('🔄 [CONFIG] System Prompt migrado a versión corta (dinámica).');
     }
-    // Solo actualizar línea 1 si está vacía
-    if (!settings["1"].systemPrompt || settings["1"].systemPrompt.length < 50) {
-        settings["1"].systemPrompt = shilajitPrompt;
-        console.log('🔄 [CONFIG] Línea 1 configurada para Shilajit Ultra.');
-    }
-    saveSettings(settings);
-    console.log('✅ [CONFIG] Prompts por línea inicializados correctamente.');
 })();
+
 
 // MIGRACIÓN: Normalizar URLs de imágenes antiguas a rutas relativas
 (function migrateMediaUrls() {
@@ -1922,57 +1944,26 @@ async function getAIResponse(message, history = [], waLine = 1) {
         return "⚠️ Error: El bot no tiene configurada la llave de inteligencia artificial en Railway.";
     }
     try {
-        // Mostrar todo el inventario como disponible para la IA, sin importar el stock real
-        const uniqueInventory = [];
-        inventory.forEach(item => {
-            if (!uniqueInventory.some(i => i.service === item.service)) {
-                uniqueInventory.push(item);
-            }
-        });
-        const inv = uniqueInventory.map(i => `${i.service} - $${i.price} (Disponible)`).join(', ');
-        
-        // Memoria de compras pasadas
-        const customerSales = sales.filter(s => s.customerId === history[0]?.from || s.customer === history[0]?.customerName);
-        const purchaseHistory = customerSales.length > 0 
-            ? `Historial del cliente: Ha comprado ${customerSales.map(s => s.service).join(', ')} antes.`
-            : "Cliente nuevo (sin compras previas).";
+        // Formatear Base de Conocimiento
+        let knowledgeContext = "### BASE DE CONOCIMIENTO DE PRODUCTOS:\n";
+        if (knowledgeBaseDb.length > 0) {
+            knowledgeBaseDb.forEach(prod => {
+                knowledgeContext += `\n--- PRODUCTO: ${prod.name} ---\n`;
+                knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
+                knowledgeContext += `Detalles y Beneficios:\n${prod.details}\n`;
+                knowledgeContext += `Precios y Combos:\n${prod.prices}\n`;
+            });
+        } else {
+            knowledgeContext += "No hay productos registrados en la base de conocimiento.\n";
+        }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones
-        const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS Y REGISTRO DE PEDIDOS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Cuando el cliente proporcione los 5 datos de envío completos, responde ÚNICAMENTE con las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].\n3. Si el cliente solicita soporte específico sobre su paquete o guía de envío, usa [APAGAR_BOT_SOPORTE].";
-
-        const mathRules = "\n\n### REGLAS DE CÁLCULO Y PRESENTACIÓN (PRECIOS EN QUETZALES):\n1. Respeta siempre los precios exactos en Quetzales (Q) del catálogo.\n2. Para la venta de Shilajit en Cápsulas, informa claramente la oferta disponible (Q155 1 frasco, Q244 2 frascos, Q330 3 frascos).\n3. ¡OBLIGATORIO!: En CADA cotización u oferta debes recalcar juntos: ENVÍO GRATIS y PAGO CONTRA ENTREGA (pagas en efectivo al recibir tu paquete en mano).";
-
-        const dynamicStrategyRules = `
-
-### EMBUDO CONVERSACIONAL ESTRICTO (ADAPTABLE A CUALQUIER PRODUCTO)
-ERES UN EXPERTO EN VENTAS CONSULTIVAS. Tu objetivo es guiar al cliente por un embudo de 5 etapas, avanzando UNA SOLA ETAPA por mensaje. NO TE SALTES ETAPAS. Si el cliente muestra urgencia directa por comprar (ej: "quiero comprar", "cuánto cuesta", "envíamelo"), pasa directo a mostrar precios y cerrar.
-
-IMPORTANTE: Usa la información de TU PRODUCTO que está arriba en el prompt del sistema. NUNCA hables de productos que no están en tu catálogo.
-
-ETAPA 1 — BIENVENIDA Y PRIMERA PREGUNTA:
-Saluda cálidamente y pregunta qué problema o necesidad tiene el cliente. NO ofrezcas el producto aún. Solo escucha.
-Ejemplo: "¡Hola! 👋 Qué bueno que escribiste. ¿Me cuentas qué es lo que te está molestando o qué estás buscando?"
-
-ETAPA 2 — EMPATIZAR Y PROFUNDIZAR:
-Muestra empatía genuina con lo que el cliente dijo. Hazle una pregunta de seguimiento para entender mejor su situación (hace cuánto lo tiene, qué ha probado, etc.).
-
-ETAPA 3 — EXPLICAR EL PROBLEMA:
-Dale una explicación breve y creíble de POR QUÉ tiene ese problema. Usa datos o lógica que conecten con su situación. Cierra diciendo que hay una buena solución.
-
-ETAPA 4 — PRESENTAR TU PRODUCTO COMO LA SOLUCIÓN:
-Presenta el producto con sus beneficios clave (usa los que están en el prompt del sistema). Menciona envío gratis y pago contra entrega.
-
-ETAPA 5 — CIERRE CON OPCIONES DE PRECIO:
-Muestra las opciones de precio/combos disponibles (usa los precios exactos del prompt del sistema). Pregunta: "¿Con cuál te gustaría empezar?"
-
-DESPUÉS DEL CIERRE: Si el cliente elige una opción, pídele sus datos de envío (nombre, teléfono, ciudad, dirección, producto elegido). Cuando los dé completos, usa las etiquetas [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].
-
-REGLA DE ORO: Responde SOLO sobre los productos que tienes en tu catálogo/prompt. Si el cliente pregunta por algo que SÍ vendes, atiéndelo. NUNCA digas que no vendes algo si está en tu prompt.`;
+        const antiHallucinationRules = "\n\n### REGLA INQUEBRANTABLE - PROHIBICIÓN DE DATOS FALSOS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.";
 
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}${antiHallucinationRules}${mathRules}${dynamicStrategyRules}\n\n${purchaseHistory}\n\nStock actual para entrega instantánea (USA ESTOS PRECIOS): ${inv}` },
+                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${antiHallucinationRules}` },
                 ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
                 { role: "user", content: message }
             ]
