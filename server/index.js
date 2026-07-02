@@ -783,6 +783,12 @@ app.post('/webhook', async (req, res) => {
                 msgBody = '[ARCHIVO NO SOPORTADO]';
         }
 
+        // Extraer datos del anuncio (Click-to-WhatsApp Ads)
+        if (msg.referral) {
+            const adInfo = msg.referral.headline || msg.referral.body || 'Facebook/Instagram';
+            msgBody = `📢 [Anuncio: ${adInfo}]\n${msgBody}`;
+        }
+
         if (msgBody) {
             const isNewChat = !chats[from];
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
