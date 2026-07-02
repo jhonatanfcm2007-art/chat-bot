@@ -786,7 +786,9 @@ app.post('/webhook', async (req, res) => {
         // Extraer datos del anuncio (Click-to-WhatsApp Ads)
         if (msg.referral) {
             const adInfo = msg.referral.headline || msg.referral.body || 'Facebook/Instagram';
-            msgBody = `📢 [Anuncio: ${adInfo}]\n${msgBody}`;
+            const adId = msg.referral.source_id ? ` (ID: ${msg.referral.source_id})` : '';
+            const adUrl = msg.referral.source_url ? `\n🔗 Link: ${msg.referral.source_url}` : '';
+            msgBody = `📢 [Anuncio: ${adInfo}${adId}]${adUrl}\n\n${msgBody}`;
         }
 
         if (msgBody) {
