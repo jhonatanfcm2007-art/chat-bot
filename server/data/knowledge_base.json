@@ -1,0 +1,30 @@
+[
+  {
+    "id": "prod-1",
+    "line": "1",
+    "name": "Shilajit Ultra en Cápsulas",
+    "keywords": [
+      "shilajit",
+      "energia",
+      "capsulas",
+      "testosterona",
+      "rendimiento"
+    ],
+    "prices": "- 🌿 1 Frasco (60 Cápsulas): Q155\n- 🎁 Combo 2 Frascos: Q244\n- 🔥 Combo 3 Frascos: Q330",
+    "details": "Potenciador 100% natural. Beneficios: más energía, mejor rendimiento físico y sexual, fortalece sistema inmune, eleva testosterona natural."
+  },
+  {
+    "id": "prod-2",
+    "line": "2",
+    "name": "Rodillera Térmica",
+    "keywords": [
+      "rodillera",
+      "rodillas",
+      "dolor",
+      "artritis",
+      "termica"
+    ],
+    "prices": "- 🦵 1 Rodillera: Q149\n- 🎁 Combo 2 Rodilleras: Q249\n- 🔥 Combo 3 Rodilleras: Q329",
+    "details": "Rodillera térmica de compresión. Alivia el dolor de rodilla, artritis, inflamación. Tecnología de calor terapéutico. Ideal para deportistas y adultos mayores."
+  }
+]

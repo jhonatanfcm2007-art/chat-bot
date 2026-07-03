@@ -1137,7 +1137,9 @@ function handleIncomingMessage(from) {
 
         const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
 
-        processAIResponse(from, msgBodyLower);
+        processAIResponse(from, msgBodyLower).catch(err => {
+            console.error('❌ [CRITICAL ERROR] Excepción no controlada en processAIResponse:', err);
+        });
     }, 2500);
 }
 
