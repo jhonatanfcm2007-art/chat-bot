@@ -1965,6 +1965,9 @@ async function getAIResponse(message, history = [], waLine = 1) {
             lineProducts.forEach(prod => {
                 knowledgeContext += `\n--- PRODUCTO: ${prod.name} ---\n`;
                 knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
+                if (prod.adIds && prod.adIds.length > 0) {
+                    knowledgeContext += `IDs de Anuncio asociados: ${prod.adIds.join(', ')}\n`;
+                }
                 knowledgeContext += `Detalles y Beneficios:\n${prod.details}\n`;
                 knowledgeContext += `Precios y Combos:\n${prod.prices}\n`;
             });

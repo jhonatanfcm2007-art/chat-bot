@@ -56,7 +56,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], prices: '', details: '', line: 'Ambas' });
+    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas' });
     setIsModalOpen(true);
   };
 
@@ -184,12 +184,24 @@ const KnowledgeBase = ({ serverUrl }) => {
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Palabras Clave (separadas por coma)</label>
                 <input 
                   type="text" required
-                  value={editingProduct.keywords.join(', ')}
+                  value={editingProduct.keywords?.join(', ') || ''}
                   onChange={e => setEditingProduct({...editingProduct, keywords: e.target.value.split(',').map(k=>k.trim()).filter(k=>k)})}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="Ej. zapatos, tenis, zapatillas deportivas"
                 />
                 <p className="text-xs text-slate-500 mt-1">Si el cliente dice alguna de estas palabras, la IA sabrá que busca este producto.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">IDs de Anuncios (opcional, separados por coma)</label>
+                <input 
+                  type="text"
+                  value={editingProduct.adIds?.join(', ') || ''}
+                  onChange={e => setEditingProduct({...editingProduct, adIds: e.target.value.split(',').map(k=>k.trim()).filter(k=>k)})}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Ej. 1202131920, 39493920202"
+                />
+                <p className="text-xs text-slate-500 mt-1">Si un cliente llega desde un anuncio de Meta con alguno de estos IDs, la IA seleccionará este producto automáticamente.</p>
               </div>
 
               <div>
