@@ -2042,6 +2042,17 @@ if (fs.existsSync(DIST_DIR)) {
 
 // --- AUTOMATIZACIÓN DE SEGUIMIENTO (REMARKETING) ---
 async function runFollowUpSequence() {
+    // Validar horario comercial para no escribir de madrugada
+    // Usamos la zona horaria de Guatemala/Centroamérica (UTC-6)
+    const localTime = new Date().toLocaleString("en-US", {timeZone: "America/Guatemala"});
+    const currentHour = new Date(localTime).getHours();
+    
+    // Si es antes de las 8 AM o después de las 11 PM (23 hrs), pausar secuencias
+    if (currentHour < 8 || currentHour >= 23) {
+        console.log('💤 [REMARKETING] Fuera de horario comercial (8 AM - 11 PM). Seguimiento en pausa.');
+        return;
+    }
+
     const now = Date.now();
     for (const chatId in chats) {
         const chat = chats[chatId];
