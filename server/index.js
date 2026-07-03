@@ -366,7 +366,7 @@ let knowledgeBaseDb = loadKnowledgeBase();
                 name: 'Rodillera Térmica',
                 keywords: ['rodillera', 'rodillas', 'dolor', 'artritis', 'termica'],
                 prices: '- 🦵 1 Rodillera: Q149\n- 🎁 Combo 2 Rodilleras: Q249\n- 🔥 Combo 3 Rodilleras: Q329',
-                details: 'Rodillera térmica de compresión. Alivia el dolor de rodilla, artritis, inflamación. Tecnología de calor terapéutico. Ideal para deportistas y adultos mayores.'
+                details: 'Rodillera térmica de compresión. Alivia el dolor de rodilla, artritis, inflamación. Tecnología de calor terapéutico. Ideal para deportistas y adultos mayores.\n\nIMPORTANTE: En tu propuesta de precios/cierre, menciónale al cliente de forma natural que cuenta con GARANTÍA TOTAL: si en 15 días no siente mejora, le devolvemos su dinero sin hacer preguntas.'
             }
         ];
         saveKnowledgeBase(knowledgeBaseDb);
@@ -380,6 +380,12 @@ let knowledgeBaseDb = loadKnowledgeBase();
             prod.details = 'FLUJO DE VENTAS ESTRICTO A SEGUIR PASO A PASO (Envía un solo mensaje a la vez, esperando la respuesta del cliente):\n\nMensaje 1 — Profundizar en el problema (Rendimiento Sexual)\nSaluda y pregunta directamente: "¡Hola! 😊 Con gusto te comparto la información del Shilajit Ultra. Cuéntame, ¿estás buscando el Shilajit para aumentar tu energía en el día a día, o para potenciar al máximo tu rendimiento y vigor sexual?"\n(⚠️ Nota: Si el cliente ya indica su interés sexual o general desde el principio, omite esta pregunta y pasa al Mensaje 2).\n\nMensaje 2 — Exagerar beneficios y empatizar\nDile exactamente: "¡Te entiendo perfectamente! Yo también soy hombre y pasé exactamente por lo mismo que tú, así que háblame y coméntame tu caso con toda confianza. Después de los 30 años, los niveles de testosterona caen y es completamente normal perder esa potencia y vigor de antes. El Shilajit Ultra actúa como una bomba natural de energía: dispara tus niveles de testosterona, te devuelve la firmeza, aumenta radicalmente el deseo y te da una resistencia en la intimidad como si tuvieras 20 años de nuevo. Todo de forma 100% natural, sin químicos ni dolores de cabeza."\n\nMensaje 3 — Presentar Opciones\nDile exactamente: "Tenemos dos opciones para que empieces a notar la diferencia esta misma semana (con GARANTÍA TOTAL: si en 15 días no sientes una mejora real, te devolvemos tu dinero sin preguntas):\n🌿 1 Frasco (60 cápsulas): Q155 — ideal para probar y sentir el primer gran impulso de potencia.\n🎁 Combo 2 Frascos: Q244 — (El más pedido) tratamiento completo para resultados increíbles que perduran.\n\nLa gran mayoría empieza directamente con el combo porque su pareja nota la diferencia de inmediato 😎. ¿Con cuál te gustaría empezar?"\n\nMensaje 4 — Cierre de Venta\nDile exactamente: "¡Excelente elección! Por favor, indícame tu dirección completa, municipio y un número de teléfono alterno para coordinar tu envío. Recuerda que el envío es GRATIS a todo el país y pagas cómodamente en efectivo al recibir 🔥."';
             
             prod.prices = '- 🌿 1 Frasco (60 Cápsulas): Q155\n- 🎁 Combo 2 Frascos: Q244\n- 🔥 Combo 3 Frascos: Q330';
+            updated = true;
+        }
+        
+        // MIGRACIÓN: Garantía global para todos los productos
+        if (!prod.details.includes('GARANTÍA TOTAL')) {
+            prod.details += '\n\nIMPORTANTE: En tu propuesta de precios o antes del cierre, menciónale al cliente de forma persuasiva y natural que cuenta con GARANTÍA TOTAL: si en 15 días no siente una mejora real, le devolvemos su dinero sin hacer preguntas.';
             updated = true;
         }
     });
