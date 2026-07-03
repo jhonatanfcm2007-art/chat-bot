@@ -2034,6 +2034,67 @@ if (fs.existsSync(DIST_DIR)) {
     });
 }
 
+// --- AUTOMATIZACIÓN DE SEGUIMIENTO (REMARKETING) ---
+async function runFollowUpSequence() {
+    const now = Date.now();
+    for (const chatId in chats) {
+        const chat = chats[chatId];
+        
+        // Ignorar si el cliente ya compró
+        if (chat.orderRegistered) continue;
+        if (chat.tags && (chat.tags.includes('venta') || chat.tags.includes('pagado') || chat.tags.includes('entregado') || chat.tags.includes('pago-pendiente'))) continue;
+        
+        // Ignorar si la IA está apagada, el chat bloqueado o si es un grupo
+        if (chat.aiDisabled || chat.isBlocked || chatId.includes('@g.us')) continue;
+        
+        const hoursInactive = (now - chat.updatedAt) / (1000 * 60 * 60);
+        let promptType = null;
+        let step = null;
+
+        if (hoursInactive >= 72 && !chat.followUp72Sent) {
+            promptType = "Han pasado 72 horas desde que el cliente te escribió y no ha comprado. Escríbele un último mensaje de seguimiento muy breve ofreciéndole envío gratis o un pequeño sentido de escasez (ej: 'Últimas unidades en bodega'). Sé ultra persuasivo pero casual, empujando al cierre.";
+            step = 72;
+        } else if (hoursInactive >= 48 && !chat.followUp48Sent) {
+            promptType = "Han pasado 48 horas desde que el cliente te escribió y no ha comprado. Escríbele un mensaje de seguimiento compartiendo un DATO CIENTÍFICO o dato duro rápido sobre el producto del que hablaron que le genere urgencia o le haga entender la importancia de usarlo ya. Sé empático y conversacional.";
+            step = 48;
+        } else if (hoursInactive >= 24 && !chat.followUp24Sent) {
+            promptType = "Han pasado 24 horas desde que el cliente te escribió y no ha comprado. Escríbele un mensaje de seguimiento amistoso contándole brevemente una historia de éxito de otro cliente que tenía las mismas dudas o el mismo dolor, probó el producto y le fue excelente. Termina con una pregunta corta para retomar la conversación.";
+            step = 24;
+        }
+
+        if (promptType) {
+            console.log(`🤖 [REMARKETING] Ejecutando seguimiento de ${step}h para ${chat.customerName} (${chatId})`);
+            
+            try {
+                // Generar respuesta con IA enviando el historial + instrucción
+                const aiPrompt = `[INSTRUCCIÓN INTERNA DEL SISTEMA PARA SEGUIMIENTO AUTOMÁTICO]: ${promptType}\n\nEscribe directamente el mensaje para enviarlo al cliente.`;
+                const aiReply = await getAIResponse(aiPrompt, chat.messages.slice(-15), chat.waLine || 1);
+                
+                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
+                
+                if (cleanReply) {
+                    const wamid = await smartSendMessage(chatId, cleanReply);
+                    const botMsg = { id: wamid || ('followup-'+Date.now()), wamid: wamid || null, status: 'sent', from: chatId, body: cleanReply, content: cleanReply, isMe: true, role: 'bot', timestampRaw: Date.now() };
+                    chat.messages.push(botMsg);
+                    
+                    if (step === 24) chat.followUp24Sent = true;
+                    if (step === 48) chat.followUp48Sent = true;
+                    if (step === 72) chat.followUp72Sent = true;
+                    
+                    // No actualizamos chat.updatedAt para que el reloj general no se reinicie por nuestro propio mensaje
+                    saveChats(chats);
+                    io.emit('message', { ...botMsg, waLine: chat.waLine });
+                }
+            } catch (err) {
+                console.error(`❌ [REMARKETING] Error enviando seguimiento a ${chatId}:`, err);
+            }
+        }
+    }
+}
+
+// Ejecutar revisión de seguimiento cada 15 minutos
+setInterval(runFollowUpSequence, 15 * 60 * 1000);
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
