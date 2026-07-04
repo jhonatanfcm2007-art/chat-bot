@@ -545,38 +545,48 @@ async function createShopifyOrder(chat, products) {
     }
 
     try {
-        const orderData = {
-            order: {
+        // Usamos Draft Orders API (no requiere permiso especial de write_orders)
+        const draftOrderData = {
+            draft_order: {
                 line_items: [
                     {
                         title: products,
-                        price: 0,
-                        quantity: 1
+                        price: '0.00',
+                        quantity: 1,
+                        requires_shipping: true
                     }
                 ],
                 customer: {
                     first_name: chat.customerName || 'Cliente WhatsApp',
                     phone: '+' + chat.from.replace(/\D/g, '')
                 },
-                financial_status: 'pending',
-                tags: 'whatsapp-bot, dropi'
+                shipping_address: {
+                    first_name: chat.customerName || 'Cliente WhatsApp',
+                    address1: chat.address || 'Pendiente de confirmar',
+                    city: chat.city || 'Guatemala',
+                    country: 'GT',
+                    phone: '+' + chat.from.replace(/\D/g, '')
+                },
+                note: `Pedido vía WhatsApp Bot. Teléfono: ${chat.from}`,
+                tags: 'whatsapp-bot, contraentrega',
+                use_customer_default_address: false
             }
         };
 
-        const response = await fetch(`https://${SHOPIFY_URL}/admin/api/2024-01/orders.json`, {
+        const response = await fetch(`https://${SHOPIFY_URL}/admin/api/2024-01/draft_orders.json`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Shopify-Access-Token': SHOPIFY_TOKEN
             },
-            body: JSON.stringify(orderData)
+            body: JSON.stringify(draftOrderData)
         });
 
         const data = await response.json();
-        if (response.ok && data.order) {
-            return { success: true, orderId: data.order.id, orderName: data.order.name };
+        if (response.ok && data.draft_order) {
+            return { success: true, orderId: data.draft_order.id, orderName: data.draft_order.name };
         } else {
-            console.error('❌ Error Shopify:', data);
+            console.error('❌ Error Shopify Draft Order:', data);
             return { success: false, error: JSON.stringify(data) };
         }
     } catch (e) {
@@ -584,6 +594,7 @@ async function createShopifyOrder(chat, products) {
         return { success: false, error: e.message };
     }
 }
+
 
 
 
