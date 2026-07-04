@@ -2110,7 +2110,7 @@ async function runFollowUpSequence() {
 }
 
 // Ejecutar revisión de seguimiento cada 15 minutos
-setInterval(runFollowUpSequence, 15 * 60 * 1000);
+// setInterval(runFollowUpSequence, 15 * 60 * 1000); // <-- Desactivado por solicitud del cliente
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
