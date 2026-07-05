@@ -1015,7 +1015,7 @@ async function processAIResponse(from, msgBodyLower) {
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
-        allMessages.push({ role: 'system', content: 'CONTEXTO: Este cliente ya tiene un pedido registrado. Si pregunta por su pedido, dile que ya está en proceso. Si quiere pedir algo más, toma el nuevo pedido normalmente.' });
+        allMessages.push({ role: 'system', content: 'CONTEXTO ESTRICTO: El cliente YA CONFIRMÓ su pedido exitosamente. Si hace preguntas post-venta (dosis, tiempo de entrega, uso), respóndelas amablemente. ESTÁ TERMINANTEMENTE PROHIBIDO preguntarle "¿Deseas continuar con tu pedido?", "¿Quieres confirmar?" o intentar venderle de nuevo. La venta ya está cerrada. Simplemente responde su duda y despídete de forma natural o pregúntale si tiene otra duda.' });
     }
     
     // Pasar información de análisis de imagen si existe
