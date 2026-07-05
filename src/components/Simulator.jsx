@@ -17,10 +17,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const chatEndRef = useRef(null);
 
   const TAG_UI = {
-    'pagado': { label: 'PAGADO', color: '#00a884', classes: 'bg-[#00a884]/10 text-[#00a884] border-[#00a884]/20' },
-    'pago-pendiente': { label: 'Pago Pendiente', color: '#ff9800', classes: 'bg-[#ff9800]/10 text-[#ff9800] border-[#ff9800]/20' },
-    'soporte': { label: 'Soporte', color: '#607d8b', classes: 'bg-[#607d8b]/10 text-[#607d8b] border-[#607d8b]/20' },
-    'interesado': { label: 'Interesado', color: '#2196f3', classes: 'bg-[#2196f3]/10 text-[#2196f3] border-[#2196f3]/20' }
+    'pagado': { label: 'Pagado', color: '#10B981', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
+    'pago-pendiente': { label: 'Pago Pendiente', color: '#F59E0B', classes: 'bg-amber-50 text-amber-700 border-amber-200/60' },
+    'soporte': { label: 'Soporte', color: '#64748B', classes: 'bg-slate-50 text-slate-600 border-slate-200/60' },
+    'interesado': { label: 'Interesado', color: '#6C5CE7', classes: 'bg-primary-light text-primary border-primary/20' }
   };
   
   const scrollToBottom = () => {
@@ -255,9 +255,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   };
 
   const getTagStyle = (tags) => {
-    if (!tags || tags.length === 0) return { label: 'Sin asignar', classes: 'bg-slate-100 text-slate-400 border-slate-200' };
+    if (!tags || tags.length === 0) return { label: 'Sin asignar', classes: 'bg-slate-50 text-slate-400 border-slate-200' };
     const key = tags[0];
-    return TAG_UI[key] || { label: 'Sin asignar', classes: 'bg-slate-100 text-slate-400 border-slate-200' };
+    return TAG_UI[key] || { label: 'Sin asignar', classes: 'bg-slate-50 text-slate-400 border-slate-200' };
   };
 
   const getTagKey = (tags) => {
@@ -265,43 +265,43 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   };
 
   return (
-    <div className="flex flex-grow overflow-hidden relative font-sans bg-slate-50">
+    <div className="flex flex-grow overflow-hidden relative font-sans bg-background">
       {/* 1. Chat List Sidebar (Left Column) */}
-      <section className={`w-full md:w-[400px] flex-shrink-0 flex flex-col bg-white overflow-hidden relative z-10 border-r border-slate-200 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-6 pb-2">
+      <section className={`w-full md:w-[400px] flex-shrink-0 flex flex-col bg-white overflow-hidden relative z-10 border-r border-outline-variant ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-5 pb-2">
           <div className="flex items-center justify-between mb-4">
              <div className="relative">
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filterTag !== 'all' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterTag !== 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterTag !== 'all' ? 'filter_list_off' : 'filter_list'}</span>
                   {filterTag !== 'all' ? TAG_UI[filterTag]?.label : 'Filtrar'}
                 </button>
 
                 {isFilterMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[100] py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
                     <div 
-                      className={`px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === 'all' ? 'bg-primary/5' : ''}`}
+                      className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === 'all' ? 'bg-primary-light' : ''}`}
                       onClick={() => { setFilterTag('all'); setIsFilterMenuOpen(false); }}
                     >
                       <div className="w-2 h-2 rounded-full bg-slate-400"></div>
-                      <span className="text-[11px] font-black text-slate-600 tracking-widest uppercase">Ver Todos</span>
+                      <span className="text-xs font-medium text-slate-600">Ver Todos</span>
                     </div>
                     {Object.entries(TAG_UI).map(([key, style]) => (
                       <div 
                         key={key}
-                        className={`px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === key ? 'bg-primary/5' : ''}`}
+                        className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === key ? 'bg-primary-light' : ''}`}
                         onClick={() => { setFilterTag(key); setIsFilterMenuOpen(false); }}
                       >
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: style.color }}></div>
-                        <span className="text-[11px] font-black text-slate-600 tracking-widest uppercase">{style.label}</span>
+                        <span className="text-xs font-medium text-slate-600">{style.label}</span>
                       </div>
                     ))}
                     
                     {filterTag !== 'all' && chatSessions.length > 0 && (
                       <div 
-                        className="mt-2 pt-2 border-t border-slate-100 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 text-slate-500"
+                        className="mt-1 pt-1 border-t border-slate-100 px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 text-slate-500"
                         onClick={() => {
                           onBulkClearTags(chatSessions.map(c => c.from));
                           setIsFilterMenuOpen(false);
@@ -309,7 +309,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         }}
                       >
                         <span className="material-symbols-outlined text-lg">label_off</span>
-                        <span className="text-[10px] font-black tracking-widest uppercase">Quitar Etiquetas ({chatSessions.length})</span>
+                        <span className="text-xs font-medium">Quitar Etiquetas ({chatSessions.length})</span>
                       </div>
                     )}
                   </div>
@@ -318,7 +318,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
              
              <div className="flex items-center gap-3 text-slate-400">
                 {filterTag !== 'all' && (
-                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-medium bg-primary-light text-primary px-2 py-0.5 rounded-md">
                     {chatSessions.length} Resultados
                   </span>
                 )}
@@ -330,7 +330,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           <div className="relative mb-4">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
             <input 
-              className="w-full bg-slate-100 border border-transparent rounded-full py-2 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-primary/20 transition-all outline-none" 
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all outline-none" 
               placeholder="Buscar contacto..." 
               type="text"
               value={searchTerm}
@@ -347,33 +347,33 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 <div 
                   key={chat.from}
                   onClick={() => onSelectChat(chat.from)}
-                  className={`flex gap-3 px-6 py-4 cursor-pointer transition-all relative border-b border-slate-50 ${
+                  className={`flex gap-3 px-5 py-3.5 cursor-pointer transition-colors relative border-b border-slate-100/60 ${
                     isSelected 
-                      ? 'bg-primary/10' 
+                      ? 'bg-primary-light' 
                       : 'hover:bg-slate-50'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-bold text-sm border-2 border-white shadow-sm overflow-visible relative">
+                  <div className="w-11 h-11 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 font-semibold text-sm border-2 border-white shadow-sm overflow-visible relative">
                     {chat.imageUrl ? (
                       <img src={chat.imageUrl} alt="" className="w-full h-full object-cover rounded-full" />
                     ) : (
                       chat.customerName ? chat.customerName.charAt(0).toUpperCase() : '?'
                     )}
                     {chat.waLine && (
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black text-white border-2 border-white shadow-sm ${chat.waLine === 2 ? 'bg-[#00a884]' : 'bg-slate-400'}`}>
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white border-2 border-white shadow-sm ${chat.waLine === 2 ? 'bg-tertiary' : 'bg-slate-400'}`}>
                         L{chat.waLine}
                       </div>
                     )}
                   </div>
                   <div className="flex-grow overflow-hidden flex flex-col justify-center">
                     <div className="flex justify-between items-center mb-0.5">
-                      <h4 className={`font-bold truncate text-[13px] ${isSelected ? 'text-slate-800' : 'text-slate-700'} flex items-center gap-1`}>
-                        {chat.isBlocked && <span className="material-symbols-outlined text-[12px] text-red-500 font-bold">block</span>}
+                      <h4 className={`font-semibold truncate text-sm ${isSelected ? 'text-on-surface' : 'text-slate-700'} flex items-center gap-1`}>
+                        {chat.isBlocked && <span className="material-symbols-outlined text-xs text-red-500 font-bold">block</span>}
                         {chat.customerName}
                       </h4>
                       <div className="flex items-center gap-2">
                         <div 
-                           className={`w-[110px] py-0.5 rounded-full text-[9px] font-bold border transition-all cursor-pointer flex items-center justify-center gap-1 ${getTagStyle(chat.tags).classes}`}
+                           className={`w-[110px] py-0.5 rounded-md text-xs font-medium border transition-colors cursor-pointer flex items-center justify-center gap-1 ${getTagStyle(chat.tags).classes}`}
                            onClick={(e) => {
                               e.stopPropagation();
                               const rect = e.currentTarget.getBoundingClientRect();
@@ -386,12 +386,12 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         >
                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getTagStyle(chat.tags).color || '#cbd5e1' }}></div>
                            {getTagStyle(chat.tags).label}
-                           <span className="material-symbols-outlined text-[10px]">expand_more</span>
+                           <span className="material-symbols-outlined text-xs">expand_more</span>
                         </div>
 
                         {openTagMenu && openTagMenu.from === chat.from && (
                            <div 
-                              className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-100 z-[999] py-2 animate-in fade-in zoom-in-95 duration-200"
+                              className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[999] py-1"
                               style={{ top: openTagMenu.top, left: openTagMenu.left }}
                            >
                               {Object.entries(TAG_UI).map(([key, style]) => (
@@ -405,25 +405,25 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                                     }}
                                  >
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: style.color }}></div>
-                                    <span className="text-[11px] font-bold text-slate-600">{style.label}</span>
+                                    <span className="text-xs font-medium text-slate-600">{style.label}</span>
                                  </div>
                               ))}
                            </div>
                         )}
 
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-xs text-slate-400 font-medium">
                           {formatChatTime(chat.activityTime > 0 ? chat.activityTime : chat.updatedAt)}
                         </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center justify-between overflow-hidden">
-                      <p className="text-[11px] text-slate-400 truncate font-medium max-w-[80%]">
+                      <p className="text-xs text-slate-400 truncate font-normal max-w-[80%]">
                         {chat.lastMessage ? chat.lastMessage.content : 'No hay mensajes'}
                       </p>
                       <div className="flex items-center gap-1 flex-shrink-0">
                          <div 
-                           className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${chat.aiDisabled ? 'bg-slate-300' : 'bg-[#00a884] shadow-sm shadow-[#00a884]/20'}`}
+                           className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${chat.aiDisabled ? 'bg-slate-300' : 'bg-primary'}`}
                            title={chat.aiDisabled ? 'IA Desactivada' : 'IA Activa'}
                          ></div>
                       </div>
@@ -435,7 +435,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           ) : (
             <div className="p-12 text-center flex flex-col items-center gap-3 opacity-30">
                <span className="material-symbols-outlined text-5xl">chat_bubble_outline</span>
-               <p className="text-xs font-bold uppercase tracking-widest">Sin conversaciones</p>
+               <p className="text-xs font-medium text-slate-500">Sin conversaciones</p>
             </div>
           )}
         </div>
@@ -444,9 +444,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       <section className={`flex-grow flex flex-col relative overflow-hidden bg-[#f7f4f0] ${selectedChat && !showContactInfo ? 'flex' : 'hidden md:flex'}`}>
         {activeChatData ? (
           <>
-            <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200 z-10">
+            <header className="h-14 flex items-center justify-between px-5 bg-white border-b border-outline-variant z-10">
               <div 
-                className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-all px-2 py-1 rounded-xl"
+                className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors px-2 py-1 rounded-lg"
                 onClick={() => setShowContactInfo(!showContactInfo)}
               >
                 <button 
@@ -455,26 +455,26 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm shadow-primary/20">
+                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold shadow-sm">
                   {activeChatData.customerName.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-[15px] leading-tight">{activeChatData.customerName}</h3>
-                  <p className="text-[11px] text-slate-400 font-medium leading-none">Desconectado</p>
+                  <h3 className="font-semibold text-on-surface text-sm leading-tight">{activeChatData.customerName}</h3>
+                  <p className="text-xs text-on-surface-variant font-normal leading-none">Desconectado</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 
-                <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-                  <span className={`text-[11px] font-black uppercase tracking-widest ${activeChatData.aiDisabled ? 'text-slate-400' : 'text-[#00a884]'}`}>
+                <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/60">
+                  <span className={`text-xs font-medium ${activeChatData.aiDisabled ? 'text-slate-400' : 'text-primary'}`}>
                     IA {activeChatData.aiDisabled ? 'Desactivada' : 'Activa'}
                   </span>
                   <button 
                     onClick={() => onToggleAI(selectedChat, !activeChatData.aiDisabled)}
-                    className={`w-10 h-5 rounded-full relative transition-all duration-500 shadow-inner ${activeChatData.aiDisabled ? 'bg-slate-200' : 'bg-[#00a884]'}`}
+                    className={`w-10 h-5 rounded-full relative transition-all duration-300 shadow-inner ${activeChatData.aiDisabled ? 'bg-slate-200' : 'bg-primary'}`}
                   >
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-500 ${activeChatData.aiDisabled ? 'left-0.5' : 'left-[1.4rem]'}`}></div>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 ${activeChatData.aiDisabled ? 'left-0.5' : 'left-[1.4rem]'}`}></div>
                   </button>
                 </div>
               </div>
@@ -513,7 +513,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <React.Fragment key={idx}>
                     {showDatePill && (
                       <div className="flex justify-center my-4">
-                        <span className="bg-white/80 backdrop-blur text-slate-500 text-[11px] font-bold px-4 py-1.5 rounded-xl shadow-sm border border-slate-100 uppercase tracking-widest">
+                        <span className="bg-white/80 backdrop-blur text-slate-500 text-xs font-medium px-4 py-1.5 rounded-lg shadow-sm border border-slate-200/60">
                           {dateString}
                         </span>
                       </div>
@@ -522,8 +522,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                       <div className={`flex items-center gap-2 group max-w-[75%] md:max-w-[60%] relative ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
                         <div className={`transition-all relative ${
                           msg.role === 'user' 
-                            ? 'bg-white text-slate-800 rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-100' 
-                            : 'bg-[#d9fdd3] text-slate-800 rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
+                            ? 'bg-white text-on-surface rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-sm border border-slate-200/60' 
+                            : 'bg-chat-bubble-outgoing text-on-surface rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-sm'
                         } ${msg.imageUrl ? 'p-1' : 'px-4 py-2'}`}>
                           
                           {msg.imageUrl && (
@@ -545,7 +545,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                                     // Si ya falló el proxy, mostrar placeholder
                                     e.target.onerror = null;
                                     e.target.style.display = 'none';
-                                    e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-3xl mb-1">image_not_supported</span><span class="text-[10px] font-bold">Imagen no disponible</span></div>';
+                                    e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center py-6 px-4 text-slate-400"><span class="material-symbols-outlined text-2xl mb-1">image_not_supported</span><span class="text-xs font-medium">Imagen no disponible</span></div>';
                                   }
                                 }}
                               />
@@ -558,22 +558,22 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                             </div>
                           )}
 
-                          <p className="text-[13px] leading-relaxed font-medium whitespace-pre-wrap">
+                          <p className="text-[13px] leading-relaxed font-normal whitespace-pre-wrap">
                             {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
                           </p>
                           
                           <div className="flex justify-end items-center gap-1 mt-1">
-                            <span className="text-[9px] text-slate-400 font-medium">
+                            <span className="text-xs text-slate-400 font-normal">
                               {timeString}
                             </span>
                             {msg.role !== 'user' && (
                               <>
                                 {msg.status === 'read' ? (
-                                  <span className="material-symbols-outlined text-[12px] text-[#53bdeb] font-black" title="Leído (Chulitos Azules)">done_all</span>
+                                  <span className="material-symbols-outlined text-xs text-[#53bdeb] font-bold" title="Leído (Chulitos Azules)">done_all</span>
                                 ) : msg.status === 'delivered' ? (
-                                  <span className="material-symbols-outlined text-[12px] text-slate-400 font-bold" title="Entregado al teléfono">done_all</span>
+                                  <span className="material-symbols-outlined text-xs text-slate-400 font-medium" title="Entregado al teléfono">done_all</span>
                                 ) : (
-                                  <span className="material-symbols-outlined text-[12px] text-slate-400 font-bold" title="Enviado por WhatsApp">done</span>
+                                  <span className="material-symbols-outlined text-xs text-slate-400 font-medium" title="Enviado por WhatsApp">done</span>
                                 )}
                               </>
                             )}
@@ -591,7 +591,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                                   : { index: idx, messageId: msg.id || msg.timestampRaw }
                               );
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-200/50 flex items-center justify-center cursor-pointer flex-shrink-0"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50 flex items-center justify-center cursor-pointer flex-shrink-0"
                             title="Opciones"
                           >
                             <span className="material-symbols-outlined text-base">more_vert</span>
@@ -599,7 +599,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
                           {activeMessageMenu && activeMessageMenu.index === idx && (
                             <div 
-                              className={`absolute bg-white rounded-xl shadow-2xl border border-slate-100 py-1 z-50 min-w-[140px] animate-in fade-in zoom-in-95 duration-100 ${msg.role === 'user' ? 'left-0 mt-1' : 'right-0 mt-1'}`}
+                              className={`absolute bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50 min-w-[140px] ${msg.role === 'user' ? 'left-0 mt-1' : 'right-0 mt-1'}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button
@@ -607,7 +607,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                                   onDeleteMessage && onDeleteMessage(selectedChat, activeMessageMenu.messageId);
                                   setActiveMessageMenu(null);
                                 }}
-                                className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors text-[11px] font-bold text-red-500 flex items-center gap-2 uppercase tracking-wider"
+                                className="w-full text-left px-3 py-2 hover:bg-red-50 transition-colors text-xs font-medium text-red-500 flex items-center gap-2"
                               >
                                 <span className="material-symbols-outlined text-sm">delete</span>
                                 Eliminar para mí
@@ -624,9 +624,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </div>
             </div>
 
-            <footer className="p-4 bg-white border-t border-slate-200">
+            <footer className="p-4 bg-white border-t border-outline-variant">
                {activeChatData.isBlocked ? (
-                 <div className="flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 text-xs font-semibold uppercase tracking-wider">
+                 <div className="flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 text-xs font-medium">
                    <span className="material-symbols-outlined text-sm">block</span>
                    Contacto bloqueado
                  </div>
@@ -634,15 +634,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                  <div className="flex flex-col gap-3">
                     {/* Vista previa de imagen seleccionada */}
                     {filePreview && (
-                      <div className="relative self-start p-2 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3 animate-in fade-in duration-300">
+                      <div className="relative self-start p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
                         <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
                         <div className="flex flex-col justify-center">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Imagen lista para enviar</span>
-                          <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{selectedFile?.name}</span>
+                          <span className="text-xs font-medium text-slate-400 leading-none mb-1">Imagen lista para enviar</span>
+                          <span className="text-xs font-medium text-slate-700 truncate max-w-[150px]">{selectedFile?.name}</span>
                         </div>
                         <button 
                           onClick={() => { setSelectedFile(null); setFilePreview(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                          className="w-8 h-8 rounded-full bg-slate-200/50 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
                         >
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
@@ -666,9 +666,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                          accept="image/*" 
                          className="hidden" 
                        />
-                       <div className="flex-grow flex items-center bg-slate-100 rounded-full px-4 py-2 border border-transparent focus-within:border-slate-200 focus-within:bg-white transition-all">
+                       <div className="flex-grow flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all">
                          <input 
-                           className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 placeholder:text-slate-400" 
+                           className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-400" 
                            placeholder={filePreview ? "Añadir un comentario..." : "Escribe un mensaje..."} 
                            value={inputValue}
                            onChange={(e) => setInputValue(e.target.value)}
@@ -677,7 +677,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        </div>
                        <button 
                          onClick={handleSend}
-                         className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                         className="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all shadow-sm"
                        >
                          <span className="material-symbols-outlined text-xl">send</span>
                        </button>
@@ -689,44 +689,44 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         ) : (
           <div className="flex-grow flex flex-col items-center justify-center text-center p-12 relative overflow-hidden">
              <div className="whatsapp-pattern"></div>
-             <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-6 border border-slate-100 z-10">
-                <span className="material-symbols-outlined text-4xl text-slate-200 font-thin">all_inbox</span>
+             <div className="w-20 h-20 rounded-xl bg-slate-50 flex items-center justify-center mb-6 border border-slate-200 z-10">
+                <span className="material-symbols-outlined text-4xl text-slate-300 font-thin">all_inbox</span>
              </div>
-             <h3 className="text-xl font-bold text-slate-300 z-10">Selecciona un chat para comenzar</h3>
+             <h3 className="text-lg font-semibold text-slate-300 z-10">Selecciona un chat para comenzar</h3>
           </div>
         )}
       </section>
 
       {/* Right Sidebar - Info and Actions */}
       {selectedChat && activeChatData && (
-        <section className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white flex flex-col relative overflow-hidden ${
+        <section className={`transition-all duration-300 ease-in-out border-l border-outline-variant bg-white flex flex-col relative overflow-hidden ${
           showContactInfo ? 'w-full md:w-80 flex-shrink-0 visible opacity-100' : 'w-0 invisible opacity-0 border-none'
         }`}>
-          <div className="p-8 flex flex-col items-center text-center border-b border-slate-50 relative">
+          <div className="p-6 flex flex-col items-center text-center border-b border-slate-100 relative">
             <button 
               onClick={() => setShowContactInfo(false)}
-              className="md:hidden absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-slate-500 rounded-full bg-slate-100 hover:bg-slate-200"
+              className="md:hidden absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-slate-500 rounded-lg bg-slate-100 hover:bg-slate-200"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold mb-4">
+            <div className="w-16 h-16 rounded-full bg-primary-light flex items-center justify-center text-primary text-2xl font-semibold mb-3">
                {activeChatData.customerName.charAt(0)}
             </div>
-            <h2 className="font-bold text-lg text-slate-800 leading-tight">{activeChatData.customerName}</h2>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedChat.split('_')[0]}</p>
+            <h2 className="font-semibold text-lg text-on-surface leading-tight">{activeChatData.customerName}</h2>
+            <p className="text-xs font-medium text-on-surface-variant mt-1">{selectedChat.split('_')[0]}</p>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-6 space-y-8 custom-scrollbar">
-            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+          <div className="flex-grow overflow-y-auto p-5 space-y-6 custom-scrollbar">
+            <div className="bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm">
                <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-primary text-xl">shopping_cart</span>
-                  <h4 className="font-bold text-sm text-slate-800">Venta Directa</h4>
+                  <h4 className="font-medium text-sm text-on-surface">Venta Directa</h4>
                </div>
                
                <select 
                  value={selectedSaleAccount}
                  onChange={(e) => setSelectedSaleAccount(e.target.value)}
-                 className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-xs font-semibold text-slate-700 mb-4 appearance-none cursor-pointer outline-none focus:border-primary/40"
+                 className="w-full bg-white border border-slate-200 rounded-lg py-2.5 px-3 text-xs font-medium text-slate-700 mb-4 appearance-none cursor-pointer outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
                >
                  <option value="">Seleccionar cuenta...</option>
                  {availableInventory.map(acc => (
@@ -739,59 +739,59 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                <button 
                 disabled={!selectedSaleAccount}
                 onClick={handleSellToCustomer}
-                className="w-full bg-primary text-white py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-wider disabled:opacity-30 hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
+                className="w-full bg-primary text-white py-2.5 rounded-lg text-xs font-medium disabled:opacity-30 hover:bg-primary-hover active:scale-[0.98] transition-all"
                >
                  Finalizar Venta
                </button>
             </div>
 
             <div>
-              <h4 className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-4 px-2 flex items-center justify-between">
+              <h4 className="text-xs font-medium text-on-surface-variant mb-3 px-1 flex items-center justify-between">
                 Historial de Compras
-                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">{customerSales.length}</span>
+                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">{customerSales.length}</span>
               </h4>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {customerSales.length > 0 ? (
                   customerSales.map((sale, i) => (
-                    <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div key={i} className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
-                           <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                           <div className="w-8 h-8 rounded-lg bg-primary-light flex items-center justify-center">
                               <span className="material-symbols-outlined text-primary text-lg">local_mall</span>
                            </div>
                            <div>
-                              <h5 className="text-[12px] font-bold text-slate-800 leading-tight">{sale.service}</h5>
-                              <p className="text-[10px] text-slate-400 font-medium">{sale.date}</p>
+                              <h5 className="text-xs font-semibold text-on-surface leading-tight">{sale.service}</h5>
+                              <p className="text-xs text-on-surface-variant font-normal">{sale.date}</p>
                            </div>
                         </div>
-                        <span className={`text-[11px] font-bold ${sale.paid ? 'text-tertiary' : 'text-orange-500 animate-pulse'}`}>
+                        <span className={`text-xs font-medium ${sale.paid ? 'text-tertiary' : 'text-orange-500 animate-pulse'}`}>
                           {sale.paid ? 'Vendido' : 'Pendiente de Pago'}
                         </span>
                       </div>
                       
-                      <div className="space-y-2 bg-slate-50 rounded-xl p-3 border border-slate-100">
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase">Proveedor:</span>
-                          <span className="text-primary font-bold uppercase tracking-widest">{sale.provider || 'N/A'}</span>
+                      <div className="space-y-2 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-on-surface-variant font-medium">Proveedor:</span>
+                          <span className="text-primary font-medium">{sale.provider || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase">Correo:</span>
-                          <span className="text-slate-700 font-mono font-medium">{sale.email}</span>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-on-surface-variant font-medium">Correo:</span>
+                          <span className="text-slate-700 font-mono font-normal">{sale.email}</span>
                         </div>
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase">Clave:</span>
-                          <span className="text-slate-700 font-mono font-medium">{sale.pass}</span>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-on-surface-variant font-medium">Clave:</span>
+                          <span className="text-slate-700 font-mono font-normal">{sale.pass}</span>
                         </div>
                         {sale.profile && (
-                          <div className="flex justify-between text-[10px]">
-                            <span className="text-slate-400 font-bold uppercase">Perfil:</span>
-                            <span className="text-slate-700 font-medium">{sale.profile} {sale.pin ? `(PIN: ${sale.pin})` : ''}</span>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant font-medium">Perfil:</span>
+                            <span className="text-slate-700 font-normal">{sale.profile} {sale.pin ? `(PIN: ${sale.pin})` : ''}</span>
                           </div>
                         )}
                         {sale.expiration && (
-                          <div className="flex justify-between text-[10px] pt-1 border-t border-slate-200">
-                            <span className="text-slate-400 font-bold uppercase">Vence:</span>
-                            <span className="text-primary font-bold">{sale.expiration}</span>
+                          <div className="flex justify-between text-xs pt-1 border-t border-slate-200">
+                            <span className="text-on-surface-variant font-medium">Vence:</span>
+                            <span className="text-primary font-medium">{sale.expiration}</span>
                           </div>
                         )}
                       </div>
@@ -800,17 +800,17 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 ) : (
                   <div className="text-center py-10 opacity-30">
                     <span className="material-symbols-outlined text-4xl mb-2">history</span>
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Sin ventas previas</p>
+                    <p className="text-xs font-medium text-slate-500">Sin ventas previas</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Multimedia Gallery */}
-            <div className="pt-4">
-              <h4 className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-4 px-2 flex items-center justify-between">
+            <div className="pt-2">
+              <h4 className="text-xs font-medium text-on-surface-variant mb-3 px-1 flex items-center justify-between">
                 Archivos y Comprobantes
-                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
+                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">
                   {activeChatData.messages.filter(m => m.imageUrl).length}
                 </span>
               </h4>
@@ -821,7 +821,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   .map((msg, i) => (
                     <div 
                       key={i} 
-                      className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
+                      className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
                       onClick={() => setFullscreenImage(formatMediaUrl(msg.imageUrl))}
                     >
                       <img 
@@ -833,28 +833,28 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   ))
                 }
                 {activeChatData.messages.filter(m => m.imageUrl).length === 0 && (
-                  <div className="col-span-3 py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin multimedia</p>
+                  <div className="col-span-3 py-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-xs font-medium text-slate-300">Sin multimedia</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+          <div className="p-5 border-t border-slate-100">
             <button 
               onClick={() => onDeleteChat && onDeleteChat(selectedChat)}
-              className="w-full flex items-center justify-center gap-2 py-4 text-red-500 hover:text-white hover:bg-red-500 rounded-2xl border border-red-100 hover:border-red-500 transition-all font-black text-[11px] uppercase tracking-widest shadow-sm hover:shadow-xl hover:shadow-red-500/20 active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3 text-red-500 hover:text-white hover:bg-red-500 rounded-lg border border-red-100 hover:border-red-500 transition-all font-medium text-xs shadow-sm active:scale-[0.98]"
             >
               <span className="material-symbols-outlined text-lg">delete</span>
               Eliminar Chat
             </button>
             <button 
               onClick={() => onToggleBlock && onToggleBlock(selectedChat, !activeChatData.isBlocked)}
-              className={`w-full mt-3 flex items-center justify-center gap-2 py-4 rounded-2xl border transition-all font-black text-[11px] uppercase tracking-widest shadow-sm active:scale-95 ${
+              className={`w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-lg border transition-all font-medium text-xs shadow-sm active:scale-[0.98] ${
                 activeChatData.isBlocked
-                  ? 'text-emerald-600 border-emerald-100 hover:text-white hover:bg-emerald-600 hover:border-emerald-600 hover:shadow-emerald-600/20'
-                  : 'text-orange-600 border-orange-100 hover:text-white hover:bg-orange-600 hover:border-orange-600 hover:shadow-orange-600/20'
+                  ? 'text-emerald-600 border-emerald-200 hover:text-white hover:bg-emerald-600 hover:border-emerald-600'
+                  : 'text-orange-600 border-orange-200 hover:text-white hover:bg-orange-600 hover:border-orange-600'
               }`}
             >
               <span className="material-symbols-outlined text-lg">
@@ -873,7 +873,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           onClick={() => setFullscreenImage(null)}
         >
           <button 
-            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur transition-all"
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center text-white backdrop-blur transition-colors"
             onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}
           >
             <span className="material-symbols-outlined text-2xl">close</span>

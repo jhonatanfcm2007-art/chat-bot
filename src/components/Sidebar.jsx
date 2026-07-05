@@ -1,51 +1,123 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const Sidebar = ({ activeTab, onTabChange }) => {
-  const menuItems = [
-    { id: 'inventory', icon: 'inventory_2', label: 'Inventario' },
+const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [lineMenuOpen, setLineMenuOpen] = useState(false);
+
+  const navItems = [
     { id: 'simulator', icon: 'chat', label: 'Chats' },
     { id: 'campaigns', icon: 'campaign', label: 'Campañas' },
     { id: 'ai_assistant', icon: 'psychology', label: 'Asistente IA' },
-    { id: 'analytics', icon: 'monitoring', label: 'Analítica' },
+    { id: 'analytics', icon: 'monitoring', label: 'Reportes' },
+    { id: 'remarketing', icon: 'group', label: 'Remarketing' },
+    { id: 'knowledge_base', icon: 'menu_book', label: 'Conocimiento' },
+    { id: 'inventory', icon: 'inventory_2', label: 'Inventario' },
   ];
 
   return (
-    <aside className="bg-surface/80 backdrop-blur-2xl w-64 h-full flex flex-col py-8 z-40 hidden md:flex font-body text-sm relative border-r border-white/5">
-      <div className="px-8 mb-12 flex items-center gap-4 relative">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20 overflow-hidden bg-white/5">
-          <img src="/logo.png" alt="Vault X" className="w-9 h-9 object-contain" />
+    <aside
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => { setExpanded(false); setLineMenuOpen(false); }}
+      className={`hidden md:flex flex-col bg-sidebar h-screen fixed left-0 top-0 z-[60]
+        transition-all duration-200 ease-in-out
+        ${expanded ? 'w-60' : 'w-16'}
+      `}
+    >
+      {/* Logo */}
+      <div className={`flex items-center h-14 px-4 border-b border-white/5 ${expanded ? 'gap-3' : 'justify-center'}`}>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+          <span className="text-white font-bold text-sm">V</span>
         </div>
-        <div>
-          <h2 className="text-lg font-black text-on-surface leading-none tracking-tight font-headline uppercase">Vault <span className="text-primary">X</span></h2>
-          <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-[0.2em] mt-1 opacity-60">Operations</p>
-        </div>
+        {expanded && (
+          <span className="text-white font-semibold text-sm whitespace-nowrap animate-fade-in">
+            Vault X
+          </span>
+        )}
       </div>
-      
-      <nav className="flex-grow space-y-1.5 px-3 relative">
-        {menuItems.map((item) => (
-          <div 
-            key={item.id}
-            onClick={() => onTabChange(item.id)}
-            className={`flex items-center gap-3.5 px-5 py-3 rounded-xl transition-all duration-500 cursor-pointer group mb-1 ${
-              activeTab === item.id 
-                ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' 
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
-            }`}
-          >
-            <span className={`material-symbols-outlined text-[22px] transition-all duration-300 ${activeTab === item.id ? 'scale-105 icon-fill' : 'group-hover:translate-x-1'}`}>{item.icon}</span>
-            <span className={`tracking-wide font-medium ${activeTab === item.id ? 'font-black' : ''}`}>{item.label}</span>
-          </div>
-        ))}
+
+      {/* Navigation */}
+      <nav className="flex-1 py-3 flex flex-col gap-0.5 px-2 overflow-y-auto scrollbar-hide">
+        {navItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={`relative flex items-center rounded-lg h-10 transition-all duration-150 group
+                ${expanded ? 'px-3 gap-3' : 'justify-center'}
+                ${isActive
+                  ? 'bg-white/10 text-white'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                }
+              `}
+            >
+              {/* Active indicator bar */}
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r" />
+              )}
+
+              <span className={`material-symbols-outlined text-xl flex-shrink-0 ${isActive ? 'icon-fill' : ''}`}>
+                {item.icon}
+              </span>
+
+              {expanded && (
+                <span className="text-sm font-medium whitespace-nowrap animate-fade-in">
+                  {item.label}
+                </span>
+              )}
+
+              {/* Tooltip when collapsed */}
+              {!expanded && (
+                <div className="sidebar-tooltip group-hover:opacity-100">
+                  {item.label}
+                </div>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
-      <div className="px-4 mt-auto space-y-1 relative pt-6 border-t border-white/5">
-        <div className="flex items-center gap-3.5 text-on-surface-variant/60 px-4 py-3 hover:text-on-surface hover:bg-white/5 rounded-xl transition-all duration-300 cursor-pointer group">
-          <span className="material-symbols-outlined group-hover:rotate-45 transition-transform duration-500">settings</span>
-          <span className="font-semibold tracking-tight">Ajustes</span>
-        </div>
-        <div className="flex items-center gap-3.5 text-on-surface-variant/60 px-4 py-3 hover:text-error hover:bg-error/5 rounded-xl transition-all duration-300 cursor-pointer group">
-          <span className="material-symbols-outlined group-hover:scale-110 transition-transform duration-300">logout</span>
-          <span className="font-semibold tracking-tight">Salir</span>
+      {/* Bottom: Line Selector */}
+      <div className="border-t border-white/5 p-2">
+        <div className="relative">
+          <button
+            onClick={() => setLineMenuOpen(!lineMenuOpen)}
+            className={`w-full flex items-center rounded-lg h-10 transition-all duration-150
+              ${expanded ? 'px-3 gap-3' : 'justify-center'}
+              text-slate-400 hover:bg-white/5 hover:text-slate-200
+            `}
+          >
+            <span className="material-symbols-outlined text-xl flex-shrink-0">
+              {globalLine === 'all' ? 'domain' : 'sim_card'}
+            </span>
+            {expanded && (
+              <span className="text-xs font-medium whitespace-nowrap animate-fade-in">
+                {globalLine === 'all' ? 'Todas' : `Línea ${globalLine}`}
+              </span>
+            )}
+          </button>
+
+          {/* Line selector dropdown */}
+          {lineMenuOpen && expanded && (
+            <div className="absolute bottom-12 left-0 w-full bg-sidebar-hover rounded-lg border border-white/10 py-1 shadow-xl animate-fade-in">
+              {[
+                { val: 'all', label: 'Todas las Líneas', icon: 'domain' },
+                { val: 1, label: 'Línea 1', icon: 'looks_one' },
+                { val: 2, label: 'Línea 2', icon: 'looks_two' },
+              ].map(opt => (
+                <button
+                  key={opt.val}
+                  onClick={() => { setGlobalLine(opt.val); setLineMenuOpen(false); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors
+                    ${globalLine === opt.val ? 'text-primary bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                  `}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{opt.icon}</span>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </aside>
@@ -53,4 +125,3 @@ const Sidebar = ({ activeTab, onTabChange }) => {
 };
 
 export default Sidebar;
-

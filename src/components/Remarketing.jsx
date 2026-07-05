@@ -39,7 +39,7 @@ const Remarketing = ({ serverUrl }) => {
     <div className="flex-1 bg-slate-50 overflow-hidden flex flex-col relative w-full h-full max-w-[1200px] mx-auto p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-800">Clientes de Remarketing</h1>
+          <h1 className="text-2xl md:text-2xl font-semibold tracking-tight text-slate-800">Clientes de Remarketing</h1>
           <p className="text-slate-500 text-sm mt-1">Base de datos de números capturados automáticamente</p>
         </div>
         <button 
@@ -52,7 +52,7 @@ const Remarketing = ({ serverUrl }) => {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 overflow-hidden flex flex-col">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col">
         {loading ? (
           <div className="flex items-center justify-center flex-1 h-64">
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
@@ -66,7 +66,7 @@ const Remarketing = ({ serverUrl }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-bold">
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs  font-bold">
                   <th className="p-4 rounded-tl-2xl">Teléfono</th>
                   <th className="p-4">Nombre</th>
                   <th className="p-4 rounded-tr-2xl">Fecha de Registro</th>

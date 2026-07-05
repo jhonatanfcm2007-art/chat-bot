@@ -119,7 +119,7 @@ const NotificationPrompt = ({ serverUrl }) => {
             Recibe notificaciones al instante cuando tus clientes escriban al WhatsApp o Messenger, directo en tu pantalla.
           </p>
           {error && (
-            <p className="text-[10px] text-red-500 mt-1 font-semibold">{error}</p>
+            <p className="text-xs text-red-500 mt-1 font-semibold">{error}</p>
           )}
         </div>
 

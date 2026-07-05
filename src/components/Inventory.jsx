@@ -325,57 +325,57 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
 
   return (
     <div className="flex-grow p-4 md:p-8 bg-background overflow-y-auto custom-scrollbar relative">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-        <h1 className="text-3xl font-black text-on-surface tracking-tighter uppercase">Gestor de Inventario</h1>
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+        <h1 className="text-lg font-semibold text-on-surface">Gestor de Inventario</h1>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="glass flex items-center justify-center gap-2 px-6 py-3 rounded-2xl hover:bg-black/5 border border-slate-200">
-            <span className="material-symbols-outlined text-xl text-emerald-500 font-bold">upload_file</span>
-            <span className="font-bold text-on-surface">Importar CSV</span>
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 border border-slate-200 bg-white transition-colors">
+            <span className="material-symbols-outlined text-lg text-emerald-500">upload_file</span>
+            <span className="font-medium text-sm text-on-surface">Importar CSV</span>
           </button>
-          <button onClick={() => setIsManageListsOpen(true)} className="glass flex items-center justify-center gap-3 px-6 py-3 rounded-2xl hover:bg-black/5">
-            <span className="material-symbols-outlined text-xl text-primary font-bold">tune</span>
-            <span className="font-bold text-on-surface">Listas</span>
+          <button onClick={() => setIsManageListsOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 border border-slate-200 bg-white transition-colors">
+            <span className="material-symbols-outlined text-lg text-primary">tune</span>
+            <span className="font-medium text-sm text-on-surface">Listas</span>
           </button>
-          <button onClick={() => { closeModal(); setIsModalOpen(true); }} className="bg-primary text-on-primary font-black px-8 py-3 rounded-2xl shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-            <span className="material-symbols-outlined text-xl">add_circle</span>
+          <button onClick={() => { closeModal(); setIsModalOpen(true); }} className="bg-primary text-white font-medium px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-lg">add_circle</span>
             Agregar Cuenta
           </button>
         </div>
       </div>
 
-      <div className="mb-10 w-full overflow-hidden">
-        <div className="bg-white border-2 border-slate-200 rounded-[2rem] flex items-center h-14 md:h-16 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 h-full flex items-center px-6 border-r-2 border-slate-200 flex-shrink-0">
-            <h2 className="text-on-surface font-black text-xs tracking-[0.2em] uppercase">Stock</h2>
+      <div className="mb-8 w-full overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl flex items-center h-12 md:h-14 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 h-full flex items-center px-5 border-r border-slate-200 flex-shrink-0">
+            <h2 className="text-xs font-medium text-slate-400">Stock</h2>
           </div>
-          <div className="flex-grow h-full flex gap-4 items-center px-6 overflow-x-auto custom-scrollbar">
+          <div className="flex-grow h-full flex gap-3 items-center px-5 overflow-x-auto custom-scrollbar">
             {Object.entries(statsByService).map(([key, data]) => (
-              <div key={key} className="flex items-center gap-2 flex-shrink-0 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase">{data.displayName}</span>
-                <span className="text-sm font-black text-on-surface">{data.totalSlots}</span>
+              <div key={key} className="flex items-center gap-2 flex-shrink-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1">
+                <span className="text-xs font-medium text-slate-400">{data.displayName}</span>
+                <span className="text-sm font-semibold text-on-surface">{data.totalSlots}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden mb-10">
+      <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden mb-8">
         <div className="overflow-x-auto custom-scrollbar hidden md:block">
           <table className="w-full text-left border-collapse min-w-[1200px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Producto / Presentación</th>
-                <th className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase">Variante</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Detalles Envío</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Promoción</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Precio (Q)</th>
-                <th className="px-6 py-5 text-[11px] font-black text-tertiary uppercase">Éxito</th>
-                <th className="px-6 py-5 text-[11px] font-black text-error uppercase">Falla</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Prov.</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Cupos</th>
-                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase">Estado</th>
-                <th className="px-6 py-5 text-right pr-12 text-[11px] font-black text-slate-400 uppercase">Acciones</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Producto / Presentación</th>
+                <th className="px-4 py-4 text-xs font-medium text-slate-400">Variante</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Detalles Envío</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Promoción</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Precio (Q)</th>
+                <th className="px-6 py-4 text-xs font-medium text-tertiary">Éxito</th>
+                <th className="px-6 py-4 text-xs font-medium text-error">Falla</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Prov.</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Cupos</th>
+                <th className="px-6 py-4 text-xs font-medium text-slate-400">Estado</th>
+                <th className="px-6 py-4 text-right pr-12 text-xs font-medium text-slate-400">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -386,16 +386,16 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 return (
                   <React.Fragment key={platform}>
                     <tr className={`cursor-pointer ${isExpanded ? 'bg-primary/5' : 'hover:bg-slate-50'}`} onClick={() => toggleGroup(platform)}>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <span className={`material-symbols-outlined transition-all ${isExpanded ? 'rotate-90' : ''}`}>chevron_right</span>
-                          <span className="font-black text-slate-800 text-xs uppercase">{platform} ({allAccountsInPlatform.length})</span>
+                          <span className="font-semibold text-slate-800 text-sm">{platform} ({allAccountsInPlatform.length})</span>
                         </div>
                       </td>
-                      <td colSpan="7" className="px-4 py-5 italic text-[10px] text-slate-400 text-center">Resumen</td>
-                      <td className="px-6 py-5"><span className="font-black text-primary">{totalSlots}</span></td>
-                      <td className="px-6 py-5"><span className={`text-[9px] font-black uppercase px-2 py-1 rounded border ${totalSlots > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>{totalSlots > 0 ? 'STOCK' : 'AGOTADO'}</span></td>
-                      <td className="px-6 py-5 text-right pr-12"><span className="text-[10px] font-black text-slate-300 uppercase">{isExpanded ? 'Cerrar' : 'Ver'}</span></td>
+                      <td colSpan="7" className="px-4 py-4 text-xs text-slate-400 text-center italic">Resumen</td>
+                      <td className="px-6 py-4"><span className="font-semibold text-primary">{totalSlots}</span></td>
+                      <td className="px-6 py-4"><span className={`text-xs font-medium px-2 py-0.5 rounded-md ${totalSlots > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>{totalSlots > 0 ? 'Stock' : 'Agotado'}</span></td>
+                      <td className="px-6 py-4 text-right pr-12"><span className="text-xs font-medium text-slate-400">{isExpanded ? 'Cerrar' : 'Ver'}</span></td>
                     </tr>
                     {isExpanded && Object.entries(emailsGroup).map(([email, emailAccounts]) => {
                       const emailKey = `${platform}-${email}`;
@@ -404,27 +404,27 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       return (
                         <React.Fragment key={emailKey}>
                           <tr className={`bg-slate-50/50 cursor-pointer border-l-4 ${isEmailExpanded ? 'border-primary' : 'border-slate-200'}`} onClick={() => toggleEmail(emailKey)}>
-                            <td className="px-6 py-4 pl-12 text-xs font-bold text-slate-500 truncate">{email}</td>
+                            <td className="px-6 py-3 pl-12 text-xs font-medium text-slate-500 truncate">{email}</td>
                             <td colSpan="7"></td>
-                            <td className="px-6 py-4"><span className="text-xs font-black bg-white px-2 py-1 rounded border shadow-sm">{emailSlots}</span></td>
-                            <td colSpan="2" className="px-6 py-4 text-right pr-12"><span className="text-[10px] font-black text-primary/40 uppercase">{isEmailExpanded ? 'Ocultar' : 'Perfiles'}</span></td>
+                            <td className="px-6 py-3"><span className="text-xs font-semibold bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-sm">{emailSlots}</span></td>
+                            <td colSpan="2" className="px-6 py-3 text-right pr-12"><span className="text-xs font-medium text-primary/50">{isEmailExpanded ? 'Ocultar' : 'Perfiles'}</span></td>
                           </tr>
                           {isEmailExpanded && emailAccounts.map(acc => (
                             <tr key={acc.id} className="bg-white hover:bg-slate-50 border-l-4 border-slate-100">
-                              <td className="px-6 py-4 pl-20 text-[10px] font-bold text-slate-400 uppercase">{acc.service}</td>
-                              <td className="px-4 py-4 font-black text-slate-600">#{acc.profile}</td>
-                              <td className="px-6 py-4 text-[11px] text-primary font-bold tracking-widest">{acc.pass}</td>
-                              <td className="px-6 py-4 text-[11px] text-slate-500 font-bold">{acc.pin || '-'}</td>
-                              <td className="px-6 py-4 font-black text-slate-800">${acc.price?.toLocaleString()}</td>
-                              <td className="px-6 py-4 font-black text-xs text-tertiary">{acc.exitosas || 0}</td>
-                              <td className="px-6 py-4 font-black text-xs text-error">{acc.failed || 0}</td>
-                              <td className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase bg-slate-50 px-2 py-1 rounded">{acc.provider || 'Directo'}</td>
-                              <td className="px-6 py-4 font-black text-primary">{acc.uses}</td>
-                              <td className="px-6 py-4"><span className={`text-[8px] font-black uppercase px-2 py-1 rounded ${acc.status === 'Available' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{acc.status === 'Available' ? 'Ok' : 'Sold'}</span></td>
-                              <td className="px-6 py-4 text-right pr-4">
+                              <td className="px-6 py-3 pl-20 text-xs font-medium text-slate-400">{acc.service}</td>
+                              <td className="px-4 py-3 font-semibold text-slate-600">#{acc.profile}</td>
+                              <td className="px-6 py-3 text-xs text-primary font-medium">{acc.pass}</td>
+                              <td className="px-6 py-3 text-xs text-slate-500 font-medium">{acc.pin || '-'}</td>
+                              <td className="px-6 py-3 font-semibold text-slate-800">${acc.price?.toLocaleString()}</td>
+                              <td className="px-6 py-3 font-semibold text-xs text-tertiary">{acc.exitosas || 0}</td>
+                              <td className="px-6 py-3 font-semibold text-xs text-error">{acc.failed || 0}</td>
+                              <td className="px-6 py-3 text-xs font-medium text-slate-400">{acc.provider || 'Directo'}</td>
+                              <td className="px-6 py-3 font-semibold text-primary">{acc.uses}</td>
+                              <td className="px-6 py-3"><span className={`text-xs font-medium px-2 py-0.5 rounded-md ${acc.status === 'Available' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>{acc.status === 'Available' ? 'Ok' : 'Sold'}</span></td>
+                              <td className="px-6 py-3 text-right pr-4">
                                 <div className="flex justify-end gap-1">
-                                  <button onClick={() => handleShowHistory(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-all"><span className="material-symbols-outlined text-lg">history</span></button>
-                                  <button onClick={() => handleEditAccount(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-all"><span className="material-symbols-outlined text-lg">edit</span></button>
+                                  <button onClick={() => handleShowHistory(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-lg">history</span></button>
+                                  <button onClick={() => handleEditAccount(acc)} className="p-1.5 text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-lg">edit</span></button>
                                   <button onClick={() => onSale(acc)} disabled={parseInt(acc.uses) <= 0} className={`p-1.5 rounded-lg ${parseInt(acc.uses) > 0 ? 'text-primary' : 'text-slate-200'}`}><span className="material-symbols-outlined text-lg">sell</span></button>
                                 </div>
                               </td>
@@ -447,12 +447,12 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
             const totalSlots = allAccountsInPlatform.reduce((sum, acc) => sum + (parseInt(acc.uses) || 0), 0);
             return (
               <div key={platform}>
-                <div className={`p-5 flex items-center justify-between ${isExpanded ? 'bg-primary/5' : ''}`} onClick={() => toggleGroup(platform)}>
+                <div className={`p-4 flex items-center justify-between ${isExpanded ? 'bg-primary/5' : ''}`} onClick={() => toggleGroup(platform)}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined">dataset</span></div>
                     <div>
-                      <h3 className="font-black text-slate-800 uppercase text-xs">{platform}</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">{totalSlots} cupos</p>
+                      <h3 className="font-semibold text-slate-800 text-sm">{platform}</h3>
+                      <p className="text-xs font-medium text-slate-400">{totalSlots} cupos</p>
                     </div>
                   </div>
                   <span className={`material-symbols-outlined text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>expand_more</span>
@@ -466,38 +466,38 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                       return (
                         <div key={emailKey}>
                           <div className="p-4 pl-8 flex items-center justify-between" onClick={() => toggleEmail(emailKey)}>
-                            <span className="text-[10px] font-bold text-slate-500 truncate max-w-[200px]">{email}</span>
-                            <span className="text-[10px] font-black bg-white px-2 py-0.5 rounded border">{emailSlots}</span>
+                            <span className="text-xs font-medium text-slate-500 truncate max-w-[200px]">{email}</span>
+                            <span className="text-xs font-semibold bg-white px-2 py-0.5 rounded-md border border-slate-200">{emailSlots}</span>
                           </div>
                           {isEmailExpanded && (
                             <div className="p-3 space-y-3 bg-white">
                               {emailAccounts.map(acc => (
-                                <div key={acc.id} className="p-5 rounded-[2rem] border border-slate-100 bg-slate-50/50">
-                                  <div className="flex justify-between items-start mb-4">
+                                <div key={acc.id} className="p-4 rounded-xl border border-slate-200/60 bg-slate-50/50">
+                                  <div className="flex justify-between items-start mb-3">
                                     <div>
-                                      <span className="text-[9px] font-black text-slate-400 uppercase">Perfil #{acc.profile}</span>
-                                      <h4 className="text-sm font-black text-slate-800">${acc.price?.toLocaleString()}</h4>
+                                      <span className="text-xs font-medium text-slate-400">Perfil #{acc.profile}</span>
+                                      <h4 className="text-sm font-semibold text-slate-800">${acc.price?.toLocaleString()}</h4>
                                     </div>
-                                    <span className={`text-[8px] font-black px-2 py-1 rounded-lg border ${parseInt(acc.uses) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>{parseInt(acc.uses) > 0 ? `${acc.uses} DISP.` : 'OFF'}</span>
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${parseInt(acc.uses) > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>{parseInt(acc.uses) > 0 ? `${acc.uses} disp.` : 'Off'}</span>
                                   </div>
-                                  <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <div className="bg-white p-3 rounded-2xl border border-slate-100" onClick={() => { navigator.clipboard.writeText(acc.pass); alert('¡Clave copiada!'); }}>
-                                      <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">Pass</span>
-                                      <span className="text-[10px] font-bold text-primary block truncate">{acc.pass}</span>
+                                  <div className="grid grid-cols-2 gap-3 mb-3">
+                                    <div className="bg-white p-3 rounded-lg border border-slate-200/60" onClick={() => { navigator.clipboard.writeText(acc.pass); alert('¡Clave copiada!'); }}>
+                                      <span className="text-xs font-medium text-slate-400 block mb-1">Pass</span>
+                                      <span className="text-xs font-medium text-primary block truncate">{acc.pass}</span>
                                     </div>
-                                    <div className="bg-white p-3 rounded-2xl border border-slate-100" onClick={() => { if(acc.pin) { navigator.clipboard.writeText(acc.pin); alert('¡PIN copiado!'); } }}>
-                                      <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">PIN</span>
-                                      <span className="text-[10px] font-bold text-slate-600 block">{acc.pin || '-'}</span>
+                                    <div className="bg-white p-3 rounded-lg border border-slate-200/60" onClick={() => { if(acc.pin) { navigator.clipboard.writeText(acc.pin); alert('¡PIN copiado!'); } }}>
+                                      <span className="text-xs font-medium text-slate-400 block mb-1">PIN</span>
+                                      <span className="text-xs font-medium text-slate-600 block">{acc.pin || '-'}</span>
                                     </div>
                                   </div>
                                   <div className="flex justify-between items-center pt-3 border-t border-slate-100">
                                     <div className="flex gap-4">
-                                      <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Ventas</span><span className="text-[11px] font-black text-tertiary">{acc.exitosas || 0}</span></div>
+                                      <div className="flex flex-col"><span className="text-xs font-medium text-slate-400">Ventas</span><span className="text-xs font-semibold text-tertiary">{acc.exitosas || 0}</span></div>
                                     </div>
                                     <div className="flex gap-2">
-                                      <button onClick={() => handleShowHistory(acc)} className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center"><span className="material-symbols-outlined text-lg">history</span></button>
-                                      <button onClick={() => handleEditAccount(acc)} className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center"><span className="material-symbols-outlined text-lg">edit</span></button>
-                                      <button onClick={() => onSale(acc)} disabled={parseInt(acc.uses) <= 0} className={`w-9 h-9 rounded-xl flex items-center justify-center ${parseInt(acc.uses) > 0 ? 'bg-primary text-white' : 'bg-slate-200 text-white'}`}><span className="material-symbols-outlined text-lg">sell</span></button>
+                                      <button onClick={() => handleShowHistory(acc)} className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center"><span className="material-symbols-outlined text-lg">history</span></button>
+                                      <button onClick={() => handleEditAccount(acc)} className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center"><span className="material-symbols-outlined text-lg">edit</span></button>
+                                      <button onClick={() => onSale(acc)} disabled={parseInt(acc.uses) <= 0} className={`w-9 h-9 rounded-lg flex items-center justify-center ${parseInt(acc.uses) > 0 ? 'bg-primary text-white' : 'bg-slate-200 text-white'}`}><span className="material-symbols-outlined text-lg">sell</span></button>
                                     </div>
                                   </div>
                                 </div>
@@ -516,31 +516,31 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border p-8 flex flex-col max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 p-6 md:p-8 flex flex-col max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase">{editingAccount ? 'Editar Producto / Combo' : 'Agregar Producto'}</h2>
-              <button onClick={closeModal}><span className="material-symbols-outlined">close</span></button>
+              <h2 className="text-base font-semibold text-on-surface">{editingAccount ? 'Editar Producto / Combo' : 'Agregar Producto'}</h2>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition-colors"><span className="material-symbols-outlined">close</span></button>
             </div>
             {!editingAccount && (
               <div className="flex items-center gap-4 mb-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={isBulkMode} onChange={(e) => setIsBulkMode(e.target.checked)} className="w-4 h-4 accent-primary" />
-                  <span className="text-xs font-bold text-slate-500">Modo Masivo</span>
+                  <span className="text-xs font-medium text-slate-500">Modo Masivo</span>
                 </label>
                 {isBulkMode && (
-                  <input type="text" value={bulkRange} onChange={(e) => setBulkRange(e.target.value)} placeholder="1-7" className="bg-slate-50 border p-2 rounded-xl text-xs w-20 text-center font-bold" />
+                  <input type="text" value={bulkRange} onChange={(e) => setBulkRange(e.target.value)} placeholder="1-7" className="bg-white border border-slate-200 p-2 rounded-lg text-xs w-20 text-center font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
                 )}
               </div>
             )}
             <form onSubmit={handleAddAccount} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Producto / Combo</label>
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Producto / Combo</label>
                 {showCustomPlatform ? (
-                  <input type="text" name="service" value={formData.service} onChange={handleInputChange} placeholder="Ej: Shilajit Resina 30g..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" required />
+                  <input type="text" name="service" value={formData.service} onChange={handleInputChange} placeholder="Ej: Shilajit Resina 30g..." className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" required />
                 ) : (
                   <div className="flex gap-2">
-                    <select name="service" value={formData.service} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomPlatform(true); setFormData(p => ({...p, service: ''})); } else { handleInputChange(e); }}} className="flex-grow bg-slate-50 border p-3 rounded-xl text-sm" required>
+                    <select name="service" value={formData.service} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomPlatform(true); setFormData(p => ({...p, service: ''})); } else { handleInputChange(e); }}} className="flex-grow bg-white border border-slate-200 p-3 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" required>
                       <option value="">Seleccionar...</option>
                       {availablePlatforms.map(p => <option key={p} value={p}>{p}</option>)}
                       <option value="__custom__">+ Otro Producto</option>
@@ -549,16 +549,16 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 )}
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Presentación / Detalles</label>
-                <input type="text" name="email" value={formData.email} onChange={handleInputChange} placeholder="Ej: 30 Gramos / Resina Puro" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Presentación / Detalles</label>
+                <input type="text" name="email" value={formData.email} onChange={handleInputChange} placeholder="Ej: 30 Gramos / Resina Puro" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               {!isBulkMode && (
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Variante / Notas</label>
+                  <label className="text-xs font-medium text-slate-400 block mb-1.5">Variante / Notas</label>
                   {showCustomProfile ? (
-                    <input type="text" name="profile" value={formData.profile} onChange={handleInputChange} placeholder="Ej: Tarro 30g" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                    <input type="text" name="profile" value={formData.profile} onChange={handleInputChange} placeholder="Ej: Tarro 30g" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
                   ) : (
-                    <select name="profile" value={formData.profile} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProfile(true); setFormData(p => ({...p, profile: ''})); } else { handleInputChange(e); }}} className="w-full bg-slate-50 border p-3 rounded-xl text-sm">
+                    <select name="profile" value={formData.profile} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProfile(true); setFormData(p => ({...p, profile: ''})); } else { handleInputChange(e); }}} className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
                       <option value="">Seleccionar...</option>
                       {availableProfiles.map(p => <option key={p} value={p}>{p}</option>)}
                       <option value="__custom__">+ Otra Variante</option>
@@ -567,31 +567,31 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 </div>
               )}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Detalles de Envío</label>
-                <input type="text" name="pass" value={formData.pass} onChange={handleInputChange} placeholder="Ej: Envío Gratis Guatemala" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Detalles de Envío</label>
+                <input type="text" name="pass" value={formData.pass} onChange={handleInputChange} placeholder="Ej: Envío Gratis Guatemala" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Promoción / Tag</label>
-                <input type="text" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="Ej: Oferta Especial" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Promoción / Tag</label>
+                <input type="text" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="Ej: Oferta Especial" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Precio (Q)</label>
-                <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="Q199" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Precio (Q)</label>
+                <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="Q199" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Costo (Q)</label>
-                <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} placeholder="Q70" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Costo (Q)</label>
+                <input type="number" name="cost" value={formData.cost} onChange={handleInputChange} placeholder="Q70" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Stock Disponible</label>
-                <input type="number" name="uses" value={formData.uses} onChange={handleInputChange} placeholder="100" className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Stock Disponible</label>
+                <input type="number" name="uses" value={formData.uses} onChange={handleInputChange} placeholder="100" className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Proveedor / Origen</label>
+                <label className="text-xs font-medium text-slate-400 block mb-1.5">Proveedor / Origen</label>
                 {showCustomProvider ? (
-                  <input type="text" name="provider" value={formData.provider} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-slate-50 border p-3 rounded-xl text-sm" />
+                  <input type="text" name="provider" value={formData.provider} onChange={handleInputChange} placeholder="Nombre..." className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
                 ) : (
-                  <select name="provider" value={formData.provider} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProvider(true); setFormData(p => ({...p, provider: ''})); } else { handleInputChange(e); }}} className="w-full bg-slate-50 border p-3 rounded-xl text-sm">
+                  <select name="provider" value={formData.provider} onChange={(e) => { if (e.target.value === '__custom__') { setShowCustomProvider(true); setFormData(p => ({...p, provider: ''})); } else { handleInputChange(e); }}} className="w-full bg-white border border-slate-200 p-3 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
                     <option value="">Seleccionar...</option>
                     {availableProviders.map(p => <option key={p} value={p}>{p}</option>)}
                     <option value="__custom__">+ Otro</option>
@@ -599,11 +599,11 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
                 )}
               </div>
               <div className="md:col-span-2 mt-4 flex gap-3">
-                <button type="submit" className="flex-grow bg-primary text-white font-black py-4 rounded-2xl uppercase text-xs">
+                <button type="submit" className="flex-grow bg-primary text-white font-medium py-3 rounded-lg hover:bg-primary-hover transition-colors text-sm">
                   {editingAccount ? 'Guardar Cambios' : (isBulkMode ? `Crear Variantes ${bulkRange}` : 'Agregar Producto')}
                 </button>
                 {editingAccount && (
-                  <button type="button" onClick={() => { handleDeleteAccount(editingAccount.id); closeModal(); }} className="bg-rose-500 text-white font-black py-4 px-6 rounded-2xl uppercase text-xs">Eliminar</button>
+                  <button type="button" onClick={() => { handleDeleteAccount(editingAccount.id); closeModal(); }} className="bg-red-50 text-red-600 hover:bg-red-100 font-medium py-3 px-6 rounded-lg transition-colors text-sm">Eliminar</button>
                 )}
               </div>
             </form>
@@ -612,108 +612,108 @@ const Inventory = ({ accounts, setAccounts, onSale, platforms, setPlatforms, pro
       )}
 
       {isManageListsOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border p-8 flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 p-6 md:p-8 flex flex-col max-h-[85vh]">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase">Master Config</h2>
-              <button onClick={() => setIsManageListsOpen(false)}><span className="material-symbols-outlined">close</span></button>
+              <h2 className="text-base font-semibold text-on-surface">Master Config</h2>
+              <button onClick={() => setIsManageListsOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><span className="material-symbols-outlined">close</span></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto p-2">
               <div>
-                <h3 className="text-xs font-black text-primary uppercase mb-4">Platforms</h3>
+                <h3 className="text-xs font-medium text-primary mb-4">Platforms</h3>
                 <div className="flex gap-2 mb-4">
-                  <input type="text" placeholder="Add..." value={newPlatformInput} onChange={(e) => setNewPlatformInput(e.target.value)} className="flex-grow bg-slate-50 border p-2 rounded-xl text-xs" />
-                  <button onClick={handleAddPlatform} className="bg-primary/20 text-primary p-2 rounded-xl"><span className="material-symbols-outlined">add</span></button>
+                  <input type="text" placeholder="Add..." value={newPlatformInput} onChange={(e) => setNewPlatformInput(e.target.value)} className="flex-grow bg-white border border-slate-200 p-2 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                  <button onClick={handleAddPlatform} className="bg-primary/10 text-primary p-2 rounded-lg hover:bg-primary/20 transition-colors"><span className="material-symbols-outlined">add</span></button>
                 </div>
                 <div className="space-y-2">
                   {platforms.map(p => (
-                    <div key={p} className="flex justify-between bg-slate-50 p-2 rounded-xl text-[10px] font-bold">
+                    <div key={p} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs font-medium">
                       <span>{p}</span>
-                      <button onClick={() => handleDeletePlatform(p)} className="text-error opacity-20 hover:opacity-100"><span className="material-symbols-outlined text-sm">delete</span></button>
+                      <button onClick={() => handleDeletePlatform(p)} className="text-error opacity-20 hover:opacity-100 transition-opacity"><span className="material-symbols-outlined text-sm">delete</span></button>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <h3 className="text-xs font-black text-tertiary uppercase mb-4">Suppliers</h3>
+                <h3 className="text-xs font-medium text-tertiary mb-4">Suppliers</h3>
                 <div className="flex gap-2 mb-4">
-                  <input type="text" placeholder="Add..." value={newProviderInput} onChange={(e) => setNewProviderInput(e.target.value)} className="flex-grow bg-slate-50 border p-2 rounded-xl text-xs" />
-                  <button onClick={handleAddProvider} className="bg-tertiary/20 text-tertiary p-2 rounded-xl"><span className="material-symbols-outlined">add</span></button>
+                  <input type="text" placeholder="Add..." value={newProviderInput} onChange={(e) => setNewProviderInput(e.target.value)} className="flex-grow bg-white border border-slate-200 p-2 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                  <button onClick={handleAddProvider} className="bg-tertiary/10 text-tertiary p-2 rounded-lg hover:bg-tertiary/20 transition-colors"><span className="material-symbols-outlined">add</span></button>
                 </div>
                 <div className="space-y-2">
                   {providers.map(p => (
-                    <div key={p} className="flex justify-between bg-slate-50 p-2 rounded-xl text-[10px] font-bold">
+                    <div key={p} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs font-medium">
                       <span>{p}</span>
-                      <button onClick={() => handleDeleteProvider(p)} className="text-error opacity-20 hover:opacity-100"><span className="material-symbols-outlined text-sm">delete</span></button>
+                      <button onClick={() => handleDeleteProvider(p)} className="text-error opacity-20 hover:opacity-100 transition-opacity"><span className="material-symbols-outlined text-sm">delete</span></button>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsManageListsOpen(false)} className="bg-primary text-white font-black py-4 rounded-2xl mt-8 uppercase text-xs">Cerrar</button>
+            <button onClick={() => setIsManageListsOpen(false)} className="bg-primary text-white font-medium py-3 rounded-lg mt-6 hover:bg-primary-hover transition-colors text-sm">Cerrar</button>
           </div>
         </div>
       )}
 
       {historyModalOpen && selectedHistory && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 flex flex-col max-h-[85vh]">
-            <div className="flex justify-between items-center mb-8">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 p-6 md:p-8 flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl font-black uppercase">Historial de Entrega</h2>
-                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{selectedHistory.account.service} - Perfil #{selectedHistory.account.profile}</p>
+                <h2 className="text-base font-semibold text-on-surface">Historial de Entrega</h2>
+                <p className="text-xs font-medium text-slate-400 mt-1">{selectedHistory.account.service} - Perfil #{selectedHistory.account.profile}</p>
               </div>
-              <button onClick={() => setHistoryModalOpen(false)} className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
+              <button onClick={() => setHistoryModalOpen(false)} className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"><span className="material-symbols-outlined">close</span></button>
             </div>
-            <div className="flex-grow overflow-y-auto space-y-4 pr-2">
+            <div className="flex-grow overflow-y-auto space-y-3 pr-2">
               {selectedHistory.history.length > 0 ? (
                 selectedHistory.history.map((sale, idx) => (
-                  <div key={idx} className="bg-slate-50 border rounded-2xl p-4 flex justify-between items-center">
+                  <div key={idx} className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-black text-slate-700">{sale.customer || 'Venta Directa'}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(sale.id).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-slate-700">{sale.customer || 'Venta Directa'}</p>
+                      <p className="text-xs font-medium text-slate-400 mt-0.5">{new Date(sale.id).toLocaleString()}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => onMarkSaleAsSuccess(sale.id, selectedHistory.account.id)} className="w-8 h-8 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center border border-emerald-100"><span className="material-symbols-outlined text-lg">check</span></button>
-                      <button onClick={() => { if(window.confirm('¿Marcar como FALLIDA?')) onMarkSaleAsFailed(sale.id, selectedHistory.account.id); }} className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center border border-rose-100"><span className="material-symbols-outlined text-lg">block</span></button>
+                      <button onClick={() => onMarkSaleAsSuccess(sale.id, selectedHistory.account.id)} className="w-8 h-8 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center border border-emerald-100 hover:bg-emerald-100 transition-colors"><span className="material-symbols-outlined text-lg">check</span></button>
+                      <button onClick={() => { if(window.confirm('¿Marcar como FALLIDA?')) onMarkSaleAsFailed(sale.id, selectedHistory.account.id); }} className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center border border-rose-100 hover:bg-rose-100 transition-colors"><span className="material-symbols-outlined text-lg">block</span></button>
                       {(sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from) && (
-                        <button onClick={() => setPreviewChatId(sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from)} className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/20"><span className="material-symbols-outlined text-lg">visibility</span></button>
+                        <button onClick={() => setPreviewChatId(sale.customerId || Object.values(chats).find(c => c.customerName === sale.customer)?.from)} className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/20 hover:bg-primary/20 transition-colors"><span className="material-symbols-outlined text-lg">visibility</span></button>
                       )}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="h-40 flex flex-col items-center justify-center opacity-20">
+                <div className="h-40 flex flex-col items-center justify-center text-slate-300">
                   <span className="material-symbols-outlined text-4xl">history</span>
-                  <p className="text-[10px] font-black uppercase">Sin registros</p>
+                  <p className="text-xs font-medium mt-2">Sin registros</p>
                 </div>
               )}
             </div>
-            <button onClick={() => setHistoryModalOpen(false)} className="bg-primary text-white font-black py-4 rounded-2xl mt-8 uppercase text-xs">Cerrar</button>
+            <button onClick={() => setHistoryModalOpen(false)} className="bg-primary text-white font-medium py-3 rounded-lg mt-6 hover:bg-primary-hover transition-colors text-sm">Cerrar</button>
           </div>
         </div>
       )}
 
       {previewChatId && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] flex flex-col max-h-[80vh] overflow-hidden">
-            <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
-              <h3 className="font-black uppercase text-sm tracking-widest">Vista Previa Chat</h3>
-              <button onClick={() => setPreviewChatId(null)}><span className="material-symbols-outlined">close</span></button>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border border-slate-200">
+            <div className="p-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-semibold text-sm text-on-surface">Vista Previa Chat</h3>
+              <button onClick={() => setPreviewChatId(null)} className="text-slate-400 hover:text-slate-600 transition-colors"><span className="material-symbols-outlined">close</span></button>
             </div>
-            <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/50 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto p-5 space-y-3 bg-slate-50/50 custom-scrollbar">
               {chats[previewChatId]?.messages?.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[85%] p-4 rounded-2xl text-[11px] font-bold shadow-sm ${m.role === 'user' ? 'bg-white text-slate-700' : 'bg-primary text-white'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-xl text-xs font-medium shadow-sm ${m.role === 'user' ? 'bg-white text-slate-700 border border-slate-200/60' : 'bg-primary text-white'}`}>
                     {m.imageUrl ? <img src={m.imageUrl} alt="img" className="rounded-lg mb-2 max-h-40" /> : <p>{m.content}</p>}
-                    <p className="text-[8px] mt-1 opacity-40 uppercase">{new Date(m.timestampRaw || Date.now()).toLocaleTimeString()}</p>
+                    <p className="text-xs mt-1 opacity-40">{new Date(m.timestampRaw || Date.now()).toLocaleTimeString()}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="p-6 bg-white border-t flex gap-3">
-               <button onClick={() => { onSendMessage({ to: previewChatId, content: '⚠️ *Recordatorio:* Pendiente tu pago. Quedo atento. 🙏' }); alert('Enviado'); }} className="flex-grow bg-emerald-500 text-white font-black py-4 rounded-2xl uppercase text-[10px]">Recordatorio</button>
-               <button onClick={() => setPreviewChatId(null)} className="px-6 bg-slate-900 text-white font-black py-4 rounded-2xl uppercase text-[10px]">Cerrar</button>
+            <div className="p-5 bg-white border-t border-slate-200 flex gap-3">
+               <button onClick={() => { onSendMessage({ to: previewChatId, content: '⚠️ *Recordatorio:* Pendiente tu pago. Quedo atento. 🙏' }); alert('Enviado'); }} className="flex-grow bg-tertiary text-white font-medium py-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm">Recordatorio</button>
+               <button onClick={() => setPreviewChatId(null)} className="px-5 bg-slate-800 text-white font-medium py-3 rounded-lg hover:bg-slate-900 transition-colors text-sm">Cerrar</button>
             </div>
           </div>
         </div>

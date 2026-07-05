@@ -21,19 +21,19 @@ const InstallPrompt = () => {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end justify-center p-6 bg-background/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-[#0b0e14] w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-white/5 animate-in slide-in-from-bottom-10 duration-500">
+      <div className="bg-[#0b0e14] w-full max-w-md rounded-xl p-8 shadow-2xl border border-white/5 animate-in slide-in-from-bottom-10 duration-500">
         <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-primary rounded-3xl shadow-xl shadow-primary/30 flex items-center justify-center rotate-3 border-4 border-white/10">
-             <img src="/app_icon.png" alt="App Icon" className="w-full h-full rounded-3xl object-cover" />
+          <div className="w-20 h-20 bg-primary rounded-xl shadow-sm shadow-primary/30 flex items-center justify-center rotate-3 border-4 border-white/10">
+             <img src="/app_icon.png" alt="App Icon" className="w-full h-full rounded-xl object-cover" />
           </div>
         </div>
         
-        <h2 className="text-2xl font-black text-on-surface text-center mb-2 tracking-tight">Instalar en tu iPhone</h2>
+        <h2 className="text-2xl font-semibold text-on-surface text-center mb-2 tracking-tight">Instalar en tu iPhone</h2>
         <p className="text-on-surface-variant text-center text-sm mb-8 leading-relaxed px-4 opacity-60">
           Para usar la app en pantalla completa y acceder rápido, añádela a tu inicio.
         </p>
 
-        <div className="space-y-4 bg-white/5 p-6 rounded-3xl border border-white/5">
+        <div className="space-y-4 bg-white/5 p-6 rounded-xl border border-white/5">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shadow-sm border border-white/10">
               <span className="material-symbols-outlined text-primary text-lg">share</span>
@@ -54,7 +54,7 @@ const InstallPrompt = () => {
             setShowPrompt(false);
             localStorage.setItem('ios-install-prompt-seen', 'true');
           }}
-          className="w-full mt-8 bg-primary text-on-primary font-black py-4 rounded-2xl hover:opacity-90 transition-all active:scale-[0.98] shadow-2xl shadow-primary/10"
+          className="w-full mt-8 bg-primary text-on-primary font-semibold py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-2xl shadow-primary/10"
         >
           ¡ENTENDIDO!
         </button>

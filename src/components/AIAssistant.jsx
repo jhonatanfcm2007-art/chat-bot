@@ -265,17 +265,17 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
       <div className="w-full max-w-4xl space-y-8 flex flex-col">
         
         {/* Card 1: Entrenar IA */}
-        <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative overflow-hidden">
+        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-              <h3 className="font-black text-on-surface text-3xl tracking-tight uppercase">Entrenar IA</h3>
+              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Entrenar IA</h3>
               <p className="text-xs text-slate-500 mt-1">Elige cómo deseas editar las instrucciones de tu asistente virtual.</p>
             </div>
             
-            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
               <button 
                 onClick={() => setEditMode('raw')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   editMode === 'raw' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -283,7 +283,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
               </button>
               <button 
                 onClick={() => setEditMode('cards')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   editMode === 'cards' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -294,11 +294,11 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
 
           {editMode === 'raw' ? (
             <div className="mb-8">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-500  mb-2">
                 Pega aquí tu System Prompt completo:
               </label>
               <textarea 
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-xs text-slate-800 font-mono leading-relaxed min-h-[400px] focus:ring-2 focus:ring-primary focus:outline-none custom-scrollbar shadow-inner"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-6 text-xs text-slate-800 font-mono leading-relaxed min-h-[400px] focus:ring-2 focus:ring-primary focus:outline-none custom-scrollbar shadow-inner"
                 value={rawPrompt}
                 onChange={(e) => setRawPrompt(e.target.value)}
                 placeholder="Pega aquí todo tu prompt de ventas..."
@@ -309,7 +309,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
               <div className="flex justify-end mb-4">
                 <button 
                   onClick={addSection}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-primary border border-slate-200 rounded-xl hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-wider"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-primary border border-slate-200 rounded-xl hover:bg-primary hover:text-white transition-all text-xs font-semibold "
                 >
                   <span className="material-symbols-outlined text-sm">add_circle</span>
                   Añadir punto
@@ -318,7 +318,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
               
               <div className="space-y-4 pr-2 mb-8 max-h-[500px] overflow-y-auto custom-scrollbar">
                 {sections.map((section, idx) => (
-                  <div key={idx} className={`border border-slate-100 rounded-2xl transition-all ${section.isOpen ? 'bg-slate-50/30' : 'bg-transparent'}`}>
+                  <div key={idx} className={`border border-slate-100 rounded-xl transition-all ${section.isOpen ? 'bg-slate-50/30' : 'bg-transparent'}`}>
                     <div 
                        className="px-6 py-4 flex items-center justify-between cursor-pointer group"
                        onClick={() => toggleSection(idx)}
@@ -326,7 +326,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                       <div className="flex items-center gap-4">
                         <span className={`material-symbols-outlined text-sm transition-transform ${section.isOpen ? 'rotate-180' : ''}`}>expand_more</span>
                         <input 
-                          className="bg-transparent border-none p-0 focus:ring-0 font-black text-xs uppercase tracking-widest text-on-surface cursor-text w-full max-w-[200px]"
+                          className="bg-transparent border-none p-0 focus:ring-0 font-semibold text-xs  text-on-surface cursor-text w-full max-w-[200px]"
                           value={section.title}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateSection(idx, 'title', e.target.value)}
@@ -360,24 +360,24 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
 
           <button 
             onClick={handleSaveSettings}
-            className={`w-full py-5 rounded-2xl font-black tracking-[0.4em] uppercase text-xs transition-all duration-500 flex items-center justify-center gap-4 flex-shrink-0 ${
+            className={`w-full py-5 rounded-xl font-semibold tracking-[0.4em] uppercase text-xs transition-all duration-500 flex items-center justify-center gap-4 flex-shrink-0 ${
               isSaved 
-                ? 'bg-tertiary text-white shadow-xl shadow-tertiary/20' 
+                ? 'bg-tertiary text-white shadow-sm shadow-tertiary/20' 
                 : 'bg-primary text-on-primary hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98]'
             }`}
           >
-            <span className="material-symbols-outlined font-black text-2xl">{isSaved ? 'verified' : 'save_as'}</span>
+            <span className="material-symbols-outlined font-semibold text-2xl">{isSaved ? 'verified' : 'save_as'}</span>
             {isSaved ? 'Instrucciones Guardadas con Éxito' : 'Cargar Instrucciones al Bot'}
           </button>
         </div>
 
         {/* Card 2: Audio de Bienvenida */}
-        <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative overflow-hidden">
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          
           
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="font-black text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Audio)</h3>
+              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Audio)</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xl">
                 Envía automáticamente un mensaje de voz a todos los clientes nuevos que entren a través de tu publicidad (solo cuando escriban por primera vez).
               </p>
@@ -398,13 +398,13 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
             </button>
           </div>
 
-          <div className="space-y-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+          <div className="space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
             <div className="flex flex-col md:flex-row items-center gap-6">
               
               {/* Drop area/Button */}
               <div 
                 onClick={() => audioInputRef.current?.click()}
-                className={`w-full md:w-1/2 border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                className={`w-full md:w-1/2 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
                   isUploading 
                     ? 'border-primary bg-primary/5 cursor-wait' 
                     : 'border-slate-300 hover:border-primary hover:bg-slate-50'
@@ -430,14 +430,14 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                   <>
                     <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">mic</span>
                     <span className="text-xs font-bold text-slate-600 text-center">Haz clic para subir tu audio de bienvenida</span>
-                    <span className="text-[10px] text-slate-400 mt-1">Formatos admitidos: .ogg, .mp3, .wav, .m4a</span>
+                    <span className="text-xs text-slate-400 mt-1">Formatos admitidos: .ogg, .mp3, .wav, .m4a</span>
                   </>
                 )}
               </div>
 
               {/* Status & Player */}
               <div className="w-full md:w-1/2 flex flex-col justify-center">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Audio Activo</span>
+                <span className="text-xs font-semibold  text-slate-400">Audio Activo</span>
                 
                 {welcomeAudioUrl ? (
                   <div className="mt-2 space-y-3">
@@ -465,12 +465,12 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
         </div>
 
         {/* Card 3: Imagen de Bienvenida */}
-        <div className="bg-white p-10 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col relative overflow-hidden">
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          
           
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="font-black text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Imagen de Producto Original)</h3>
+              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Imagen de Producto Original)</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xl">
                 Envía automáticamente la foto de tu producto Shilajit original a todos los clientes nuevos que escriban por primera vez.
               </p>
@@ -491,13 +491,13 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
             </button>
           </div>
 
-          <div className="space-y-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+          <div className="space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
             <div className="flex flex-col md:flex-row items-center gap-6">
               
               {/* Drop area/Button */}
               <div 
                 onClick={() => imageInputRef.current?.click()}
-                className={`w-full md:w-1/2 border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                className={`w-full md:w-1/2 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
                   isUploadingImage 
                     ? 'border-primary bg-primary/5 cursor-wait' 
                     : 'border-slate-300 hover:border-primary hover:bg-slate-50'
@@ -523,14 +523,14 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                   <>
                     <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">image</span>
                     <span className="text-xs font-bold text-slate-600 text-center">Haz clic para subir tu foto de producto original</span>
-                    <span className="text-[10px] text-slate-400 mt-1">Formatos admitidos: .png, .jpg, .jpeg, .webp</span>
+                    <span className="text-xs text-slate-400 mt-1">Formatos admitidos: .png, .jpg, .jpeg, .webp</span>
                   </>
                 )}
               </div>
 
               {/* Status & Preview */}
               <div className="w-full md:w-1/2 flex flex-col justify-center">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Imagen Activa</span>
+                <span className="text-xs font-semibold  text-slate-400">Imagen Activa</span>
                 
                 {welcomeImageUrl ? (
                   <div className="mt-2 space-y-3">
@@ -543,7 +543,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                     <img 
                       src={welcomeImageUrl.startsWith('http') ? welcomeImageUrl : `${serverUrl}${welcomeImageUrl}`} 
                       alt="Bienvenida Original" 
-                      className="w-32 h-32 object-cover border border-slate-200 rounded-2xl shadow-sm"
+                      className="w-32 h-32 object-cover border border-slate-200 rounded-xl shadow-sm"
                     />
                   </div>
                 ) : (

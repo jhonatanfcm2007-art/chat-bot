@@ -69,7 +69,7 @@ const KnowledgeBase = ({ serverUrl }) => {
     <div className="flex-1 bg-slate-50 overflow-hidden flex flex-col relative w-full h-full max-w-[1200px] mx-auto p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-800">Base de Conocimiento</h1>
+          <h1 className="text-2xl md:text-2xl font-semibold tracking-tight text-slate-800">Base de Conocimiento</h1>
           <p className="text-slate-500 text-sm mt-1">Configura el cerebro de ventas por producto</p>
         </div>
         <button 
@@ -87,7 +87,7 @@ const KnowledgeBase = ({ serverUrl }) => {
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
           </div>
         ) : products.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-slate-400">
+          <div className="bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center p-12 text-slate-400">
             <span className="material-symbols-outlined text-6xl mb-2 opacity-50">menu_book</span>
             <p className="font-semibold text-lg text-slate-600">Base de conocimiento vacía</p>
             <p className="text-sm">Agrega tu primer producto para que la IA sepa qué vender.</p>
@@ -95,7 +95,7 @@ const KnowledgeBase = ({ serverUrl }) => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {products.map(p => (
-              <div key={p.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col shadow-sm hover:shadow-md transition-shadow">
+              <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">inventory_2</span>
@@ -146,7 +146,7 @@ const KnowledgeBase = ({ serverUrl }) => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-lg font-bold text-slate-800">{editingProduct.id ? 'Editar Producto' : 'Nuevo Producto'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">

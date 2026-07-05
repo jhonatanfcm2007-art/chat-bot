@@ -1,73 +1,132 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #004d4d;
+  /* ═══ NEW COLOR SYSTEM — Notion/Stripe Inspired ═══ */
+  --color-primary: #6C5CE7;
+  --color-primary-hover: #5A4BD1;
+  --color-primary-light: #EDE9FE;
   --color-on-primary: #ffffff;
-  --color-secondary-bg: #f0f2f5;
+
+  --color-background: #F8F9FC;
+  --color-secondary-bg: #F1F3F9;
   --color-surface: #ffffff;
-  --color-on-surface: #1a1a1a;
-  --color-on-surface-variant: #64748b;
-  --color-outline-variant: #e2e8f0;
-  --color-background: #f8fafc;
-  --color-tertiary: #22c55e;
-  --color-error: #ef4444;
+  --color-on-surface: #1E293B;
+  --color-on-surface-variant: #94A3B8;
+  --color-outline-variant: #E2E8F0;
+
+  --color-sidebar: #1E293B;
+  --color-sidebar-hover: #334155;
+  --color-sidebar-active: rgba(255, 255, 255, 0.08);
+
+  --color-tertiary: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
 
   --color-panel-bg: #ffffff;
-  --color-panel-on-bg: #1a1a1a;
+  --color-panel-on-bg: #1E293B;
 
   --color-chat-bubble-incoming: #ffffff;
-  --color-chat-bubble-outgoing: #d9fdd3;
+  --color-chat-bubble-outgoing: #DCF8E8;
 
-  --font-headline: "Outfit", "Inter", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --color-accent: #10B981;
+
+  /* ═══ TYPOGRAPHY ═══ */
+  --font-headline: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
 }
 
+/* ═══ BASE ═══ */
 @layer base {
   body {
     @apply bg-background text-on-surface font-body antialiased;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* ═══ COMPONENT CLASSES ═══ */
 @layer components {
-  .glass {
-    background-color: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 45, 45, 0.05);
-  }
-  
-  .glass-card {
-    @apply bg-white border border-slate-100 shadow-xl shadow-slate-200/50 rounded-2xl;
+  /* Card — clean, minimal shadow */
+  .card {
+    @apply bg-white border border-slate-200/60 rounded-xl shadow-sm;
   }
 
+  .card-hover {
+    @apply bg-white border border-slate-200/60 rounded-xl shadow-sm transition-shadow duration-200 hover:shadow-md;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-primary text-white font-medium px-4 py-2 rounded-lg
+           hover:bg-primary-hover active:scale-[0.98] transition-all duration-150;
+  }
+
+  .btn-ghost {
+    @apply text-on-surface-variant font-medium px-3 py-2 rounded-lg
+           hover:bg-slate-100 active:scale-[0.98] transition-all duration-150;
+  }
+
+  .btn-outline {
+    @apply border border-slate-200 text-on-surface font-medium px-4 py-2 rounded-lg
+           hover:bg-slate-50 active:scale-[0.98] transition-all duration-150;
+  }
+
+  /* Input fields */
+  .input {
+    @apply bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm
+           placeholder:text-slate-400
+           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10
+           transition-all duration-150;
+  }
+
+  /* WhatsApp chat background */
   .whatsapp-pattern {
-    background-color: #f7f4f0 !important;
+    background-color: #F0EDE8 !important;
     position: relative;
     z-index: 0;
   }
-  
+
   .whatsapp-pattern::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
     background-repeat: repeat;
     background-size: 500px;
     background-attachment: local;
-    opacity: 0.05;
+    opacity: 0.04;
     z-index: -1;
     pointer-events: none;
   }
 
-  .nav-item-active {
-    @apply bg-primary text-white shadow-lg shadow-primary/20 scale-105;
+  /* Sidebar tooltip */
+  .sidebar-tooltip {
+    @apply absolute left-full ml-3 px-2.5 py-1.5 rounded-md
+           bg-slate-900 text-white text-xs font-medium
+           opacity-0 pointer-events-none
+           transition-opacity duration-150
+           whitespace-nowrap z-50;
+  }
+
+  /* Badge/pill */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-50
+           flex items-center justify-center;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden;
   }
 }
 
+/* ═══ MATERIAL ICONS ═══ */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
@@ -76,20 +135,48 @@
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
+/* ═══ SCROLLBAR ═══ */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #CBD5E1;
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8;
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 200ms ease-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 200ms ease-out;
+}
