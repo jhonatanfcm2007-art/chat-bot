@@ -1938,6 +1938,13 @@ app.post('/api/settings', (req, res) => {
         if (!chats[to]) chats[to] = { from: to, customerName: 'Cliente', messages: [] };
         chats[to].messages.push(m); chats[to].updatedAt = Date.now(); 
         
+        // Auto-apagar IA si un humano responde manualmente
+        if (!chats[to].aiDisabled) {
+            chats[to].aiDisabled = true;
+            io.emit('toggle_ai', { chatId: to, disabled: true });
+            console.log(`🤖 [SISTEMA] IA apagada automáticamente porque el administrador envió un mensaje a ${to}`);
+        }
+
         // Si el admin envió credenciales manualmente, marcar el chat
         if (content) {
             const lowerContent = content.toLowerCase();
