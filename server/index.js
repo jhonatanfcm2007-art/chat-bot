@@ -996,13 +996,6 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
-        
-        const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
-        await smartSendMessage(from, supportMsg);
-        
-        const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-        refreshedChat.messages.push(botMsg);
-        saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
 
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
         
@@ -1036,13 +1029,6 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
-        
-        const supportMsg = "Veo que necesitas ayuda. 👩‍💻 En breve te comunicaremos con atención humana para resolver tu solicitud.";
-        await smartSendMessage(from, supportMsg);
-        
-        const botMsg = { id: 'bot-'+Date.now(), from, body: supportMsg, content: supportMsg, isMe: true, role: 'bot', timestampRaw: Date.now() };
-        refreshedChat.messages.push(botMsg);
-        saveChats(chats); io.emit('message', { ...botMsg, waLine: refreshedChat.waLine });
 
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
