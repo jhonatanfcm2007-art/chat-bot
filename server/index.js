@@ -505,7 +505,7 @@ function schedulePaymentReminder(to) {
 }
 
 // --- REGISTRO DE PEDIDO (PENDIENTE DE APROBACION) ---
-async function registerOrder(to, products, aiReplyText) {
+async function registerOrder(to, products) {
     const chat = chats[to];
     if (!chat) return;
 
@@ -522,13 +522,12 @@ async function registerOrder(to, products, aiReplyText) {
 
     // Notificar al admin por WhatsApp para aprobación
     if (ADMIN_PHONE) {
-        const lastUserMsgs = (chat.messages || [])
-            .filter(m => m.role === 'user')
-            .slice(-5)
-            .map(m => m.content || m.body)
-            .join('\n');
-        
-        const notif = `📦 *NUEVO PEDIDO PENDIENTE DE APROBACIÓN*\n👤 *Cliente:* ${chat.customerName}\n📞 *Chat:* ${to}\n🛒 *Producto:* ${productList}\n\n📋 *Datos del cliente:*\n${lastUserMsgs}\n\n👉 *Para confirmar:* Responde APROBAR ${to}\n👉 *Para cancelar:* Responde RECHAZAR ${to}`;
+        const orderName = chat.orderName || chat.customerName || 'No especificado';
+        const orderPhone = chat.orderPhone || 'No especificado';
+        const orderAddress = chat.address || 'No especificada';
+        const orderCity = chat.city || 'No especificado';
+
+        const notif = `📦 *NUEVO PEDIDO PENDIENTE*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
         smartSendMessage(ADMIN_PHONE, notif);
     }
 
@@ -1041,11 +1040,23 @@ async function processAIResponse(from, msgBodyLower) {
     
     if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
+        
+        const nameMatch = aiReply.match(/\[NOMBRE:(.+?)\]/i);
+        const phoneMatch = aiReply.match(/\[TELEFONO:(.+?)\]/i);
+        const dirMatch = aiReply.match(/\[DIRECCION:(.+?)\]/i);
+        const munMatch = aiReply.match(/\[MUNICIPIO:(.+?)\]/i);
+        
+        if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
+        if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
+        if (dirMatch) refreshedChat.address = dirMatch[1].trim();
+        if (munMatch) refreshedChat.city = munMatch[1].trim();
+        
+        saveChats(chats);
         await registerOrder(from, products);
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
+    const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]|\[NOMBRE:.+?\]|\[TELEFONO:.+?\]|\[DIRECCION:.+?\]|\[MUNICIPIO:.+?\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -2000,7 +2011,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
         }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO: Cuando pidas los datos de envío y el cliente te dé su número de teléfono o dirección, NO LO CONFUNDAS con un número de guía. NUNCA uses [APAGAR_BOT_SOPORTE] cuando el cliente solo te está dando sus datos para hacer el pedido. En ese caso, solo usa [ENTREGAR_AHORA] para confirmar la orden.";
+        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO: Cuando el cliente te dé sus datos de envío, NO CONFUNDAS su número de teléfono con un número de guía de rastreo. NUNCA uses [APAGAR_BOT_SOPORTE]. En lugar de eso, responde confirmando el pedido usando [ENTREGAR_AHORA] e incluye ESTRICTAMENTE estas 4 etiquetas llenadas con los datos del cliente que extraigas de la conversación: [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: xxx] [MUNICIPIO: xxx].";
 
 
         const comp = await activeOpenAI.chat.completions.create({
