@@ -545,6 +545,9 @@ async function createShopifyOrder(chat, products) {
     }
 
     try {
+        const cleanUrl = SHOPIFY_URL.replace(/^https?:\/\//, '').replace(/\/$/, '').trim();
+        const cleanToken = SHOPIFY_TOKEN.trim();
+        
         // Usamos Draft Orders API (no requiere permiso especial de write_orders)
         const draftOrderData = {
             draft_order: {
@@ -556,10 +559,6 @@ async function createShopifyOrder(chat, products) {
                         requires_shipping: true
                     }
                 ],
-                customer: {
-                    first_name: chat.customerName || 'Cliente WhatsApp',
-                    phone: '+' + chat.from.replace(/\D/g, '')
-                },
                 shipping_address: {
                     first_name: chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
@@ -573,11 +572,11 @@ async function createShopifyOrder(chat, products) {
             }
         };
 
-        const response = await fetch(`https://${SHOPIFY_URL}/admin/api/2024-01/draft_orders.json`, {
+        const response = await fetch(`https://${cleanUrl}/admin/api/2024-01/draft_orders.json`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Shopify-Access-Token': SHOPIFY_TOKEN
+                'X-Shopify-Access-Token': cleanToken
             },
             body: JSON.stringify(draftOrderData)
         });
