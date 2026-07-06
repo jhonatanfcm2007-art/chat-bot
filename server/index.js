@@ -559,11 +559,11 @@ async function createShopifyOrder(chat, products) {
                     }
                 ],
                 shipping_address: {
-                    first_name: chat.customerName || 'Cliente WhatsApp',
+                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
                     city: chat.city || 'Guatemala',
                     country: 'GT',
-                    phone: '+' + chat.from.replace(/\D/g, '')
+                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
                 note: `Pedido vía WhatsApp Bot. Teléfono: ${chat.from}`,
                 tags: 'whatsapp-bot, contraentrega',
