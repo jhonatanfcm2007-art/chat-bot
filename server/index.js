@@ -1041,10 +1041,10 @@ async function processAIResponse(from, msgBodyLower) {
     if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
         
-        const nameMatch = aiReply.match(/\[NOMBRE:(.+?)\]/i);
-        const phoneMatch = aiReply.match(/\[TELEFONO:(.+?)\]/i);
-        const dirMatch = aiReply.match(/\[DIRECCION:(.+?)\]/i);
-        const munMatch = aiReply.match(/\[MUNICIPIO:(.+?)\]/i);
+        const nameMatch = aiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
+        const phoneMatch = aiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
+        const dirMatch = aiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
+        const munMatch = aiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
         
         if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
         if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
@@ -1056,7 +1056,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]|\[NOMBRE:.+?\]|\[TELEFONO:.+?\]|\[DIRECCION:.+?\]|\[MUNICIPIO:.+?\]/gi, '').trim();
+    const cleanReply = aiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO)[^\]]*\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -2011,7 +2011,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
         }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO (¡CRÍTICO!): Cuando el cliente te dé sus datos de envío para hacer el pedido, confirma la orden de manera natural y agradable. IMPORTANTE: Las etiquetas de datos son INVISIBLES para el cliente. NUNCA digas cosas como 'Aquí están tus datos:' porque el cliente verá un espacio en blanco. Simplemente confirma el pedido con texto normal y, al puro final de tu mensaje, sin anunciarlo, agrega estas etiquetas internas: [ENTREGAR_AHORA] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: xxx] [MUNICIPIO: xxx].";
+        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO (¡CRÍTICO!): Cuando el cliente te dé sus datos de envío para hacer el pedido, confirma la orden de manera natural y agradable. IMPORTANTE: Las etiquetas de datos son INVISIBLES para el cliente. NUNCA digas cosas como 'Aquí están tus datos:' porque el cliente verá un espacio en blanco. Simplemente confirma el pedido con texto normal y, al puro final de tu mensaje, sin anunciarlo, agrega estas etiquetas internas: [ENTREGAR_AHORA] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: xxx] [MUNICIPIO: xxx].\n8. VALIDACIÓN GEOGRÁFICA: Tienes pleno conocimiento de la geografía de Guatemala. Si al recibir los datos de envío notas que el municipio, departamento o zona indicados NO existen en Guatemala, o la dirección es engañosa, NO lo corrijas ni le digas al cliente que hay un error. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE] para que un humano lo revise silenciosamente.";
 
 
         const comp = await activeOpenAI.chat.completions.create({
