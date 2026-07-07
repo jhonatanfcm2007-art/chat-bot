@@ -40,10 +40,10 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
 // Configuración Líneas Adicionales de WhatsApp (Multi-Línea)
-const WHATSAPP_TOKEN_2 = process.env.WHATSAPP_TOKEN_2;
-const PHONE_ID_2 = process.env.WHATSAPP_PHONE_ID_2 || process.env.PHONE_ID_2;
-const WHATSAPP_TOKEN_3 = process.env.WHATSAPP_TOKEN_3;
-const PHONE_ID_3 = process.env.WHATSAPP_PHONE_ID_3 || process.env.PHONE_ID_3;
+const WHATSAPP_TOKEN_2 = (process.env.WHATSAPP_TOKEN_2 || '').trim();
+const PHONE_ID_2 = (process.env.WHATSAPP_PHONE_ID_2 || process.env.PHONE_ID_2 || '').trim();
+const WHATSAPP_TOKEN_3 = (process.env.WHATSAPP_TOKEN_3 || '').trim();
+const PHONE_ID_3 = (process.env.WHATSAPP_PHONE_ID_3 || process.env.PHONE_ID_3 || '').trim();
 
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -53,6 +53,8 @@ console.log('--- [SISTEMA] Diagnóstico de Variables ---');
 console.log('OpenAI Key:', process.env.OPENAI_API_KEY ? `Detectada (${process.env.OPENAI_API_KEY.substring(0, 10)}...)` : '❌ FALTANTE');
 console.log('📱 Línea 1 - WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' : '❌ FALTANTE');
 console.log('📱 Línea 1 - Phone ID:', PHONE_ID ? `✅ ${PHONE_ID}` : '❌ FALTANTE');
+console.log('📱 Línea 2 - Phone ID:', PHONE_ID_2 ? `✅ ${PHONE_ID_2}` : '❌ FALTANTE');
+console.log('📱 Línea 3 - Phone ID:', PHONE_ID_3 ? `✅ ${PHONE_ID_3}` : '❌ FALTANTE');
 console.log('📱 Línea 2 - WhatsApp Token:', WHATSAPP_TOKEN_2 ? '✅ Detectado' : '⚠️ No configurada');
 console.log('📱 Línea 2 - Phone ID:', PHONE_ID_2 ? `✅ ${PHONE_ID_2}` : '⚠️ No configurada');
 console.log('Admin Phone:', ADMIN_PHONE ? `✅ Detectado (${ADMIN_PHONE})` : '❌ FALTANTE');
@@ -715,6 +717,9 @@ app.post('/webhook', async (req, res) => {
         const msg = body.entry[0].changes[0].value.messages[0];
         const originalFrom = msg.from;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
+        
+        console.log(`[DEBUG] Webhook received from Phone ID: '${webhookPhoneId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}'`);
+
         const waLine = webhookPhoneId === PHONE_ID_3 ? 3 : (webhookPhoneId === PHONE_ID_2 ? 2 : 1);
         const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
