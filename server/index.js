@@ -41,9 +41,9 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
 // Configuración Líneas Adicionales de WhatsApp (Multi-Línea)
 const WHATSAPP_TOKEN_2 = process.env.WHATSAPP_TOKEN_2;
-const PHONE_ID_2 = process.env.WHATSAPP_PHONE_ID_2;
+const PHONE_ID_2 = process.env.WHATSAPP_PHONE_ID_2 || process.env.PHONE_ID_2;
 const WHATSAPP_TOKEN_3 = process.env.WHATSAPP_TOKEN_3;
-const PHONE_ID_3 = process.env.WHATSAPP_PHONE_ID_3;
+const PHONE_ID_3 = process.env.WHATSAPP_PHONE_ID_3 || process.env.PHONE_ID_3;
 
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;

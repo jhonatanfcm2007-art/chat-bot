@@ -107,7 +107,7 @@ const KnowledgeBase = ({ serverUrl }) => {
                       p.line === '2' ? 'bg-purple-50 text-purple-600 border-purple-200' : 
                       'bg-emerald-50 text-emerald-600 border-emerald-200'
                     }`}>
-                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : 'Ambas Líneas'}
+                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : p.line === '3' ? 'Línea 3' : 'Ambas Líneas'}
                     </span>
                     <button onClick={() => openEditModal(p)} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors">
                       <span className="material-symbols-outlined text-sm">edit</span>
@@ -176,6 +176,7 @@ const KnowledgeBase = ({ serverUrl }) => {
                   <option value="Ambas">Ambas Líneas (Global)</option>
                   <option value="1">Línea 1</option>
                   <option value="2">Línea 2</option>
+                  <option value="3">Línea 3</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">El asistente solo venderá este producto en la línea seleccionada.</p>
               </div>

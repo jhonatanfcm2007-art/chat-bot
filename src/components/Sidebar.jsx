@@ -104,6 +104,7 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
                 { val: 'all', label: 'Todas las Líneas', icon: 'domain' },
                 { val: 1, label: 'Línea 1', icon: 'looks_one' },
                 { val: 2, label: 'Línea 2', icon: 'looks_two' },
+                { val: 3, label: 'Línea 3', icon: 'looks_3' },
               ].map(opt => (
                 <button
                   key={opt.val}
