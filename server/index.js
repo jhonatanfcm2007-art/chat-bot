@@ -840,7 +840,10 @@ app.post('/webhook', async (req, res) => {
 
             // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
-            if (webhookPhoneId === PHONE_ID_2) {
+            const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
+            if (cleanWebhookId === PHONE_ID_3) {
+                currentChat.waLine = 3;
+            } else if (cleanWebhookId === PHONE_ID_2) {
                 currentChat.waLine = 2;
             } else if (!currentChat.waLine) {
                 currentChat.waLine = 1;
