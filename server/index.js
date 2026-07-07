@@ -39,9 +39,11 @@ const PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
 
-// Configuración Línea 2 de WhatsApp (Multi-Línea)
+// Configuración Líneas Adicionales de WhatsApp (Multi-Línea)
 const WHATSAPP_TOKEN_2 = process.env.WHATSAPP_TOKEN_2;
 const PHONE_ID_2 = process.env.WHATSAPP_PHONE_ID_2;
+const WHATSAPP_TOKEN_3 = process.env.WHATSAPP_TOKEN_3;
+const PHONE_ID_3 = process.env.WHATSAPP_PHONE_ID_3;
 
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -109,6 +111,9 @@ app.get('/api/webhook-debug', (req, res) => {
 // Helper Multi-Línea: Resuelve credenciales según la línea del cliente
 function getWhatsAppCredentials(customerPhone) {
     const chat = chats?.[customerPhone];
+    if (chat?.waLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) {
+        return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
+    }
     if (chat?.waLine === 2 && WHATSAPP_TOKEN_2 && PHONE_ID_2) {
         return { token: WHATSAPP_TOKEN_2, phoneId: PHONE_ID_2, line: 2 };
     }
@@ -683,8 +688,8 @@ app.post('/webhook', async (req, res) => {
         const statusObj = body.entry[0].changes[0].value.statuses[0];
         const originalRecipientId = statusObj.recipient_id;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
-        const waLine = webhookPhoneId === PHONE_ID_2 ? 2 : 1;
-        const recipientId = waLine === 2 ? `${originalRecipientId}_2` : originalRecipientId;
+        const waLine = webhookPhoneId === PHONE_ID_3 ? 3 : (webhookPhoneId === PHONE_ID_2 ? 2 : 1);
+        const recipientId = waLine > 1 ? `${originalRecipientId}_${waLine}` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
 
@@ -710,8 +715,8 @@ app.post('/webhook', async (req, res) => {
         const msg = body.entry[0].changes[0].value.messages[0];
         const originalFrom = msg.from;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
-        const waLine = webhookPhoneId === PHONE_ID_2 ? 2 : 1;
-        const from = waLine === 2 ? `${originalFrom}_2` : originalFrom;
+        const waLine = webhookPhoneId === PHONE_ID_3 ? 3 : (webhookPhoneId === PHONE_ID_2 ? 2 : 1);
+        const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
         if (chats[from]?.isBlocked) {
@@ -1427,7 +1432,11 @@ async function sendMessageToMessengerAPI(psid, text) {
 
 async function downloadMetaMedia(mediaId, customerPhone) {
     // Multi-Línea: Usar el token correcto para descargar media
-    const waToken = (customerPhone && chats[customerPhone]?.waLine === 2 && WHATSAPP_TOKEN_2) ? WHATSAPP_TOKEN_2 : WHATSAPP_TOKEN;
+    let waToken = WHATSAPP_TOKEN;
+    if (customerPhone && chats[customerPhone]) {
+        if (chats[customerPhone].waLine === 3 && WHATSAPP_TOKEN_3) waToken = WHATSAPP_TOKEN_3;
+        else if (chats[customerPhone].waLine === 2 && WHATSAPP_TOKEN_2) waToken = WHATSAPP_TOKEN_2;
+    }
     try {
         console.log(`📡 [META] Paso 1: Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
