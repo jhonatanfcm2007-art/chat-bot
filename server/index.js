@@ -690,7 +690,8 @@ app.post('/webhook', async (req, res) => {
         const statusObj = body.entry[0].changes[0].value.statuses[0];
         const originalRecipientId = statusObj.recipient_id;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
-        const waLine = webhookPhoneId === PHONE_ID_3 ? 3 : (webhookPhoneId === PHONE_ID_2 ? 2 : 1);
+        const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
+        const waLine = cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1);
         const recipientId = waLine > 1 ? `${originalRecipientId}_${waLine}` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
@@ -717,10 +718,11 @@ app.post('/webhook', async (req, res) => {
         const msg = body.entry[0].changes[0].value.messages[0];
         const originalFrom = msg.from;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
+        const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
         
-        console.log(`[DEBUG] Webhook received from Phone ID: '${webhookPhoneId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}'`);
+        console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}'`);
 
-        const waLine = webhookPhoneId === PHONE_ID_3 ? 3 : (webhookPhoneId === PHONE_ID_2 ? 2 : 1);
+        const waLine = cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1);
         const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
