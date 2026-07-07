@@ -1991,7 +1991,20 @@ app.post('/api/settings', (req, res) => {
 
 async function sendMessageToCloudAPI(to, text) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
-    if (!token || !phoneId || !to) return null;
+    if (!token || !phoneId || !to) {
+        if (chats[to]) {
+            const errorMsg = {
+                id: 'error-cred-' + Date.now(),
+                isMe: true,
+                body: `⚠️ ERROR DEL SISTEMA: Faltan credenciales (WHATSAPP_TOKEN_${chats[to].waLine} o PHONE_ID_${chats[to].waLine}). Ve a Railway y asegúrate de que existan y estén correctas.`,
+                time: new Date().toLocaleTimeString('es-CO')
+            };
+            chats[to].messages.push(errorMsg);
+            saveChats(chats);
+            if (typeof io !== 'undefined') io.emit('message', { ...errorMsg, from: to, waLine: chats[to].waLine });
+        }
+        return null;
+    }
     try {
         const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
@@ -2002,6 +2015,17 @@ async function sendMessageToCloudAPI(to, text) {
         if (!res.ok) {
             const errData = await res.text();
             console.error(`❌ [META L${line} ERROR] al enviar a ${cleanTo}:`, errData);
+            if (chats[to]) {
+                const errorMsg = {
+                    id: 'error-' + Date.now(),
+                    isMe: true,
+                    body: `⚠️ ERROR DEL SISTEMA: Meta rechazó el mensaje. Revisa tu WHATSAPP_TOKEN_3. Detalle: ${errData}`,
+                    time: new Date().toLocaleTimeString('es-CO')
+                };
+                chats[to].messages.push(errorMsg);
+                saveChats(chats);
+                if (typeof io !== 'undefined') io.emit('message', { ...errorMsg, from: to, waLine: line });
+            }
             return null;
         }
         const data = await res.json();
