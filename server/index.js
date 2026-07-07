@@ -1034,17 +1034,30 @@ async function processAIResponse(from, msgBodyLower) {
         return;
     }
 
+    let cleanAiReply = aiReply;
+
+    // --- INTERCEPCIÓN DE FOTOS ---
+    if (/\[ENVIAR_FOTO\]/i.test(cleanAiReply)) {
+        // TODO: Replace with the actual image URL the user wants
+        const photoUrl = 'https://i.imgur.com/vH1NZY9.jpeg'; // Shilajit generic placeholder
+        try {
+            await smartSendImage(from, photoUrl, 'Aquí tienes la presentación oficial del producto.');
+        } catch (err) {
+            console.error("Error enviando foto solicitada por IA:", err);
+        }
+    }
+
     // --- REGISTRO DE PEDIDO ---
-    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(aiReply);
-    const prodsMatch = aiReply.match(/\[PRODUCTOS:(.+?)\]/i);
+    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
+    const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
     
     if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
         
-        const nameMatch = aiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
-        const phoneMatch = aiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
-        const dirMatch = aiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
-        const munMatch = aiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
+        const nameMatch = cleanAiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
+        const phoneMatch = cleanAiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
+        const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
+        const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
         
         if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
         if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
@@ -1056,7 +1069,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = aiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO)[^\]]*\]/gi, '').trim();
+    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -2011,7 +2024,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
         }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO (¡CRÍTICO!): Cuando el cliente te dé sus datos de envío, confirma la orden de manera natural. IMPORTANTE: Las etiquetas de datos DEBEN incluir los corchetes literales [ ] para que el sistema las lea y las oculte. NUNCA las escribas como texto normal (ej. no pongas 'Nombre: Juan'). Al puro final de tu mensaje, sin anunciarlo, agrega literalmente: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: solo la calle, aldea o zona] [MUNICIPIO: ciudad, municipio y departamento].\n8. VALIDACIÓN GEOGRÁFICA: Tienes pleno conocimiento de la geografía de Guatemala. Si al recibir los datos de envío notas que el municipio, departamento o zona indicados NO existen en Guatemala, o la dirección es engañosa, NO lo corrijas ni le digas al cliente que hay un error. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE] para que un humano lo revise silenciosamente.";
+        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a toda Guatemala y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO (¡CRÍTICO!): Cuando el cliente te dé sus datos de envío, confirma la orden de manera natural. IMPORTANTE: Las etiquetas de datos DEBEN incluir los corchetes literales [ ] para que el sistema las lea y las oculte. NUNCA las escribas como texto normal (ej. no pongas 'Nombre: Juan'). Al puro final de tu mensaje, sin anunciarlo, agrega literalmente: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: solo la calle, aldea o zona] [MUNICIPIO: ciudad, municipio y departamento].\n8. VALIDACIÓN GEOGRÁFICA: Tienes pleno conocimiento de la geografía de Guatemala. Si al recibir los datos de envío notas que el municipio, departamento o zona indicados NO existen en Guatemala, o la dirección es engañosa, NO lo corrijas ni le digas al cliente que hay un error. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE] para que un humano lo revise silenciosamente.\n9. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, responde confirmando amablemente y añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO]. El sistema interceptará esta etiqueta y le enviará la foto real. NO intentes enviar fotos dibujando caracteres ni inventando enlaces.";
 
 
         const comp = await activeOpenAI.chat.completions.create({
