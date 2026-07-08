@@ -28,7 +28,13 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   useEffect(() => {
     if (globalLine === 'all') return;
     
-    const lineSettings = settings && settings[globalLine] ? settings[globalLine] : settings?.["1"];
+    const lineSettings = settings && settings[globalLine] ? settings[globalLine] : {
+      systemPrompt: settings?.["1"]?.systemPrompt || '',
+      welcomeAudioEnabled: false,
+      welcomeAudioUrl: '',
+      welcomeImageEnabled: false,
+      welcomeImageUrl: ''
+    };
     
     if (lineSettings?.systemPrompt) {
       const raw = lineSettings.systemPrompt;
@@ -130,7 +136,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
     socket.emit('sync_settings', {
       line: globalLine,
       settings: {
-        ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+        ...(settings && settings[globalLine] ? settings[globalLine] : { systemPrompt: settings?.["1"]?.systemPrompt || '' }),
         welcomeAudioEnabled: val,
         welcomeAudioUrl,
         welcomeImageEnabled,
@@ -144,7 +150,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
     socket.emit('sync_settings', {
       line: globalLine,
       settings: {
-        ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+        ...(settings && settings[globalLine] ? settings[globalLine] : { systemPrompt: settings?.["1"]?.systemPrompt || '' }),
         welcomeAudioEnabled,
         welcomeAudioUrl,
         welcomeImageEnabled: val,
@@ -184,7 +190,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
           socket.emit('sync_settings', {
             line: globalLine,
             settings: {
-              ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+              ...(settings && settings[globalLine] ? settings[globalLine] : { systemPrompt: settings?.["1"]?.systemPrompt || '' }),
               welcomeAudioEnabled,
               welcomeAudioUrl: data.url,
               welcomeImageEnabled,
@@ -237,7 +243,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
           socket.emit('sync_settings', {
             line: globalLine,
             settings: {
-              ...(settings && settings[globalLine] ? settings[globalLine] : settings?.["1"]),
+              ...(settings && settings[globalLine] ? settings[globalLine] : { systemPrompt: settings?.["1"]?.systemPrompt || '' }),
               welcomeAudioEnabled,
               welcomeAudioUrl,
               welcomeImageEnabled,
@@ -260,7 +266,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   };
 
   return (
-    <div className="flex-grow flex justify-center p-6 md:p-10 bg-slate-50/50 overflow-y-auto custom-scrollbar relative">
+    <div className="flex-grow w-full h-full flex justify-center p-6 md:p-10 bg-slate-50/50 overflow-y-auto custom-scrollbar relative">
       {/* Elementos decorativos de fondo (blur orbs) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-400/20 rounded-full blur-[100px]"></div>
