@@ -1749,6 +1749,18 @@ app.post('/api/platforms', (req, res) => { platforms = req.body; savePlatforms(p
 app.get('/api/providers', (req, res) => res.json(providers));
 app.post('/api/providers', (req, res) => { providers = req.body; saveProviders(providers); io.emit('providers_updated', providers); res.json({success:true}); });
 
+app.get('/api/settings', (req, res) => res.json(settings));
+app.post('/api/settings', (req, res) => {
+    if (req.body.line) {
+        settings[req.body.line] = { ...settings[req.body.line], ...req.body.settings };
+    } else {
+        settings["1"] = { ...settings["1"], ...req.body };
+    }
+    saveSettings(settings);
+    io.emit('initial_settings', settings);
+    res.json({ success: true, settings });
+});
+
 io.on('connection', (socket) => {
     socket.emit('inventory_updated', inventory);
     socket.emit('sales_updated', sales);
@@ -1859,17 +1871,7 @@ io.on('connection', (socket) => {
     socket.on('sync_platforms', (data) => { platforms = data; savePlatforms(platforms); socket.broadcast.emit('platforms_updated', platforms); });
     socket.on('sync_providers', (data) => { providers = data; saveProviders(providers); socket.broadcast.emit('providers_updated', providers); });
 
-app.get('/api/settings', (req, res) => res.json(settings));
-app.post('/api/settings', (req, res) => {
-    if (req.body.line) {
-        settings[req.body.line] = { ...settings[req.body.line], ...req.body.settings };
-    } else {
-        settings["1"] = { ...settings["1"], ...req.body };
-    }
-    saveSettings(settings);
-    io.emit('initial_settings', settings);
-    res.json({ success: true, settings });
-});
+
     
     socket.on('delete_chat', (chatId) => {
         if (chats[chatId]) {
