@@ -261,30 +261,42 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   };
 
   return (
-    <div className="flex-grow flex justify-center p-6 md:p-10 bg-background overflow-y-auto custom-scrollbar relative">
-      <div className="w-full max-w-4xl space-y-8 flex flex-col">
+    <div className="flex-grow flex justify-center p-6 md:p-10 bg-slate-50/50 overflow-y-auto custom-scrollbar relative">
+      {/* Elementos decorativos de fondo (blur orbs) */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-400/20 rounded-full blur-[100px]"></div>
+        <div className="absolute top-1/2 -right-40 w-96 h-96 bg-emerald-400/20 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-pink-400/20 rounded-full blur-[100px]"></div>
+      </div>
+
+      <div className="w-full max-w-4xl space-y-8 flex flex-col relative z-10">
         
         {/* Card 1: Entrenar IA */}
-        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-2xl p-8 md:p-10 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-500 flex flex-col relative overflow-hidden group">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Entrenar IA</h3>
-              <p className="text-xs text-slate-500 mt-1">Elige cómo deseas editar las instrucciones de tu asistente virtual.</p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 transform group-hover:scale-105 transition-transform duration-300">
+                <span className="material-symbols-outlined text-white text-2xl">psychology</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-2xl tracking-tight">Entrenar IA</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Elige cómo deseas editar las instrucciones de tu asistente virtual.</p>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/50 backdrop-blur-md">
               <button 
                 onClick={() => setEditMode('raw')}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  editMode === 'raw' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                  editMode === 'raw' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                📝 Texto Completo (Pegar Todo)
+                📝 Texto Completo
               </button>
               <button 
                 onClick={() => setEditMode('cards')}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  editMode === 'cards' ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:text-slate-900'
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                  editMode === 'cards' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 🗂️ Modo Secciones
@@ -294,64 +306,67 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
 
           {editMode === 'raw' ? (
             <div className="mb-8">
-              <label className="block text-xs font-bold text-slate-500  mb-2">
-                Pega aquí tu System Prompt completo:
-              </label>
-              <textarea 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-6 text-xs text-slate-800 font-mono leading-relaxed min-h-[400px] focus:ring-2 focus:ring-primary focus:outline-none custom-scrollbar shadow-inner"
-                value={rawPrompt}
-                onChange={(e) => setRawPrompt(e.target.value)}
-                placeholder="Pega aquí todo tu prompt de ventas..."
-              />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl pointer-events-none"></div>
+                <textarea 
+                  className="w-full bg-white/50 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 text-sm text-slate-700 font-mono leading-relaxed min-h-[400px] focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 focus:outline-none custom-scrollbar shadow-inner transition-all"
+                  value={rawPrompt}
+                  onChange={(e) => setRawPrompt(e.target.value)}
+                  placeholder="Pega aquí todo tu prompt de ventas..."
+                />
+              </div>
             </div>
           ) : (
             <>
               <div className="flex justify-end mb-4">
                 <button 
                   onClick={addSection}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-primary border border-slate-200 rounded-xl hover:bg-primary hover:text-white transition-all text-xs font-semibold "
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white transition-all text-xs font-bold shadow-sm"
                 >
                   <span className="material-symbols-outlined text-sm">add_circle</span>
-                  Añadir punto
+                  Añadir punto clave
                 </button>
               </div>
               
               <div className="space-y-4 pr-2 mb-8 max-h-[500px] overflow-y-auto custom-scrollbar">
                 {sections.map((section, idx) => (
-                  <div key={idx} className={`border border-slate-100 rounded-xl transition-all ${section.isOpen ? 'bg-slate-50/30' : 'bg-transparent'}`}>
+                  <div key={idx} className={`border border-slate-200/60 rounded-2xl transition-all duration-300 overflow-hidden ${section.isOpen ? 'bg-white shadow-md' : 'bg-slate-50/50 hover:bg-white hover:shadow-sm'}`}>
                     <div 
                        className="px-6 py-4 flex items-center justify-between cursor-pointer group"
                        onClick={() => toggleSection(idx)}
                     >
-                      <div className="flex items-center gap-4">
-                        <span className={`material-symbols-outlined text-sm transition-transform ${section.isOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                      <div className="flex items-center gap-4 w-full">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${section.isOpen ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+                          <span className={`material-symbols-outlined text-sm transition-transform duration-300 ${section.isOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                        </div>
                         <input 
-                          className="bg-transparent border-none p-0 focus:ring-0 font-semibold text-xs  text-on-surface cursor-text w-full max-w-[200px]"
+                          className="bg-transparent border-none p-0 focus:ring-0 font-bold text-sm text-slate-800 cursor-text w-full flex-1"
                           value={section.title}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                          placeholder="Título de la sección..."
                         />
                       </div>
                       {sections.length > 1 && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); removeSection(idx); }}
-                          className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-error transition-all"
+                          className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition-all ml-2"
                         >
                           <span className="material-symbols-outlined text-sm">delete</span>
                         </button>
                       )}
                     </div>
                     
-                    {section.isOpen && (
-                      <div className="px-14 pb-6 animate-in slide-in-from-top-2 duration-300">
+                    <div className={`transition-all duration-300 ease-in-out origin-top ${section.isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="px-6 pb-6 pt-2">
                         <textarea 
-                          className="w-full bg-transparent border-none p-0 text-xs focus:ring-0 resize-none text-on-surface-variant leading-relaxed min-h-[100px] custom-scrollbar outline-none font-sans"
+                          className="w-full bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 resize-none text-slate-600 leading-relaxed min-h-[120px] custom-scrollbar outline-none font-sans"
                           value={section.content}
                           onChange={(e) => updateSection(idx, 'content', e.target.value)}
                           placeholder="Indica aquí los detalles de este punto clave..."
                         />
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -360,54 +375,57 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
 
           <button 
             onClick={handleSaveSettings}
-            className={`w-full py-5 rounded-xl font-semibold tracking-[0.4em] uppercase text-xs transition-all duration-500 flex items-center justify-center gap-4 flex-shrink-0 ${
+            className={`w-full py-4 rounded-2xl font-bold tracking-widest uppercase text-sm transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden group ${
               isSaved 
-                ? 'bg-tertiary text-white shadow-sm shadow-tertiary/20' 
-                : 'bg-primary text-on-primary hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98]'
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5'
             }`}
           >
-            <span className="material-symbols-outlined font-semibold text-2xl">{isSaved ? 'verified' : 'save_as'}</span>
-            {isSaved ? 'Instrucciones Guardadas con Éxito' : 'Cargar Instrucciones al Bot'}
+            {/* Efecto de brillo al pasar el mouse */}
+            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
+            
+            <span className="material-symbols-outlined font-bold text-xl relative z-10">{isSaved ? 'task_alt' : 'memory'}</span>
+            <span className="relative z-10">{isSaved ? 'Instrucciones Actualizadas' : 'Actualizar Cerebro de IA'}</span>
           </button>
         </div>
 
         {/* Card 2: Audio de Bienvenida */}
-        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
-          
-          
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Audio)</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xl">
-                Envía automáticamente un mensaje de voz a todos los clientes nuevos que entren a través de tu publicidad (solo cuando escriban por primera vez).
-              </p>
+        <div className="bg-white/80 backdrop-blur-2xl p-8 md:p-10 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-500 flex flex-col relative overflow-hidden group">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 transform group-hover:scale-105 transition-transform duration-300">
+                <span className="material-symbols-outlined text-white text-2xl">record_voice_over</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-2xl tracking-tight">Audio de Bienvenida</h3>
+                <p className="text-sm text-slate-500 mt-0.5 max-w-lg">Envía automáticamente un mensaje de voz a todos los clientes nuevos que entren a través de tu publicidad.</p>
+              </div>
             </div>
             
-            {/* Toggle Switch */}
             <button 
               onClick={() => handleToggleWelcomeAudio(!welcomeAudioEnabled)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                welcomeAudioEnabled ? 'bg-primary' : 'bg-slate-200'
+              className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none shadow-inner ${
+                welcomeAudioEnabled ? 'bg-emerald-500' : 'bg-slate-200'
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  welcomeAudioEnabled ? 'translate-x-5' : 'translate-x-0'
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-300 ease-in-out ${
+                  welcomeAudioEnabled ? 'translate-x-7' : 'translate-x-0'
                 }`}
               />
             </button>
           </div>
 
-          <div className="space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
-            <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className={`transition-all duration-500 ${welcomeAudioEnabled ? 'opacity-100' : 'opacity-50 grayscale'}`}>
+            <div className="flex flex-col md:flex-row gap-6">
               
-              {/* Drop area/Button */}
               <div 
-                onClick={() => audioInputRef.current?.click()}
-                className={`w-full md:w-1/2 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                onClick={() => welcomeAudioEnabled && audioInputRef.current?.click()}
+                className={`w-full md:w-1/2 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
+                  !welcomeAudioEnabled ? 'cursor-not-allowed border-slate-200 bg-slate-50/50' :
                   isUploading 
-                    ? 'border-primary bg-primary/5 cursor-wait' 
-                    : 'border-slate-300 hover:border-primary hover:bg-slate-50'
+                    ? 'border-emerald-400 bg-emerald-50/50 cursor-wait' 
+                    : 'border-slate-300 hover:border-emerald-400 hover:bg-emerald-50/30 cursor-pointer'
                 }`}
               >
                 <input 
@@ -416,46 +434,47 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                   onChange={handleAudioUpload} 
                   accept="audio/*" 
                   className="hidden" 
+                  disabled={!welcomeAudioEnabled}
                 />
                 
                 {isUploading ? (
-                  <>
-                    <svg className="animate-spin h-8 w-8 text-primary mb-3" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-xs font-bold text-slate-600">Subiendo audio...</span>
-                  </>
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+                    <span className="text-sm font-bold text-emerald-600">Subiendo a la nube...</span>
+                  </div>
                 ) : (
-                  <>
-                    <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">mic</span>
-                    <span className="text-xs font-bold text-slate-600 text-center">Haz clic para subir tu audio de bienvenida</span>
-                    <span className="text-xs text-slate-400 mt-1">Formatos admitidos: .ogg, .mp3, .wav, .m4a</span>
-                  </>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors duration-300">
+                      <span className="material-symbols-outlined text-3xl text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">cloud_upload</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-700">Haz clic para subir un audio nuevo</span>
+                    <span className="text-xs text-slate-400 mt-2 font-medium">MP3, WAV, OGG, M4A</span>
+                  </div>
                 )}
               </div>
 
-              {/* Status & Player */}
-              <div className="w-full md:w-1/2 flex flex-col justify-center">
-                <span className="text-xs font-semibold  text-slate-400">Audio Activo</span>
+              <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+                <span className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-4">Audio Actual</span>
                 
                 {welcomeAudioUrl ? (
-                  <div className="mt-2 space-y-3">
-                    <div className="flex items-center gap-2 text-xs text-primary font-bold bg-primary/10 px-3 py-2 rounded-xl border border-primary/20 w-fit">
-                      <span className="material-symbols-outlined text-sm">audiotrack</span>
-                      <span>Audio Cargado Correctamente</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-sm text-emerald-600 font-bold bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-sm">check</span>
+                      </div>
+                      <span>Audio configurado y listo</span>
                     </div>
                     
-                    {/* Audio Player */}
                     <audio 
                       src={welcomeAudioUrl.startsWith('http') ? welcomeAudioUrl : `${serverUrl}${welcomeAudioUrl}`} 
                       controls 
-                      className="w-full h-10 mt-1 border border-slate-200 rounded-xl"
+                      className="w-full h-12 rounded-xl custom-audio-player"
                     />
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-slate-400 italic">
-                    No hay ningún archivo de audio cargado todavía. Sube un archivo para comenzar.
+                  <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                    <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">mic_off</span>
+                    <p className="text-sm text-slate-400 font-medium">No hay audio configurado.</p>
                   </div>
                 )}
               </div>
@@ -465,42 +484,42 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
         </div>
 
         {/* Card 3: Imagen de Bienvenida */}
-        <div className="bg-white p-10 md:p-12 rounded-xl border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
-          
-          
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="font-semibold text-on-surface text-2xl tracking-tight uppercase">Mensaje de Bienvenida (Imagen de Producto Original)</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xl">
-                Envía automáticamente la foto de tu producto Shilajit original a todos los clientes nuevos que escriban por primera vez.
-              </p>
+        <div className="bg-white/80 backdrop-blur-2xl p-8 md:p-10 rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-500 flex flex-col relative overflow-hidden group">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30 transform group-hover:scale-105 transition-transform duration-300">
+                <span className="material-symbols-outlined text-white text-2xl">image</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-2xl tracking-tight">Imagen de Bienvenida</h3>
+                <p className="text-sm text-slate-500 mt-0.5 max-w-lg">Envía automáticamente la foto de tu producto original a todos los clientes nuevos.</p>
+              </div>
             </div>
             
-            {/* Toggle Switch */}
             <button 
               onClick={() => handleToggleWelcomeImage(!welcomeImageEnabled)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                welcomeImageEnabled ? 'bg-primary' : 'bg-slate-200'
+              className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none shadow-inner ${
+                welcomeImageEnabled ? 'bg-pink-500' : 'bg-slate-200'
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  welcomeImageEnabled ? 'translate-x-5' : 'translate-x-0'
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-300 ease-in-out ${
+                  welcomeImageEnabled ? 'translate-x-7' : 'translate-x-0'
                 }`}
               />
             </button>
           </div>
 
-          <div className="space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
-            <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className={`transition-all duration-500 ${welcomeImageEnabled ? 'opacity-100' : 'opacity-50 grayscale'}`}>
+            <div className="flex flex-col md:flex-row gap-6">
               
-              {/* Drop area/Button */}
               <div 
-                onClick={() => imageInputRef.current?.click()}
-                className={`w-full md:w-1/2 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                onClick={() => welcomeImageEnabled && imageInputRef.current?.click()}
+                className={`w-full md:w-1/2 border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
+                  !welcomeImageEnabled ? 'cursor-not-allowed border-slate-200 bg-slate-50/50' :
                   isUploadingImage 
-                    ? 'border-primary bg-primary/5 cursor-wait' 
-                    : 'border-slate-300 hover:border-primary hover:bg-slate-50'
+                    ? 'border-pink-400 bg-pink-50/50 cursor-wait' 
+                    : 'border-slate-300 hover:border-pink-400 hover:bg-pink-50/30 cursor-pointer'
                 }`}
               >
                 <input 
@@ -509,46 +528,52 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
                   onChange={handleImageUpload} 
                   accept="image/*" 
                   className="hidden" 
+                  disabled={!welcomeImageEnabled}
                 />
                 
                 {isUploadingImage ? (
-                  <>
-                    <svg className="animate-spin h-8 w-8 text-primary mb-3" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-xs font-bold text-slate-600">Subiendo imagen...</span>
-                  </>
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin mb-4"></div>
+                    <span className="text-sm font-bold text-pink-600">Procesando imagen...</span>
+                  </div>
                 ) : (
-                  <>
-                    <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">image</span>
-                    <span className="text-xs font-bold text-slate-600 text-center">Haz clic para subir tu foto de producto original</span>
-                    <span className="text-xs text-slate-400 mt-1">Formatos admitidos: .png, .jpg, .jpeg, .webp</span>
-                  </>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-pink-100 transition-colors duration-300">
+                      <span className="material-symbols-outlined text-3xl text-slate-400 group-hover:text-pink-500 transition-colors duration-300">add_photo_alternate</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-700">Haz clic para subir una foto</span>
+                    <span className="text-xs text-slate-400 mt-2 font-medium">PNG, JPG, JPEG, WEBP</span>
+                  </div>
                 )}
               </div>
 
-              {/* Status & Preview */}
-              <div className="w-full md:w-1/2 flex flex-col justify-center">
-                <span className="text-xs font-semibold  text-slate-400">Imagen Activa</span>
+              <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+                <span className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-4">Vista Previa</span>
                 
                 {welcomeImageUrl ? (
-                  <div className="mt-2 space-y-3">
-                    <div className="flex items-center gap-2 text-xs text-primary font-bold bg-primary/10 px-3 py-2 rounded-xl border border-primary/20 w-fit">
-                      <span className="material-symbols-outlined text-sm">photo_library</span>
-                      <span>Imagen Cargada Correctamente</span>
+                  <div className="flex items-center gap-6">
+                    <div className="relative group/img rounded-xl overflow-hidden shadow-md border border-slate-200 w-32 h-32 flex-shrink-0">
+                      <img 
+                        src={welcomeImageUrl.startsWith('http') ? welcomeImageUrl : `${serverUrl}${welcomeImageUrl}`} 
+                        alt="Bienvenida Original" 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-white">visibility</span>
+                      </div>
                     </div>
-                    
-                    {/* Image Preview */}
-                    <img 
-                      src={welcomeImageUrl.startsWith('http') ? welcomeImageUrl : `${serverUrl}${welcomeImageUrl}`} 
-                      alt="Bienvenida Original" 
-                      className="w-32 h-32 object-cover border border-slate-200 rounded-xl shadow-sm"
-                    />
+                    <div className="flex flex-col justify-center">
+                      <div className="flex items-center gap-2 text-sm text-pink-600 font-bold mb-1">
+                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                        <span>Imagen Lista</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Se enviará esta imagen a tus clientes nuevos.</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-slate-400 italic">
-                    No hay ninguna imagen cargada todavía. Sube una foto de tu producto original para comenzar.
+                  <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                    <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">hide_image</span>
+                    <p className="text-sm text-slate-400 font-medium">No has subido ninguna foto.</p>
                   </div>
                 )}
               </div>
