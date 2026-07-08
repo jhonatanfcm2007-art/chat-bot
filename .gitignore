@@ -27,9 +27,4 @@ dist-ssr
 .wwebjs_auth
 
 # Production Database Files
-server/data/chats.json
-server/data/sales.json
-server/data/customers.json
-server/data/inventory.json
-server/data/vapid.json
-server/data/push_subscriptions.json
+server/data/*.json
