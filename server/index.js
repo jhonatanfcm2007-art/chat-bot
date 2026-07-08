@@ -1966,7 +1966,7 @@ io.on('connection', (socket) => {
         }
         
         if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
-        saveChats(chats); io.emit('message', { ...m, waLine: chat.waLine });
+        saveChats(chats); io.emit('message', { ...m, waLine: chats[to].waLine || 1 });
         scheduleRecovery(to);
     });
 });
