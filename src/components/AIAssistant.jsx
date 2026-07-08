@@ -266,7 +266,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   };
 
   return (
-    <div className="flex-grow w-full h-full flex justify-center p-6 md:p-10 bg-slate-50/50 overflow-y-auto custom-scrollbar relative">
+    <div className="flex-1 w-full min-h-0 flex justify-center p-6 md:p-10 bg-slate-50/50 overflow-y-auto custom-scrollbar relative">
       {/* Elementos decorativos de fondo (blur orbs) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-400/20 rounded-full blur-[100px]"></div>
