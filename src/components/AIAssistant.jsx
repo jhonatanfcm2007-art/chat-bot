@@ -99,8 +99,7 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
       ? rawPrompt 
       : sections.map(s => `### ${s.title.toUpperCase()}:\n${s.content}`).join('\n\n');
       
-    const payload = { 
-      ...settings, 
+    const payload = {
       systemPrompt: fullPrompt,
       welcomeAudioEnabled,
       welcomeAudioUrl,
