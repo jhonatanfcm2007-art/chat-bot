@@ -380,26 +380,6 @@ let knowledgeBaseDb = loadKnowledgeBase();
         console.log('✅ [CONFIG] Base de Conocimiento inicializada con productos por defecto.');
     }
 
-    // MIGRACIÓN FORZADA - Actualizar flujo de Shilajit en producción
-    let updated = false;
-    knowledgeBaseDb.forEach(prod => {
-        if (prod.name.toLowerCase().includes('shilajit')) {
-            prod.details = 'REGLA DE SOPORTE CRÍTICA: Si el cliente pregunta por su \'número de envío\', \'número de guía\', \'número de rastreo\', \'cuándo llega\' o menciona que quiere \'recoger\' su pedido, JAMÁS digas que no puedes darlo. Responde SIEMPRE así: \'Tu número de guía se te enviará por aquí en cuanto el paquete sea despachado, generalmente en 24-48 horas 📦 ¿Tienes alguna otra duda?\' y luego incluye la etiqueta [APAGAR_BOT_SOPORTE] al final de tu mensaje para que un asesor humano tome el caso.\n\nFLUJO DE VENTAS (Reglas de Oro):\n1. RESPONDE LA PREGUNTA DEL CLIENTE PRIMERO. Si te hacen una pregunta directa (ej. "¿Es cápsula?", "¿Tiene efectos secundarios?"), responde a su duda de forma natural y coherente ANTES de continuar con el siguiente paso del flujo.\n2. ESTÁ PROHIBIDO UNIR DOS PASOS EN UN SOLO MENSAJE. Nunca envíes los precios sin que el cliente haya respondido al paso anterior.\n3. Si preguntan si "engruesa" o "alarga", RESPONDE QUE SÍ (gracias al aumento masivo de flujo sanguíneo, se nota desde la 2da/3ra semana).\n\nPASOS DEL EMBUDO:\n\nMensaje 1 — Exploración:\nPregunta si busca el Shilajit para energía diaria o para potenciar su rendimiento y vigor sexual. (Si el cliente ya fue directo a otra cosa, responde su duda y avanza al Mensaje 2).\n\nMensaje 2 — Beneficios Agresivos:\nIMPORTANTE: No digas "Te entiendo perfectamente" a menos que el cliente realmente te haya contado un problema personal. Adapta tu respuesta a lo que dijo el cliente. Luego, menciona los beneficios clave: "Después de los 30 años la testosterona cae. El Shilajit Ultra actúa como una bomba natural: dispara la testosterona, devuelve la firmeza, aumenta radicalmente el deseo y da una resistencia en la intimidad como si tuvieras 20 años de nuevo. Sin químicos."\nTermina siempre con esta pregunta: "¿Te gustaría conocer las opciones de tratamiento para empezar a notar el cambio esta misma semana?"\n\nMensaje 3 — Opciones y Precios:\nDile: "Tenemos estas dos opciones (con GARANTÍA TOTAL de devolución de dinero en 15 días si no sientes mejora):\n🌿 1 Frasco (60 cápsulas): Q155\n🎁 Combo 2 Frascos: Q244 — (El más pedido) tratamiento completo.\nLa gran mayoría empieza con el combo porque la pareja nota la diferencia de inmediato 😎. ¿Con cuál te gustaría empezar?"\n\nMensaje 4 — Cierre:\nPide dirección completa y municipio. Recuerda que el envío es GRATIS a todo el país y el pago es en efectivo al recibir.';
-            
-            prod.prices = '- 🌿 1 Frasco (60 Cápsulas): Q155\n- 🎁 Combo 2 Frascos: Q244\n- 🔥 Combo 3 Frascos: Q330';
-            updated = true;
-        }
-        
-        // MIGRACIÓN: Garantía global para todos los productos
-        if (!prod.details.includes('GARANTÍA TOTAL')) {
-            prod.details += '\n\nIMPORTANTE: En tu propuesta de precios o antes del cierre, menciónale al cliente de forma persuasiva y natural que cuenta con GARANTÍA TOTAL: si en 15 días no siente una mejora real, le devolvemos su dinero sin hacer preguntas.';
-            updated = true;
-        }
-    });
-    if (updated) {
-        saveKnowledgeBase(knowledgeBaseDb);
-        console.log('✅ [MIGRACIÓN] Flujo de Shilajit actualizado forzosamente en producción.');
-    }
 
     // Configurar un prompt base corto si aún no está configurado
     const basePrompt = `Eres un asesor de ventas virtual experto y persuasivo por WhatsApp. 
@@ -481,7 +461,7 @@ function scheduleRecovery(to) {
             const newLastMsg = [...(currentChat.messages || [])].reverse()[0];
             if (newLastMsg && newLastMsg.role === 'bot') {
                 console.log(`⏱️ [SEGUIMIENTO] Enviando seguimiento de Etapa 5 a ${currentChat.customerName} (${to})`);
-                const followUpMsg = "Hola de nuevo 👋 Solo quería confirmarte que aún tenemos stock disponible hoy. Muchos clientes en Guatemala ya están sintiendo los resultados — no quiero que te quedes sin tu pedido. ¿Te ayudo a coordinar el envío?";
+                const followUpMsg = "Hola de nuevo 👋 Solo quería confirmarte que aún tenemos stock disponible hoy. Muchos de nuestros clientes ya están sintiendo los resultados — no quiero que te quedes sin tu pedido. ¿Te ayudo a coordinar el envío?";
                 
                 const wamid = await smartSendMessage(to, followUpMsg);
                 const botMsg = { 
@@ -568,7 +548,7 @@ async function createShopifyOrder(chat, products) {
                 shipping_address: {
                     first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
-                    city: chat.city || 'Guatemala',
+                    city: chat.city || '',
                     country: 'GT',
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
