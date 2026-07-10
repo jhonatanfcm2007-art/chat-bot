@@ -513,8 +513,9 @@ async function registerOrder(to, products) {
         const orderPhone = chat.orderPhone || 'No especificado';
         const orderAddress = chat.address || 'No especificada';
         const orderCity = chat.city || 'No especificado';
+        const orderDep = chat.province || 'No especificado';
 
-        const notif = `📦 *NUEVO PEDIDO PENDIENTE*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
+        const notif = `📦 *NUEVO PEDIDO PENDIENTE*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
         smartSendMessage(ADMIN_PHONE, notif);
     }
 
@@ -549,6 +550,7 @@ async function createShopifyOrder(chat, products) {
                     first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
                     city: chat.city || '',
+                    province: chat.province || '',
                     country: 'GT',
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
@@ -1053,18 +1055,20 @@ async function processAIResponse(from, msgBodyLower) {
         const phoneMatch = cleanAiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
         const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
         const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
+        const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
         
         if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
         if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
         if (dirMatch) refreshedChat.address = dirMatch[1].trim();
         if (munMatch) refreshedChat.city = munMatch[1].trim();
+        if (depMatch) refreshedChat.province = depMatch[1].trim();
         
         saveChats(chats);
         await registerOrder(from, products);
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
+    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
