@@ -618,11 +618,7 @@ async function createShopifyOrder(chat, products) {
         const orderData = {
             order: {
                 line_items: [ lineItem ],
-                customer: {
-                    first_name: firstName,
-                    last_name: lastName,
-                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
-                },
+                phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, '')),
                 shipping_address: {
                     first_name: firstName,
                     last_name: lastName,
