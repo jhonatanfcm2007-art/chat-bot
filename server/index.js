@@ -805,7 +805,7 @@ app.post('/webhook', async (req, res) => {
         // Comandos Admin (Shopify Approval)
         if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text') {
             const adminText = msg.text.body.trim();
-            const match = adminText.match(/^(APROBAR|RECHAZAR)\s+(\d+)$/i);
+            const match = adminText.match(/^(APROBAR|RECHAZAR)\s+([\d_]+)$/i);
             if (match) {
                 const action = match[1].toUpperCase();
                 const targetPhone = match[2];
