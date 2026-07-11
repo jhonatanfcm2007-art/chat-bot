@@ -576,17 +576,17 @@ async function createShopifyOrder(chat, products) {
                 variant_id: targetVariantId,
                 quantity: orderQty
             };
-            // Shopify ignora 'price' si hay 'variant_id', debemos aplicar un descuento total
-            let originalTotal = 155.00 * orderQty;
-            let desiredTotal = parseFloat(unitPrice) * orderQty;
-            let discountAmount = originalTotal - desiredTotal;
+            // En Shopify, el 'applied_discount' de tipo fixed_amount en un line_item se aplica POR UNIDAD.
+            let originalUnitPrice = 155.00;
+            let desiredUnitPrice = parseFloat(unitPrice);
+            let discountPerUnit = originalUnitPrice - desiredUnitPrice;
             
-            if (discountAmount > 0) {
+            if (discountPerUnit > 0) {
                 lineItem.applied_discount = {
                     description: "Descuento por Combo",
                     value_type: "fixed_amount",
-                    value: discountAmount.toFixed(2),
-                    amount: discountAmount.toFixed(2)
+                    value: discountPerUnit.toFixed(2),
+                    amount: discountPerUnit.toFixed(2) // Some API versions use value, others amount
                 };
             }
         } else {
