@@ -625,6 +625,9 @@ async function createShopifyOrder(chat, products) {
         }
         finalPhone = '+' + finalPhone;
 
+        const defaultProvince = countryISO === 'GT' ? 'Guatemala' : 'Francisco Morazán';
+        const provinceVal = chat.province || defaultProvince;
+
         const orderData = {
             order: {
                 line_items: [ lineItem ],
@@ -632,9 +635,9 @@ async function createShopifyOrder(chat, products) {
                     first_name: firstName,
                     last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
-                    address2: chat.orderRef || '',
+                    address2: chat.references || '',
                     city: chat.city || 'Ciudad',
-                    province: chat.orderDep || chat.province || '',
+                    province: provinceVal,
                     zip: '00000',
                     country: countryISO,
                     phone: finalPhone
@@ -644,12 +647,12 @@ async function createShopifyOrder(chat, products) {
                     last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
                     city: chat.city || 'Ciudad',
-                    province: chat.orderDep || chat.province || '',
+                    province: provinceVal,
                     zip: '00000',
                     country: countryISO,
                     phone: finalPhone
                 },
-                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nReferencias: ${chat.orderRef || 'No especificadas'}`,
+                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nReferencias: ${chat.references || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
                 financial_status: 'pending'
             }
