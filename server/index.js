@@ -613,18 +613,30 @@ async function createShopifyOrder(chat, products) {
         const orderData = {
             order: {
                 line_items: [ lineItem ],
+                customer: {
+                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
+                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
+                },
                 shipping_address: {
                     first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
+                    address2: chat.orderRef || '',
                     city: chat.city || '',
-                    province: chat.province || '',
+                    province: chat.orderDep || chat.province || '',
                     country: countryISO,
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
-                note: `Pedido vía WhatsApp Bot. Teléfono: ${chat.from}`,
+                billing_address: {
+                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
+                    address1: chat.address || 'Pendiente de confirmar',
+                    city: chat.city || '',
+                    province: chat.orderDep || chat.province || '',
+                    country: countryISO,
+                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
+                },
+                note: `Pedido vía WhatsApp Bot.\nTeléfono: ${chat.orderPhone || chat.from}\nReferencias: ${chat.orderRef || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
-                financial_status: 'pending',
-                use_customer_default_address: false
+                financial_status: 'pending'
             }
         };
 
