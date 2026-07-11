@@ -539,8 +539,16 @@ async function createShopifyOrder(chat, products) {
     let PRODUCT_ID = '9785966035179'; // ID de Shilajit en Guatemala
     let countryISO = 'GT';
 
-    // Si es Honduras (Línea 2 o 3), usar credenciales de Honduras si existen
-    if (waLine === '2' || waLine === '3') {
+    // Si es Chile (Línea 2), usar credenciales de Chile (por ahora vacías/fallback a GT si no existen)
+    if (waLine === '2') {
+        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_CL || process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
+        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_CL || process.env.SHOPIFY_ACCESS_TOKEN_HN;
+        PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_CL || process.env.SHOPIFY_PRODUCT_ID_HN || '10462928404768';
+        countryISO = 'CL';
+    }
+
+    // Si es Honduras (Línea 3), usar credenciales de Honduras si existen
+    if (waLine === '3') {
         SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
         SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN;
         PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_HN || '10462928404768';
@@ -622,10 +630,12 @@ async function createShopifyOrder(chat, products) {
             finalPhone = '502' + finalPhone;
         } else if (countryISO === 'HN' && !finalPhone.startsWith('504')) {
             finalPhone = '504' + finalPhone;
+        } else if (countryISO === 'CL' && !finalPhone.startsWith('56')) {
+            finalPhone = '56' + finalPhone;
         }
         finalPhone = '+' + finalPhone;
 
-        const defaultProvince = countryISO === 'GT' ? 'Guatemala' : 'Francisco Morazán';
+        const defaultProvince = countryISO === 'GT' ? 'Guatemala' : (countryISO === 'HN' ? 'Francisco Morazán' : 'Región Metropolitana');
         const provinceVal = chat.province || defaultProvince;
 
         const orderData = {
@@ -2187,8 +2197,18 @@ async function getAIResponse(message, history = [], waLine = 1) {
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
         let countryContext = "Guatemala"; // Default
-        if (waLine == '1') countryContext = "Guatemala";
-        else if (waLine == '2' || waLine == '3') countryContext = "Honduras";
+        let termCity = "Municipio";
+        let termProv = "Departamento";
+
+        if (waLine == '1') {
+            countryContext = "Guatemala";
+        } else if (waLine == '2') {
+            countryContext = "Chile";
+            termCity = "Comuna";
+            termProv = "Región";
+        } else if (waLine == '3') {
+            countryContext = "Honduras";
+        }
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
@@ -2197,9 +2217,9 @@ async function getAIResponse(message, history = [], waLine = 1) {
 4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
 6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
-7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
-8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y Municipio. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
-9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el municipio o departamento en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
+7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un(a) ${termCity} pero NO te dice el(la) ${termProv}, DEBES deducir el(la) ${termProv} correcto(a) con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
+8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
+9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
 
 
