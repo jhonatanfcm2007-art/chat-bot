@@ -598,20 +598,9 @@ async function createShopifyOrder(chat, products) {
         if (targetVariantId) {
             lineItem = {
                 variant_id: targetVariantId,
-                quantity: orderQty
+                quantity: orderQty,
+                price: unitPrice
             };
-            // En Shopify, el 'applied_discount' de tipo fixed_amount en un line_item se aplica POR UNIDAD.
-            let desiredUnitPrice = parseFloat(unitPrice);
-            let discountPerUnit = originalUnitPrice - desiredUnitPrice;
-            
-            if (discountPerUnit > 0) {
-                lineItem.applied_discount = {
-                    description: "Descuento por Combo",
-                    value_type: "fixed_amount",
-                    value: discountPerUnit.toFixed(2),
-                    amount: discountPerUnit.toFixed(2) // Some API versions use value, others amount
-                };
-            }
         } else {
             lineItem = {
                 title: products, // Fallback
@@ -621,9 +610,8 @@ async function createShopifyOrder(chat, products) {
             };
         }
 
-        // Usamos Draft Orders API (no requiere permiso especial de write_orders)
-        const draftOrderData = {
-            draft_order: {
+        const orderData = {
+            order: {
                 line_items: [ lineItem ],
                 shipping_address: {
                     first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
@@ -635,24 +623,25 @@ async function createShopifyOrder(chat, products) {
                 },
                 note: `Pedido vía WhatsApp Bot. Teléfono: ${chat.from}`,
                 tags: 'whatsapp-bot, contraentrega',
+                financial_status: 'pending',
                 use_customer_default_address: false
             }
         };
 
-        const response = await fetch(`https://${cleanUrl}/admin/api/2024-01/draft_orders.json`, {
+        const response = await fetch(`https://${cleanUrl}/admin/api/2024-01/orders.json`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Shopify-Access-Token': cleanToken
             },
-            body: JSON.stringify(draftOrderData)
+            body: JSON.stringify(orderData)
         });
 
         const data = await response.json();
-        if (response.ok && data.draft_order) {
-            return { success: true, orderId: data.draft_order.id, orderName: data.draft_order.name };
+        if (response.ok && data.order) {
+            return { success: true, orderId: data.order.id, orderName: data.order.name };
         } else {
-            console.error('❌ Error Shopify Draft Order:', data);
+            console.error('❌ Error Shopify Order:', data);
             return { success: false, error: JSON.stringify(data) };
         }
     } catch (e) {
