@@ -836,6 +836,12 @@ app.post('/webhook', async (req, res) => {
                 }
 
                 if (action === 'APROBAR') {
+                    // Validar que los datos mínimos existan para Dropi
+                    if (!targetChat.orderName || !targetChat.address || !targetChat.city || !targetChat.province) {
+                        smartSendMessage(ADMIN_PHONE, '❌ *Error de Aprobación:* No se puede aprobar el pedido porque faltan datos esenciales (Nombre, Dirección, Municipio o Departamento). Por favor, pídele los datos faltantes al cliente antes de aprobar.');
+                        res.sendStatus(200); return;
+                    }
+
                     smartSendMessage(ADMIN_PHONE, '⏳ Creando pedido en Shopify...');
                     const shopifyRes = await createShopifyOrder(targetChat, targetChat.pendingApprovalProducts || 'Producto');
                     
