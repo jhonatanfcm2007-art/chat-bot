@@ -887,6 +887,13 @@ app.post('/webhook', async (req, res) => {
             const isNewChat = !chats[from];
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
+            
+            // DEDUPLICACIÓN DE WEBHOOKS: Ignorar si el mensaje ya fue procesado
+            if (msg.id && currentChat.messages.some(m => m.wamid === msg.id || m.id === msg.id)) {
+                console.log(`♻️ [DEDUPLICACIÓN] Mensaje ${msg.id} de ${from} ya fue procesado. Ignorando.`);
+                res.sendStatus(200);
+                return;
+            }
 
             // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
