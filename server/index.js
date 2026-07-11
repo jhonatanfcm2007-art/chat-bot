@@ -539,15 +539,26 @@ async function createShopifyOrder(chat, products) {
         const cleanUrl = SHOPIFY_URL.replace(/^https?:\/\//, '').replace(/\/$/, '').trim();
         const cleanToken = SHOPIFY_TOKEN.trim();
         
+        // Extraer la cantidad del texto del producto (ej: "Combo 2 Frascos")
+        let orderQty = 1;
+        if (/2\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 2;
+        else if (/3\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 3;
+        else if (/4\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 4;
+        else if (/5\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 5;
+
+        // Calcular precio unitario para que cuadre con las promociones (Shilajit)
+        let unitPrice = '155.00';
+        if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
+        if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
+
         // Usamos Draft Orders API (no requiere permiso especial de write_orders)
         const draftOrderData = {
             draft_order: {
                 line_items: [
                     {
-                        title: products,
-                        price: '0.00',
-                        quantity: 1,
-                        requires_shipping: true
+                        variant_id: 9785966035179, // ID del Shilajit unitario
+                        quantity: orderQty,
+                        price: unitPrice
                     }
                 ],
                 shipping_address: {
