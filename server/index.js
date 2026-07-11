@@ -628,7 +628,6 @@ async function createShopifyOrder(chat, products) {
         const orderData = {
             order: {
                 line_items: [ lineItem ],
-                phone: finalPhone,
                 shipping_address: {
                     first_name: firstName,
                     last_name: lastName,
