@@ -514,8 +514,12 @@ async function registerOrder(to, products) {
         const orderAddress = chat.address || 'No especificada';
         const orderCity = chat.city || 'No especificado';
         const orderDep = chat.province || 'No especificado';
+        const orderRef = chat.references || 'No especificadas';
 
-        const notif = `📦 *NUEVO PEDIDO PENDIENTE*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
+        const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado' && orderRef !== 'No especificadas';
+        const title = isComplete ? '📦 *NUEVO PEDIDO PENDIENTE*' : '⚠️ *NUEVO PEDIDO (Falta Info)*';
+
+        const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
         smartSendMessage(ADMIN_PHONE, notif);
     }
 
@@ -1056,19 +1060,31 @@ async function processAIResponse(from, msgBodyLower) {
         const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
         const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
         const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
+        const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
         
         if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
         if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
         if (dirMatch) refreshedChat.address = dirMatch[1].trim();
         if (munMatch) refreshedChat.city = munMatch[1].trim();
         if (depMatch) refreshedChat.province = depMatch[1].trim();
+        if (refMatch) refreshedChat.references = refMatch[1].trim();
+        
+        const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province && refreshedChat.references;
         
         saveChats(chats);
-        await registerOrder(from, products);
+        
+        // Evitar spam: Solo notificar si no se ha marcado como registrado definitivamente
+        if (!refreshedChat.orderRegistered) {
+            await registerOrder(from, products);
+            if (isComplete) {
+                refreshedChat.orderRegistered = true;
+                saveChats(chats);
+            }
+        }
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
+    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -2056,7 +2072,21 @@ async function getAIResponse(message, history = [], waLine = 1) {
         }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        const globalRules = "\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:\n1. NUNCA inventes datos de acceso, correos ni números de guía falsos.\n2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].\n3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento de arriba.\n4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).\n5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia (ej: ya pidió explícitamente el nombre de un producto o ya dijo qué le duele), OMITE cualquier paso de tu guion que pregunte esa misma información. Salta directamente al siguiente paso lógico para no sonar redundante o poco inteligente.\n6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye una etiqueta de anuncio como [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto que tenga ese 'ID de Anuncio asociado' (123456) y asumir INMEDIATAMENTE que el cliente busca ese producto, aplicando su flujo de ventas correspondiente sin preguntar.\n7. DATOS DE ENVÍO (¡CRÍTICO!): Cuando el cliente te dé sus datos de envío, confirma la orden de manera natural. IMPORTANTE: Las etiquetas de datos DEBEN incluir los corchetes literales [ ] para que el sistema las lea y las oculte. NUNCA las escribas como texto normal (ej. no pongas 'Nombre: Juan'). Al puro final de tu mensaje, sin anunciarlo, agrega literalmente: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: solo la calle, aldea o zona] [MUNICIPIO: ciudad, municipio y departamento u otra subdivisión válida].\n8. VALIDACIÓN GEOGRÁFICA: Tienes pleno conocimiento de la geografía del país de tu línea operativa. Si al recibir los datos de envío notas que el municipio, departamento, provincia o zona indicados NO existen, o la dirección es engañosa, NO lo corrijas ni le digas al cliente que hay un error. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE] para que un humano lo revise silenciosamente.\n9. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, responde confirmando amablemente y añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO]. El sistema interceptará esta etiqueta y le enviará la foto real. NO intentes enviar fotos dibujando caracteres ni inventando enlaces.";
+        let countryContext = "Guatemala"; // Default
+        if (waLine == '1') countryContext = "Guatemala";
+        else if (waLine == '2') countryContext = "Honduras";
+        
+        const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
+1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
+2. Si el cliente solicita soporte sobre su paquete o guía, usa [APAGAR_BOT_SOPORTE].
+3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento.
+4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).
+5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
+6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
+7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. SIEMPRE solicita Puntos de Referencia ("Cerca de...", "Frente a...") para la dirección.
+8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta hasta tener TODO: Nombre, Dirección, Referencias, y Municipio. Cuando tengas todos los datos, confirma la orden. IMPORTANTE: Al final de tu mensaje de confirmación, agrega literalmente estas etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: xxx] [REFERENCIAS: xxx] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento].
+9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el municipio o departamento en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
+10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
 
 
         const comp = await activeOpenAI.chat.completions.create({
