@@ -1062,12 +1062,19 @@ async function processAIResponse(from, msgBodyLower) {
         const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
         const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
         
-        if (nameMatch) refreshedChat.orderName = nameMatch[1].trim();
-        if (phoneMatch) refreshedChat.orderPhone = phoneMatch[1].trim();
-        if (dirMatch) refreshedChat.address = dirMatch[1].trim();
-        if (munMatch) refreshedChat.city = munMatch[1].trim();
-        if (depMatch) refreshedChat.province = depMatch[1].trim();
-        if (refMatch) refreshedChat.references = refMatch[1].trim();
+        const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) ? val.trim() : null;
+
+        if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
+        if (phoneMatch) refreshedChat.orderPhone = cleanVal(phoneMatch[1]) || refreshedChat.orderPhone;
+        if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
+        if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
+        if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
+        if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
+        
+        // Autodetectar el número de teléfono desde el ID de WhatsApp si la IA no lo extrajo o no se lo dieron
+        if (!refreshedChat.orderPhone) {
+            refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
+        }
         
         const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province && refreshedChat.references;
         
@@ -2084,7 +2091,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
 6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
 7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. SIEMPRE solicita Puntos de Referencia ("Cerca de...", "Frente a...") para la dirección.
-8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta hasta tener TODO: Nombre, Dirección, Referencias, y Municipio. Cuando tengas todos los datos, confirma la orden. IMPORTANTE: Al final de tu mensaje de confirmación, agrega literalmente estas etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [TELEFONO: xxx] [DIRECCION: xxx] [REFERENCIAS: xxx] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento].
+8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos: Nombre, Dirección, Referencias, y Municipio. Si te falta alguno de estos datos, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: xxx] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento].
 9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el municipio o departamento en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
 
