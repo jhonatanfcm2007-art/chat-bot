@@ -516,7 +516,7 @@ async function registerOrder(to, products) {
         const orderDep = chat.province || 'No especificado';
         const orderRef = chat.references || 'No especificadas';
 
-        const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado' && orderRef !== 'No especificadas';
+        const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
         const title = isComplete ? '📦 *NUEVO PEDIDO PENDIENTE*' : '⚠️ *NUEVO PEDIDO (Falta Info)*';
 
         const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
@@ -1076,7 +1076,7 @@ async function processAIResponse(from, msgBodyLower) {
             refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
         }
         
-        const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province && refreshedChat.references;
+        const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
         
         saveChats(chats);
         
@@ -2090,8 +2090,8 @@ async function getAIResponse(message, history = [], waLine = 1) {
 4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
 6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
-7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. SIEMPRE solicita Puntos de Referencia ("Cerca de...", "Frente a...") para la dirección.
-8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos: Nombre, Dirección, Referencias, y Municipio. Si te falta alguno de estos datos, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: xxx] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento].
+7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
+8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y Municipio. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: xxx] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento].
 9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el municipio o departamento en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
 
