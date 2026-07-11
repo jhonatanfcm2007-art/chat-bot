@@ -1154,17 +1154,6 @@ async function processAIResponse(from, msgBodyLower) {
 
     let cleanAiReply = aiReply;
 
-    // --- INTERCEPCIÓN DE FOTOS ---
-    if (/\[ENVIAR_FOTO\]/i.test(cleanAiReply)) {
-        // TODO: Replace with the actual image URL the user wants
-        const photoUrl = 'https://i.imgur.com/vH1NZY9.jpeg'; // Shilajit generic placeholder
-        try {
-            await smartSendImage(from, photoUrl, 'Aquí tienes la presentación oficial del producto.');
-        } catch (err) {
-            console.error("Error enviando foto solicitada por IA:", err);
-        }
-    }
-
     // --- REGISTRO DE PEDIDO ---
     const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
@@ -2220,7 +2209,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
 7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un(a) ${termCity} pero NO te dice el(la) ${termProv}, DEBES deducir el(la) ${termProv} correcto(a) con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
 8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
 9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
-10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
+10. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), NO intentes convencerlo de otra cosa ni le digas que tú se la enviarás. DEBES OBLIGATORIAMENTE usar la etiqueta literal [APAGAR_BOT_SOPORTE] en tu respuesta para apagar la IA y permitir que un humano le envíe la foto manualmente.`;
 
 
         const comp = await activeOpenAI.chat.completions.create({
