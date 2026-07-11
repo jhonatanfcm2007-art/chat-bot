@@ -541,13 +541,10 @@ async function createShopifyOrder(chat, products) {
 
     // Si es Honduras (Línea 2 o 3), usar credenciales de Honduras si existen
     if (waLine === '2' || waLine === '3') {
-        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || SHOPIFY_URL;
-        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN || SHOPIFY_TOKEN;
-        // Si ya hay token de Honduras, usamos el ID de producto de Honduras (pendiente)
-        if (process.env.SHOPIFY_ACCESS_TOKEN_HN) {
-            PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_HN || PRODUCT_ID;
-            countryISO = 'HN';
-        }
+        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
+        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN;
+        PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_HN || '10462928404768';
+        countryISO = 'HN';
     }
 
     if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
@@ -566,13 +563,19 @@ async function createShopifyOrder(chat, products) {
         else if (/4\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 4;
         else if (/5\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 5;
 
-        // Calcular precio unitario para que cuadre con las promociones (Shilajit)
+        // Calcular precio unitario para que cuadre con las promociones (Guatemala por defecto)
         let unitPrice = '155.00';
+        let originalUnitPrice = 155.00;
         if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
         if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
         
-        // TODO: Ajustar lógica de precios en Lempiras si countryISO es 'HN'
-        // Esto lo programaremos cuando el usuario nos dé los precios en Honduras
+        // Ajustar lógica de precios en Lempiras si countryISO es 'HN'
+        if (countryISO === 'HN') {
+            originalUnitPrice = 695.00;
+            unitPrice = '695.00';
+            if (orderQty === 2) unitPrice = '550.00'; // 550 * 2 = 1100 L
+            if (orderQty === 3) unitPrice = '466.66'; // 466.66 * 3 = 1400 L
+        }
 
         // Resolver el Variant ID a partir del Product ID
         let targetVariantId = null;
@@ -598,7 +601,6 @@ async function createShopifyOrder(chat, products) {
                 quantity: orderQty
             };
             // En Shopify, el 'applied_discount' de tipo fixed_amount en un line_item se aplica POR UNIDAD.
-            let originalUnitPrice = 155.00;
             let desiredUnitPrice = parseFloat(unitPrice);
             let discountPerUnit = originalUnitPrice - desiredUnitPrice;
             
