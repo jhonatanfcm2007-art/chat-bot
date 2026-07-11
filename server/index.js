@@ -551,16 +551,39 @@ async function createShopifyOrder(chat, products) {
         if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
         if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
 
+        // Resolver el Variant ID a partir del Product ID que nos dio el usuario
+        const PRODUCT_ID = '9785966035179';
+        let targetVariantId = null;
+        
+        try {
+            const prodRes = await fetch(`https://${cleanUrl}/admin/api/2024-01/products/${PRODUCT_ID}.json`, {
+                headers: { 'X-Shopify-Access-Token': cleanToken }
+            });
+            const prodData = await prodRes.json();
+            if (prodData.product && prodData.product.variants && prodData.product.variants.length > 0) {
+                targetVariantId = prodData.product.variants[0].id;
+            } else {
+                console.error("No se pudo obtener la variante del producto:", prodData);
+            }
+        } catch (e) {
+            console.error("Error consultando producto Shopify:", e);
+        }
+
+        const lineItem = targetVariantId ? {
+            variant_id: targetVariantId,
+            quantity: orderQty,
+            price: unitPrice
+        } : {
+            title: products, // Fallback si falla
+            price: unitPrice,
+            quantity: orderQty,
+            requires_shipping: true
+        };
+
         // Usamos Draft Orders API (no requiere permiso especial de write_orders)
         const draftOrderData = {
             draft_order: {
-                line_items: [
-                    {
-                        variant_id: 9785966035179, // ID del Shilajit unitario
-                        quantity: orderQty,
-                        price: unitPrice
-                    }
-                ],
+                line_items: [ lineItem ],
                 shipping_address: {
                     first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
                     address1: chat.address || 'Pendiente de confirmar',
