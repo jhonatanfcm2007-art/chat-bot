@@ -551,8 +551,9 @@ async function createShopifyOrder(chat, products) {
         if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
         if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
 
-        // Resolver el Variant ID a partir del Product ID que nos dio el usuario
-        const PRODUCT_ID = '9785966035179';
+        // Resolver el Variant ID a partir del Product ID
+        // TODO: Agregar IDs de otros productos (ej: Rodilleras) según palabras clave
+        let PRODUCT_ID = '9785966035179'; // Shilajit por defecto
         let targetVariantId = null;
         
         try {
@@ -569,16 +570,33 @@ async function createShopifyOrder(chat, products) {
             console.error("Error consultando producto Shopify:", e);
         }
 
-        const lineItem = targetVariantId ? {
-            variant_id: targetVariantId,
-            quantity: orderQty,
-            price: unitPrice
-        } : {
-            title: products, // Fallback si falla
-            price: unitPrice,
-            quantity: orderQty,
-            requires_shipping: true
-        };
+        let lineItem = {};
+        if (targetVariantId) {
+            lineItem = {
+                variant_id: targetVariantId,
+                quantity: orderQty
+            };
+            // Shopify ignora 'price' si hay 'variant_id', debemos aplicar un descuento total
+            let originalTotal = 155.00 * orderQty;
+            let desiredTotal = parseFloat(unitPrice) * orderQty;
+            let discountAmount = originalTotal - desiredTotal;
+            
+            if (discountAmount > 0) {
+                lineItem.applied_discount = {
+                    description: "Descuento por Combo",
+                    value_type: "fixed_amount",
+                    value: discountAmount.toFixed(2),
+                    amount: discountAmount.toFixed(2)
+                };
+            }
+        } else {
+            lineItem = {
+                title: products, // Fallback
+                price: unitPrice,
+                quantity: orderQty,
+                requires_shipping: true
+            };
+        }
 
         // Usamos Draft Orders API (no requiere permiso especial de write_orders)
         const draftOrderData = {
@@ -2125,7 +2143,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
 6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
 7. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un municipio pero NO te dice el departamento/provincia, DEBES deducir el departamento correcto con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
-8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y Municipio. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta o el combo, ej: '1 Frasco de Shilajit', 'Combo 2 Frascos'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento]. IMPORTANTE: En [PRODUCTOS] NUNCA escribas solo el nombre del producto, SIEMPRE especifica si es 1 frasco, 2 frascos, o 3 frascos.
+8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y Municipio. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit', 'Combo 2 Frascos de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: xxx] [DEPARTAMENTO: deduce el departamento]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
 9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el municipio o departamento en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 10. MULTIMEDIA: Si el cliente pide explícitamente ver una foto o imagen del producto, añade AL FINAL de tu respuesta la etiqueta literal [ENVIAR_FOTO].`;
 
