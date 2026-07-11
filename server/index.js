@@ -528,8 +528,28 @@ async function registerOrder(to, products) {
 
 // --- SHOPIFY INTEGRATION ---
 async function createShopifyOrder(chat, products) {
-    const SHOPIFY_URL = process.env.SHOPIFY_STORE_URL;
-    const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+    let waLine = '1';
+    if (chat.from && chat.from.includes('_')) {
+        waLine = chat.from.split('_')[1];
+    }
+
+    // Por defecto usa las credenciales de Guatemala (Línea 1)
+    let SHOPIFY_URL = process.env.SHOPIFY_STORE_URL;
+    let SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+    let PRODUCT_ID = '9785966035179'; // ID de Shilajit en Guatemala
+    let countryISO = 'GT';
+
+    // Si es Honduras (Línea 2 o 3), usar credenciales de Honduras si existen
+    if (waLine === '2' || waLine === '3') {
+        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || SHOPIFY_URL;
+        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN || SHOPIFY_TOKEN;
+        // Si ya hay token de Honduras, usamos el ID de producto de Honduras (pendiente)
+        if (process.env.SHOPIFY_ACCESS_TOKEN_HN) {
+            PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_HN || PRODUCT_ID;
+            countryISO = 'HN';
+        }
+    }
+
     if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
         console.error('❌ Faltan credenciales de Shopify en .env');
         return { success: false, error: 'Credenciales Shopify no configuradas' };
@@ -550,10 +570,11 @@ async function createShopifyOrder(chat, products) {
         let unitPrice = '155.00';
         if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
         if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
+        
+        // TODO: Ajustar lógica de precios en Lempiras si countryISO es 'HN'
+        // Esto lo programaremos cuando el usuario nos dé los precios en Honduras
 
         // Resolver el Variant ID a partir del Product ID
-        // TODO: Agregar IDs de otros productos (ej: Rodilleras) según palabras clave
-        let PRODUCT_ID = '9785966035179'; // Shilajit por defecto
         let targetVariantId = null;
         
         try {
@@ -607,7 +628,7 @@ async function createShopifyOrder(chat, products) {
                     address1: chat.address || 'Pendiente de confirmar',
                     city: chat.city || '',
                     province: chat.province || '',
-                    country: 'GT',
+                    country: countryISO,
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
                 note: `Pedido vía WhatsApp Bot. Teléfono: ${chat.from}`,
