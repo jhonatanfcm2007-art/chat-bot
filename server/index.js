@@ -2074,7 +2074,7 @@ async function getAIResponse(message, history = [], waLine = 1) {
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
         let countryContext = "Guatemala"; // Default
         if (waLine == '1') countryContext = "Guatemala";
-        else if (waLine == '2') countryContext = "Honduras";
+        else if (waLine == '2' || waLine == '3') countryContext = "Honduras";
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
