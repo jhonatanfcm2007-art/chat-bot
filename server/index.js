@@ -615,9 +615,20 @@ async function createShopifyOrder(chat, products) {
         const firstName = nameParts[0] || 'Cliente';
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '.';
 
+        let finalPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : chat.from.replace(/\D/g, '');
+        
+        // Estandarizar prefijo de país
+        if (countryISO === 'GT' && !finalPhone.startsWith('502')) {
+            finalPhone = '502' + finalPhone;
+        } else if (countryISO === 'HN' && !finalPhone.startsWith('504')) {
+            finalPhone = '504' + finalPhone;
+        }
+        finalPhone = '+' + finalPhone;
+
         const orderData = {
             order: {
                 line_items: [ lineItem ],
+                phone: finalPhone,
                 shipping_address: {
                     first_name: firstName,
                     last_name: lastName,
@@ -627,7 +638,7 @@ async function createShopifyOrder(chat, products) {
                     province: chat.orderDep || chat.province || '',
                     zip: '00000',
                     country: countryISO,
-                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
+                    phone: finalPhone
                 },
                 billing_address: {
                     first_name: firstName,
@@ -637,9 +648,9 @@ async function createShopifyOrder(chat, products) {
                     province: chat.orderDep || chat.province || '',
                     zip: '00000',
                     country: countryISO,
-                    phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
+                    phone: finalPhone
                 },
-                note: `Pedido vía WhatsApp Bot.\nTeléfono: ${chat.orderPhone || chat.from}\nReferencias: ${chat.orderRef || 'No especificadas'}`,
+                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nReferencias: ${chat.orderRef || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
                 financial_status: 'pending'
             }
