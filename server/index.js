@@ -610,27 +610,37 @@ async function createShopifyOrder(chat, products) {
             };
         }
 
+        const fullName = chat.orderName || chat.customerName || 'Cliente WhatsApp';
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || 'Cliente';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '.';
+
         const orderData = {
             order: {
                 line_items: [ lineItem ],
                 customer: {
-                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
+                    first_name: firstName,
+                    last_name: lastName,
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
                 shipping_address: {
-                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
+                    first_name: firstName,
+                    last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
                     address2: chat.orderRef || '',
-                    city: chat.city || '',
+                    city: chat.city || 'Ciudad',
                     province: chat.orderDep || chat.province || '',
+                    zip: '00000',
                     country: countryISO,
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
                 billing_address: {
-                    first_name: chat.orderName || chat.customerName || 'Cliente WhatsApp',
+                    first_name: firstName,
+                    last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
-                    city: chat.city || '',
+                    city: chat.city || 'Ciudad',
                     province: chat.orderDep || chat.province || '',
+                    zip: '00000',
                     country: countryISO,
                     phone: chat.orderPhone || ('+' + chat.from.replace(/\D/g, ''))
                 },
