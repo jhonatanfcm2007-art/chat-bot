@@ -901,6 +901,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           />
         </div>
       )}
+
+      {/* 6. Kanban Board Overlay */}
+      {showKanban && (
+        <KanbanBoard 
+          chats={chats} 
+          onUpdateTag={onUpdateTag} 
+          onClose={() => setShowKanban(false)} 
+        />
+      )}
     </div>
   );
 };
