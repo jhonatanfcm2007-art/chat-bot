@@ -1191,8 +1191,20 @@ async function processAIResponse(from, msgBodyLower) {
             await registerOrder(from, products);
             if (isComplete) {
                 refreshedChat.orderRegistered = true;
+                
+                // Auto-etiquetado Kanban: Pasar a Preparar Pedido
+                refreshedChat.tags = ['preparar_pedido'];
+                io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                
                 saveChats(chats);
             }
+        }
+    } else {
+        // Si no es un cierre de orden, y el chat no tiene ninguna etiqueta, se marca como interesado
+        if (!refreshedChat.tags || refreshedChat.tags.length === 0 || (refreshedChat.tags.length === 1 && refreshedChat.tags[0] === 'activo')) {
+            refreshedChat.tags = ['interesado'];
+            saveChats(chats);
+            io.emit('tag_updated', { from, tags: refreshedChat.tags });
         }
     }
 
