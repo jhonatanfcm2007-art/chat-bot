@@ -498,6 +498,57 @@ async function registerOrder(to, products) {
 
     const productList = products || 'Producto solicitado';
     
+    const orderName = chat.orderName || chat.customerName || 'No especificado';
+    const orderPhone = chat.orderPhone || 'No especificado';
+    const orderAddress = chat.address || 'No especificada';
+    const orderCity = chat.city || 'No especificado';
+    const orderDep = chat.province || 'No especificado';
+    const orderRef = chat.references || 'No especificadas';
+
+    const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
+
+    if (isComplete) {
+        // --- AUTO-APROBACIÓN ---
+        chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido');
+        chat.tags.push('preparar_pedido');
+        chat.updatedAt = Date.now();
+        saveChats(chats);
+        io.emit('tag_updated', { from: to, tags: chat.tags });
+
+        console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
+        
+        if (ADMIN_PHONE) {
+            const notif = `✅ *PEDIDO AUTO-APROBADO*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\nEnviando a Shopify y solicitando Dropi automáticamente...`;
+            smartSendMessage(ADMIN_PHONE, notif);
+        }
+
+        createShopifyOrder(chat, productList).then(shopifyRes => {
+            if (shopifyRes.success) {
+                chat.orderRegistered = true;
+                saveChats(chats);
+                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `✅ Pedido ${shopifyRes.orderName} enviado a Dropi exitosamente.`);
+                smartSendMessage(to, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
+                
+                const now = new Date();
+                sales.push({
+                    id: 'sale-' + Date.now(),
+                    reference: shopifyRes.orderName,
+                    service: productList,
+                    price: 0,
+                    date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
+                    customer: chat.customerName,
+                    customerId: to,
+                    paid: false
+                });
+                io.emit('sales_updated', sales);
+            } else {
+                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ Error auto-creando pedido en Shopify: ${shopifyRes.error}`);
+            }
+        });
+        return;
+    }
+
+    // --- APROBACIÓN MANUAL ---
     // Marcar el pedido en el chat como pendiente de aprobación
     if (!chat.tags?.includes('pedido-pendiente')) {
         chat.tags = [...(chat.tags || []).filter(t => t !== 'soporte' && t !== 'pedido'), 'pedido-pendiente'];
@@ -507,23 +558,14 @@ async function registerOrder(to, products) {
     saveChats(chats);
     io.emit('tag_updated', { from: to, tags: chat.tags });
 
-    // Notificar al admin por WhatsApp para aprobación
+    // Notificar al admin por WhatsApp para aprobación manual
     if (ADMIN_PHONE) {
-        const orderName = chat.orderName || chat.customerName || 'No especificado';
-        const orderPhone = chat.orderPhone || 'No especificado';
-        const orderAddress = chat.address || 'No especificada';
-        const orderCity = chat.city || 'No especificado';
-        const orderDep = chat.province || 'No especificado';
-        const orderRef = chat.references || 'No especificadas';
-
-        const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
-        const title = isComplete ? '📦 *NUEVO PEDIDO PENDIENTE*' : '⚠️ *NUEVO PEDIDO (Falta Info)*';
-
+        const title = '⚠️ *NUEVO PEDIDO (Falta Info)*';
         const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
         smartSendMessage(ADMIN_PHONE, notif);
     }
 
-    console.log(`📦 [PEDIDO PENDIENTE] Pedido de ${chat.customerName}: ${productList}. Esperando aprobación del admin.`);
+    console.log(`📦 [PEDIDO PENDIENTE] Pedido de ${chat.customerName}: ${productList}. Esperando aprobación del admin (faltan datos).`);
 }
 
 // --- SHOPIFY INTEGRATION ---
@@ -679,6 +721,36 @@ async function createShopifyOrder(chat, products) {
 
         const data = await response.json();
         if (response.ok && data.order) {
+            // AUTOMATIZAR SOLICITUD DE PREPARACIÓN A DROPI (Fulfillment Request)
+            try {
+                const fOrderRes = await fetch(`https://${cleanUrl}/admin/api/2024-01/orders/${data.order.id}/fulfillment_orders.json`, {
+                    headers: { 'X-Shopify-Access-Token': cleanToken }
+                });
+                const fOrderData = await fOrderRes.json();
+                
+                if (fOrderData.fulfillment_orders && fOrderData.fulfillment_orders.length > 0) {
+                    const fulfillmentOrderId = fOrderData.fulfillment_orders[0].id;
+                    const requestRes = await fetch(`https://${cleanUrl}/admin/api/2024-01/fulfillment_orders/${fulfillmentOrderId}/fulfillment_request.json`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Shopify-Access-Token': cleanToken
+                        },
+                        body: JSON.stringify({
+                            fulfillment_request: { message: "Pedido generado automáticamente por el Chatbot." }
+                        })
+                    });
+                    
+                    if (requestRes.ok) {
+                        console.log(`✅ Solicitud de preparación enviada a Dropi para orden ${data.order.name}`);
+                    } else {
+                        console.error('❌ Error enviando solicitud a Dropi:', await requestRes.json());
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Excepción pidiendo Fulfillment a Dropi:', err);
+            }
+
             return { success: true, orderId: data.order.id, orderName: data.order.name };
         } else {
             console.error('❌ Error Shopify Order:', data);
@@ -856,8 +928,8 @@ app.post('/webhook', async (req, res) => {
                     const shopifyRes = await createShopifyOrder(targetChat, targetChat.pendingApprovalProducts || 'Producto');
                     
                     if (shopifyRes.success) {
-                        targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pedido-pendiente');
-                        targetChat.tags.push('pedido');
+                        targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pedido-pendiente' && t !== 'interesado' && t !== 'pedido');
+                        targetChat.tags.push('preparar_pedido');
                         targetChat.orderRegistered = true;
                         delete targetChat.pendingApprovalProducts;
                         saveChats(chats);
