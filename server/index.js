@@ -1958,6 +1958,77 @@ app.post('/api/settings', (req, res) => {
     res.json({ success: true, settings });
 });
 
+app.post('/api/scan-chats', async (req, res) => {
+    const { timeframe } = req.body;
+    let start, end;
+    const now = new Date();
+    
+    if (timeframe === 'hoy') {
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        end = now.getTime();
+    } else if (timeframe === 'ayer') {
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - 1;
+    } else {
+        return res.status(400).json({ success: false, error: 'Timeframe inválido' });
+    }
+
+    const targetTags = ['preparar_pedido', 'pedido', 'guia_enviada', 'viajando_destino', 'en_ruta', 'entregado'];
+    let suspiciousChats = [];
+
+    for (const [phone, chat] of Object.entries(chats)) {
+        const hasLogisticsTag = chat.tags && chat.tags.some(t => targetTags.includes(t));
+        if (chat.updatedAt >= start && chat.updatedAt <= end && !hasLogisticsTag) {
+            const userMsgs = chat.messages ? chat.messages.filter(m => m.role === 'user') : [];
+            if (userMsgs.length > 0) {
+                suspiciousChats.push({ phone, chat });
+            }
+        }
+    }
+
+    let currentOpenai = openai;
+    if (!currentOpenai && process.env.OPENAI_API_KEY) {
+        const OpenAI = (await import('openai')).default;
+        currentOpenai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+    if (!currentOpenai) return res.status(500).json({ success: false, error: 'OpenAI no configurado' });
+
+    let recoveredCount = 0;
+    
+    // Process in batches of 3
+    for (let i = 0; i < suspiciousChats.length; i += 3) {
+        const batch = suspiciousChats.slice(i, i + 3);
+        await Promise.all(batch.map(async ({ phone, chat }) => {
+            try {
+                const contextMsgs = chat.messages.slice(-10).map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.body || m.content}`).join('\n');
+                const prompt = `Analiza la siguiente conversación con un cliente.\nDetermina si el cliente proporcionó sus datos de envío completos para confirmar una compra.\nDebes buscar: Nombre, Dirección, Municipio, Departamento/Provincia.\nResponde ÚNICAMENTE con un JSON válido en este formato exacto:\n{"isComplete": true, "datos": {"nombre": "...", "direccion": "...", "municipio": "...", "departamento": "..."}}\nSi faltan datos esenciales o el cliente no confirmó el pedido, isComplete debe ser false.\n\nConversación:\n${contextMsgs}`;
+
+                const response = await currentOpenai.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    messages: [{ role: 'user', content: prompt }],
+                    response_format: { type: 'json_object' }
+                });
+
+                const result = JSON.parse(response.choices[0].message.content);
+                if (result.isComplete) {
+                    chat.orderName = result.datos.nombre;
+                    chat.address = result.datos.direccion;
+                    chat.city = result.datos.municipio;
+                    chat.province = result.datos.departamento;
+                    
+                    await registerOrder(phone, 'Producto rescatado por Auditoría');
+                    recoveredCount++;
+                }
+            } catch (err) {
+                console.error('❌ Error en Auditoría IA para', phone, err.message);
+            }
+        }));
+    }
+
+    res.json({ success: true, scanned: suspiciousChats.length, recovered: recoveredCount });
+});
+
+
 io.on('connection', (socket) => {
     socket.emit('inventory_updated', inventory);
     socket.emit('sales_updated', sales);

@@ -16,6 +16,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [showKanban, setShowKanban] = useState(false);
+  const [isAuditing, setIsAuditing] = useState(false);
   const chatEndRef = useRef(null);
 
   const TAG_UI = {
@@ -38,6 +39,29 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   useEffect(() => {
     scrollToBottom();
   }, [chats, selectedChat]);
+
+  const handleAudit = async () => {
+    const time = window.prompt("¿Qué chats deseas auditar? Escribe 'hoy' o 'ayer':", "hoy");
+    if (time !== 'hoy' && time !== 'ayer') return;
+
+    setIsAuditing(true);
+    try {
+      const response = await fetch(`${serverUrl}/api/scan-chats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeframe: time })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert(`Auditoría Completada.\nChats analizados: ${data.scanned}\nPedidos recuperados: ${data.recovered}`);
+      } else {
+        alert('Error en auditoría: ' + data.error);
+      }
+    } catch (e) {
+      alert('Error de conexión.');
+    }
+    setIsAuditing(false);
+  };
 
   useEffect(() => {
     const handleCloseMenu = () => {
@@ -292,6 +316,16 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 >
                   <span className="material-symbols-outlined text-sm">view_kanban</span>
                   Tablero Logístico
+                </button>
+                <button 
+                  onClick={handleAudit}
+                  disabled={isAuditing}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${isAuditing ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200'}`}
+                >
+                  <span className={`material-symbols-outlined text-sm ${isAuditing ? 'animate-spin' : ''}`}>
+                    {isAuditing ? 'sync' : 'policy'}
+                  </span>
+                  {isAuditing ? 'Auditando...' : 'Auditoría IA'}
                 </button>
 
                 {isFilterMenuOpen && (
