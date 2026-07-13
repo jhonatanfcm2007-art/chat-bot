@@ -1975,13 +1975,18 @@ app.post('/api/scan-chats', async (req, res) => {
 
     const targetTags = ['preparar_pedido', 'pedido', 'guia_enviada', 'viajando_destino', 'en_ruta', 'entregado'];
     let suspiciousChats = [];
+    let alreadyRegistered = 0;
 
     for (const [phone, chat] of Object.entries(chats)) {
         const hasLogisticsTag = chat.tags && chat.tags.some(t => targetTags.includes(t));
-        if (chat.updatedAt >= start && chat.updatedAt <= end && !hasLogisticsTag) {
-            const userMsgs = chat.messages ? chat.messages.filter(m => m.role === 'user') : [];
-            if (userMsgs.length > 0) {
-                suspiciousChats.push({ phone, chat });
+        if (chat.updatedAt >= start && chat.updatedAt <= end) {
+            if (hasLogisticsTag) {
+                alreadyRegistered++;
+            } else {
+                const userMsgs = chat.messages ? chat.messages.filter(m => m.role === 'user') : [];
+                if (userMsgs.length > 0) {
+                    suspiciousChats.push({ phone, chat });
+                }
             }
         }
     }
@@ -2025,7 +2030,7 @@ app.post('/api/scan-chats', async (req, res) => {
         }));
     }
 
-    res.json({ success: true, scanned: suspiciousChats.length, recovered: recoveredCount });
+    res.json({ success: true, scanned: suspiciousChats.length, recovered: recoveredCount, total: alreadyRegistered + recoveredCount });
 });
 
 

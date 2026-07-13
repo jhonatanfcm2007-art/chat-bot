@@ -53,7 +53,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       });
       const data = await response.json();
       if (data.success) {
-        alert(`Auditoría Completada.\nChats analizados: ${data.scanned}\nPedidos recuperados: ${data.recovered}`);
+        alert(`Auditoría Completada.\nChats analizados: ${data.scanned}\nPedidos recuperados: ${data.recovered}\nTotal de pedidos de ${time}: ${data.total}`);
       } else {
         alert('Error en auditoría: ' + data.error);
       }
