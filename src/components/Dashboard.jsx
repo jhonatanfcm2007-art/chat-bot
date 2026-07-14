@@ -30,6 +30,17 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
   });
 
   const stats = (() => {
+    // Guatemala (GT / GTQ)
+    const salesGT = filteredSales.filter(s => s.country !== 'HN');
+    const totalSalesGT = salesGT.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const itemsSoldGT = salesGT.length;
+    
+    // Honduras (HN / HNL)
+    const salesHN = filteredSales.filter(s => s.country === 'HN');
+    const totalSalesHN = salesHN.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const itemsSoldHN = salesHN.length;
+
+    // Totals for all
     const totalSales = filteredSales.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
     const totalCosts = filteredSales.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
     const totalPendiente = filteredSales.reduce((sum, s) => s.paid ? sum : sum + (parseFloat(s.price) || 0), 0);
@@ -53,7 +64,11 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
        return d >= startObj && d <= endObj;
     }).length;
 
-    return { totalSales, totalCosts, netProfit, itemsSold, totalPendiente, cuentasPendientes, chatsActivos };
+    return { 
+        totalSales, totalCosts, netProfit, itemsSold, totalPendiente, cuentasPendientes, chatsActivos,
+        totalSalesGT, itemsSoldGT,
+        totalSalesHN, itemsSoldHN
+    };
   })();
 
   const handleDateClick = (value) => {
@@ -176,32 +191,94 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {[
-          { label: 'Ventas Totales', value: `$${stats.totalSales.toLocaleString()}`, icon: 'payments', color: 'text-primary', bg: 'bg-primary-light', trend: 'Ingresos Brutos' },
-          { label: 'Ganancia Neta', value: `$${stats.netProfit.toLocaleString()}`, icon: 'trending_up', color: 'text-emerald-600', bg: 'bg-emerald-50', trend: 'Utilidad Real' },
-          { label: 'Unidades Vendidas', value: stats.itemsSold.toString(), icon: 'shopping_bag', color: 'text-slate-700', bg: 'bg-slate-100', trend: 'Volumen Transaccional', action: () => setIsBreakdownOpen(true) },
-          { label: 'Deuda por Cobrar ($)', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'account_balance_wallet', color: 'text-rose-600', bg: 'bg-rose-50', trend: 'Valor Pendiente' },
-          { label: 'Cuentas Fíadas', value: `${stats.cuentasPendientes}`, icon: 'money_off', color: 'text-amber-600', bg: 'bg-amber-50', trend: 'Cuentas sin pago' },
-          { label: 'Chats Nuevos', value: stats.chatsActivos.toString(), icon: 'forum', color: 'text-indigo-600', bg: 'bg-indigo-50', trend: 'Interacciones hoy' },
-        ].map((stat, i) => (
-          <div 
-            key={i} 
-            onClick={stat.action}
-            className={`group bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all duration-200 ${stat.action ? 'cursor-pointer hover:border-primary/40 hover:shadow-md' : 'cursor-default'}`}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center`}>
-                <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
+        {/* GUATEMALA CARD */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-2xl shadow-lg p-6 border border-indigo-500/30 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10">
+                  <span className="text-2xl">🇬🇹</span>
+                </div>
+                <div>
+                  <h3 className="text-indigo-100 text-sm font-medium">Guatemala</h3>
+                  <p className="text-white text-xs opacity-70">Ingresos Brutos (Quetzales)</p>
+                </div>
               </div>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-md border border-slate-200 text-slate-500 bg-slate-50">
-                {stat.trend}
+              <span className="bg-indigo-500/30 text-indigo-100 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-400/30 backdrop-blur-sm">
+                GTQ
               </span>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-slate-500 mb-1">{stat.label}</h3>
-              <p className="text-2xl font-bold text-on-surface leading-none">{stat.value}</p>
+              <div className="flex items-end gap-3 mb-2">
+                <p className="text-4xl font-bold text-white tracking-tight">
+                  Q{stats.totalSalesGT.toLocaleString()}
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1 text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded-md">
+                  <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+                  <span className="font-medium">{stats.itemsSoldGT} Pedidos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* HONDURAS CARD */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-sky-600 to-blue-900 rounded-2xl shadow-lg p-6 border border-blue-500/30 group">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10">
+                  <span className="text-2xl">🇭🇳</span>
+                </div>
+                <div>
+                  <h3 className="text-blue-100 text-sm font-medium">Honduras</h3>
+                  <p className="text-white text-xs opacity-70">Ingresos Brutos (Lempiras)</p>
+                </div>
+              </div>
+              <span className="bg-blue-500/30 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full border border-blue-400/30 backdrop-blur-sm">
+                HNL
+              </span>
+            </div>
+            
+            <div>
+              <div className="flex items-end gap-3 mb-2">
+                <p className="text-4xl font-bold text-white tracking-tight">
+                  L{stats.totalSalesHN.toLocaleString()}
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1 text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded-md">
+                  <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+                  <span className="font-medium">{stats.itemsSoldHN} Pedidos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: 'Unidades Vendidas', value: stats.itemsSold.toString(), icon: 'inventory_2', color: 'text-slate-700', bg: 'bg-slate-100', trend: 'Global' },
+          { label: 'Deuda por Cobrar', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'account_balance_wallet', color: 'text-rose-600', bg: 'bg-rose-50', trend: 'Pendiente' },
+          { label: 'Cuentas Fíadas', value: `${stats.cuentasPendientes}`, icon: 'money_off', color: 'text-amber-600', bg: 'bg-amber-50', trend: 'Sin pago' },
+          { label: 'Chats Activos', value: stats.chatsActivos.toString(), icon: 'forum', color: 'text-indigo-600', bg: 'bg-indigo-50', trend: 'Interacciones hoy' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</h3>
+              <p className="text-xl font-bold text-on-surface">{stat.value}</p>
+            </div>
+            <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center`}>
+              <span className="material-symbols-outlined">{stat.icon}</span>
             </div>
           </div>
         ))}
@@ -256,7 +333,9 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
                   </div>
                 </div>
                 <div className="text-right flex flex-col items-end gap-1.5">
-                  <p className="text-lg font-bold text-on-surface">${sale.price.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-on-surface">
+                    {sale.currency === 'HNL' ? 'L' : (sale.currency === 'GTQ' ? 'Q' : 'Q')}{sale.price.toLocaleString()}
+                  </p>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onUpdateSale && onUpdateSale(sale.id, { paid: !sale.paid }); }}
                     className={`text-xs font-medium px-2 py-0.5 rounded-md transition-colors ${sale.paid ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-rose-700 bg-rose-50 hover:bg-rose-100'}`}

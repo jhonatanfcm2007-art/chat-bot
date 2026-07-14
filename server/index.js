@@ -491,6 +491,22 @@ function schedulePaymentReminder(to) {
     return;
 }
 
+function extractSaleData(phone, productStr) {
+    const phoneStr = phone.toString();
+    const isHonduras = phoneStr.startsWith('504') || phoneStr.startsWith('+504');
+    const country = isHonduras ? 'HN' : 'GT';
+    const currency = isHonduras ? 'HNL' : 'GTQ';
+    
+    let price = 0;
+    if (productStr) {
+        const priceMatch = productStr.match(/(?:Q|L|Lps|Quetzales|Lempiras|\$)\s*(\d+(?:[.,]\d+)?)/i);
+        if (priceMatch) {
+            price = parseFloat(priceMatch[1].replace(',', '.'));
+        }
+    }
+    return { country, currency, price };
+}
+
 // --- REGISTRO DE PEDIDO (PENDIENTE DE APROBACION) ---
 async function registerOrder(to, products) {
     const chat = chats[to];
@@ -530,16 +546,20 @@ async function registerOrder(to, products) {
                 smartSendMessage(to, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
                 
                 const now = new Date();
+                const saleData = extractSaleData(to, productList);
                 sales.push({
                     id: 'sale-' + Date.now(),
                     reference: shopifyRes.orderName,
                     service: productList,
-                    price: 0,
+                    price: saleData.price,
+                    country: saleData.country,
+                    currency: saleData.currency,
                     date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
                     customer: chat.customerName,
                     customerId: to,
                     paid: false
                 });
+                saveSales(sales);
                 io.emit('sales_updated', sales);
             } else {
                 if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ Error auto-creando pedido en Shopify: ${shopifyRes.error}`);
@@ -940,11 +960,15 @@ app.post('/webhook', async (req, res) => {
                         
                         // Guardar en sales para compatibilidad con el frontend antiguo
                         const now = new Date();
+                        const saleProduct = targetChat.pendingApprovalProducts || 'Producto';
+                        const saleData = extractSaleData(targetPhone, saleProduct);
                         sales.push({
                             id: 'sale-' + Date.now(),
                             reference: shopifyRes.orderName,
-                            service: targetChat.pendingApprovalProducts || 'Producto',
-                            price: 0,
+                            service: saleProduct,
+                            price: saleData.price,
+                            country: saleData.country,
+                            currency: saleData.currency,
                             date: now.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }),
                             customer: targetChat.customerName,
                             customerId: targetPhone,
