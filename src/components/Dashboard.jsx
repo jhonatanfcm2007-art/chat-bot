@@ -29,29 +29,43 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
     const currentTag = chat.tags?.find(t => allLogisticsTags.includes(t));
     if (!currentTag) return null;
 
+    // We look up the historical sale in salesHistory to get the EXACT date and potentially exact price
+    const historicalSale = salesHistory?.find(s => s.customerId === phone);
+
     // 2. Extract country
-    const phoneStr = phone.toString();
-    const isHonduras = phoneStr.startsWith('504') || phoneStr.startsWith('+504');
+    const phoneToTest = (chat.orderPhone || phone).toString();
+    const isHonduras = phoneToTest.startsWith('504') || phoneToTest.startsWith('+504') || phoneToTest.includes('@c.us') && phoneToTest.startsWith('504');
     const country = isHonduras ? 'HN' : 'GT';
     const currency = isHonduras ? 'HNL' : 'GTQ';
 
     // 3. Extract price
-    let extractedPrice = 0;
-    const msgs = chat.messages || [];
-    for (let i = msgs.length - 1; i >= 0; i--) {
-        const m = msgs[i];
-        if (m.text) {
-            const priceMatch = m.text.match(/(?:Q|L|Lps|Quetzales|Lempiras|\$)\s*(\d+(?:[.,]\d+)?)/i);
-            if (priceMatch) {
-                extractedPrice = parseFloat(priceMatch[1].replace(',', '.'));
-                break;
+    let extractedPrice = historicalSale && historicalSale.price > 0 ? historicalSale.price : 0;
+    if (extractedPrice === 0) {
+        const msgs = chat.messages || [];
+        for (let i = msgs.length - 1; i >= 0; i--) {
+            const m = msgs[i];
+            if (m.text) {
+                const priceMatch = m.text.match(/(?:Q|L|Lps|Quetzales|Lempiras|\$)\s*(\d+(?:[.,]\d+)?)/i);
+                if (priceMatch) {
+                    extractedPrice = parseFloat(priceMatch[1].replace(',', '.'));
+                    break;
+                }
             }
         }
     }
 
     // 4. Determine date
-    const dateObj = new Date(chat.updatedAt || Date.now());
-    const dateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
+    let dateStr = '';
+    let dateObj = null;
+    if (historicalSale && historicalSale.date) {
+        dateStr = historicalSale.date;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateObj = new Date(year, month - 1, day);
+    } else {
+        // Fallback
+        dateObj = new Date(chat.updatedAt || Date.now());
+        dateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
+    }
 
     return {
         id: phone,
