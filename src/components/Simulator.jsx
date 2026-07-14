@@ -946,6 +946,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           onClose={() => setShowKanban(false)} 
           onSendTrackingManual={onSendTrackingManual}
           onOpenDropiModal={() => setShowDropiModal(true)}
+          globalLine={globalLine}
         />
       )}
 

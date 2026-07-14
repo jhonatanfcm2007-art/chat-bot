@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 
-const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpenDropiModal }) => {
+const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpenDropiModal, globalLine = 'all' }) => {
   const [draggedChatId, setDraggedChatId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
+  const [selectedLine, setSelectedLine] = useState(globalLine);
 
   const handleTrackingChange = (chatId, val) => {
     setTrackingInputs(prev => ({ ...prev, [chatId]: val }));
@@ -60,7 +61,10 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpen
     chatsByColumn[col.id] = [];
   });
 
-  const chatList = Object.values(chats || {});
+  const chatList = Object.values(chats || {}).filter(chat => {
+    if (selectedLine === 'all') return true;
+    return chat.waLine == selectedLine; // Use == for string/int comparison
+  });
   
   chatList.forEach(chat => {
     if (chat.tags && chat.tags.length > 0) {
@@ -80,13 +84,30 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpen
     <div className="absolute inset-0 z-[200] bg-slate-50 flex flex-col font-sans h-full w-full overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-            <span className="material-symbols-outlined">view_kanban</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <span className="material-symbols-outlined">view_kanban</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Tablero Logístico</h2>
+              <p className="text-xs text-slate-500">Arrastra y suelta las conversaciones para cambiar su estado logístico</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Tablero Logístico</h2>
-            <p className="text-xs text-slate-500">Arrastra y suelta las conversaciones para cambiar su estado logístico</p>
+          
+          <div className="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+          
+          <div className="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+            <span className="material-symbols-outlined text-slate-400 text-[18px]">phone_iphone</span>
+            <select
+              value={selectedLine}
+              onChange={(e) => setSelectedLine(e.target.value)}
+              className="bg-transparent text-sm font-medium text-slate-700 outline-none border-none cursor-pointer"
+            >
+              <option value="all">Todas las Líneas</option>
+              <option value="1">Línea 1</option>
+              <option value="2">Línea 2</option>
+            </select>
           </div>
         </div>
         <div className="flex items-center gap-3">
