@@ -22,52 +22,93 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredSales = salesHistory.filter(sale => {
+  const allLogisticsTags = ['preparar_pedido', 'guia_enviada', 'viajando_destino', 'en_ruta', 'novedad', 'entregado'];
+
+  const dynamicSales = Object.entries(chats || {}).map(([phone, chat]) => {
+    // 1. Check if the chat has a logistics tag
+    const currentTag = chat.tags?.find(t => allLogisticsTags.includes(t));
+    if (!currentTag) return null;
+
+    // 2. Extract country
+    const phoneStr = phone.toString();
+    const isHonduras = phoneStr.startsWith('504') || phoneStr.startsWith('+504');
+    const country = isHonduras ? 'HN' : 'GT';
+    const currency = isHonduras ? 'HNL' : 'GTQ';
+
+    // 3. Extract price
+    let extractedPrice = 0;
+    const msgs = chat.messages || [];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+        const m = msgs[i];
+        if (m.text) {
+            const priceMatch = m.text.match(/(?:Q|L|Lps|Quetzales|Lempiras|\$)\s*(\d+(?:[.,]\d+)?)/i);
+            if (priceMatch) {
+                extractedPrice = parseFloat(priceMatch[1].replace(',', '.'));
+                break;
+            }
+        }
+    }
+
+    // 4. Determine date
+    const dateObj = new Date(chat.updatedAt || Date.now());
+    const dateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
+
+    return {
+        id: phone,
+        reference: chat.orderName || chat.customerName || 'Cliente',
+        service: chat.orderPhone || phone,
+        price: extractedPrice,
+        country,
+        currency,
+        date: dateStr,
+        dateObj,
+        customer: chat.customerName || 'Sin Nombre',
+        customerId: phone,
+        paid: currentTag === 'entregado',
+        tag: currentTag,
+        waLine: chat.waLine
+    };
+  }).filter(Boolean);
+
+  const startObj = new Date(dateRange.start);
+  startObj.setHours(0,0,0,0);
+  const endObj = new Date(dateRange.end);
+  endObj.setHours(23,59,59,999);
+
+  const filteredSales = dynamicSales.filter(sale => {
     if (!isFilterActive) return globalLine === 'all' || sale.waLine == globalLine;
-    const dateMatch = sale.date >= dateRange.start && sale.date <= dateRange.end;
-    const lineMatch = globalLine === 'all' || sale.waLine == globalLine || !sale.waLine; // Si no tiene waLine (ventas antiguas), la mostramos
+    const dateMatch = sale.dateObj >= startObj && sale.dateObj <= endObj;
+    const lineMatch = globalLine === 'all' || sale.waLine == globalLine || !sale.waLine;
     return dateMatch && lineMatch;
   });
 
   const stats = (() => {
     // Guatemala (GT / GTQ)
     const salesGT = filteredSales.filter(s => s.country !== 'HN');
-    const totalSalesGT = salesGT.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const totalSalesGT = salesGT.reduce((sum, s) => sum + s.price, 0);
     const itemsSoldGT = salesGT.length;
     
     // Honduras (HN / HNL)
     const salesHN = filteredSales.filter(s => s.country === 'HN');
-    const totalSalesHN = salesHN.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const totalSalesHN = salesHN.reduce((sum, s) => sum + s.price, 0);
     const itemsSoldHN = salesHN.length;
 
     // Totals for all
-    const totalSales = filteredSales.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
-    const totalCosts = filteredSales.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
-    const totalPendiente = filteredSales.reduce((sum, s) => s.paid ? sum : sum + (parseFloat(s.price) || 0), 0);
-    const netProfit = totalSales - totalCosts;
     const itemsSold = filteredSales.length;
-    
-    const cuentasPendientes = filteredSales.filter(s => !s.paid).length;
-    
-    // Calcular chats nuevos/activos
-    const startObj = new Date(dateRange.start);
-    startObj.setHours(0,0,0,0);
-    const endObj = new Date(dateRange.end);
-    endObj.setHours(23,59,59,999);
-    
-    const chatsActivos = Object.values(chats || {}).filter(chat => {
-       const msgs = chat.messages || [];
-       if (msgs.length === 0) return false;
-       if (globalLine !== 'all' && chat.waLine != globalLine) return false;
-       const firstMsg = msgs.find(m => m.role === 'user') || msgs[0];
-       const d = new Date(Number(firstMsg.timestampRaw || chat.updatedAt || 0));
-       return d >= startObj && d <= endObj;
-    }).length;
+
+    // Tags
+    const prepararPedido = filteredSales.filter(s => s.tag === 'preparar_pedido').length;
+    const guiaEnviada = filteredSales.filter(s => s.tag === 'guia_enviada').length;
+    const viajando = filteredSales.filter(s => s.tag === 'viajando_destino').length;
+    const enRuta = filteredSales.filter(s => s.tag === 'en_ruta').length;
+    const novedad = filteredSales.filter(s => s.tag === 'novedad').length;
+    const entregado = filteredSales.filter(s => s.tag === 'entregado').length;
 
     return { 
-        totalSales, totalCosts, netProfit, itemsSold, totalPendiente, cuentasPendientes, chatsActivos,
+        itemsSold, 
         totalSalesGT, itemsSoldGT,
-        totalSalesHN, itemsSoldHN
+        totalSalesHN, itemsSoldHN,
+        prepararPedido, guiaEnviada, viajando, enRuta, novedad, entregado
     };
   })();
 
@@ -265,21 +306,21 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
 
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         {[
-          { label: 'Unidades Vendidas', value: stats.itemsSold.toString(), icon: 'inventory_2', color: 'text-slate-700', bg: 'bg-slate-100', trend: 'Global' },
-          { label: 'Deuda por Cobrar', value: `$${stats.totalPendiente.toLocaleString()}`, icon: 'account_balance_wallet', color: 'text-rose-600', bg: 'bg-rose-50', trend: 'Pendiente' },
-          { label: 'Cuentas Fíadas', value: `${stats.cuentasPendientes}`, icon: 'money_off', color: 'text-amber-600', bg: 'bg-amber-50', trend: 'Sin pago' },
-          { label: 'Chats Activos', value: stats.chatsActivos.toString(), icon: 'forum', color: 'text-indigo-600', bg: 'bg-indigo-50', trend: 'Interacciones hoy' },
+          { label: 'Preparar Pedido', value: stats.prepararPedido, icon: 'inventory_2', color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Guía Enviada', value: stats.guiaEnviada, icon: 'receipt_long', color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Viajando', value: stats.viajando, icon: 'local_shipping', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: 'En Ruta', value: stats.enRuta, icon: 'directions_car', color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Novedad', value: stats.novedad, icon: 'warning', color: 'text-rose-600', bg: 'bg-rose-50' },
+          { label: 'Entregado', value: stats.entregado, icon: 'check_circle', color: 'text-emerald-600', bg: 'bg-emerald-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</h3>
-              <p className="text-xl font-bold text-on-surface">{stat.value}</p>
-            </div>
-            <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center`}>
+          <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center justify-center">
+            <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center mb-3`}>
               <span className="material-symbols-outlined">{stat.icon}</span>
             </div>
+            <p className="text-2xl font-bold text-on-surface mb-1">{stat.value}</p>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</h3>
           </div>
         ))}
       </div>

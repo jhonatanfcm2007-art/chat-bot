@@ -30,7 +30,7 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
         </div>
         {expanded && (
           <span className="text-white font-semibold text-sm whitespace-nowrap animate-fade-in">
-            Vault X
+            Dropi Admin
           </span>
         )}
       </div>
