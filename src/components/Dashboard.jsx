@@ -492,7 +492,7 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
               <div className="bg-slate-800 rounded-xl p-5 text-white flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium text-slate-300 mb-0.5">Liquidación Total</p>
-                  <p className="text-xl font-bold">${stats.totalSales.toLocaleString()}</p>
+                  <p className="text-xl font-bold">GTQ {stats.totalSalesGT.toLocaleString()} | HNL {stats.totalSalesHN.toLocaleString()}</p>
                 </div>
                 <div className="bg-white/10 rounded-lg px-4 py-2 border border-white/10">
                    <div className="text-center">
