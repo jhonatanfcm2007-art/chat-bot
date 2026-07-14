@@ -229,7 +229,50 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static(UPLOADS_DIR));
 
-// Servir archivos estáticos del frontend en producción
+app.post('/api/extract-dropi-tracking', async (req, res) => {
+    try {
+        const { imageBase64 } = req.body;
+        if (!imageBase64) return res.status(400).json({ success: false, error: 'No image provided' });
+
+        if (!openai) {
+            return res.status(500).json({ success: false, error: 'OpenAI API key no configurada' });
+        }
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: "Extract all orders from this Dropi screenshot. Return ONLY a raw JSON array. For each order, find the customer name, phone number, and tracking number (guía). The JSON should look like this: [{\"cliente\": \"Juan Perez\", \"telefono\": \"50412345678\", \"guia\": \"123456\"}]. If a phone is not visible, leave it empty. DO NOT wrap the JSON in backticks or markdown, return ONLY the JSON. If there are no orders, return []."
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 1000
+        });
+
+        let content = response.choices[0].message.content.trim();
+        if (content.startsWith('```')) {
+            content = content.replace(/^```(json)?\n/, '').replace(/\n```$/, '').trim();
+        }
+        
+        const data = JSON.parse(content);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error extracting Dropi tracking:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Servir archivos estáticos del frontend en producción
 const DIST_DIR = path.join(__dirname, '../dist');
 if (fs.existsSync(DIST_DIR)) {
@@ -2076,6 +2119,80 @@ io.on('connection', (socket) => {
     socket.emit('platforms_updated', platforms);
     socket.emit('providers_updated', providers);
     socket.emit('campaigns_updated', campaigns);
+
+    const getTrackingMessage = (customerName, trackingNumber) => {
+        let trackingLink = '';
+        const tnLower = trackingNumber.toLowerCase();
+        if (tnLower.startsWith('fd')) {
+            trackingLink = `\n\nPuedes rastrearlo aquí: https://rastreo.forzadelivery.com/`;
+        } else if (tnLower.startsWith('gdt')) {
+            trackingLink = `\n\nPuedes rastrearlo aquí: https://gt.gintracom.site/tracking`;
+        }
+        return `¡Hola ${customerName || ''}! Tu pedido ha sido despachado. Tu número de guía es: ${trackingNumber}${trackingLink}\n\nEstaremos atentos a la entrega.`;
+    };
+
+    socket.on('send_tracking_manual', async ({ chatId, trackingNumber }) => {
+        if (!chats[chatId]) return;
+        
+        const chat = chats[chatId];
+        chat.trackingNumber = trackingNumber;
+        
+        // Remove 'preparar_pedido' and add 'guia_enviada'
+        chat.tags = (chat.tags || []).filter(t => t !== 'preparar_pedido');
+        if (!chat.tags.includes('guia_enviada')) {
+            chat.tags.push('guia_enviada');
+        }
+        
+        saveChats(chats);
+        io.emit('initial_chats', chats);
+
+        // Send WhatsApp message
+        const cName = chat.customerName || chat.orderName || chat.from.split('@')[0];
+        const messageText = getTrackingMessage(cName, trackingNumber);
+        try {
+            await smartSendMessage(chatId, messageText);
+        } catch (error) {
+            console.error('Error sending manual tracking message to', chatId, error);
+        }
+    });
+
+    socket.on('send_bulk_tracking', async ({ results }) => {
+        for (const item of results) {
+            if (!item.guia || (!item.telefono && !item.cliente)) continue;
+            
+            // Find chat
+            let targetChatId = null;
+            if (item.telefono) {
+                const phoneStr = item.telefono.replace(/\D/g, '');
+                targetChatId = Object.keys(chats).find(id => id.includes(phoneStr));
+            }
+            if (!targetChatId && item.cliente) {
+                targetChatId = Object.keys(chats).find(id => {
+                    const cName = chats[id].customerName || chats[id].orderName || '';
+                    return cName.toLowerCase().includes(item.cliente.toLowerCase());
+                });
+            }
+
+            if (targetChatId && chats[targetChatId]) {
+                const chat = chats[targetChatId];
+                chat.trackingNumber = item.guia;
+                
+                chat.tags = (chat.tags || []).filter(t => t !== 'preparar_pedido');
+                if (!chat.tags.includes('guia_enviada')) {
+                    chat.tags.push('guia_enviada');
+                }
+                
+                const messageText = getTrackingMessage(chat.customerName || chat.orderName || item.cliente || chat.from.split('@')[0], item.guia);
+                try {
+                    await smartSendMessage(targetChatId, messageText);
+                } catch (error) {
+                    console.error('Error in bulk tracking for', targetChatId, error);
+                }
+            }
+        }
+        saveChats(chats);
+        io.emit('initial_chats', chats);
+    });
 
     socket.on('create_campaign', (data) => {
         const targets = [];

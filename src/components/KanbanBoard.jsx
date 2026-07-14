@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
 
-const KanbanBoard = ({ chats, onUpdateTag, onClose }) => {
+const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpenDropiModal }) => {
   const [draggedChatId, setDraggedChatId] = useState(null);
+  const [trackingInputs, setTrackingInputs] = useState({});
+
+  const handleTrackingChange = (chatId, val) => {
+    setTrackingInputs(prev => ({ ...prev, [chatId]: val }));
+  };
+
+  const handleSendTracking = (chatId) => {
+    const guia = trackingInputs[chatId];
+    if (!guia) return;
+    if (onSendTrackingManual) {
+      onSendTrackingManual(chatId, guia);
+      setTrackingInputs(prev => ({ ...prev, [chatId]: '' }));
+    }
+  };
 
   const COLUMNS = [
     { id: 'preparar_pedido', title: 'Preparar Pedido', color: 'bg-sky-50 text-sky-700 border-sky-200' },
@@ -75,12 +89,21 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose }) => {
             <p className="text-xs text-slate-500">Arrastra y suelta las conversaciones para cambiar su estado logístico</p>
           </div>
         </div>
-        <button 
-          onClick={onClose}
-          className="p-2 hover:bg-slate-100 text-slate-500 rounded-full transition-colors flex items-center justify-center"
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onOpenDropiModal}
+            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">document_scanner</span>
+            Extraer Guías Dropi
+          </button>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 text-slate-500 rounded-full transition-colors flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
 
       {/* Kanban Board Area */}
@@ -125,10 +148,31 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose }) => {
                       +{chat.from.split('@')[0]}
                     </div>
                     
-                    {chat.city && (
+                    {column.id !== 'preparar_pedido' && chat.city && (
                       <div className="text-[11px] text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100 flex items-center gap-1 mt-2">
                         <span className="material-symbols-outlined text-[12px] text-slate-400">location_on</span>
                         <span className="truncate">{chat.city}, {chat.province}</span>
+                      </div>
+                    )}
+
+                    {column.id === 'preparar_pedido' && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Ingresar guía..."
+                          className="flex-1 text-xs px-2 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50"
+                          value={trackingInputs[chat.from] || ''}
+                          onChange={(e) => handleTrackingChange(chat.from, e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendTracking(chat.from)}
+                          onClick={(e) => e.stopPropagation()} // prevent drag conflicts if any
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSendTracking(chat.from); }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white p-1.5 rounded-lg flex items-center justify-center transition-colors shadow-sm"
+                          title="Enviar Guía"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">send</span>
+                        </button>
                       </div>
                     )}
                   </div>

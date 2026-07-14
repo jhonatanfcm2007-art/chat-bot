@@ -584,6 +584,14 @@ function App() {
 
   const [globalLine, setGlobalLine] = useState('all');
 
+  const handleSendTrackingManual = (chatId, trackingNumber) => {
+    socket.emit('send_tracking_manual', { chatId, trackingNumber });
+  };
+
+  const handleConfirmBulkTracking = (results) => {
+    socket.emit('send_bulk_tracking', { results });
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inventory':
@@ -623,6 +631,8 @@ function App() {
             onToggleBlock={handleToggleBlock}
             serverUrl={SERVER_URL}
             globalLine={globalLine}
+            onSendTrackingManual={handleSendTrackingManual}
+            onConfirmBulkTracking={handleConfirmBulkTracking}
           />
         );
       case 'ai_assistant':
