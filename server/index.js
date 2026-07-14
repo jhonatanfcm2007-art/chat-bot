@@ -230,10 +230,20 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(UPLOADS_DIR));
 
 // Servir archivos estáticos del frontend en producción
+// Servir archivos estáticos del frontend en producción
 const DIST_DIR = path.join(__dirname, '../dist');
 if (fs.existsSync(DIST_DIR)) {
     console.log('✅ [SISTEMA] Sirviendo archivos estáticos del frontend desde:', DIST_DIR);
-    app.use(express.static(DIST_DIR));
+    app.use(express.static(DIST_DIR, {
+        setHeaders: (res, filePath) => {
+            if (filePath.endsWith('.html')) {
+                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+                res.setHeader('Surrogate-Control', 'no-store');
+            }
+        }
+    }));
 } else {
     app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
 }
