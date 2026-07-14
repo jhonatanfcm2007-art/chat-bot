@@ -1,4 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Component } from 'react';
+
+class DashboardErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error("Dashboard Error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 bg-red-50 text-red-900 h-full w-full overflow-auto">
+          <h1 className="text-2xl font-bold mb-4">Fatal Error in Dashboard</h1>
+          <pre className="text-sm bg-white p-4 rounded border border-red-200">{this.state.error && this.state.error.toString()}</pre>
+          <pre className="text-xs mt-4 text-red-700">{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale, globalLine }) => {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
@@ -568,4 +595,10 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
   );
 };
 
-export default Dashboard;
+export default function DashboardWrapper(props) {
+  return (
+    <DashboardErrorBoundary>
+      <Dashboard {...props} />
+    </DashboardErrorBoundary>
+  );
+}
