@@ -1212,19 +1212,20 @@ app.post('/webhook', async (req, res) => {
                     console.error(`❌ [ERROR] Excepción procesando media ${msg.type}:`, e.message);
                     msgBody += ' (⚠️ Fallo técnico)';
                 }
+                }
             }
 
-            const mediaId = msg.type !== 'text' ? msg[msg.type]?.id : null;
+            const messageMediaId = msg.type !== 'text' ? msg[msg.type]?.id : null;
             const newMessage = { 
                 id: msg.id, 
-                mediaId: mediaId,
+                mediaId: messageMediaId,
                 from, 
                 body: msgBody, content: msgBody, 
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
-                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (messageMediaId ? `/api/media/${messageMediaId}` : null)) 
                     : null,
                 fileUrl: (msg.type === 'document' || msg.type === 'audio' || msg.type === 'voice' || msg.type === 'video') 
-                    ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
+                    ? (mediaUrl || (messageMediaId ? `/api/media/${messageMediaId}` : null)) 
                     : null,
                 timestampRaw: Date.now(), role: 'user' 
             };
