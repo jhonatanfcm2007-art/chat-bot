@@ -2150,7 +2150,23 @@ io.on('connection', (socket) => {
         const cName = chat.customerName || chat.orderName || chat.from.split('@')[0];
         const messageText = getTrackingMessage(cName, trackingNumber);
         try {
-            await smartSendMessage(chatId, messageText);
+            const wamid = await smartSendMessage(chatId, messageText);
+            const newMsg = {
+                id: wamid || ('man-'+Date.now()),
+                wamid: wamid || null,
+                status: 'sent',
+                from: chatId,
+                body: messageText,
+                content: messageText,
+                isMe: true,
+                role: 'bot',
+                timestampRaw: Date.now(),
+                timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+            };
+            if (!chat.messages) chat.messages = [];
+            chat.messages.push(newMsg);
+            saveChats(chats);
+            io.emit('message', { ...newMsg, waLine: chat.waLine });
         } catch (error) {
             console.error('Error sending manual tracking message to', chatId, error);
         }
@@ -2184,7 +2200,22 @@ io.on('connection', (socket) => {
                 
                 const messageText = getTrackingMessage(chat.customerName || chat.orderName || item.cliente || chat.from.split('@')[0], item.guia);
                 try {
-                    await smartSendMessage(targetChatId, messageText);
+                    const wamid = await smartSendMessage(targetChatId, messageText);
+                    const newMsg = {
+                        id: wamid || ('man-'+Date.now()),
+                        wamid: wamid || null,
+                        status: 'sent',
+                        from: targetChatId,
+                        body: messageText,
+                        content: messageText,
+                        isMe: true,
+                        role: 'bot',
+                        timestampRaw: Date.now(),
+                        timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                    };
+                    if (!chat.messages) chat.messages = [];
+                    chat.messages.push(newMsg);
+                    io.emit('message', { ...newMsg, waLine: chat.waLine });
                 } catch (error) {
                     console.error('Error in bulk tracking for', targetChatId, error);
                 }
