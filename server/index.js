@@ -1052,7 +1052,7 @@ app.post('/webhook', async (req, res) => {
         
         switch (msg.type) {
             case 'text':
-                msgBody = msg.text.body;
+                msgBody = msg.text?.body || '';
                 break;
             case 'image':
                 msgBody = '[FOTO]';
@@ -1061,13 +1061,26 @@ app.post('/webhook', async (req, res) => {
                 msgBody = '[STICKER]';
                 break;
             case 'document':
-                msgBody = `[DOCUMENTO: ${msg.document.filename || 'archivo'}]`;
+                msgBody = `[DOCUMENTO: ${msg.document?.filename || 'archivo'}]`;
                 break;
             case 'audio':
+            case 'voice':
                 msgBody = '[AUDIO]';
                 break;
+            case 'video':
+                msgBody = '[VIDEO]';
+                break;
+            case 'contacts':
+                msgBody = '[CONTACTOS]';
+                break;
+            case 'location':
+                msgBody = '[UBICACIÓN]';
+                break;
+            case 'reaction':
+                msgBody = `[REACCIÓN: ${msg.reaction?.emoji || ''}]`;
+                break;
             default:
-                msgBody = '[ARCHIVO NO SOPORTADO]';
+                msgBody = `[${(msg.type || 'ARCHIVO').toUpperCase()}]`;
         }
 
         // Extraer datos del anuncio (Click-to-WhatsApp Ads)
@@ -1105,19 +1118,26 @@ app.post('/webhook', async (req, res) => {
             triggerWelcomeImageIfNeeded(from, isNewChat);
             
             // Descarga de Multimedia
-            if (['image', 'sticker', 'document', 'audio'].includes(msg.type)) {
+            if (['image', 'sticker', 'document', 'audio', 'voice', 'video'].includes(msg.type)) {
                 const mediaData = msg[msg.type];
-                const mediaId = mediaData.id;
-                console.log(`📥 ${msg.type.toUpperCase()} recibido de ${customerName}. Descargando...`);
+                const mediaId = mediaData?.id;
                 
-                try {
-                    const buffer = await downloadMetaMedia(mediaId, from);
-                    if (buffer) {
-                        const ext = msg.type === 'document' ? (msg.document.filename?.split('.').pop() || 'file') : (msg.type === 'image' ? 'jpg' : (msg.type === 'sticker' ? 'webp' : 'ogg'));
-                        const fileName = `${Date.now()}-${from}.${ext}`;
-                        const filePath = path.join(UPLOADS_DIR, fileName);
-                        fs.writeFileSync(filePath, buffer);
-                        mediaUrl = `/uploads/${fileName}`;
+                if (mediaId) {
+                    console.log(`📥 ${msg.type.toUpperCase()} recibido de ${customerName}. Descargando...`);
+                    try {
+                        const buffer = await downloadMetaMedia(mediaId, from);
+                        if (buffer) {
+                            let ext = 'file';
+                            if (msg.type === 'document') ext = msg.document?.filename?.split('.').pop() || 'pdf';
+                            else if (msg.type === 'image') ext = 'jpg';
+                            else if (msg.type === 'sticker') ext = 'webp';
+                            else if (msg.type === 'audio' || msg.type === 'voice') ext = 'ogg';
+                            else if (msg.type === 'video') ext = 'mp4';
+
+                            const fileName = `${Date.now()}-${from}.${ext}`;
+                            const filePath = path.join(UPLOADS_DIR, fileName);
+                            fs.writeFileSync(filePath, buffer);
+                            mediaUrl = `/uploads/${fileName}`;
                         
                         // GPT Vision analysis si es imagen
                         if (msg.type === 'image') {
@@ -1203,14 +1223,14 @@ app.post('/webhook', async (req, res) => {
                 imageUrl: (msg.type === 'image' || msg.type === 'sticker') 
                     ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
-                fileUrl: (msg.type === 'document' || msg.type === 'audio') 
+                fileUrl: (msg.type === 'document' || msg.type === 'audio' || msg.type === 'voice' || msg.type === 'video') 
                     ? (mediaUrl || (mediaId ? `/api/media/${mediaId}` : null)) 
                     : null,
                 timestampRaw: Date.now(), role: 'user' 
             };
             
             // --- MANEJO DE AUDIO (Whisper) ---
-            if (msg.type === 'audio' && newMessage.fileUrl) {
+            if ((msg.type === 'audio' || msg.type === 'voice') && newMessage.fileUrl) {
                 const fileName = path.basename(newMessage.fileUrl);
                 const filePath = path.join(UPLOADS_DIR, fileName);
                 if (fs.existsSync(filePath)) {

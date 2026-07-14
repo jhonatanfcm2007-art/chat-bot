@@ -603,11 +603,36 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                             </div>
                           )}
                           
-                          {msg.fileUrl && (msg.fileUrl.endsWith('.ogg') || msg.fileUrl.endsWith('.opus') || msg.fileUrl.endsWith('.mp3') || msg.content?.includes('[AUDIO]') || msg.content?.includes('🎙️ (Audio)')) && (
-                            <div className="mb-2 w-full max-w-[240px]">
-                               <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
-                            </div>
-                          )}
+                          {msg.fileUrl && (() => {
+                            const isAudio = msg.fileUrl.endsWith('.ogg') || msg.fileUrl.endsWith('.opus') || msg.fileUrl.endsWith('.mp3') || msg.content?.includes('[AUDIO]') || msg.content?.includes('🎙️ (Audio)');
+                            const isVideo = msg.fileUrl.endsWith('.mp4') || msg.content?.includes('[VIDEO]');
+                            
+                            if (isAudio) {
+                              return (
+                                <div className="mb-2 w-full max-w-[240px]">
+                                   <audio controls className="w-full h-10" src={formatMediaUrl(msg.fileUrl)} />
+                                </div>
+                              );
+                            }
+                            
+                            if (isVideo) {
+                              return (
+                                <div className="mb-2 w-full max-w-[240px]">
+                                   <video controls className="w-full rounded-lg max-h-48" src={formatMediaUrl(msg.fileUrl)} />
+                                </div>
+                              );
+                            }
+
+                            return (
+                                <div className="mb-2 w-full max-w-[240px]">
+                                   <a href={formatMediaUrl(msg.fileUrl)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/5 rounded-lg hover:bg-black/10 transition-colors text-sm font-medium text-slate-700">
+                                     <span className="material-symbols-outlined text-indigo-500">description</span>
+                                     <span className="truncate flex-1">Ver Archivo</span>
+                                     <span className="material-symbols-outlined text-[16px] text-slate-400">download</span>
+                                   </a>
+                                </div>
+                            );
+                          })()}
 
                           <p className="text-[13px] leading-relaxed font-normal whitespace-pre-wrap">
                             {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
