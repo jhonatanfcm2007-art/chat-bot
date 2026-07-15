@@ -37,7 +37,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     'novedad': { label: 'Novedades', color: '#EF4444', classes: 'bg-red-50 text-red-600 border-red-200/60' }
   };
   
-  const activeChatData = selectedChat && chats[selectedChat] 
+  const currentChatForScroll = selectedChat && chats[selectedChat] 
     ? chats[selectedChat] 
     : { messages: [], name: 'Selecciona un chat', phone: '', tags: [] };
 
@@ -47,7 +47,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   useEffect(() => {
     const isChatSwitch = prevSelectedChatRef.current !== selectedChat;
-    const currentMessagesLength = activeChatData?.messages?.length || 0;
+    const currentMessagesLength = currentChatForScroll?.messages?.length || 0;
     const hasNewMessage = currentMessagesLength > prevChatsLengthRef.current;
     
     if (isChatSwitch) {
@@ -63,7 +63,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     
     prevSelectedChatRef.current = selectedChat;
     prevChatsLengthRef.current = currentMessagesLength;
-  }, [chats, selectedChat, activeChatData.messages.length]);
+  }, [chats, selectedChat, currentChatForScroll.messages.length]);
 
   const handleAudit = async () => {
     const time = window.prompt("¿Qué chats deseas auditar? Escribe 'hoy' o 'ayer':", "hoy");
