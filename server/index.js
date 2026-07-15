@@ -1115,7 +1115,6 @@ app.post('/webhook', async (req, res) => {
             }
 
             triggerWelcomeAudioIfNeeded(from, isNewChat);
-            triggerWelcomeImageIfNeeded(from, isNewChat);
             
             // Descarga de Multimedia
             if (['image', 'sticker', 'document', 'audio', 'voice', 'video'].includes(msg.type)) {
@@ -1559,42 +1558,7 @@ function triggerWelcomeAudioIfNeeded(from, isNewChat, origin) {
     }
 }
 
-function triggerWelcomeImageIfNeeded(from, isNewChat, origin) {
-    const chat = chats[from];
-    const waLine = chat?.waLine || 1;
-    const lineSettings = settings[waLine] || settings["1"];
 
-    if (isNewChat && lineSettings.welcomeImageEnabled && lineSettings.welcomeImageUrl) {
-        const imageUrl = lineSettings.welcomeImageUrl;
-        console.log(`🖼️ [BIENVENIDA] Enviando imagen de producto original a ${from} (${imageUrl})`);
-        
-        setTimeout(async () => {
-            try {
-                await smartSendImage(from, imageUrl, '✨ Producto 100% Original Garantizado con Sello de Autenticidad 🌿', origin);
-                const currentChat = chats[from];
-                if (currentChat) {
-                    const imageMsg = {
-                        id: 'welcome-image-' + Date.now(),
-                        from,
-                        body: '🖼️ [Foto de Producto Original]',
-                        content: '🖼️ [Foto de Producto Original]',
-                        imageUrl: imageUrl,
-                        isMe: true,
-                        role: 'bot',
-                        isWelcomeImage: true,
-                        timestampRaw: Date.now(),
-                        timestamp: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })
-                    };
-                    currentChat.messages.push(imageMsg);
-                    saveChats(chats);
-                    io.emit('message', { ...imageMsg, waLine: currentChat.waLine });
-                }
-            } catch (err) {
-                console.error('❌ [BIENVENIDA] Error enviando imagen:', err);
-            }
-        }, 1000);
-    }
-}
 
 async function sendAudioToCloudAPI(to, audioUrl) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
