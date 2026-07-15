@@ -584,7 +584,8 @@ function App() {
 
   const [isRestricted, setIsRestricted] = useState(false);
   const [globalLine, setGlobalLine] = useState(() => {
-    return localStorage.getItem('globalLineRestricted') || 'all';
+    const saved = localStorage.getItem('globalLineRestricted');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved, 10)) : 'all';
   });
 
   useEffect(() => {
@@ -599,12 +600,12 @@ function App() {
     } else if (workerLine) {
       localStorage.setItem('globalLineRestricted', workerLine);
       setIsRestricted(true);
-      setGlobalLine(workerLine);
+      setGlobalLine(parseInt(workerLine, 10));
     } else {
       const savedRestriction = localStorage.getItem('globalLineRestricted');
       if (savedRestriction) {
         setIsRestricted(true);
-        setGlobalLine(savedRestriction);
+        setGlobalLine(savedRestriction === 'all' ? 'all' : parseInt(savedRestriction, 10));
       }
     }
   }, []);
