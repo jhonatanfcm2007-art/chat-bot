@@ -245,7 +245,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        chat.tags.includes(filterTag) || 
                        (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
       
-      const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
+      const lineMatch = globalLine === 'all' || chat.waLine == globalLine;
       
       return searchMatch && tagMatch && lineMatch;
     })
