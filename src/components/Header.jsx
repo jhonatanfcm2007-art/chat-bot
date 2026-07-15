@@ -10,7 +10,7 @@ const TAB_TITLES = {
   inventory: 'Inventario',
 };
 
-const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine, isRestricted }) => {
+const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine }) => {
   const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
 
   return (
@@ -49,19 +49,15 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
         {/* Line selector (mobile only — desktop uses sidebar) */}
         <div className="relative md:hidden">
           <button
-            onClick={() => {
-              if (!isRestricted) setLineDropdownOpen(!lineDropdownOpen);
-            }}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-              isRestricted ? 'text-slate-300 cursor-default' : 'text-slate-400 hover:bg-slate-100'
-            }`}
+            onClick={() => setLineDropdownOpen(!lineDropdownOpen)}
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors"
           >
             <span className="material-symbols-outlined text-xl">
               {globalLine === 'all' ? 'domain' : 'sim_card'}
             </span>
           </button>
 
-          {lineDropdownOpen && !isRestricted && (
+          {lineDropdownOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setLineDropdownOpen(false)} />
               <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 animate-fade-in">
@@ -89,9 +85,8 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
 
         {/* Desktop line label */}
         <div className="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200 ml-1">
-          <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+          <span className="text-xs font-medium text-slate-400">
             {globalLine === 'all' ? 'Todas las Líneas' : `Línea ${globalLine}`}
-            {isRestricted && <span className="material-symbols-outlined text-[14px]">lock</span>}
           </span>
         </div>
       </div>

@@ -582,33 +582,7 @@ function App() {
     }));
   };
 
-  const [isRestricted, setIsRestricted] = useState(false);
-  const [globalLine, setGlobalLine] = useState(() => {
-    const saved = localStorage.getItem('globalLineRestricted');
-    return saved ? (saved === 'all' ? 'all' : parseInt(saved, 10)) : 'all';
-  });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const workerLine = params.get('linea');
-    const isAdmin = params.get('admin');
-
-    if (isAdmin) {
-      localStorage.removeItem('globalLineRestricted');
-      setIsRestricted(false);
-      setGlobalLine('all');
-    } else if (workerLine) {
-      localStorage.setItem('globalLineRestricted', workerLine);
-      setIsRestricted(true);
-      setGlobalLine(parseInt(workerLine, 10));
-    } else {
-      const savedRestriction = localStorage.getItem('globalLineRestricted');
-      if (savedRestriction) {
-        setIsRestricted(true);
-        setGlobalLine(savedRestriction === 'all' ? 'all' : parseInt(savedRestriction, 10));
-      }
-    }
-  }, []);
+  const [globalLine, setGlobalLine] = useState('all');
 
   const handleSendTrackingManual = (chatId, trackingNumber) => {
     socket.emit('send_tracking_manual', { chatId, trackingNumber });
@@ -700,7 +674,6 @@ function App() {
       serverUrl={SERVER_URL}
       globalLine={globalLine}
       setGlobalLine={setGlobalLine}
-      isRestricted={isRestricted}
     >
       {renderContent()}
     </Layout>
