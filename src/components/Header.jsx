@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 
 const TAB_TITLES = {
   simulator: 'Chats',
-  campaigns: 'Campañas',
-  ai_assistant: 'Asistente IA',
   analytics: 'Reportes',
   remarketing: 'Remarketing',
   knowledge_base: 'Conocimiento',
-  inventory: 'Inventario',
 };
 
 const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine }) => {

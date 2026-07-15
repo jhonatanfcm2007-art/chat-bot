@@ -594,25 +594,6 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'inventory':
-        return (
-          <Inventory 
-            accounts={accounts} 
-            setAccounts={setAccounts} 
-            onSale={handleSale} 
-            platforms={platforms}
-            setPlatforms={setPlatforms}
-            providers={providers}
-            setProviders={setProviders}
-            salesHistory={salesHistory}
-            onNavigateToChat={handleNavigateToChat}
-            onMarkSaleAsSuccess={handleMarkSaleAsSuccess}
-            onMarkSaleAsFailed={handleMarkSaleAsFailed}
-            chats={chats}
-            onSendMessage={handleSendMessage}
-            globalLine={globalLine}
-          />
-        );
       case 'simulator':
         return (
           <Simulator 
@@ -633,24 +614,6 @@ function App() {
             globalLine={globalLine}
             onSendTrackingManual={handleSendTrackingManual}
             onConfirmBulkTracking={handleConfirmBulkTracking}
-          />
-        );
-      case 'ai_assistant':
-        return (
-          <AIAssistant 
-            settings={settings}
-            socket={socket}
-            serverUrl={SERVER_URL}
-            globalLine={globalLine}
-          />
-        );
-      case 'campaigns':
-        return (
-          <Campaigns 
-            campaigns={campaigns}
-            chats={chats}
-            socket={socket}
-            globalLine={globalLine}
           />
         );
       case 'remarketing':
