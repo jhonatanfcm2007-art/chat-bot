@@ -319,16 +319,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <span className="material-symbols-outlined text-sm">view_kanban</span>
                   Tablero Logístico
                 </button>
-                <button 
-                  onClick={handleAudit}
-                  disabled={isAuditing}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${isAuditing ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200'}`}
-                >
-                  <span className={`material-symbols-outlined text-sm ${isAuditing ? 'animate-spin' : ''}`}>
-                    {isAuditing ? 'sync' : 'policy'}
-                  </span>
-                  {isAuditing ? 'Auditando...' : 'Auditoría IA'}
-                </button>
+
 
                 {isFilterMenuOpen && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">

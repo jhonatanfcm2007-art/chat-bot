@@ -6,6 +6,7 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
 
   const navItems = [
     { id: 'simulator', icon: 'chat', label: 'Chats' },
+    { id: 'ai_assistant', icon: 'psychology', label: 'Entrenar IA' },
     { id: 'analytics', icon: 'monitoring', label: 'Reportes' },
     { id: 'remarketing', icon: 'group', label: 'Remarketing' },
     { id: 'knowledge_base', icon: 'menu_book', label: 'Conocimiento' },

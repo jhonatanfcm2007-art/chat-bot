@@ -616,6 +616,15 @@ function App() {
             onConfirmBulkTracking={handleConfirmBulkTracking}
           />
         );
+      case 'ai_assistant':
+        return (
+          <AIAssistant 
+            settings={settings}
+            socket={socket}
+            serverUrl={SERVER_URL}
+            globalLine={globalLine}
+          />
+        );
       case 'remarketing':
         return <Remarketing serverUrl={SERVER_URL} />;
       case 'knowledge_base':

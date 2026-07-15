@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const TAB_TITLES = {
   simulator: 'Chats',
+  ai_assistant: 'Entrenar IA',
   analytics: 'Reportes',
   remarketing: 'Remarketing',
   knowledge_base: 'Conocimiento',
