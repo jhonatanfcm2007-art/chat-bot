@@ -582,7 +582,32 @@ function App() {
     }));
   };
 
-  const [globalLine, setGlobalLine] = useState('all');
+  const [isRestricted, setIsRestricted] = useState(false);
+  const [globalLine, setGlobalLine] = useState(() => {
+    return localStorage.getItem('globalLineRestricted') || 'all';
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const workerLine = params.get('linea');
+    const isAdmin = params.get('admin');
+
+    if (isAdmin) {
+      localStorage.removeItem('globalLineRestricted');
+      setIsRestricted(false);
+      setGlobalLine('all');
+    } else if (workerLine) {
+      localStorage.setItem('globalLineRestricted', workerLine);
+      setIsRestricted(true);
+      setGlobalLine(workerLine);
+    } else {
+      const savedRestriction = localStorage.getItem('globalLineRestricted');
+      if (savedRestriction) {
+        setIsRestricted(true);
+        setGlobalLine(savedRestriction);
+      }
+    }
+  }, []);
 
   const handleSendTrackingManual = (chatId, trackingNumber) => {
     socket.emit('send_tracking_manual', { chatId, trackingNumber });
@@ -674,6 +699,7 @@ function App() {
       serverUrl={SERVER_URL}
       globalLine={globalLine}
       setGlobalLine={setGlobalLine}
+      isRestricted={isRestricted}
     >
       {renderContent()}
     </Layout>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
+const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine, isRestricted }) => {
   const [expanded, setExpanded] = useState(false);
   const [lineMenuOpen, setLineMenuOpen] = useState(false);
 
@@ -81,24 +81,28 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
       <div className="border-t border-white/5 p-2">
         <div className="relative">
           <button
-            onClick={() => setLineMenuOpen(!lineMenuOpen)}
+            onClick={() => {
+              if (!isRestricted) setLineMenuOpen(!lineMenuOpen);
+            }}
             className={`w-full flex items-center rounded-lg h-10 transition-all duration-150
               ${expanded ? 'px-3 gap-3' : 'justify-center'}
-              text-slate-400 hover:bg-white/5 hover:text-slate-200
+              ${isRestricted ? 'cursor-default opacity-80' : 'hover:bg-white/5 hover:text-slate-200'}
+              ${!isRestricted ? 'text-slate-400' : 'text-slate-500'}
             `}
           >
             <span className="material-symbols-outlined text-xl flex-shrink-0">
               {globalLine === 'all' ? 'domain' : 'sim_card'}
             </span>
             {expanded && (
-              <span className="text-xs font-medium whitespace-nowrap animate-fade-in">
+              <span className="text-xs font-medium whitespace-nowrap animate-fade-in flex items-center gap-1">
                 {globalLine === 'all' ? 'Todas' : `Línea ${globalLine}`}
+                {isRestricted && <span className="material-symbols-outlined text-[14px]">lock</span>}
               </span>
             )}
           </button>
 
           {/* Line selector dropdown */}
-          {lineMenuOpen && expanded && (
+          {lineMenuOpen && expanded && !isRestricted && (
             <div className="absolute bottom-12 left-0 w-full bg-sidebar-hover rounded-lg border border-white/10 py-1 shadow-xl animate-fade-in">
               {[
                 { val: 'all', label: 'Todas las Líneas', icon: 'domain' },

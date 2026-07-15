@@ -5,7 +5,7 @@ import MobileNav from './MobileNav';
 import InstallPrompt from './InstallPrompt';
 import NotificationPrompt from './NotificationPrompt';
 
-const Layout = ({ children, activeTab, onTabChange, notifications, onNotificationClick, onClearNotifications, serverUrl, globalLine, setGlobalLine }) => {
+const Layout = ({ children, activeTab, onTabChange, notifications, onNotificationClick, onClearNotifications, serverUrl, globalLine, setGlobalLine, isRestricted }) => {
   return (
     <div className="bg-background text-on-surface font-body h-screen flex overflow-hidden relative selection:bg-primary/20">
       <InstallPrompt />
@@ -17,6 +17,7 @@ const Layout = ({ children, activeTab, onTabChange, notifications, onNotificatio
         onTabChange={onTabChange}
         globalLine={globalLine}
         setGlobalLine={setGlobalLine}
+        isRestricted={isRestricted}
       />
 
       {/* Main content area */}
@@ -29,6 +30,7 @@ const Layout = ({ children, activeTab, onTabChange, notifications, onNotificatio
           onClearNotifications={onClearNotifications}
           globalLine={globalLine}
           setGlobalLine={setGlobalLine}
+          isRestricted={isRestricted}
         />
         <main className="flex-1 flex overflow-hidden pt-14 pb-16 md:pb-0">
           {children}
