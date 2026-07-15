@@ -20,6 +20,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [showDropiModal, setShowDropiModal] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
   const chatEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const prevSelectedChatRef = useRef(selectedChat);
+  const prevChatsLengthRef = useRef(0);
 
   const TAG_UI = {
     'pagado': { label: 'Pagado', color: '#10B981', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
@@ -34,13 +37,33 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     'novedad': { label: 'Novedades', color: '#EF4444', classes: 'bg-red-50 text-red-600 border-red-200/60' }
   };
   
+  const activeChatData = selectedChat && chats[selectedChat] 
+    ? chats[selectedChat] 
+    : { messages: [], name: 'Selecciona un chat', phone: '', tags: [] };
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [chats, selectedChat]);
+    const isChatSwitch = prevSelectedChatRef.current !== selectedChat;
+    const currentMessagesLength = activeChatData?.messages?.length || 0;
+    const hasNewMessage = currentMessagesLength > prevChatsLengthRef.current;
+    
+    if (isChatSwitch) {
+      setTimeout(scrollToBottom, 50);
+    } else if (hasNewMessage && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      
+      if (distanceToBottom < 250) {
+        scrollToBottom();
+      }
+    }
+    
+    prevSelectedChatRef.current = selectedChat;
+    prevChatsLengthRef.current = currentMessagesLength;
+  }, [chats, selectedChat, activeChatData.messages.length]);
 
   const handleAudit = async () => {
     const time = window.prompt("¿Qué chats deseas auditar? Escribe 'hoy' o 'ayer':", "hoy");
@@ -522,7 +545,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
               </div>
             </header>
 
-            <div className="flex-grow overflow-y-auto flex flex-col relative group whatsapp-pattern custom-scrollbar">
+            <div ref={scrollContainerRef} className="flex-grow overflow-y-auto flex flex-col relative group whatsapp-pattern custom-scrollbar">
               <div className="p-6 md:p-10 space-y-4 flex flex-col relative z-20">
                 {activeChatData.messages.map((msg, idx) => {
                   const currentMsgDate = msg.timestampRaw ? new Date(Number(msg.timestampRaw)) : null;
