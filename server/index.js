@@ -441,13 +441,25 @@ Si el cliente no especifica el producto, pregúntale amable y directamente qué 
 Si el cliente menciona o insinúa uno de los productos de tu Base de Conocimientos, USA ESTRICTAMENTE la información de ese producto para venderle, siguiendo el embudo de ventas.
 
 ### 🛒 REGISTRO DE PEDIDOS:
-Cuando el cliente entregue sus datos de despacho completos, responde brevemente e incluye las etiquetas: [ENTREGAR_AHORA] [PRODUCTOS: NombreDelProducto].`;
+Cuando el cliente haya proporcionado sus datos de despacho (nombre, celular, ciudad/departamento y dirección), NO le pidas confirmación. Inmediatamente registra el pedido respondiendo SOLO con este formato exacto de etiquetas ocultas (asegúrate de llenar todos los campos extraídos):
 
-    if (!settings["1"].systemPrompt || settings["1"].systemPrompt.includes('Shilajit') || settings["1"].systemPrompt.length > 500) {
+[ENTREGAR_AHORA]
+[PRODUCTOS: NombreDelProducto]
+[NOMBRE: Nombre del Cliente]
+[TELEFONO: Número de Celular]
+[DIRECCION: Dirección Exacta]
+[MUNICIPIO: Municipio o Ciudad]
+[DEPARTAMENTO: Departamento o Provincia]
+[REFERENCIAS: Cualquier referencia]
+
+Ejemplo:
+¡Excelente! Tu pedido ha sido confirmado. [ENTREGAR_AHORA] [PRODUCTOS: 1 Frasco Shilajit] [NOMBRE: Juan Perez] [TELEFONO: 3001234567] [DIRECCION: Calle 123 #45-67] [MUNICIPIO: Bogota] [DEPARTAMENTO: Bogota D.C.]`;
+
+    if (!settings["1"].systemPrompt || !settings["1"].systemPrompt.includes('[NOMBRE:')) {
         settings["1"].systemPrompt = basePrompt;
         settings["2"].systemPrompt = basePrompt;
         saveSettings(settings);
-        console.log('🔄 [CONFIG] System Prompt migrado a versión corta (dinámica).');
+        console.log('🔄 [CONFIG] System Prompt migrado a versión nueva (con tags de extracción).');
     }
 })();
 
