@@ -34,7 +34,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     'viajando_destino': { label: 'Viajando a Destino', color: '#3B82F6', classes: 'bg-blue-50 text-blue-600 border-blue-200/60' },
     'en_ruta': { label: 'En Ruta de Entrega', color: '#F97316', classes: 'bg-orange-50 text-orange-600 border-orange-200/60' },
     'entregado': { label: 'Entregado', color: '#14B8A6', classes: 'bg-teal-50 text-teal-600 border-teal-200/60' },
-    'novedad': { label: 'Novedades', color: '#EF4444', classes: 'bg-red-50 text-red-600 border-red-200/60' }
+    'novedad': { label: 'Novedades', color: '#EF4444', classes: 'bg-red-50 text-red-600 border-red-200/60' },
+    'pedidos_abandonados': { label: 'Pedido Abandonado', color: '#6B7280', classes: 'bg-gray-100 text-gray-700 border-gray-300' }
   };
   
   const currentChatForScroll = selectedChat && chats[selectedChat] 
@@ -809,91 +810,39 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           <div className="flex-grow overflow-y-auto p-5 space-y-6 custom-scrollbar">
             <div className="bg-white border border-slate-200/60 rounded-xl p-5 shadow-sm">
                <div className="flex items-center gap-2 mb-4">
-                  <span className="material-symbols-outlined text-primary text-xl">shopping_cart</span>
-                  <h4 className="font-medium text-sm text-on-surface">Venta Directa</h4>
+                  <span className="material-symbols-outlined text-primary text-xl">local_shipping</span>
+                  <h4 className="font-medium text-sm text-on-surface">Datos del Pedido</h4>
                </div>
                
-               <select 
-                 value={selectedSaleAccount}
-                 onChange={(e) => setSelectedSaleAccount(e.target.value)}
-                 className="w-full bg-white border border-slate-200 rounded-lg py-2.5 px-3 text-xs font-medium text-slate-700 mb-4 appearance-none cursor-pointer outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-               >
-                 <option value="">Seleccionar cuenta...</option>
-                 {availableInventory.map(acc => (
-                   <option key={acc.id} value={acc.id}>
-                     {acc.service} — ${acc.price}
-                   </option>
-                 ))}
-               </select>
-
-               <button 
-                disabled={!selectedSaleAccount}
-                onClick={handleSellToCustomer}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-xs font-medium disabled:opacity-30 hover:bg-primary-hover active:scale-[0.98] transition-all"
-               >
-                 Finalizar Venta
-               </button>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-medium text-on-surface-variant mb-3 px-1 flex items-center justify-between">
-                Historial de Compras
-                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-xs">{customerSales.length}</span>
-              </h4>
-              <div className="space-y-3">
-                {customerSales.length > 0 ? (
-                  customerSales.map((sale, i) => (
-                    <div key={i} className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-8 rounded-lg bg-primary-light flex items-center justify-center">
-                              <span className="material-symbols-outlined text-primary text-lg">local_mall</span>
-                           </div>
-                           <div>
-                              <h5 className="text-xs font-semibold text-on-surface leading-tight">{sale.service}</h5>
-                              <p className="text-xs text-on-surface-variant font-normal">{sale.date}</p>
-                           </div>
-                        </div>
-                        <span className={`text-xs font-medium ${sale.paid ? 'text-tertiary' : 'text-orange-500 animate-pulse'}`}>
-                          {sale.paid ? 'Vendido' : 'Pendiente de Pago'}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2 bg-slate-50 rounded-lg p-3 border border-slate-100">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant font-medium">Proveedor:</span>
-                          <span className="text-primary font-medium">{sale.provider || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant font-medium">Correo:</span>
-                          <span className="text-slate-700 font-mono font-normal">{sale.email}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant font-medium">Clave:</span>
-                          <span className="text-slate-700 font-mono font-normal">{sale.pass}</span>
-                        </div>
-                        {sale.profile && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant font-medium">Perfil:</span>
-                            <span className="text-slate-700 font-normal">{sale.profile} {sale.pin ? `(PIN: ${sale.pin})` : ''}</span>
-                          </div>
-                        )}
-                        {sale.expiration && (
-                          <div className="flex justify-between text-xs pt-1 border-t border-slate-200">
-                            <span className="text-on-surface-variant font-medium">Vence:</span>
-                            <span className="text-primary font-medium">{sale.expiration}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 opacity-30">
-                    <span className="material-symbols-outlined text-4xl mb-2">history</span>
-                    <p className="text-xs font-medium text-slate-500">Sin ventas previas</p>
-                  </div>
-                )}
-              </div>
+               <div className="space-y-3">
+                 <div className="flex flex-col text-xs">
+                   <span className="text-on-surface-variant font-medium">🛒 Producto:</span>
+                   <span className="text-slate-800 font-semibold">{activeChatData.pendingApprovalProducts || 'Aún no especificado'}</span>
+                 </div>
+                 <div className="flex flex-col text-xs">
+                   <span className="text-on-surface-variant font-medium">👤 Nombre:</span>
+                   <span className="text-slate-700">{activeChatData.orderName || activeChatData.customerName || 'No especificado'}</span>
+                 </div>
+                 <div className="flex flex-col text-xs">
+                   <span className="text-on-surface-variant font-medium">📞 Teléfono:</span>
+                   <span className="text-slate-700">{activeChatData.orderPhone || selectedChat.split('_')[0] || 'No especificado'}</span>
+                 </div>
+                 <div className="flex flex-col text-xs">
+                   <span className="text-on-surface-variant font-medium">📍 Dirección:</span>
+                   <span className="text-slate-700">{activeChatData.address || 'No especificada'}</span>
+                 </div>
+                 <div className="flex flex-col text-xs">
+                   <span className="text-on-surface-variant font-medium">🏙️ Municipio / Depto:</span>
+                   <span className="text-slate-700">{(activeChatData.city && activeChatData.province) ? `${activeChatData.city}, ${activeChatData.province}` : (activeChatData.city || activeChatData.province || 'No especificado')}</span>
+                 </div>
+                 
+                 <div className="pt-3 mt-1 border-t border-slate-100 flex justify-between items-center text-xs">
+                   <span className="text-on-surface-variant font-medium">Estado:</span>
+                   <span className={`px-2 py-1 rounded-md font-semibold ${activeChatData.orderRegistered ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                     {activeChatData.orderRegistered ? '✅ Enviado a WhatsApp' : '⏳ Pendiente de envío'}
+                   </span>
+                 </div>
+               </div>
             </div>
 
             {/* Multimedia Gallery */}

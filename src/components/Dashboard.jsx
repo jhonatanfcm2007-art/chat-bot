@@ -26,7 +26,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale, globalLine }) => {
+const Dashboard = ({ accounts, salesHistory, anomalies, chats = {}, onNavigateToChat, onDeleteSale, onUpdateSale, globalLine }) => {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const [dateRange, setDateRange] = useState({
     start: today,
@@ -51,65 +51,28 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
 
   const allLogisticsTags = ['preparar_pedido', 'guia_enviada', 'viajando_destino', 'en_ruta', 'novedad', 'entregado'];
 
-  const dynamicSales = Object.entries(chats || {}).map(([phone, chat]) => {
-    // 1. Check if the chat has a logistics tag
-    const currentTag = chat.tags?.find(t => allLogisticsTags.includes(t));
-    if (!currentTag) return null;
-
-    // We look up the historical sale in salesHistory to get the EXACT date and potentially exact price
-    const historicalSale = salesHistory?.find(s => s.customerId === phone);
-
-    // 2. Extract country
-    const phoneToTest = (chat.orderPhone || phone).toString();
-    const isHonduras = phoneToTest.startsWith('504') || phoneToTest.startsWith('+504') || phoneToTest.includes('@c.us') && phoneToTest.startsWith('504');
-    const country = isHonduras ? 'HN' : 'GT';
-    const currency = isHonduras ? 'HNL' : 'GTQ';
-
-    // 3. Extract price
-    let extractedPrice = historicalSale && historicalSale.price > 0 ? historicalSale.price : 0;
-    if (extractedPrice === 0) {
-        const msgs = chat.messages || [];
-        for (let i = msgs.length - 1; i >= 0; i--) {
-            const m = msgs[i];
-            if (m.text) {
-                const priceMatch = m.text.match(/(?:Q|L|Lps|Quetzales|Lempiras|\$)\s*(\d+(?:[.,]\d+)?)/i);
-                if (priceMatch) {
-                    extractedPrice = parseFloat(priceMatch[1].replace(',', '.'));
-                    break;
-                }
-            }
-        }
-    }
-
-    // 4. Determine date
-    let dateStr = '';
+  const dynamicSales = (salesHistory || []).map(sale => {
+    // Attempt to determine if it has been delivered by checking current chat tags
+    const chat = chats?.[sale.customerId];
+    const isEntregado = chat?.tags?.includes('entregado');
+    
+    // Create Date object based on sale.date
     let dateObj = null;
-    if (historicalSale && historicalSale.date) {
-        dateStr = historicalSale.date;
+    let dateStr = sale.date || '';
+    if (dateStr.includes('T')) {
+        dateObj = new Date(dateStr);
+    } else {
         const [year, month, day] = dateStr.split('-').map(Number);
         dateObj = new Date(year, month - 1, day);
-    } else {
-        // Fallback
-        dateObj = new Date(chat.updatedAt || Date.now());
-        dateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
     }
 
     return {
-        id: phone,
-        reference: chat.orderName || chat.customerName || 'Cliente',
-        service: chat.orderPhone || phone,
-        price: extractedPrice,
-        country,
-        currency,
-        date: dateStr,
+        ...sale,
         dateObj,
-        customer: chat.customerName || 'Sin Nombre',
-        customerId: phone,
-        paid: currentTag === 'entregado',
-        tag: currentTag,
-        waLine: chat.waLine
+        paid: isEntregado || sale.paid,
+        tag: chat?.tags?.find(t => allLogisticsTags.includes(t)) || null
     };
-  }).filter(Boolean);
+  });
 
   const startObj = new Date(dateRange.start);
   startObj.setHours(0,0,0,0);
@@ -367,6 +330,61 @@ const Dashboard = ({ accounts, salesHistory, chats = {}, onNavigateToChat, onDel
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Anomalies / AI Reports Section */}
+        {(anomalies && anomalies.length > 0) && (
+          <div className="lg:col-span-12 bg-rose-50/50 p-6 rounded-xl border border-rose-200 shadow-sm mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center">
+                <span className="material-symbols-outlined text-[20px]">warning</span>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-rose-900">Alertas y Reportes IA</h3>
+                <p className="text-sm font-medium text-rose-700/70 mt-0.5">Anomalías detectadas recientemente que requieren revisión manual</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {anomalies.filter(a => !a.resolved).slice(0, 6).map(anomaly => (
+                <div key={anomaly.id} className="bg-white border border-rose-200 rounded-lg p-4 flex flex-col justify-between shadow-sm">
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold text-rose-600 bg-rose-100 px-2 py-0.5 rounded uppercase tracking-wider">{anomaly.type}</span>
+                      <span className="text-xs font-medium text-slate-400">{new Date(anomaly.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-800 mb-1">{anomaly.customerName}</p>
+                    <p className="text-xs text-slate-500 mb-4 line-clamp-2">
+                      {anomaly.type === 'Pedido Abandonado' 
+                        ? 'El cliente parecía interesado pero no finalizó los datos, o la IA se detuvo sin confirmar.'
+                        : 'El cliente ha reportado un problema o ha solicitado soporte humano.'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mt-auto">
+                    <button 
+                      onClick={() => {
+                        fetch(`${SERVER_URL}/api/anomalies/${anomaly.id}/resolve`, { method: 'POST' });
+                      }}
+                      className="flex-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 py-1.5 rounded transition-colors"
+                    >
+                      Marcar Resuelto
+                    </button>
+                    <button 
+                      onClick={() => onNavigateToChat && onNavigateToChat(anomaly.from)}
+                      className="flex-1 text-xs font-medium bg-rose-600 hover:bg-rose-700 text-white py-1.5 rounded transition-colors"
+                    >
+                      Ver Chat
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {anomalies.filter(a => !a.resolved).length === 0 && (
+              <p className="text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-lg flex items-center gap-2">
+                <span className="material-symbols-outlined">check_circle</span>
+                No hay anomalías pendientes. Todo está funcionando correctamente.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Recent Activity Card - Expanded */}
         <div className="lg:col-span-12 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">

@@ -137,6 +137,7 @@ const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const KNOWLEDGE_BASE_FILE = path.join(DATA_DIR, 'knowledge_base.json');
+const ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -291,6 +292,7 @@ if (fs.existsSync(DIST_DIR)) {
     app.get('/', (req, res) => res.send('Backend Chatbot CRM running 🚀'));
 }
 
+// --- DATA LOADING & SAVING ---
 function loadInventory() {
     try {
         if (fs.existsSync(INVENTORY_FILE)) return JSON.parse(fs.readFileSync(INVENTORY_FILE, 'utf-8'));
@@ -320,6 +322,29 @@ function loadChats() {
     return {};
 }
 function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, null, 2)); }
+
+function loadAnomalies() {
+    if (fs.existsSync(ANOMALIES_FILE)) {
+        try { return JSON.parse(fs.readFileSync(ANOMALIES_FILE, 'utf-8')); } catch (e) { console.error('Error cargando anomalías:', e); }
+    }
+    return [];
+}
+function saveAnomalies(data) { fs.writeFileSync(ANOMALIES_FILE, JSON.stringify(data, null, 2)); }
+
+function registerAnomaly(type, customerName, from) {
+    const newAnomaly = {
+        id: 'anomaly-' + Date.now(),
+        type,
+        customerName: customerName || 'Desconocido',
+        from,
+        date: new Date().toISOString(),
+        resolved: false
+    };
+    anomalies.unshift(newAnomaly);
+    if (anomalies.length > 200) anomalies.pop(); // Keep only last 200
+    saveAnomalies(anomalies);
+    io.emit('anomalies_updated', anomalies);
+}
 
 function loadSettings() {
     const defSingle = { 
@@ -381,6 +406,7 @@ let settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
 let campaigns = loadCampaigns();
+let anomalies = loadAnomalies();
 
 function loadCustomers() {
     try {
@@ -453,7 +479,11 @@ Cuando el cliente haya proporcionado sus datos de despacho (nombre, celular, ciu
 [REFERENCIAS: Cualquier referencia]
 
 Ejemplo:
-¡Excelente! Tu pedido ha sido confirmado. [ENTREGAR_AHORA] [PRODUCTOS: 1 Frasco Shilajit] [NOMBRE: Juan Perez] [TELEFONO: 3001234567] [DIRECCION: Calle 123 #45-67] [MUNICIPIO: Bogota] [DEPARTAMENTO: Bogota D.C.]`;
+¡Excelente! Tu pedido ha sido confirmado. [ENTREGAR_AHORA] [PRODUCTOS: 1 Frasco Shilajit] [NOMBRE: Juan Perez] [TELEFONO: 3001234567] [DIRECCION: Calle 123 #45-67] [MUNICIPIO: Bogota] [DEPARTAMENTO: Bogota D.C.]
+
+### ETIQUETAS DE SEGUIMIENTO INTERNO:
+- Si el cliente muestra interés real en comprar (ej. pregunta precios, envío) pero aún no deja datos de envío, incluye (solo una vez) al final de tu respuesta la etiqueta: [INTERESADO]
+- Si el cliente estaba en proceso de dar sus datos y luego se desanima o la conversación se estanca sin llegar a la venta, incluye la etiqueta: [ABANDONADO]`;
 
     if (!settings["1"].systemPrompt || !settings["1"].systemPrompt.includes('[NOMBRE:')) {
         settings["1"].systemPrompt = basePrompt;
@@ -1329,6 +1359,8 @@ async function processAIResponse(from, msgBodyLower) {
 
         if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
+        registerAnomaly('Soporte Requerido', customerName, from);
+        
         delete aiTimers[from];
         return;
     }
@@ -1381,16 +1413,38 @@ async function processAIResponse(from, msgBodyLower) {
             }
         }
     } else {
-        // Si no es un cierre de orden, y el chat no tiene ninguna etiqueta, se marca como interesado
-        if (!refreshedChat.tags || refreshedChat.tags.length === 0 || (refreshedChat.tags.length === 1 && refreshedChat.tags[0] === 'activo')) {
-            refreshedChat.tags = ['interesado'];
+        // Etiquetas detectadas por la IA
+        const isInteresado = /\[INTERESADO\]/i.test(cleanAiReply);
+        const isAbandonado = /\[ABANDONADO\]/i.test(cleanAiReply);
+        
+        let newTags = [...(refreshedChat.tags || [])];
+        let changed = false;
+
+        if (isInteresado && !newTags.includes('interesado')) {
+            newTags = newTags.filter(t => t !== 'activo');
+            newTags.push('interesado');
+            changed = true;
+        }
+
+        if (isAbandonado && !newTags.includes('pedidos_abandonados')) {
+            newTags = newTags.filter(t => t !== 'interesado' && t !== 'preparar_pedido' && t !== 'pedido-pendiente');
+            newTags.push('pedidos_abandonados');
+            changed = true;
+            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *ANOMALÍA: PEDIDO ABANDONADO*\n\nEl cliente *${customerName}* parece haber abandonado el proceso de compra o la IA se ha atascado. Revisa la conversación.`);
+            
+            // Register anomaly
+            registerAnomaly('Pedido Abandonado', customerName, from);
+        }
+
+        if (changed) {
+            refreshedChat.tags = newTags;
             saveChats(chats);
             io.emit('tag_updated', { from, tags: refreshedChat.tags });
         }
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO)[^\]]*\]/gi, '').trim();
+    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|ABANDONADO)[^\]]*\]/gi, '').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -2013,6 +2067,20 @@ async function processCampaign(campaignId) {
 
 app.get('/api/inventory', (req, res) => res.json(inventory));
 app.post('/api/inventory', (req, res) => { inventory = req.body; saveInventory(inventory); io.emit('inventory_updated', inventory); res.json({success:true}); });
+
+app.get('/api/anomalies', (req, res) => res.json(anomalies));
+app.post('/api/anomalies/:id/resolve', (req, res) => {
+    const anomaly = anomalies.find(a => a.id === req.params.id);
+    if (anomaly) {
+        anomaly.resolved = true;
+        saveAnomalies(anomalies);
+        io.emit('anomalies_updated', anomalies);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
+});
+
 app.get('/api/sales', (req, res) => res.json(sales));
 app.post('/api/sales', (req, res) => { sales = req.body; saveSales(sales); io.emit('sales_updated', sales); res.json({success:true}); });
 app.get('/api/platforms', (req, res) => res.json(platforms));

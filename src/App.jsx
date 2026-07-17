@@ -29,8 +29,25 @@ function App() {
     inventory: false,
     platforms: false,
     providers: false,
-    sales: false
+    knowledge: false,
+    sales: false,
+    anomalies: false
   });
+
+  useEffect(() => {
+    if (!initialized.anomalies) {
+      fetch(`${SERVER_URL}/api/anomalies`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setAnomalies(data);
+          setInitialized(prev => ({ ...prev, anomalies: true }));
+        })
+        .catch(err => {
+          console.error("Error cargando anomalies:", err);
+          setInitialized(prev => ({ ...prev, anomalies: true }));
+        });
+    }
+  }, [initialized]);
 
   // Jugar sonido simple al recibir notificación (opcional si falla)
   const playAlertSound = () => {
@@ -250,6 +267,9 @@ function App() {
       socket.off('block_state_updated');
       socket.off('message_deleted');
       socket.off('campaigns_updated');
+      socket.off('inventory_updated');
+      socket.off('sales_updated');
+      socket.off('anomalies_updated');
     };
   }, []);
   
@@ -326,6 +346,7 @@ function App() {
   }, []);
 
   const [salesHistory, setSalesHistory] = useState([]);
+  const [anomalies, setAnomalies] = useState([]);
 
   // Cargar ventas del servidor al iniciar
   useEffect(() => {
@@ -632,7 +653,7 @@ function App() {
       case 'analytics':
       case 'dashboard':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} globalLine={globalLine} />;
+        return <Dashboard accounts={accounts} salesHistory={salesHistory} anomalies={anomalies} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} globalLine={globalLine} />;
     }
   };
 
