@@ -182,6 +182,18 @@ const KnowledgeBase = ({ serverUrl }) => {
               </div>
 
               <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Prefijo Telefónico (Opcional, ej. 503)</label>
+                <input 
+                  type="text"
+                  value={editingProduct.phonePrefix || ''}
+                  onChange={e => setEditingProduct({...editingProduct, phonePrefix: e.target.value.trim()})}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Ej. 503 para El Salvador"
+                />
+                <p className="text-xs text-slate-500 mt-1">Si se llena, este producto solo se ofrecerá a clientes cuyo número inicie con este prefijo. Útil para separar países en la misma línea.</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Palabras Clave (separadas por coma)</label>
                 <input 
                   type="text" required

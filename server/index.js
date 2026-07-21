@@ -2574,7 +2574,17 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         
         const lineProducts = knowledgeBaseDb.filter(p => {
             const pLine = p.line || '1'; // Si no tiene línea, pertenece a Línea 1 por defecto
-            return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
+            const isCorrectLine = pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
+            
+            // Verificar si el producto tiene un prefijo telefónico específico
+            if (p.phonePrefix && p.phonePrefix.trim() !== '') {
+                const cleanPhone = String(fromPhone).replace('+', '').trim();
+                const cleanPrefix = p.phonePrefix.replace('+', '').trim();
+                if (!cleanPhone.startsWith(cleanPrefix)) {
+                    return false; // El número no coincide con el prefijo exigido
+                }
+            }
+            return isCorrectLine;
         });
         
         if (lineProducts.length > 0) {
