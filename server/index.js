@@ -2574,17 +2574,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         
         const lineProducts = knowledgeBaseDb.filter(p => {
             const pLine = p.line || '1'; // Si no tiene línea, pertenece a Línea 1 por defecto
-            const isCorrectLine = pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
-            
-            // Verificar si el producto tiene un prefijo telefónico específico
-            if (p.phonePrefix && p.phonePrefix.trim() !== '') {
-                const cleanPhone = String(fromPhone).replace('+', '').trim();
-                const cleanPrefix = p.phonePrefix.replace('+', '').trim();
-                if (!cleanPhone.startsWith(cleanPrefix)) {
-                    return false; // El número no coincide con el prefijo exigido
-                }
-            }
-            return isCorrectLine;
+            return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
         });
         
         if (lineProducts.length > 0) {
@@ -2595,7 +2585,17 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
                     knowledgeContext += `IDs de Anuncio asociados: ${prod.adIds.join(', ')}\n`;
                 }
                 knowledgeContext += `Detalles y Beneficios:\n${prod.details}\n`;
-                knowledgeContext += `Precios y Combos:\n${prod.prices}\n`;
+                
+                // Procesar variaciones de precios según el número de teléfono del cliente
+                let finalPrices = prod.prices;
+                if (prod.priceVariations && prod.priceVariations.length > 0) {
+                    const cleanPhone = String(fromPhone).replace('+', '').trim();
+                    const matchedVar = prod.priceVariations.find(v => v.prefix && cleanPhone.startsWith(v.prefix.replace('+', '').trim()));
+                    if (matchedVar && matchedVar.prices) {
+                        finalPrices = matchedVar.prices;
+                    }
+                }
+                knowledgeContext += `Precios y Combos:\n${finalPrices}\n`;
             });
         } else {
             knowledgeContext += "No hay productos registrados en la base de conocimiento.\n";

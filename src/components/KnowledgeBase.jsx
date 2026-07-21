@@ -56,12 +56,12 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas' });
+    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [] });
     setIsModalOpen(true);
   };
 
   const openEditModal = (product) => {
-    setEditingProduct({ line: 'Ambas', ...product });
+    setEditingProduct({ line: 'Ambas', priceVariations: [], ...product });
     setIsModalOpen(true);
   };
 
@@ -182,18 +182,6 @@ const KnowledgeBase = ({ serverUrl }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Prefijo Telefónico (Opcional, ej. 503)</label>
-                <input 
-                  type="text"
-                  value={editingProduct.phonePrefix || ''}
-                  onChange={e => setEditingProduct({...editingProduct, phonePrefix: e.target.value.trim()})}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                  placeholder="Ej. 503 para El Salvador"
-                />
-                <p className="text-xs text-slate-500 mt-1">Si se llena, este producto solo se ofrecerá a clientes cuyo número inicie con este prefijo. Útil para separar países en la misma línea.</p>
-              </div>
-
-              <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Palabras Clave (separadas por coma)</label>
                 <input 
                   type="text" required
@@ -229,7 +217,7 @@ const KnowledgeBase = ({ serverUrl }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Precios y Combos</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Precios y Combos (Por Defecto)</label>
                 <textarea 
                   required rows={3}
                   value={editingProduct.prices}
@@ -237,6 +225,70 @@ const KnowledgeBase = ({ serverUrl }) => {
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                   placeholder="- 1 Unidad: $50\n- 2 Unidades: $90 (Ahorras $10)"
                 ></textarea>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-sm font-semibold text-slate-700">Variaciones de Precio por País / Prefijo</label>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const newVariations = [...(editingProduct.priceVariations || []), { prefix: '', prices: '' }];
+                      setEditingProduct({...editingProduct, priceVariations: newVariations});
+                    }}
+                    className="text-xs font-semibold text-primary bg-primary-light px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    Añadir Variante
+                  </button>
+                </div>
+                
+                {(editingProduct.priceVariations || []).map((variation, idx) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-lg p-3 mb-3 relative group">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newVariations = [...editingProduct.priceVariations];
+                        newVariations.splice(idx, 1);
+                        setEditingProduct({...editingProduct, priceVariations: newVariations});
+                      }}
+                      className="absolute top-2 right-2 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                    <div className="mb-2 w-full md:w-1/2">
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Prefijo (Ej. 503)</label>
+                      <input 
+                        type="text" required
+                        value={variation.prefix}
+                        onChange={e => {
+                          const newVariations = [...editingProduct.priceVariations];
+                          newVariations[idx].prefix = e.target.value.trim();
+                          setEditingProduct({...editingProduct, priceVariations: newVariations});
+                        }}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50"
+                        placeholder="Ej. 503"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Precios para este prefijo</label>
+                      <textarea 
+                        required rows={2}
+                        value={variation.prices}
+                        onChange={e => {
+                          const newVariations = [...editingProduct.priceVariations];
+                          newVariations[idx].prices = e.target.value;
+                          setEditingProduct({...editingProduct, priceVariations: newVariations});
+                        }}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50 resize-none"
+                        placeholder="Precios en moneda local..."
+                      ></textarea>
+                    </div>
+                  </div>
+                ))}
+                {(editingProduct.priceVariations?.length === 0 || !editingProduct.priceVariations) && (
+                  <p className="text-xs text-slate-500 text-center py-2">No hay variaciones. Se usará el precio por defecto.</p>
+                )}
               </div>
 
               <div className="pt-2 flex justify-end gap-3">
