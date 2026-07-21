@@ -1345,7 +1345,7 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
     }
 
-    const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine);
+    const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
     
     // --- APAGADO POR IA ---
     if (/\[APAGAR_BOT_SOPORTE\]/i.test(aiReply)) {
@@ -2428,7 +2428,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history, data.waLine || 1)));
+    socket.on('test_ai', async (data, callback) => callback(await getAIResponse(data.content, data.history, data.waLine || 1, '')));
     socket.on('update_chat_tags', ({ chatId, tags }) => { 
         if (chats[chatId]) { 
             chats[chatId].tags = tags; 
@@ -2555,7 +2555,7 @@ async function sendMessageToCloudAPI(to, text) {
     } catch (err) { console.error('Meta send error:', err); return null; }
 }
 
-async function getAIResponse(message, history = [], waLine = 1) {
+async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') {
     let activeOpenAI = openai;
     
     // Intento de recuperación si la variable no estaba lista al inicio
@@ -2603,7 +2603,12 @@ async function getAIResponse(message, history = [], waLine = 1) {
             termCity = "Comuna";
             termProv = "Región";
         } else if (waLine == '3') {
-            countryContext = "Honduras";
+            const cleanPhone = String(fromPhone).replace('+', '').trim();
+            if (cleanPhone.startsWith('503')) {
+                countryContext = "El Salvador";
+            } else {
+                countryContext = "Honduras";
+            }
         }
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
@@ -2617,7 +2622,8 @@ async function getAIResponse(message, history = [], waLine = 1) {
 8. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
 9. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 10. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), NO intentes convencerlo de otra cosa ni le digas que tú se la enviarás. DEBES OBLIGATORIAMENTE usar la etiqueta literal [APAGAR_BOT_SOPORTE] en tu respuesta para apagar la IA y permitir que un humano le envíe la foto manualmente.
-11. OTROS PRODUCTOS Y CATÁLOGO: Si el cliente pregunta por otros productos que no están en tu Base de Conocimiento (ej: "tienen aceite humectante", "venden X cosa") o solicita ver un catálogo de productos, NO le digas que no tienes información ni intentes venderle lo que sí tienes. DEBES OBLIGATORIAMENTE usar la etiqueta literal [APAGAR_BOT_SOPORTE] en tu respuesta para apagar la IA y permitir que un humano lo asesore manualmente con el catálogo completo.`;
+11. OTROS PRODUCTOS Y CATÁLOGO: Si el cliente pregunta por otros productos que no están en tu Base de Conocimiento (ej: "tienen aceite humectante", "venden X cosa") o solicita ver un catálogo de productos, NO le digas que no tienes información ni intentes venderle lo que sí tienes. DEBES OBLIGATORIAMENTE usar la etiqueta literal [APAGAR_BOT_SOPORTE] en tu respuesta para apagar la IA y permitir que un humano lo asesore manualmente con el catálogo completo.
+12. MONEDA Y PAÍS: Estás hablando con un cliente de ${countryContext}. Asegúrate de ofrecer EXCLUSIVAMENTE los precios, promociones y la moneda correspondientes a ${countryContext} (Ejemplo: Si es El Salvador usa Dólares, si es Honduras usa Lempiras). IGNORA los precios de la Base de Conocimiento que pertenezcan a otros países. NUNCA menciones precios de otro país.`;
 
 
         const comp = await activeOpenAI.chat.completions.create({
@@ -2709,7 +2715,7 @@ async function runFollowUpSequence() {
             try {
                 // Generar respuesta con IA enviando el historial + instrucción
                 const aiPrompt = `[INSTRUCCIÓN INTERNA DEL SISTEMA PARA SEGUIMIENTO AUTOMÁTICO]: ${promptType}\n\nEscribe directamente el mensaje para enviarlo al cliente.`;
-                const aiReply = await getAIResponse(aiPrompt, chat.messages.slice(-15), chat.waLine || 1);
+                const aiReply = await getAIResponse(aiPrompt, chat.messages.slice(-15), chat.waLine || 1, chatId);
                 
                 const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
                 
