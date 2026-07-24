@@ -231,7 +231,23 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
-  const uniqueProducts = Array.from(new Set(Object.values(chats).map(c => c.assignedProduct).filter(Boolean))).sort();
+  const [kbProducts, setKbProducts] = useState([]);
+  
+  useEffect(() => {
+    fetch(`${serverUrl}/api/knowledge-base`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setKbProducts(data.map(p => p.name.trim()));
+        }
+      })
+      .catch(err => console.error("Error fetching knowledge base for simulator:", err));
+  }, [serverUrl]);
+
+  const uniqueProducts = Array.from(new Set([
+    ...Object.values(chats).map(c => c.assignedProduct?.trim()).filter(Boolean),
+    ...kbProducts
+  ])).sort();
 
   const chatSessions = Object.entries(chats)
     .map(([id, data], index) => {
