@@ -290,7 +290,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
       
       const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
-      const productMatch = filterProduct === 'all' || chat.assignedProduct === filterProduct;
+      const productMatch = filterProduct === 'all' || chat.assignedProduct?.trim() === filterProduct;
       
       return searchMatch && tagMatch && lineMatch && productMatch;
     })
