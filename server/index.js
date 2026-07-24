@@ -544,7 +544,6 @@ Ejemplo:
         saveSettings(settings);
         console.log('🔄 [CONFIG] System Prompt migrado a versión nueva (con tags de extracción).');
     }
-})();
 
 
 // MIGRACIÓN: Normalizar URLs de imágenes antiguas a rutas relativas
