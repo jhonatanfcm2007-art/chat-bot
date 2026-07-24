@@ -15,6 +15,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [filterProduct, setFilterProduct] = useState('all');
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
+  const [filterCountry, setFilterCountry] = useState('all');
+  const [isCountryMenuOpen, setIsCountryMenuOpen] = useState(false);
   const [openTagMenu, setOpenTagMenu] = useState(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -95,6 +97,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     const handleCloseMenu = () => {
       setOpenTagMenu(null);
       setIsFilterMenuOpen(false);
+      setIsProductMenuOpen(false);
+      setIsCountryMenuOpen(false);
       setActiveMessageMenu(null);
     };
     window.addEventListener('click', handleCloseMenu);
@@ -292,7 +296,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
       const productMatch = filterProduct === 'all' || chat.assignedProduct?.trim() === filterProduct;
       
-      return searchMatch && tagMatch && lineMatch && productMatch;
+      const chatPhone = String(chat.from).replace('+', '').trim();
+      const countryMatch = filterCountry === 'all' || chatPhone.startsWith(filterCountry);
+      
+      return searchMatch && tagMatch && lineMatch && productMatch && countryMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
 
@@ -359,11 +366,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </button>
 
                 <button 
-                  onClick={(e) => { e.stopPropagation(); setIsProductMenuOpen(!isProductMenuOpen); setIsFilterMenuOpen(false); }}
+                  onClick={(e) => { e.stopPropagation(); setIsProductMenuOpen(!isProductMenuOpen); setIsFilterMenuOpen(false); setIsCountryMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterProduct !== 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterProduct !== 'all' ? 'inventory_2' : 'inventory'}</span>
                   {filterProduct !== 'all' ? filterProduct : 'Producto'}
+                </button>
+
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsCountryMenuOpen(!isCountryMenuOpen); setIsFilterMenuOpen(false); setIsProductMenuOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterCountry !== 'all' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  <span className="material-symbols-outlined text-sm">{filterCountry !== 'all' ? 'public' : 'public'}</span>
+                  {filterCountry !== 'all' ? (filterCountry === '503' ? 'El Salvador' : filterCountry === '504' ? 'Honduras' : filterCountry === '502' ? 'Guatemala' : filterCountry === '56' ? 'Chile' : filterCountry) : 'País'}
                 </button>
 
                 {/* PRODUCT MENU */}
@@ -395,6 +410,29 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <span className="material-symbols-outlined text-sm">view_kanban</span>
                   Tablero Logístico
                 </button>
+
+                {/* COUNTRY MENU */}
+                {isCountryMenuOpen && (
+                  <div className="absolute top-full left-32 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
+                    <div 
+                      className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterCountry === 'all' ? 'bg-emerald-50' : ''}`}
+                      onClick={() => { setFilterCountry('all'); setIsCountryMenuOpen(false); }}
+                    >
+                      <span className="material-symbols-outlined text-sm text-slate-400">public</span>
+                      <span className="text-xs font-medium text-slate-600">Todos los Países</span>
+                    </div>
+                    {[{ code: '503', name: 'El Salvador' }, { code: '504', name: 'Honduras' }, { code: '502', name: 'Guatemala' }, { code: '56', name: 'Chile' }].map((country) => (
+                      <div 
+                        key={country.code}
+                        onClick={() => { setFilterCountry(country.code); setIsCountryMenuOpen(false); }}
+                        className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterCountry === country.code ? 'bg-emerald-50' : ''}`}
+                      >
+                        <span className="material-symbols-outlined text-emerald-500 text-[18px]">location_on</span>
+                        <span className="text-[13px] font-medium text-slate-700">{country.name} (+{country.code})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
 
                 {isFilterMenuOpen && (

@@ -80,6 +80,22 @@ app.get('/api/knowledge-base', (req, res) => {
     res.json(knowledgeBaseDb);
 });
 
+app.get('/api/debug-products', (req, res) => {
+    const counts = {};
+    let total = 0;
+    let unassigned = 0;
+    Object.values(chats).forEach(chat => {
+        total++;
+        if (chat.assignedProduct) {
+            const p = chat.assignedProduct;
+            counts[p] = (counts[p] || 0) + 1;
+        } else {
+            unassigned++;
+        }
+    });
+    res.json({ total, unassigned, counts, kb: knowledgeBaseDb.map(p => p.name) });
+});
+
 app.post('/api/knowledge-base', (req, res) => {
     const newProduct = { ...req.body, id: 'prod-' + Date.now() };
     knowledgeBaseDb.push(newProduct);
