@@ -1390,7 +1390,7 @@ async function processAIResponse(from, msgBodyLower) {
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
-        allMessages.push({ role: 'system', content: 'CONTEXTO ESTRICTO: El cliente YA CONFIRMÓ su pedido exitosamente. Si hace preguntas post-venta (dosis, tiempo de entrega, uso), respóndelas amablemente. ESTÁ TERMINANTEMENTE PROHIBIDO preguntarle "¿Deseas continuar con tu pedido?", "¿Quieres confirmar?" o intentar venderle de nuevo. La venta ya está cerrada. Simplemente responde su duda y despídete de forma natural o pregúntale si tiene otra duda.' });
+        allMessages.push({ role: 'system', content: 'CONTEXTO ESTRICTO: El cliente YA CONFIRMÓ su pedido exitosamente en el pasado. Si hace preguntas post-venta sobre DOSIS o USO, respóndelas amablemente. PERO si pregunta por el ESTADO DE SU ENVÍO, TIEMPO DE ENTREGA, NÚMERO DE GUÍA o RASTREO, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] para que un humano le dé seguimiento a su guía. ESTÁ TERMINANTEMENTE PROHIBIDO preguntarle "¿Deseas continuar con tu pedido?", "¿Quieres confirmar?" o volver a pedirle sus datos de envío. La venta ya está cerrada.' });
     }
     
     // Pasar información de análisis de imagen si existe
@@ -2678,7 +2678,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
-2. SOPORTE VS PREGUNTAS FRECUENTES: Si el cliente hace preguntas comunes antes de comprar (ej. "¿En cuántos días llega?", "¿Por qué paquetería lo envían?"), RESPONDE: "El envío tarda de 24 a 48 horas hábiles y lo enviamos por Forza o Cargo Expreso". NO apagues la IA. Usa [APAGAR_BOT_SOPORTE] ÚNICAMENTE si el cliente reporta un problema serio, reclama garantías o se queja de un paquete que no ha llegado.
+2. SOPORTE Y POST-VENTA: Si el cliente pregunta "¿cuántos días tarda?" ANTES de comprar, responde: "El envío tarda de 24 a 48 horas hábiles y lo enviamos por Forza o Cargo Expreso". PERO si el cliente pregunta por su envío, guía, o rastreo DESPUÉS de que la venta ya fue cerrada (si en el historial ya existe la etiqueta [ENTREGAR_AHORA]), DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta [APAGAR_BOT_SOPORTE]. Está estrictamente prohibido intentar continuar el flujo de ventas o volver a pedir datos de dirección si la venta ya se cerró en el pasado. Usa también [APAGAR_BOT_SOPORTE] si el cliente reporta un problema o reclama garantías.
 3. PRECIOS EXACTOS: NUNCA ofrezcas un precio que no esté bajo la sección 'Precios y Combos'. Si los 'Detalles y Beneficios' mencionan precios diferentes o de otro país, IGNÓRALOS COMPLETAMENTE y usa ÚNICAMENTE los que están en 'Precios y Combos', ya que son los precios dinámicos oficiales para el país actual del cliente.
 4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
