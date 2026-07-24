@@ -498,18 +498,29 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
     let changed = false;
     Object.values(chats).forEach(chat => {
         if (!chat.assignedProduct && chat.messages && chat.messages.length > 0) {
+            // Check for adId in the first message first
             const firstMsg = chat.messages.find(m => !m.isMe && m.body) || chat.messages[0];
             if (firstMsg && firstMsg.body) {
                 const adIdMatch = firstMsg.body.match(/ID:\s*(\d+)/i);
                 const adId = adIdMatch ? adIdMatch[1] : null;
                 assignProductToChat(chat, firstMsg.body, adId, chat.waLine || 1, chat.from);
-                if (chat.assignedProduct) changed = true;
             }
+            
+            // If still not assigned, scan all user messages for keywords
+            if (!chat.assignedProduct) {
+                const userMessages = chat.messages.filter(m => !m.isMe && m.body);
+                for (const msg of userMessages) {
+                    assignProductToChat(chat, msg.body, null, chat.waLine || 1, chat.from);
+                    if (chat.assignedProduct) break;
+                }
+            }
+            
+            if (chat.assignedProduct) changed = true;
         }
     });
     if (changed) {
         saveChats(chats);
-        console.log('✅ [CONFIG] Productos asignados a chats antiguos.');
+        console.log('✅ [CONFIG] Productos asignados a chats antiguos tras escaneo completo.');
     }
 })();
 
