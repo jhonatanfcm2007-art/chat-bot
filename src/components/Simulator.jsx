@@ -13,6 +13,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [showContactInfo, setShowContactInfo] = useState(false);
   
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [filterProduct, setFilterProduct] = useState('all');
+  const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
   const [openTagMenu, setOpenTagMenu] = useState(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -229,6 +231,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
   const activeChatData = selectedChat ? chats[selectedChat] : null;
   
+  const uniqueProducts = Array.from(new Set(Object.values(chats).map(c => c.assignedProduct).filter(Boolean))).sort();
+
   const chatSessions = Object.entries(chats)
     .map(([id, data], index) => {
       const messages = data.messages || [];
@@ -270,8 +274,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                        (filterTag === 'pago-pendiente' && chat.tags.includes('entregado'));
       
       const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
+      const productMatch = filterProduct === 'all' || chat.assignedProduct === filterProduct;
       
-      return searchMatch && tagMatch && lineMatch;
+      return searchMatch && tagMatch && lineMatch && productMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
 
@@ -330,12 +335,43 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           <div className="flex items-center justify-between mb-4">
              <div className="relative flex items-center gap-2">
                 <button 
-                  onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); }}
+                  onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); setIsProductMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterTag !== 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterTag !== 'all' ? 'filter_list_off' : 'filter_list'}</span>
                   {filterTag !== 'all' ? TAG_UI[filterTag]?.label : 'Filtrar'}
                 </button>
+
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsProductMenuOpen(!isProductMenuOpen); setIsFilterMenuOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterProduct !== 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  <span className="material-symbols-outlined text-sm">{filterProduct !== 'all' ? 'inventory_2' : 'inventory'}</span>
+                  {filterProduct !== 'all' ? filterProduct : 'Producto'}
+                </button>
+
+                {/* PRODUCT MENU */}
+                {isProductMenuOpen && (
+                  <div className="absolute top-full left-10 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
+                    <div 
+                      className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterProduct === 'all' ? 'bg-primary-light' : ''}`}
+                      onClick={() => { setFilterProduct('all'); setIsProductMenuOpen(false); }}
+                    >
+                      <span className="material-symbols-outlined text-sm text-slate-400">all_inclusive</span>
+                      <span className="text-xs font-medium text-slate-600">Todos los Productos</span>
+                    </div>
+                    {uniqueProducts.map((prod) => (
+                      <div 
+                        key={prod}
+                        className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterProduct === prod ? 'bg-primary-light' : ''}`}
+                        onClick={() => { setFilterProduct(prod); setIsProductMenuOpen(false); }}
+                      >
+                        <span className="material-symbols-outlined text-sm text-primary">inventory_2</span>
+                        <span className="text-xs font-medium text-slate-600 truncate">{prod}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button 
                   onClick={() => setShowKanban(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-200"

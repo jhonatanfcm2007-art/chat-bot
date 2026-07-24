@@ -458,9 +458,62 @@ let knowledgeBaseDb = loadKnowledgeBase();
         saveKnowledgeBase(knowledgeBaseDb);
         console.log('✅ [CONFIG] Base de Conocimiento inicializada con productos por defecto.');
     }
+})();
 
+function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
+    if (chat.assignedProduct) return;
+    
+    const lineProducts = knowledgeBaseDb.filter(p => {
+        const pLine = p.line || '1';
+        const isCorrectLine = pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
+        if (p.phonePrefix && p.phonePrefix.trim() !== '') {
+            const cleanPhone = String(fromPhone).replace('+', '').trim();
+            const cleanPrefix = p.phonePrefix.replace('+', '').trim();
+            if (!cleanPhone.startsWith(cleanPrefix)) return false;
+        }
+        return isCorrectLine;
+    });
+    
+    if (adId) {
+        const matched = lineProducts.find(p => p.adIds?.includes(String(adId).trim()));
+        if (matched) {
+            chat.assignedProduct = matched.name;
+            return;
+        }
+    }
+    
+    if (msgBody) {
+        const bodyLower = msgBody.toLowerCase();
+        for (const p of lineProducts) {
+            if (p.keywords && p.keywords.some(k => bodyLower.includes(k.toLowerCase()))) {
+                chat.assignedProduct = p.name;
+                return;
+            }
+        }
+    }
+}
 
-    // Configurar un prompt base corto si aún no está configurado
+// BACKFILL EXISTING CHATS
+(function backfillProducts() {
+    let changed = false;
+    Object.values(chats).forEach(chat => {
+        if (!chat.assignedProduct && chat.messages && chat.messages.length > 0) {
+            const firstMsg = chat.messages.find(m => !m.isMe && m.body) || chat.messages[0];
+            if (firstMsg && firstMsg.body) {
+                const adIdMatch = firstMsg.body.match(/ID:\s*(\d+)/i);
+                const adId = adIdMatch ? adIdMatch[1] : null;
+                assignProductToChat(chat, firstMsg.body, adId, chat.waLine || 1, chat.from);
+                if (chat.assignedProduct) changed = true;
+            }
+        }
+    });
+    if (changed) {
+        saveChats(chats);
+        console.log('✅ [CONFIG] Productos asignados a chats antiguos.');
+    }
+})();
+
+// Configurar un prompt base corto si aún no está configurado
     const basePrompt = `Eres un asesor de ventas virtual experto y persuasivo por WhatsApp. 
 Tu objetivo es identificar qué producto busca el cliente de tu catálogo. 
 Si el cliente no especifica el producto, pregúntale amable y directamente qué busca o ofrécele el catálogo.
@@ -1155,6 +1208,9 @@ app.post('/webhook', async (req, res) => {
             } else if (!currentChat.waLine) {
                 currentChat.waLine = 1;
             }
+
+            const adIdMatch = msg.referral?.source_id ? msg.referral.source_id : null;
+            assignProductToChat(currentChat, msgBody, adIdMatch, currentChat.waLine, from);
 
             triggerWelcomeAudioIfNeeded(from, isNewChat);
             
