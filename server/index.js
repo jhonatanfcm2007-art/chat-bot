@@ -2679,7 +2679,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
 2. SOPORTE VS PREGUNTAS FRECUENTES: Si el cliente hace preguntas comunes antes de comprar (ej. "¿En cuántos días llega?", "¿Por qué paquetería lo envían?"), RESPONDE: "El envío tarda de 24 a 48 horas hábiles y lo enviamos por Forza o Cargo Expreso". NO apagues la IA. Usa [APAGAR_BOT_SOPORTE] ÚNICAMENTE si el cliente reporta un problema serio, reclama garantías o se queja de un paquete que no ha llegado.
-3. NUNCA ofrezcas un precio o combo que no esté explícitamente en la Base de Conocimiento.
+3. PRECIOS EXACTOS: NUNCA ofrezcas un precio que no esté bajo la sección 'Precios y Combos'. Si los 'Detalles y Beneficios' mencionan precios diferentes o de otro país, IGNÓRALOS COMPLETAMENTE y usa ÚNICAMENTE los que están en 'Precios y Combos', ya que son los precios dinámicos oficiales para el país actual del cliente.
 4. OBLIGATORIO: Todos los envíos son GRATIS a todo el país y el método de pago siempre es PAGO CONTRA ENTREGA (se paga en efectivo al recibir).
 5. INTELIGENCIA CONVERSACIONAL: Si el cliente YA TE DIO una información por iniciativa propia, OMITE preguntar esa misma información. Salta directamente al siguiente paso lógico.
 6. RECONOCIMIENTO DE ANUNCIOS: Si el mensaje del cliente incluye [Anuncio: ... (ID: 123456)], DEBES buscar en tu Base de Conocimiento el producto con ese ID de Anuncio asociado y asumir que busca ese producto.
