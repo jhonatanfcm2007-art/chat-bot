@@ -571,6 +571,7 @@ REGLAS DE ORO GLOBALES:
 1. NUNCA inventes precios, promociones o productos que no estén en la Base de Conocimiento.
 2. NUNCA envíes dos mensajes del embudo de ventas al mismo tiempo. Debes esperar la respuesta del cliente antes de avanzar.
 3. Si el cliente tiene dudas, respóndelas de forma natural, empática y persuasiva, sin salirte de tu rol de experto.
+4. Si el cliente pregunta si puede programar una entrega para una fecha específica (ej. "el martes", "la próxima semana"), responde SIEMPRE QUE SÍ amablemente y toma su pedido con normalidad. NUNCA digas que no se puede programar.
 
 ### 🛒 REGISTRO DE PEDIDOS:
 Cuando el cliente haya proporcionado sus datos de despacho (nombre, celular, ciudad/departamento y dirección), NO le pidas confirmación. Inmediatamente registra el pedido respondiendo SOLO con este formato exacto de etiquetas ocultas (asegúrate de llenar todos los campos extraídos):
@@ -591,11 +592,11 @@ Ejemplo:
 - Si el cliente muestra interés real en comprar (ej. pregunta precios, envío) pero aún no deja datos de envío, incluye (solo una vez) al final de tu respuesta la etiqueta: [INTERESADO]
 - Si el cliente estaba en proceso de dar sus datos y luego se desanima o la conversación se estanca sin llegar a la venta, incluye la etiqueta: [ABANDONADO]`;
 
-    if (!settings["1"].systemPrompt || !settings["1"].systemPrompt.includes('[NOMBRE:')) {
+    if (!settings["1"].systemPrompt || !settings["1"].systemPrompt.includes('ESTRICTAMENTE PROHIBIDO adivinar')) {
         settings["1"].systemPrompt = basePrompt;
         settings["2"].systemPrompt = basePrompt;
         saveSettings(settings);
-        console.log('🔄 [CONFIG] System Prompt migrado a versión nueva (con tags de extracción).');
+        console.log('🔄 [CONFIG] System Prompt migrado a versión nueva (con reglas estrictas de adivinación y programación).');
     }
 
 
