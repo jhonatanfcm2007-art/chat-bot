@@ -100,6 +100,7 @@ app.post('/api/knowledge-base', (req, res) => {
     const newProduct = { ...req.body, id: 'prod-' + Date.now() };
     knowledgeBaseDb.push(newProduct);
     saveKnowledgeBase(knowledgeBaseDb);
+    backfillProducts();
     res.json({ success: true, product: newProduct });
 });
 
@@ -109,6 +110,7 @@ app.put('/api/knowledge-base/:id', (req, res) => {
     if (index !== -1) {
         knowledgeBaseDb[index] = { ...knowledgeBaseDb[index], ...req.body };
         saveKnowledgeBase(knowledgeBaseDb);
+        backfillProducts();
         res.json({ success: true, product: knowledgeBaseDb[index] });
     } else {
         res.status(404).json({ error: 'Not found' });
@@ -118,6 +120,8 @@ app.put('/api/knowledge-base/:id', (req, res) => {
 app.delete('/api/knowledge-base/:id', (req, res) => {
     knowledgeBaseDb = knowledgeBaseDb.filter(p => p.id !== req.params.id);
     saveKnowledgeBase(knowledgeBaseDb);
+    // Note: We don't remove assignedProduct from old chats here, to keep their history intact.
+    // If they want to reassign, they can just create the new product.
     res.json({ success: true });
 });
 
@@ -510,7 +514,7 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
 }
 
 // BACKFILL EXISTING CHATS
-(function backfillProducts() {
+function backfillProducts() {
     let changed = false;
     Object.values(chats).forEach(chat => {
         if (!chat.assignedProduct && chat.messages && chat.messages.length > 0) {
@@ -537,8 +541,25 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
     if (changed) {
         saveChats(chats);
         console.log('✅ [CONFIG] Productos asignados a chats antiguos tras escaneo completo.');
+        
+        // Emit updated chats to clients so the UI updates in real-time
+        if (typeof io !== 'undefined') {
+            io.emit('initial_state', { 
+                chats, 
+                settings, 
+                salesHistory, 
+                accounts, 
+                products: productsDb, 
+                globalRules,
+                knowledgeBase: knowledgeBaseDb,
+                customers: customersDb
+            });
+        }
     }
-})();
+}
+
+// Run once on boot
+backfillProducts();
 
 // Configurar un prompt base corto si aún no está configurado
     const basePrompt = `Eres un asesor de ventas virtual experto y persuasivo por WhatsApp. 
