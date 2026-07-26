@@ -56,7 +56,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [] });
+    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '' });
     setIsModalOpen(true);
   };
 
@@ -101,6 +101,12 @@ const KnowledgeBase = ({ serverUrl }) => {
                     <span className="material-symbols-outlined text-primary">inventory_2</span>
                     {p.name}
                   </h3>
+                  {p.adminPhone && (
+                    <div className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 mt-1">
+                      <span className="material-symbols-outlined text-sm">notifications_active</span>
+                      Notifica a: {p.adminPhone}
+                    </div>
+                  )}
                   <div className="flex gap-2 items-center">
                     <span className={`text-xs px-2 py-1 rounded-md font-semibold border ${
                       p.line === '1' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
@@ -179,6 +185,18 @@ const KnowledgeBase = ({ serverUrl }) => {
                   <option value="3">Línea 3</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">El asistente solo venderá este producto en la línea seleccionada.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Número para Notificaciones (Opcional)</label>
+                <input 
+                  type="text"
+                  value={editingProduct.adminPhone || ''}
+                  onChange={e => setEditingProduct({...editingProduct, adminPhone: e.target.value})}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Ej. 573001234567"
+                />
+                <p className="text-xs text-slate-500 mt-1">Si dejas esto vacío, las notificaciones de ventas y alertas irán al número principal. Escríbelo con el código de país sin el + (Ej. 50499999999).</p>
               </div>
 
               <div>

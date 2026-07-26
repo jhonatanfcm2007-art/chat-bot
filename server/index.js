@@ -146,6 +146,48 @@ let lastReceiptFrom = null;
 const aiTimers = {};
 const webhookLogs = []; // Stores last 20 webhooks for debugging
 
+// --- NOTIFICATIONS HELPERS ---
+function getCountryFromPhone(phoneStr) {
+    if (!phoneStr) return 'Desconocido';
+    const clean = String(phoneStr).replace(/\D/g, '');
+    if (clean.startsWith('502')) return 'Guatemala';
+    if (clean.startsWith('503')) return 'El Salvador';
+    if (clean.startsWith('504')) return 'Honduras';
+    if (clean.startsWith('505')) return 'Nicaragua';
+    if (clean.startsWith('506')) return 'Costa Rica';
+    if (clean.startsWith('507')) return 'Panamá';
+    if (clean.startsWith('52')) return 'México';
+    if (clean.startsWith('56')) return 'Chile';
+    if (clean.startsWith('57')) return 'Colombia';
+    if (clean.startsWith('593')) return 'Ecuador';
+    if (clean.startsWith('51')) return 'Perú';
+    return 'Desconocido';
+}
+
+function notifyAdmins(chat, text) {
+    let targetPhone = ADMIN_PHONE;
+    
+    // Check if product has a custom admin phone
+    if (chat && chat.assignedProduct) {
+        const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
+        if (prod && prod.adminPhone && prod.adminPhone.trim() !== '') {
+            targetPhone = prod.adminPhone.trim();
+        }
+    }
+
+    if (!targetPhone) return;
+
+    // Append Country Info
+    let country = 'Desconocido';
+    if (chat && chat.from) {
+        country = getCountryFromPhone(chat.from);
+    }
+    
+    const finalMessage = `🌍 *País:* ${country}\n${text}`;
+    
+    smartSendMessage(targetPhone, finalMessage);
+}
+
 // --- PERSISTENCIA ---
 const DATA_DIR = path.join(__dirname, 'data');
 const INVENTORY_FILE = path.join(DATA_DIR, 'inventory.json');
@@ -737,16 +779,16 @@ async function registerOrder(to, products) {
 
         console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
         
-        if (ADMIN_PHONE) {
+        if (ADMIN_PHONE || (chat.assignedProduct && knowledgeBaseDb.some(p => p.name === chat.assignedProduct && p.adminPhone))) {
             const notif = `✅ *PEDIDO AUTO-APROBADO*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\nEnviando a Shopify y solicitando Dropi automáticamente...`;
-            smartSendMessage(ADMIN_PHONE, notif);
+            notifyAdmins(chat, notif);
         }
 
         createShopifyOrder(chat, productList).then(shopifyRes => {
             if (shopifyRes.success) {
                 chat.orderRegistered = true;
                 saveChats(chats);
-                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `✅ Pedido ${shopifyRes.orderName} enviado a Dropi exitosamente.`);
+                notifyAdmins(chat, `✅ Pedido ${shopifyRes.orderName} enviado a Dropi exitosamente.`);
                 smartSendMessage(to, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
                 
                 const now = new Date();
@@ -766,7 +808,7 @@ async function registerOrder(to, products) {
                 saveSales(sales);
                 io.emit('sales_updated', sales);
             } else {
-                if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `❌ Error auto-creando pedido en Shopify: ${shopifyRes.error}`);
+                notifyAdmins(chat, `❌ Error auto-creando pedido en Shopify: ${shopifyRes.error}`);
             }
         });
         return;
@@ -783,11 +825,9 @@ async function registerOrder(to, products) {
     io.emit('tag_updated', { from: to, tags: chat.tags });
 
     // Notificar al admin por WhatsApp para aprobación manual
-    if (ADMIN_PHONE) {
-        const title = '⚠️ *NUEVO PEDIDO (Falta Info)*';
-        const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
-        smartSendMessage(ADMIN_PHONE, notif);
-    }
+    const title = '⚠️ *NUEVO PEDIDO (Falta Info)*';
+    const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
+    notifyAdmins(chat, notif);
 
     console.log(`📦 [PEDIDO PENDIENTE] Pedido de ${chat.customerName}: ${productList}. Esperando aprobación del admin (faltan datos).`);
 }
@@ -1128,7 +1168,8 @@ app.post('/webhook', async (req, res) => {
         }
 
         // Comandos Admin (Shopify Approval)
-        if (ADMIN_PHONE && from === ADMIN_PHONE && msg.type === 'text') {
+        const isSenderAdmin = from === ADMIN_PHONE || knowledgeBaseDb.some(p => p.adminPhone && p.adminPhone.trim() === from);
+        if (isSenderAdmin && msg.type === 'text') {
             const adminText = msg.text.body.trim();
             const match = adminText.match(/^(APROBAR|RECHAZAR)\s+([\d_]+)$/i);
             if (match) {
@@ -1137,18 +1178,18 @@ app.post('/webhook', async (req, res) => {
                 const targetChat = chats[targetPhone];
 
                 if (!targetChat) {
-                    smartSendMessage(ADMIN_PHONE, '❌ Chat no encontrado.');
+                    smartSendMessage(from, '❌ Chat no encontrado.');
                     res.sendStatus(200); return;
                 }
 
                 if (action === 'APROBAR') {
                     // Validar que los datos mínimos existan para Dropi
                     if (!targetChat.orderName || !targetChat.address || !targetChat.city || !targetChat.province) {
-                        smartSendMessage(ADMIN_PHONE, '❌ *Error de Aprobación:* No se puede aprobar el pedido porque faltan datos esenciales (Nombre, Dirección, Municipio o Departamento). Por favor, pídele los datos faltantes al cliente antes de aprobar.');
+                        smartSendMessage(from, '❌ *Error de Aprobación:* No se puede aprobar el pedido porque faltan datos esenciales (Nombre, Dirección, Municipio o Departamento). Por favor, pídele los datos faltantes al cliente antes de aprobar.');
                         res.sendStatus(200); return;
                     }
 
-                    smartSendMessage(ADMIN_PHONE, '⏳ Creando pedido en Shopify...');
+                    smartSendMessage(from, '⏳ Creando pedido en Shopify...');
                     const shopifyRes = await createShopifyOrder(targetChat, targetChat.pendingApprovalProducts || 'Producto');
                     
                     if (shopifyRes.success) {
@@ -1159,7 +1200,7 @@ app.post('/webhook', async (req, res) => {
                         saveChats(chats);
                         io.emit('tag_updated', { from: targetPhone, tags: targetChat.tags });
                         
-                        smartSendMessage(ADMIN_PHONE, `✅ Pedido ${shopifyRes.orderName} creado en Shopify exitosamente.`);
+                        smartSendMessage(from, `✅ Pedido ${shopifyRes.orderName} creado en Shopify exitosamente.`);
                         smartSendMessage(targetPhone, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
                         
                         // Guardar en sales para compatibilidad con el frontend antiguo
@@ -1181,14 +1222,14 @@ app.post('/webhook', async (req, res) => {
                         saveSales(sales);
                         io.emit('sales_updated', sales);
                     } else {
-                        smartSendMessage(ADMIN_PHONE, `❌ Error en Shopify: ${shopifyRes.error}`);
+                        smartSendMessage(from, `❌ Error en Shopify: ${shopifyRes.error}`);
                     }
                 } else if (action === 'RECHAZAR') {
                     targetChat.tags = (targetChat.tags || []).filter(t => t !== 'pedido-pendiente');
                     delete targetChat.pendingApprovalProducts;
                     saveChats(chats);
                     io.emit('tag_updated', { from: targetPhone, tags: targetChat.tags });
-                    smartSendMessage(ADMIN_PHONE, '❌ Pedido rechazado.');
+                    smartSendMessage(from, '❌ Pedido rechazado.');
                     smartSendMessage(targetPhone, '❌ Lo sentimos, no pudimos procesar tu pedido. Comunícate con soporte.');
                 }
                 res.sendStatus(200); return;
@@ -1327,9 +1368,7 @@ app.post('/webhook', async (req, res) => {
                                     currentChat.messages.push({ ...botMsg, content: confirmMsg });
                                     io.emit('message', botMsg);
 
-                                    if (ADMIN_PHONE) {
-                                        await smartSendMessage(ADMIN_PHONE, `✅ *PAGO DETECTADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
-                                    }
+                                    notifyAdmins(chats[from], `✅ *PAGO DETECTADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
                                     
                                     saveChats(chats);
                                 } else {
@@ -1436,7 +1475,7 @@ async function processAIResponse(from, msgBodyLower) {
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
+        notifyAdmins(chats[to], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
         
         delete aiTimers[from];
         return;
@@ -1469,7 +1508,7 @@ async function processAIResponse(from, msgBodyLower) {
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
+        notifyAdmins(chats[to], `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
         registerAnomaly('Soporte Requerido', customerName, from);
         
@@ -1542,7 +1581,7 @@ async function processAIResponse(from, msgBodyLower) {
             newTags = newTags.filter(t => t !== 'interesado' && t !== 'preparar_pedido' && t !== 'pedido-pendiente');
             newTags.push('pedidos_abandonados');
             changed = true;
-            if (ADMIN_PHONE) smartSendMessage(ADMIN_PHONE, `⚠️ *ANOMALÍA: PEDIDO ABANDONADO*\n\nEl cliente *${customerName}* parece haber abandonado el proceso de compra o la IA se ha atascado. Revisa la conversación.`);
+            notifyAdmins(chat, `⚠️ *ANOMALÍA: PEDIDO ABANDONADO*\n\nEl cliente *${customerName}* parece haber abandonado el proceso de compra o la IA se ha atascado. Revisa la conversación.`);
             
             // Register anomaly
             registerAnomaly('Pedido Abandonado', customerName, from);
