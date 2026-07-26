@@ -1475,7 +1475,7 @@ async function processAIResponse(from, msgBodyLower) {
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        notifyAdmins(chats[to], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
+        notifyAdmins(refreshedChat, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
         
         delete aiTimers[from];
         return;
@@ -1508,7 +1508,7 @@ async function processAIResponse(from, msgBodyLower) {
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        notifyAdmins(chats[to], `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
+        notifyAdmins(refreshedChat, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
         
         registerAnomaly('Soporte Requerido', customerName, from);
         
