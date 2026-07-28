@@ -7,6 +7,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoresModalOpen, setIsStoresModalOpen] = useState(false);
+  const [ownerFilter, setOwnerFilter] = useState('Todos');
 
   useEffect(() => {
     fetchProducts();
@@ -69,7 +70,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
+    setEditingProduct({ name: '', owner: 'Fernando', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
   };
 
@@ -93,6 +94,19 @@ const KnowledgeBase = ({ serverUrl }) => {
           <p className="text-slate-500 mt-1">Entrena al asistente con tus productos, precios y flujos de venta</p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="relative flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
+            <span className="material-symbols-outlined text-slate-400 text-sm mr-2">filter_alt</span>
+            <select 
+              value={ownerFilter}
+              onChange={e => setOwnerFilter(e.target.value)}
+              className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
+            >
+              <option value="Todos">Todos los Socios</option>
+              <option value="Fernando">Fernando</option>
+              <option value="Nicolas">Nicolás</option>
+              <option value="Daniel">Daniel</option>
+            </select>
+          </div>
           <button 
             onClick={() => setIsStoresModalOpen(true)}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-50 hover:text-primary transition-all flex items-center gap-2 shadow-sm font-medium"
@@ -123,13 +137,20 @@ const KnowledgeBase = ({ serverUrl }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {products.map(p => (
+            {products
+              .filter(p => ownerFilter === 'Todos' || p.owner === ownerFilter)
+              .map(p => (
               <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">inventory_2</span>
-                    {p.name}
-                  </h3>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary">inventory_2</span>
+                      {p.name}
+                    </h3>
+                    <span className="inline-block mt-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">
+                      Socio: {p.owner || 'Fernando'}
+                    </span>
+                  </div>
                   {p.adminPhone && (
                     <div className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 mt-1">
                       <span className="material-symbols-outlined text-sm">notifications_active</span>
@@ -190,15 +211,29 @@ const KnowledgeBase = ({ serverUrl }) => {
             </div>
             
             <form onSubmit={handleSave} className="overflow-y-auto p-6 flex flex-col gap-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre del Producto</label>
-                <input 
-                  type="text" required
-                  value={editingProduct.name}
-                  onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                  placeholder="Ej. Zapatos Deportivos X"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre del Producto</label>
+                  <input 
+                    type="text" required
+                    value={editingProduct.name}
+                    onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                    placeholder="Ej. Zapatos Deportivos X"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Socio / Propietario</label>
+                  <select 
+                    value={editingProduct.owner || 'Fernando'}
+                    onChange={e => setEditingProduct({...editingProduct, owner: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all bg-white"
+                  >
+                    <option value="Fernando">Fernando</option>
+                    <option value="Nicolas">Nicolás</option>
+                    <option value="Daniel">Daniel</option>
+                  </select>
+                </div>
               </div>
 
               <div>
