@@ -845,7 +845,7 @@ async function createShopifyOrder(chat, products) {
     let PRODUCT_ID = '9785966035179'; // ID de Shilajit en Guatemala
     let countryISO = 'GT';
 
-    // Si es Chile (Línea 2), usar credenciales de Chile (por ahora vacías/fallback a GT si no existen)
+    // Si es Chile (Línea 2)
     if (waLine === '2') {
         SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_CL || process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
         SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_CL || process.env.SHOPIFY_ACCESS_TOKEN_HN;
@@ -853,7 +853,7 @@ async function createShopifyOrder(chat, products) {
         countryISO = 'CL';
     }
 
-    // Si es Honduras (Línea 3), usar credenciales de Honduras si existen
+    // Si es Honduras (Línea 3)
     if (waLine === '3') {
         SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
         SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN;
@@ -861,8 +861,24 @@ async function createShopifyOrder(chat, products) {
         countryISO = 'HN';
     }
 
+    // SOBRESCRIBIR con credenciales específicas del producto si existen
+    const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
+    if (prod && prod.shopifyStoreUrl && prod.shopifyAccessToken && prod.shopifyProductId) {
+        SHOPIFY_URL = prod.shopifyStoreUrl;
+        SHOPIFY_TOKEN = prod.shopifyAccessToken;
+        PRODUCT_ID = prod.shopifyProductId;
+        
+        // Inferir el país por el prefijo del cliente si usa tienda personalizada
+        const p = chat.from || '';
+        if (p.startsWith('504')) countryISO = 'HN';
+        else if (p.startsWith('503')) countryISO = 'SV';
+        else if (p.startsWith('506')) countryISO = 'CR';
+        else if (p.startsWith('56')) countryISO = 'CL';
+        else countryISO = 'GT'; // Fallback
+    }
+
     if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
-        console.error('❌ Faltan credenciales de Shopify en .env');
+        console.error('❌ Faltan credenciales de Shopify en .env o en el producto');
         return { success: false, error: 'Credenciales Shopify no configuradas' };
     }
 

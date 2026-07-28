@@ -56,7 +56,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '' });
+    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', shopifyStoreUrl: '', shopifyAccessToken: '', shopifyProductId: '' });
     setIsModalOpen(true);
   };
 
@@ -197,6 +197,46 @@ const KnowledgeBase = ({ serverUrl }) => {
                   placeholder="Ej. 573001234567"
                 />
                 <p className="text-xs text-slate-500 mt-1">Si dejas esto vacío, las notificaciones de ventas y alertas irán al número principal. Escríbelo con el código de país sin el + (Ej. 50499999999).</p>
+              </div>
+
+              <div className="border border-indigo-100 rounded-xl p-4 bg-indigo-50/30">
+                <h3 className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+                  Conexión Shopify Específica (Opcional)
+                </h3>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">URL de la Tienda</label>
+                    <input 
+                      type="text"
+                      value={editingProduct.shopifyStoreUrl || ''}
+                      onChange={e => setEditingProduct({...editingProduct, shopifyStoreUrl: e.target.value})}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
+                      placeholder="ej. mi-tienda.myshopify.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Access Token de la App</label>
+                    <input 
+                      type="password"
+                      value={editingProduct.shopifyAccessToken || ''}
+                      onChange={e => setEditingProduct({...editingProduct, shopifyAccessToken: e.target.value})}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
+                      placeholder="shpat_..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">ID del Producto (Product ID)</label>
+                    <input 
+                      type="text"
+                      value={editingProduct.shopifyProductId || ''}
+                      onChange={e => setEditingProduct({...editingProduct, shopifyProductId: e.target.value})}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
+                      placeholder="Ej. 10462928404768"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-indigo-600/70 mt-3 font-medium">Si llenas estos datos, los pedidos de este producto se crearán en esta tienda específica, ignorando la configuración predeterminada.</p>
               </div>
 
               <div>
