@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 
 const KnowledgeBase = ({ serverUrl }) => {
   const [products, setProducts] = useState([]);
+  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStoresModalOpen, setIsStoresModalOpen] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    fetchStores();
   }, []);
 
   const fetchProducts = async () => {
@@ -20,6 +23,16 @@ const KnowledgeBase = ({ serverUrl }) => {
       console.error('Error fetching knowledge base:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStores = async () => {
+    try {
+      const res = await fetch(`${serverUrl}/api/stores`);
+      const data = await res.json();
+      setStores(data);
+    } catch (e) {
+      console.error('Error fetching stores:', e);
     }
   };
 
@@ -56,7 +69,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', shopifyStoreUrl: '', shopifyAccessToken: '', shopifyProductId: '' });
+    setEditingProduct({ name: '', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
   };
 
@@ -65,20 +78,36 @@ const KnowledgeBase = ({ serverUrl }) => {
     setIsModalOpen(true);
   };
 
+  if (loading) {
+    return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+  }
+
   return (
-    <div className="flex-1 bg-slate-50 overflow-hidden flex flex-col relative w-full h-full max-w-[1200px] mx-auto p-4 md:p-6 pb-24 md:pb-6">
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl md:text-2xl font-semibold tracking-tight text-slate-800">Base de Conocimiento</h1>
-          <p className="text-slate-500 text-sm mt-1">Configura el cerebro de ventas por producto</p>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">menu_book</span>
+            Base de Conocimiento
+          </h1>
+          <p className="text-slate-500 mt-1">Entrena al asistente con tus productos, precios y flujos de venta</p>
         </div>
-        <button 
-          onClick={openNewModal}
-          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/30 transition-all"
-        >
-          <span className="material-symbols-outlined">add</span>
-          Nuevo Producto
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsStoresModalOpen(true)}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-50 hover:text-primary transition-all flex items-center gap-2 shadow-sm font-medium"
+          >
+            <span className="material-symbols-outlined">storefront</span>
+            Gestionar Tiendas
+          </button>
+          <button 
+            onClick={openNewModal}
+            className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition-all flex items-center gap-2 shadow-sm shadow-primary/30 font-medium"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -201,42 +230,37 @@ const KnowledgeBase = ({ serverUrl }) => {
 
               <div className="border border-indigo-100 rounded-xl p-4 bg-indigo-50/30">
                 <h3 className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
-                  Conexión Shopify Específica (Opcional)
+                  <span className="material-symbols-outlined text-[18px]">storefront</span>
+                  Tienda Shopify Principal
                 </h3>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">URL de la Tienda</label>
-                    <input 
-                      type="text"
-                      value={editingProduct.shopifyStoreUrl || ''}
-                      onChange={e => setEditingProduct({...editingProduct, shopifyStoreUrl: e.target.value})}
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Seleccionar Tienda</label>
+                    <select 
+                      value={editingProduct.defaultStoreId || ''}
+                      onChange={e => setEditingProduct({...editingProduct, defaultStoreId: e.target.value})}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
-                      placeholder="ej. mi-tienda.myshopify.com"
-                    />
+                    >
+                      <option value="">Usar Tienda Global (Por defecto)</option>
+                      {stores.map(store => (
+                        <option key={store.id} value={store.id}>
+                          {store.owner} - {store.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Access Token de la App</label>
-                    <input 
-                      type="password"
-                      value={editingProduct.shopifyAccessToken || ''}
-                      onChange={e => setEditingProduct({...editingProduct, shopifyAccessToken: e.target.value})}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
-                      placeholder="shpat_..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">ID del Producto (Product ID)</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">ID del Producto en esta Tienda</label>
                     <input 
                       type="text"
-                      value={editingProduct.shopifyProductId || ''}
-                      onChange={e => setEditingProduct({...editingProduct, shopifyProductId: e.target.value})}
+                      value={editingProduct.defaultShopifyProductId || editingProduct.shopifyProductId || ''}
+                      onChange={e => setEditingProduct({...editingProduct, defaultShopifyProductId: e.target.value})}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
                       placeholder="Ej. 10462928404768"
                     />
                   </div>
                 </div>
-                <p className="text-xs text-indigo-600/70 mt-3 font-medium">Si llenas estos datos, los pedidos de este producto se crearán en esta tienda específica, ignorando la configuración predeterminada.</p>
+                <p className="text-xs text-indigo-600/70 mt-3 font-medium">Los pedidos de este producto se crearán en la tienda que elijas, a menos que especifiques una tienda diferente en las Variaciones por País.</p>
               </div>
 
               <div>
@@ -314,19 +338,52 @@ const KnowledgeBase = ({ serverUrl }) => {
                     >
                       <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
-                    <div className="mb-2 w-full md:w-1/2">
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Prefijo (Ej. 503)</label>
-                      <input 
-                        type="text" required
-                        value={variation.prefix}
-                        onChange={e => {
-                          const newVariations = [...editingProduct.priceVariations];
-                          newVariations[idx].prefix = e.target.value.trim();
-                          setEditingProduct({...editingProduct, priceVariations: newVariations});
-                        }}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50"
-                        placeholder="Ej. 503"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Prefijo (Ej. 503)</label>
+                        <input 
+                          type="text" required
+                          value={variation.prefix}
+                          onChange={e => {
+                            const newVariations = [...editingProduct.priceVariations];
+                            newVariations[idx].prefix = e.target.value.trim();
+                            setEditingProduct({...editingProduct, priceVariations: newVariations});
+                          }}
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50"
+                          placeholder="Ej. 503"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Tienda Específica (Opcional)</label>
+                        <select 
+                          value={variation.storeId || ''}
+                          onChange={e => {
+                            const newVariations = [...editingProduct.priceVariations];
+                            newVariations[idx].storeId = e.target.value;
+                            setEditingProduct({...editingProduct, priceVariations: newVariations});
+                          }}
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50 bg-white"
+                        >
+                          <option value="">Usar Tienda Principal</option>
+                          {stores.map(store => (
+                            <option key={store.id} value={store.id}>{store.owner} - {store.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-slate-500 mb-1">ID Producto en esta tienda (Opcional)</label>
+                        <input 
+                          type="text"
+                          value={variation.shopifyProductId || ''}
+                          onChange={e => {
+                            const newVariations = [...editingProduct.priceVariations];
+                            newVariations[idx].shopifyProductId = e.target.value;
+                            setEditingProduct({...editingProduct, priceVariations: newVariations});
+                          }}
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50"
+                          placeholder="ID en Shopify (si es diferente al principal)"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Precios para este prefijo</label>
@@ -361,6 +418,171 @@ const KnowledgeBase = ({ serverUrl }) => {
           </div>
         </div>
       )}
+
+      {isStoresModalOpen && (
+        <StoresManagerModal 
+          stores={stores} 
+          fetchStores={fetchStores} 
+          onClose={() => setIsStoresModalOpen(false)} 
+          serverUrl={serverUrl} 
+        />
+      )}
+    </div>
+  );
+};
+
+const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl }) => {
+  const [editingStore, setEditingStore] = useState(null);
+
+  const handleSaveStore = async (e) => {
+    e.preventDefault();
+    const isNew = !editingStore.id;
+    const url = isNew ? `${serverUrl}/api/stores` : `${serverUrl}/api/stores/${editingStore.id}`;
+    try {
+      const res = await fetch(url, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingStore)
+      });
+      if (res.ok) {
+        setEditingStore(null);
+        fetchStores();
+      }
+    } catch (e) {
+      console.error('Error saving store:', e);
+    }
+  };
+
+  const handleDeleteStore = async (id) => {
+    if (!window.confirm('¿Seguro que quieres eliminar esta tienda? Los productos asignados a ella volverán a su configuración global.')) return;
+    try {
+      const res = await fetch(`${serverUrl}/api/stores/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchStores();
+    } catch (e) {
+      console.error('Error deleting store:', e);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center z-[110] p-4">
+      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">storefront</span>
+            Gestionar Tiendas Shopify
+          </h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+          {!editingStore ? (
+            <>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-slate-500">Configura tiendas una sola vez para seleccionarlas fácilmente en tus productos.</p>
+                <button 
+                  onClick={() => setEditingStore({ owner: 'Fernando', name: '', shopifyStoreUrl: '', shopifyAccessToken: '' })}
+                  className="bg-primary text-white px-3 py-1.5 rounded-lg text-sm hover:bg-primary-dark transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  Añadir Tienda
+                </button>
+              </div>
+              
+              {stores.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">storefront</span>
+                  <p className="text-slate-500 font-medium">No hay tiendas configuradas</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stores.map(store => (
+                    <div key={store.id} className="border border-slate-200 rounded-xl p-4 flex flex-col gap-2 hover:border-primary/50 transition-colors bg-white">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-slate-800">{store.name}</h3>
+                          <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium mt-1">
+                            {store.owner}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setEditingStore(store)} className="p-1.5 text-slate-400 hover:text-primary transition-colors bg-slate-50 rounded-lg">
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                          </button>
+                          <button onClick={() => handleDeleteStore(store.id)} className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors bg-slate-50 rounded-lg">
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 truncate mt-2 font-mono bg-slate-50 p-1.5 rounded border border-slate-100">{store.shopifyStoreUrl}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <form onSubmit={handleSaveStore} className="flex flex-col gap-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
+              <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2">{editingStore.id ? 'Editar Tienda' : 'Nueva Tienda'}</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Propietario / Socio</label>
+                  <select 
+                    value={editingStore.owner}
+                    onChange={e => setEditingStore({...editingStore, owner: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50 bg-white"
+                  >
+                    <option value="Fernando">Fernando</option>
+                    <option value="Nicolas">Nicolás</option>
+                    <option value="Daniel">Daniel</option>
+                    <option value="General">General / Empresa</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre Identificador</label>
+                  <input 
+                    type="text" required
+                    value={editingStore.name}
+                    onChange={e => setEditingStore({...editingStore, name: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                    placeholder="Ej. Honduras (Principal)"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">URL de Shopify (.myshopify.com)</label>
+                  <input 
+                    type="text" required
+                    value={editingStore.shopifyStoreUrl}
+                    onChange={e => setEditingStore({...editingStore, shopifyStoreUrl: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                    placeholder="mitienda.myshopify.com"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Access Token de la App (shpat_...)</label>
+                  <input 
+                    type="password" required
+                    value={editingStore.shopifyAccessToken}
+                    onChange={e => setEditingStore({...editingStore, shopifyAccessToken: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                    placeholder="shpat_..."
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-2">
+                <button type="button" onClick={() => setEditingStore(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-dark transition-colors shadow-sm">
+                  Guardar Tienda
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

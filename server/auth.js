@@ -1,10 +1,10 @@
 import express from 'express';
 
 const app = express();
-const port = 3001;
+const port = 3002;
 
-const CLIENT_ID = '8599873049a7fe564b83d45e02107d18';
-const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET || 'secret_removed_for_security';
+const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET || '';
 const SCOPES = 'read_products,write_draft_orders,write_orders';
 const REDIRECT_URI = `http://localhost:${port}/callback`;
 
@@ -68,5 +68,5 @@ app.listen(port, () => {
     console.log(`Paso 1: Entra a tu navegador web y escribe la siguiente dirección:`);
     console.log(`👉 http://localhost:${port}/auth?shop=tu-tienda-honduras.myshopify.com`);
     console.log(`(Asegúrate de cambiar "tu-tienda-honduras" por el nombre real de tu tienda nueva)`);
-    console.log(`\nSi ya configuraste la app en Shopify para que redirija a http://localhost:3001/callback, el proceso será automático.\n`);
+    console.log(`\nSi ya configuraste la app en Shopify para que redirija a http://localhost:3002/callback, el proceso será automático.\n`);
 });

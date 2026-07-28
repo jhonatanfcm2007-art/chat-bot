@@ -125,6 +125,42 @@ app.delete('/api/knowledge-base/:id', (req, res) => {
     res.json({ success: true });
 });
 
+// --- STORES API ---
+app.get('/api/stores', (req, res) => {
+    res.json(storesDb);
+});
+
+app.post('/api/stores', (req, res) => {
+    const newStore = {
+        id: 'store-' + Date.now(),
+        owner: req.body.owner || 'General',
+        name: req.body.name || 'Nueva Tienda',
+        shopifyStoreUrl: req.body.shopifyStoreUrl || '',
+        shopifyAccessToken: req.body.shopifyAccessToken || '',
+        createdAt: new Date().toISOString()
+    };
+    storesDb.push(newStore);
+    saveStores(storesDb);
+    res.json({ success: true, store: newStore });
+});
+
+app.put('/api/stores/:id', (req, res) => {
+    const index = storesDb.findIndex(s => s.id === req.params.id);
+    if (index !== -1) {
+        storesDb[index] = { ...storesDb[index], ...req.body };
+        saveStores(storesDb);
+        res.json({ success: true, store: storesDb[index] });
+    } else {
+        res.status(404).json({ success: false, error: 'Store not found' });
+    }
+});
+
+app.delete('/api/stores/:id', (req, res) => {
+    storesDb = storesDb.filter(s => s.id !== req.params.id);
+    saveStores(storesDb);
+    res.json({ success: true });
+});
+
 // Endpoint secreto para depurar webhooks de Meta
 app.get('/api/webhook-debug', (req, res) => {
     res.json(webhookLogs);
@@ -199,6 +235,7 @@ const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const KNOWLEDGE_BASE_FILE = path.join(DATA_DIR, 'knowledge_base.json');
+const STORES_FILE = path.join(DATA_DIR, 'stores.json');
 const ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
@@ -495,6 +532,19 @@ function loadKnowledgeBase() {
 }
 function saveKnowledgeBase(data) { fs.writeFileSync(KNOWLEDGE_BASE_FILE, JSON.stringify(data, null, 2)); }
 let knowledgeBaseDb = loadKnowledgeBase();
+
+function loadStores() {
+    try {
+        if (fs.existsSync(STORES_FILE)) {
+            return JSON.parse(fs.readFileSync(STORES_FILE, 'utf-8'));
+        }
+    } catch (e) {
+        console.error('Error loading stores:', e);
+    }
+    return [];
+}
+function saveStores(data) { fs.writeFileSync(STORES_FILE, JSON.stringify(data, null, 2)); }
+let storesDb = loadStores();
 
 // MIGRACIÓN A BASE DE CONOCIMIENTO DINÁMICA
 (function initKnowledgeBase() {
@@ -863,18 +913,41 @@ async function createShopifyOrder(chat, products) {
 
     // SOBRESCRIBIR con credenciales específicas del producto si existen
     const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
-    if (prod && prod.shopifyStoreUrl && prod.shopifyAccessToken && prod.shopifyProductId) {
-        SHOPIFY_URL = prod.shopifyStoreUrl;
-        SHOPIFY_TOKEN = prod.shopifyAccessToken;
-        PRODUCT_ID = prod.shopifyProductId;
-        
-        // Inferir el país por el prefijo del cliente si usa tienda personalizada
+    if (prod) {
         const p = chat.from || '';
+        // Inferir el país por el prefijo del cliente
         if (p.startsWith('504')) countryISO = 'HN';
         else if (p.startsWith('503')) countryISO = 'SV';
         else if (p.startsWith('506')) countryISO = 'CR';
         else if (p.startsWith('56')) countryISO = 'CL';
         else countryISO = 'GT'; // Fallback
+        
+        let targetStoreId = prod.defaultStoreId;
+        let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
+        
+        if (prod.priceVariations) {
+            const variation = prod.priceVariations.find(v => v.prefix && p.startsWith(v.prefix));
+            if (variation && variation.storeId) {
+                targetStoreId = variation.storeId;
+                if (variation.shopifyProductId) {
+                    targetProductId = variation.shopifyProductId;
+                }
+            }
+        }
+        
+        if (targetStoreId) {
+            const store = storesDb.find(s => s.id === targetStoreId);
+            if (store) {
+                SHOPIFY_URL = store.shopifyStoreUrl;
+                SHOPIFY_TOKEN = store.shopifyAccessToken;
+                PRODUCT_ID = targetProductId || PRODUCT_ID;
+            }
+        } else if (prod.shopifyStoreUrl && prod.shopifyAccessToken) {
+            // Soporte de compatibilidad hacia atrás
+            SHOPIFY_URL = prod.shopifyStoreUrl;
+            SHOPIFY_TOKEN = prod.shopifyAccessToken;
+            PRODUCT_ID = prod.shopifyProductId || PRODUCT_ID;
+        }
     }
 
     if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
