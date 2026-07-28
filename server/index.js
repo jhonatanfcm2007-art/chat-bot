@@ -913,25 +913,28 @@ async function createShopifyOrder(chat, products) {
 
     // SOBRESCRIBIR con credenciales específicas del producto si existen
     const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
+    let targetPricesText = '';
+    
     if (prod) {
-        const p = chat.from || '';
+        targetPricesText = prod.prices || '';
+        const cleanPhone = (chat.from || '').replace(/\D/g, '');
+        
         // Inferir el país por el prefijo del cliente
-        if (p.startsWith('504')) countryISO = 'HN';
-        else if (p.startsWith('503')) countryISO = 'SV';
-        else if (p.startsWith('506')) countryISO = 'CR';
-        else if (p.startsWith('56')) countryISO = 'CL';
+        if (cleanPhone.startsWith('504')) countryISO = 'HN';
+        else if (cleanPhone.startsWith('503')) countryISO = 'SV';
+        else if (cleanPhone.startsWith('506')) countryISO = 'CR';
+        else if (cleanPhone.startsWith('56')) countryISO = 'CL';
         else countryISO = 'GT'; // Fallback
         
         let targetStoreId = prod.defaultStoreId;
         let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
         
         if (prod.priceVariations) {
-            const variation = prod.priceVariations.find(v => v.prefix && p.startsWith(v.prefix));
-            if (variation && variation.storeId) {
-                targetStoreId = variation.storeId;
-                if (variation.shopifyProductId) {
-                    targetProductId = variation.shopifyProductId;
-                }
+            const variation = prod.priceVariations.find(v => v.prefix && cleanPhone.startsWith(v.prefix.replace(/\D/g, '')));
+            if (variation) {
+                if (variation.prices) targetPricesText = variation.prices;
+                if (variation.storeId) targetStoreId = variation.storeId;
+                if (variation.shopifyProductId) targetProductId = variation.shopifyProductId;
             }
         }
         
@@ -966,19 +969,40 @@ async function createShopifyOrder(chat, products) {
         else if (/4\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 4;
         else if (/5\s*(frasco|tarro|unidad|combo|x)/i.test(products)) orderQty = 5;
 
-        // Calcular precio unitario para que cuadre con las promociones (Guatemala por defecto)
-        let unitPrice = '155.00';
-        let originalUnitPrice = 155.00;
-        if (orderQty === 2) unitPrice = '122.00'; // 122 * 2 = 244 Q
-        if (orderQty === 3) unitPrice = '110.00'; // 110 * 3 = 330 Q
+        // Calcular precio unitario dinámicamente desde el texto de la KB
+        let unitPriceVal = 155.00; // fallback estricto en caso de que todo falle
         
-        // Ajustar lógica de precios en Lempiras si countryISO es 'HN'
-        if (countryISO === 'HN') {
-            originalUnitPrice = 695.00;
-            unitPrice = '695.00';
-            if (orderQty === 2) unitPrice = '550.00'; // 550 * 2 = 1100 L
-            if (orderQty === 3) unitPrice = '466.66'; // 466.66 * 3 = 1400 L
+        if (targetPricesText) {
+            const lines = targetPricesText.split('\n');
+            let foundPrice = null;
+            
+            // Buscar línea que coincida con la cantidad
+            for (const line of lines) {
+                if (
+                    new RegExp(`^[^0-9]*${orderQty}\\s*[^0-9]`, 'i').test(line) || 
+                    new RegExp(`Combo ${orderQty}`, 'i').test(line)
+                ) {
+                    const match = line.match(/(?:Q|L|\$|₡)\s*([0-9.,]+)/i);
+                    if (match) {
+                        foundPrice = parseFloat(match[1].replace(/,/g, ''));
+                        break;
+                    }
+                }
+            }
+            
+            // Fallback si no encontró la línea exacta pero ordenó 1
+            if (foundPrice === null && orderQty === 1) {
+                const match = targetPricesText.match(/(?:Q|L|\$|₡)\s*([0-9.,]+)/i);
+                if (match) foundPrice = parseFloat(match[1].replace(/,/g, ''));
+            }
+            
+            // Si encontró el precio total para el combo, dividirlo entre orderQty
+            if (foundPrice !== null && !isNaN(foundPrice)) {
+                unitPriceVal = foundPrice / orderQty;
+            }
         }
+        
+        const unitPrice = unitPriceVal.toFixed(2);
 
         // Resolver el Variant ID a partir del Product ID
         let targetVariantId = null;
