@@ -573,8 +573,6 @@ let storesDb = loadStores();
 })();
 
 function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
-    if (chat.assignedProduct) return;
-    
     const lineProducts = knowledgeBaseDb.filter(p => {
         const pLine = p.line || '1';
         const isCorrectLine = pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
@@ -586,6 +584,7 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         return isCorrectLine;
     });
     
+    // 1. PRIORIDAD ABSOLUTA: Si entra desde un Anuncio, forzamos el cambio de producto.
     if (adId) {
         const matched = lineProducts.find(p => p.adIds?.includes(String(adId).trim()));
         if (matched) {
@@ -594,6 +593,10 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         }
     }
     
+    // Si ya tiene producto asignado y no entró por un anuncio nuevo, lo conservamos.
+    if (chat.assignedProduct) return;
+    
+    // 2. Búsqueda por palabras clave (solo para chats nuevos sin producto)
     if (msgBody) {
         const bodyLower = msgBody.toLowerCase();
         for (const p of lineProducts) {
