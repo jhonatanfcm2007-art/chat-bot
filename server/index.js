@@ -889,25 +889,18 @@ async function createShopifyOrder(chat, products) {
         waLine = chat.from.split('_')[1];
     }
 
-    // Por defecto usa las credenciales de Guatemala (Línea 1)
-    let SHOPIFY_URL = process.env.SHOPIFY_STORE_URL;
-    let SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
-    let PRODUCT_ID = '9785966035179'; // ID de Shilajit en Guatemala
+    let SHOPIFY_URL = null;
+    let SHOPIFY_TOKEN = null;
+    let PRODUCT_ID = null;
     let countryISO = 'GT';
 
     // Si es Chile (Línea 2)
     if (waLine === '2') {
-        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_CL || process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
-        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_CL || process.env.SHOPIFY_ACCESS_TOKEN_HN;
-        PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_CL || process.env.SHOPIFY_PRODUCT_ID_HN || '10462928404768';
         countryISO = 'CL';
     }
 
     // Si es Honduras (Línea 3)
     if (waLine === '3') {
-        SHOPIFY_URL = process.env.SHOPIFY_STORE_URL_HN || 'hn-12367.myshopify.com';
-        SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN_HN;
-        PRODUCT_ID = process.env.SHOPIFY_PRODUCT_ID_HN || '10462928404768';
         countryISO = 'HN';
     }
 
@@ -954,8 +947,8 @@ async function createShopifyOrder(chat, products) {
     }
 
     if (!SHOPIFY_URL || !SHOPIFY_TOKEN) {
-        console.error('❌ Faltan credenciales de Shopify en .env o en el producto');
-        return { success: false, error: 'Credenciales Shopify no configuradas' };
+        console.log(`ℹ️ [Shopify Skip] El producto "${chat.assignedProduct || products}" no tiene tienda configurada en la Base de Conocimiento. Omitiendo carga.`);
+        return { success: false, error: 'Credenciales Shopify no configuradas o producto sin tienda asignada.' };
     }
 
     try {
