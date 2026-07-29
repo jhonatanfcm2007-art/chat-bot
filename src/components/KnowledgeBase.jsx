@@ -39,6 +39,15 @@ const KnowledgeBase = ({ serverUrl }) => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    const payload = { ...editingProduct };
+    
+    if (typeof payload.keywords === 'string') {
+      payload.keywords = payload.keywords.split(',').map(k => k.trim()).filter(k => k);
+    }
+    if (typeof payload.adIds === 'string') {
+      payload.adIds = payload.adIds.split(',').map(k => k.trim()).filter(k => k);
+    }
+
     const isNew = !editingProduct.id;
     const url = isNew 
       ? `${serverUrl}/api/knowledge-base` 
@@ -48,7 +57,7 @@ const KnowledgeBase = ({ serverUrl }) => {
       const res = await fetch(url, {
         method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProduct)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setIsModalOpen(false);
@@ -70,12 +79,18 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', owner: 'Fernando', keywords: [], adIds: [], prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
+    setEditingProduct({ name: '', owner: 'Fernando', keywords: '', adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
   };
 
   const openEditModal = (product) => {
-    setEditingProduct({ line: 'Ambas', priceVariations: [], ...product });
+    setEditingProduct({ 
+      line: 'Ambas', 
+      priceVariations: [], 
+      ...product,
+      keywords: product.keywords ? product.keywords.join(', ') : '',
+      adIds: product.adIds ? product.adIds.join(', ') : ''
+    });
     setIsModalOpen(true);
   };
 
@@ -302,8 +317,8 @@ const KnowledgeBase = ({ serverUrl }) => {
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Palabras Clave (separadas por coma)</label>
                 <input 
                   type="text" required
-                  value={editingProduct.keywords?.join(', ') || ''}
-                  onChange={e => setEditingProduct({...editingProduct, keywords: e.target.value.split(',').map(k=>k.trim()).filter(k=>k)})}
+                  value={editingProduct.keywords || ''}
+                  onChange={e => setEditingProduct({...editingProduct, keywords: e.target.value})}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="Ej. zapatos, tenis, zapatillas deportivas"
                 />
@@ -314,8 +329,8 @@ const KnowledgeBase = ({ serverUrl }) => {
                 <label className="block text-sm font-semibold text-slate-700 mb-1">IDs de Anuncios (opcional, separados por coma)</label>
                 <input 
                   type="text"
-                  value={editingProduct.adIds?.join(', ') || ''}
-                  onChange={e => setEditingProduct({...editingProduct, adIds: e.target.value.split(',').map(k=>k.trim()).filter(k=>k)})}
+                  value={editingProduct.adIds || ''}
+                  onChange={e => setEditingProduct({...editingProduct, adIds: e.target.value})}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                   placeholder="Ej. 1202131920, 39493920202"
                 />
