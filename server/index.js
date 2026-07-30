@@ -595,17 +595,6 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
     
     // Si ya tiene producto asignado y no entró por un anuncio nuevo, lo conservamos.
     if (chat.assignedProduct) return;
-    
-    // 2. Búsqueda por palabras clave (solo para chats nuevos sin producto)
-    if (msgBody) {
-        const bodyLower = msgBody.toLowerCase();
-        for (const p of lineProducts) {
-            if (p.keywords && p.keywords.some(k => bodyLower.includes(k.toLowerCase()))) {
-                chat.assignedProduct = p.name;
-                return;
-            }
-        }
-    }
 }
 
 // BACKFILL EXISTING CHATS

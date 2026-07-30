@@ -41,9 +41,6 @@ const KnowledgeBase = ({ serverUrl }) => {
     e.preventDefault();
     const payload = { ...editingProduct };
     
-    if (typeof payload.keywords === 'string') {
-      payload.keywords = payload.keywords.split(',').map(k => k.trim()).filter(k => k);
-    }
     if (typeof payload.adIds === 'string') {
       payload.adIds = payload.adIds.split(',').map(k => k.trim()).filter(k => k);
     }
@@ -79,7 +76,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', owner: 'Fernando', keywords: '', adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
+    setEditingProduct({ name: '', owner: 'Fernando', adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
   };
 
@@ -88,7 +85,6 @@ const KnowledgeBase = ({ serverUrl }) => {
       line: 'Ambas', 
       priceVariations: [], 
       ...product,
-      keywords: product.keywords ? product.keywords.join(', ') : '',
       adIds: product.adIds ? product.adIds.join(', ') : ''
     });
     setIsModalOpen(true);
@@ -189,17 +185,6 @@ const KnowledgeBase = ({ serverUrl }) => {
                   </div>
                 </div>
                 
-                <div className="mb-3">
-                  <span className="text-xs font-semibold text-slate-500 uppercase">Palabras Clave (Activación):</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {p.keywords?.map((k, i) => (
-                      <span key={i} className="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="flex-1 mb-3">
                   <span className="text-xs font-semibold text-slate-500 uppercase">Beneficios / Pitch:</span>
                   <p className="text-sm text-slate-700 mt-1 line-clamp-3 bg-slate-50 p-2 rounded-lg border border-slate-100">{p.details}</p>
@@ -311,18 +296,6 @@ const KnowledgeBase = ({ serverUrl }) => {
                   </div>
                 </div>
                 <p className="text-xs text-indigo-600/70 mt-3 font-medium">Los pedidos de este producto se crearán en la tienda que elijas, a menos que especifiques una tienda diferente en las Variaciones por País.</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Palabras Clave (separadas por coma)</label>
-                <input 
-                  type="text" required
-                  value={editingProduct.keywords || ''}
-                  onChange={e => setEditingProduct({...editingProduct, keywords: e.target.value})}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                  placeholder="Ej. zapatos, tenis, zapatillas deportivas"
-                />
-                <p className="text-xs text-slate-500 mt-1">Si el cliente dice alguna de estas palabras, la IA sabrá que busca este producto.</p>
               </div>
 
               <div>
