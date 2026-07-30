@@ -2834,8 +2834,9 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         });
         
         let activeProducts = lineProducts;
-        if (chat && chat.assignedProduct) {
-            const assignedProd = lineProducts.find(p => p.name === chat.assignedProduct);
+        const currentChat = chats[fromPhone];
+        if (currentChat && currentChat.assignedProduct) {
+            const assignedProd = lineProducts.find(p => p.name === currentChat.assignedProduct);
             if (assignedProd) {
                 activeProducts = [assignedProd];
             }
