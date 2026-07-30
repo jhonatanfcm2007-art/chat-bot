@@ -584,9 +584,16 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         return isCorrectLine;
     });
     
+    // Extracción profunda del ID de anuncio (por si el usuario lo pegó manual o la API no trajo el objeto referral)
+    let finalAdId = adId;
+    if (!finalAdId && msgBody) {
+        const match = msgBody.match(/ID:\s*(\d+)/i);
+        if (match) finalAdId = match[1];
+    }
+    
     // 1. PRIORIDAD ABSOLUTA: Si entra desde un Anuncio, forzamos el cambio de producto.
-    if (adId) {
-        const matched = lineProducts.find(p => p.adIds?.includes(String(adId).trim()));
+    if (finalAdId) {
+        const matched = lineProducts.find(p => p.adIds?.includes(String(finalAdId).trim()));
         if (matched) {
             chat.assignedProduct = matched.name;
             return;
@@ -2826,10 +2833,20 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
             return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
         });
         
-        if (lineProducts.length > 0) {
-            lineProducts.forEach(prod => {
+        let activeProducts = lineProducts;
+        if (chat && chat.assignedProduct) {
+            const assignedProd = lineProducts.find(p => p.name === chat.assignedProduct);
+            if (assignedProd) {
+                activeProducts = [assignedProd];
+            }
+        }
+
+        if (activeProducts.length > 0) {
+            activeProducts.forEach(prod => {
                 knowledgeContext += `\n--- PRODUCTO: ${prod.name} ---\n`;
-                knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
+                if (prod.keywords && prod.keywords.length > 0) {
+                    knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
+                }
                 if (prod.adIds && prod.adIds.length > 0) {
                     knowledgeContext += `IDs de Anuncio asociados: ${prod.adIds.join(', ')}\n`;
                 }
