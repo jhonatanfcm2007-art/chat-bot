@@ -2851,23 +2851,18 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         }
 
         // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        let countryContext = "Guatemala"; // Default
+        let detectedCountry = getCountryFromPhone(fromPhone);
+        let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : "Guatemala"; // Default
+        
         let termCity = "Municipio";
         let termProv = "Departamento";
 
-        if (waLine == '1') {
-            countryContext = "Guatemala";
-        } else if (waLine == '2') {
-            countryContext = "Chile";
+        if (countryContext === "Chile") {
             termCity = "Comuna";
             termProv = "Región";
-        } else if (waLine == '3') {
-            const cleanPhone = String(fromPhone).replace('+', '').trim();
-            if (cleanPhone.startsWith('503')) {
-                countryContext = "El Salvador";
-            } else {
-                countryContext = "Honduras";
-            }
+        } else if (countryContext === "Costa Rica") {
+            termCity = "Cantón";
+            termProv = "Provincia";
         }
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
