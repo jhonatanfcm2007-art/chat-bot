@@ -3017,6 +3017,34 @@ async function runFollowUpSequence() {
 // setInterval(runFollowUpSequence, 15 * 60 * 1000); // <-- Desactivado por solicitud del cliente
 
 const PORT = process.env.PORT || 3000;
+app.get('/api/recover-leads', async (req, res) => {
+    let recoveredCount = 0;
+    const recoveredChats = [];
+    
+    for (const [from, chat] of Object.entries(chats)) {
+        if (!chat.messages || chat.messages.length === 0) continue;
+        
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        if (lastMsg.isMe && lastMsg.body && lastMsg.body.includes('Error IA')) {
+            chat.messages.pop(); // Eliminar el mensaje de error de la IA
+            saveChats(chats);
+            
+            const lastCustomerMsg = chat.messages.slice().reverse().find(m => !m.isMe);
+            if (lastCustomerMsg) {
+                const msgBodyLower = (lastCustomerMsg.body || lastCustomerMsg.content || '').toLowerCase().trim();
+                
+                // Disparar la respuesta de la IA en segundo plano
+                processAIResponse(from, msgBodyLower).catch(e => console.error('Recovery Error:', e));
+                
+                recoveredCount++;
+                recoveredChats.push(chat.customerName || from);
+            }
+        }
+    }
+    
+    res.json({ success: true, message: "Leads recuperados exitosamente", recoveredCount, recoveredChats });
+});
+
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
 });
