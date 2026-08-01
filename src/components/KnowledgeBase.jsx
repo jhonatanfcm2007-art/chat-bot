@@ -263,6 +263,51 @@ const KnowledgeBase = ({ serverUrl }) => {
                 <p className="text-xs text-slate-500 mt-1">Si dejas esto vacío, las notificaciones de ventas y alertas irán al número principal. Escríbelo con el código de país sin el + (Ej. 50499999999).</p>
               </div>
 
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Imagen del Producto (Opcional)</label>
+                <div className="flex items-center gap-4">
+                  {editingProduct.imageUrl ? (
+                    <div className="relative group">
+                      <img src={editingProduct.imageUrl.startsWith('http') ? editingProduct.imageUrl : `${serverUrl}${editingProduct.imageUrl}`} alt="Producto" className="w-16 h-16 object-cover rounded-lg border border-slate-300 shadow-sm" />
+                      <button type="button" onClick={() => setEditingProduct({...editingProduct, imageUrl: ''})} className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow hover:bg-red-600 transition-colors">
+                        <span className="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-slate-200 rounded-lg border border-slate-300 border-dashed flex items-center justify-center text-slate-400">
+                      <span className="material-symbols-outlined">image</span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                          const res = await fetch(`${serverUrl}/api/upload`, {
+                            method: 'POST',
+                            body: formData
+                          });
+                          const data = await res.json();
+                          if (data.url) {
+                            setEditingProduct({...editingProduct, imageUrl: data.url});
+                          }
+                        } catch (err) {
+                          alert('Error al subir la imagen');
+                        }
+                      }}
+                      className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Sube una foto. Si el cliente pide fotos, la IA la enviará automáticamente.</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="border border-indigo-100 rounded-xl p-4 bg-indigo-50/30">
                 <h3 className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">storefront</span>

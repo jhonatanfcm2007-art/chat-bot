@@ -1626,6 +1626,24 @@ async function processAIResponse(from, msgBodyLower) {
 
     let cleanAiReply = aiReply;
 
+    // --- ENVÍO DE FOTO AUTOMÁTICA ---
+    const hasFotoTag = /\[ENVIAR_FOTO\]/i.test(aiReply);
+    if (hasFotoTag) {
+        if (refreshedChat.assignedProduct) {
+            const prod = knowledgeBaseDb.find(p => p.name === refreshedChat.assignedProduct);
+            if (prod && prod.imageUrl) {
+                await smartSendImage(from, prod.imageUrl, "", null);
+                refreshedChat.messages.push({
+                    role: 'assistant',
+                    isMe: true,
+                    body: '[FOTO ENVIADA AL CLIENTE]'
+                });
+                cleanAiReply = cleanAiReply.replace(/\[ENVIAR_FOTO\]/gi, '').trim();
+                saveChats(chats);
+            }
+        }
+    }
+
     // --- REGISTRO DE PEDIDO ---
     const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
@@ -2838,11 +2856,15 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         
         let activeProducts = lineProducts;
         const currentChat = chats[fromPhone];
+        let hasProductImage = false;
         if (currentChat && currentChat.assignedProduct) {
             const assignedProd = lineProducts.find(p => p.name === currentChat.assignedProduct);
             if (assignedProd) {
                 activeProducts = [assignedProd];
+                if (assignedProd.imageUrl) hasProductImage = true;
             }
+        } else if (activeProducts.length === 1 && activeProducts[0].imageUrl) {
+            hasProductImage = true;
         }
 
         if (activeProducts.length > 0) {
@@ -2898,7 +2920,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 9. INTELIGENCIA GEOGRÁFICA (${countryContext}): Estás vendiendo productos en ${countryContext}. Si el cliente te da un(a) ${termCity} pero NO te dice el(la) ${termProv}, DEBES deducir el(la) ${termProv} correcto(a) con absoluta exactitud basándote en tu conocimiento geográfico de ${countryContext}. Intenta solicitar Puntos de Referencia de la dirección, pero si el cliente no los da, no es bloqueante.
 10. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe aquí la cantidad exacta Y el nombre del producto, ej: '1 Frasco de Shilajit'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica la cantidad (1, 2 o 3) Y el nombre del producto (nunca dejes el nombre del producto por fuera).
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} en ${countryContext} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
-12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), NO intentes convencerlo de otra cosa ni le digas que tú se la enviarás. DEBES OBLIGATORIAMENTE usar la etiqueta literal [APAGAR_BOT_SOPORTE] en tu respuesta para apagar la IA y permitir que un humano le envíe la foto manualmente.
+12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), NO intentes convencerlo de otra cosa ni le digas que tú se la enviarás. DEBES OBLIGATORIAMENTE usar la etiqueta literal ${hasProductImage ? '[ENVIAR_FOTO]' : '[APAGAR_BOT_SOPORTE]'} en tu respuesta${hasProductImage ? ' para que el sistema envíe la foto automáticamente. NO uses [APAGAR_BOT_SOPORTE] en este caso.' : ' para apagar la IA y permitir que un humano le envíe la foto manualmente.'}
 13. OTROS PRODUCTOS Y DESCONOCIMIENTO (¡CRÍTICO!): Si el cliente menciona el nombre de un producto que NO está en tu Base de Conocimiento (ej: "Magnesio", "aceite", etc.), o hace una pregunta de la que no tienes respuesta, o pide una cantidad o combo que no está en tus opciones de 'Precios y Combos' (ej: pide 3 frascos y tú solo ofreces 1 o 2), o pide un catálogo: NO te disculpes, NO le digas que no tienes información, y NO le preguntes si quiere ver el catálogo. DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] y nada más. Apágate de inmediato para que un humano lo atienda.
 14. MONEDA Y PAÍS: Estás hablando con un cliente de ${countryContext}. Asegúrate de ofrecer EXCLUSIVAMENTE los precios, promociones y la moneda correspondientes a ${countryContext} (Ejemplo: Si es El Salvador usa Dólares, si es Honduras usa Lempiras). IGNORA los precios de la Base de Conocimiento que pertenezcan a otros países. NUNCA menciones precios de otro país.`;
 
