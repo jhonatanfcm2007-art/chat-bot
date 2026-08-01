@@ -1605,18 +1605,21 @@ async function processAIResponse(from, msgBodyLower) {
     
     // --- APAGADO POR IA ---
     if (/\[APAGAR_BOT_SOPORTE\]/i.test(aiReply)) {
-        if (!refreshedChat.tags?.includes('soporte')) {
-            refreshedChat.tags = [...(refreshedChat.tags || []), 'soporte'];
-        }
+        const hasPartialData = refreshedChat.orderName || refreshedChat.address || refreshedChat.city || refreshedChat.orderPhone;
+        let newTag = hasPartialData ? 'pedidos_abandonados' : 'soporte';
+        let alertMsg = hasPartialData ? `⚠️ *PEDIDO ABANDONADO / INCOMPLETO* por *${customerName}*. La IA se apagó antes de cerrar la venta.` : `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`;
+
+        if (!refreshedChat.tags) refreshedChat.tags = [];
+        refreshedChat.tags = refreshedChat.tags.filter(t => t !== 'soporte' && t !== 'pedidos_abandonados');
+        refreshedChat.tags.push(newTag);
+
         refreshedChat.aiDisabled = true;
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        notifyAdmins(refreshedChat, `⚠️ *SOPORTE REQUERIDO* por *${customerName}* (Detectado por IA). La IA se ha apagado.`);
-        
-        registerAnomaly('Soporte Requerido', customerName, from);
-        
+        notifyAdmins(refreshedChat, alertMsg);
+        registerAnomaly(hasPartialData ? 'Pedido Abandonado' : 'Soporte Requerido', customerName, from);
         delete aiTimers[from];
         return;
     }
