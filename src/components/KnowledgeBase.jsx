@@ -286,20 +286,26 @@ const KnowledgeBase = ({ serverUrl }) => {
                         const file = e.target.files[0];
                         if (!file) return;
                         
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        try {
-                          const res = await fetch(`${serverUrl}/api/upload`, {
-                            method: 'POST',
-                            body: formData
-                          });
-                          const data = await res.json();
-                          if (data.url) {
-                            setEditingProduct({...editingProduct, imageUrl: data.url});
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                          try {
+                            const res = await fetch(`${serverUrl}/api/upload`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                filename: file.name,
+                                base64: reader.result
+                              })
+                            });
+                            const data = await res.json();
+                            if (data.url) {
+                              setEditingProduct({...editingProduct, imageUrl: data.url});
+                            }
+                          } catch (err) {
+                            alert('Error al subir la imagen');
                           }
-                        } catch (err) {
-                          alert('Error al subir la imagen');
-                        }
+                        };
+                        reader.readAsDataURL(file);
                       }}
                       className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
                     />
