@@ -1478,6 +1478,21 @@ app.post('/webhook', async (req, res) => {
                                     saveChats(chats);
                                 } else {
                                     currentChat.lastImageAnalysis = visionResult.description;
+                                    
+                                    // APAGAR IA AL RECIBIR FOTO (A petición del usuario)
+                                    currentChat.aiDisabled = true;
+                                    currentChat.tags = [...(currentChat.tags || []).filter(t => t !== 'soporte'), 'soporte'];
+                                    
+                                    io.emit('tag_updated', { from, tags: currentChat.tags });
+                                    io.emit('ai_state_updated', { chatId: from, disabled: true });
+                                    
+                                    notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`);
+                                    registerAnomaly('Soporte Requerido (Imagen)', customerName, from);
+                                    
+                                    if (aiTimers[from]) {
+                                        clearTimeout(aiTimers[from]);
+                                        delete aiTimers[from];
+                                    }
                                 }
                             } catch (vErr) {
                                 console.error('Vision analysis error:', vErr);
