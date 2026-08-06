@@ -2467,11 +2467,37 @@ app.post('/api/scan-chats', async (req, res) => {
     res.json({ success: true, scanned: suspiciousChats.length, recovered: recoveredCount, total: alreadyRegistered + recoveredCount });
 });
 
+// Función para optimizar el payload de chats (rendimiento CRM)
+function getOptimizedChatsPayload() {
+    const optimized = {};
+    
+    // Sort chats by recent activity
+    const chatEntries = Object.entries(chats).map(([id, data]) => {
+        const messages = data.messages || [];
+        const lastMsgTime = messages.length > 0 ? (Number(messages[messages.length - 1].timestampRaw) || 0) : 0;
+        const activityTime = Math.max(Number(data.updatedAt) || 0, lastMsgTime);
+        return { id, data, activityTime };
+    });
+    
+    // Solo enviamos los últimos 800 chats más recientes
+    chatEntries.sort((a, b) => b.activityTime - a.activityTime);
+    const topChats = chatEntries.slice(0, 800);
+    
+    for (const { id, data } of topChats) {
+        // Clonamos superficialmente para no afectar la DB
+        optimized[id] = { ...data };
+        // Truncamos mensajes a los últimos 30
+        if (data.messages && data.messages.length > 30) {
+            optimized[id].messages = data.messages.slice(-30);
+        }
+    }
+    return optimized;
+}
 
 io.on('connection', (socket) => {
     socket.emit('inventory_updated', inventory);
     socket.emit('sales_updated', sales);
-    socket.emit('initial_chats', chats);
+    socket.emit('initial_chats', getOptimizedChatsPayload());
     socket.emit('initial_settings', settings);
     socket.emit('platforms_updated', platforms);
     socket.emit('providers_updated', providers);
@@ -2501,7 +2527,7 @@ io.on('connection', (socket) => {
         }
         
         saveChats(chats);
-        io.emit('initial_chats', chats);
+        io.emit('initial_chats', getOptimizedChatsPayload());
 
         // Send WhatsApp message
         const cName = chat.customerName || chat.orderName || chat.from.split('@')[0];
@@ -2579,7 +2605,7 @@ io.on('connection', (socket) => {
             }
         }
         saveChats(chats);
-        io.emit('initial_chats', chats);
+        io.emit('initial_chats', getOptimizedChatsPayload());
     });
 
     socket.on('create_campaign', (data) => {

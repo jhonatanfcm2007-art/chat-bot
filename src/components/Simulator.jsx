@@ -23,6 +23,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [showKanban, setShowKanban] = useState(false);
   const [showDropiModal, setShowDropiModal] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
+  const [visibleChatsCount, setVisibleChatsCount] = useState(50);
   const chatEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const prevSelectedChatRef = useRef(selectedChat);
@@ -497,7 +498,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
         <div className="flex-grow overflow-y-auto custom-scrollbar">
           {chatSessions.length > 0 ? (
-            chatSessions.map((chat) => {
+            <>
+            {chatSessions.slice(0, visibleChatsCount).map((chat) => {
               const isSelected = selectedChat === chat.from;
               return (
                 <div 
@@ -587,7 +589,17 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   </div>
                 </div>
               );
-            })
+            })}
+            {chatSessions.length > visibleChatsCount && (
+              <div 
+                className="py-4 text-center cursor-pointer text-xs font-semibold text-primary hover:bg-slate-50 transition-colors border-b border-slate-100/60 flex items-center justify-center gap-2"
+                onClick={() => setVisibleChatsCount(prev => prev + 50)}
+              >
+                <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                Cargar más chats ({chatSessions.length - visibleChatsCount} ocultos)
+              </div>
+            )}
+            </>
           ) : (
             <div className="p-12 text-center flex flex-col items-center gap-3 opacity-30">
                <span className="material-symbols-outlined text-5xl">chat_bubble_outline</span>
