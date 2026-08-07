@@ -259,8 +259,9 @@ if (fs.existsSync(VAPID_FILE)) {
 
 if (!vapidKeys) {
     vapidKeys = webpush.generateVAPIDKeys();
+    function saveVapidKeys(keys) { atomicSave(VAPID_FILE, keys); }
+    saveVapidKeys(vapidKeys);
     try {
-        fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2));
         console.log('🔑 [PUSH] Nuevas llaves VAPID generadas y guardadas.');
     } catch (e) {
         console.error('❌ [PUSH] No se pudieron guardar las llaves VAPID:', e);
@@ -285,13 +286,7 @@ function loadPushSubscriptions() {
     return [];
 }
 
-function savePushSubscriptions(subs) {
-    try {
-        fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2));
-    } catch (err) {
-        console.error('Error saving push subscriptions:', err);
-    }
-}
+function savePushSubscriptions(subs) { atomicSave(SUBSCRIPTIONS_FILE, subs); }
 
 let pushSubscriptions = loadPushSubscriptions();
 
@@ -393,13 +388,25 @@ if (fs.existsSync(DIST_DIR)) {
 }
 
 // --- DATA LOADING & SAVING ---
+// Funciones seguras de guardado atómico
+let isSaving = false;
+function atomicSave(filePath, data) {
+    try {
+        const tmpPath = filePath + '.tmp';
+        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+        fs.renameSync(tmpPath, filePath); // Operación atómica a nivel de OS
+    } catch (e) {
+        console.error(`Error en guardado atómico para ${filePath}:`, e);
+    }
+}
+
 function loadInventory() {
     try {
         if (fs.existsSync(INVENTORY_FILE)) return JSON.parse(fs.readFileSync(INVENTORY_FILE, 'utf-8'));
     } catch (err) { console.error('Error loading inventory:', err); }
     return [];
 }
-function saveInventory(data) { fs.writeFileSync(INVENTORY_FILE, JSON.stringify(data, null, 2)); }
+function saveInventory(data) { atomicSave(INVENTORY_FILE, data); }
 
 function loadSales() {
     try {
@@ -407,7 +414,7 @@ function loadSales() {
     } catch (err) { console.error('Error loading sales:', err); }
     return [];
 }
-function saveSales(data) { fs.writeFileSync(SALES_FILE, JSON.stringify(data, null, 2)); }
+function saveSales(data) { atomicSave(SALES_FILE, data); }
 
 function loadChats() {
     try {
@@ -421,7 +428,7 @@ function loadChats() {
     } catch (err) { console.error('Error loading chats:', err); }
     return {};
 }
-function saveChats(data) { fs.writeFileSync(CHATS_FILE, JSON.stringify(data, null, 2)); }
+function saveChats(data) { atomicSave(CHATS_FILE, data); }
 
 function loadAnomalies() {
     if (fs.existsSync(ANOMALIES_FILE)) {
@@ -429,7 +436,7 @@ function loadAnomalies() {
     }
     return [];
 }
-function saveAnomalies(data) { fs.writeFileSync(ANOMALIES_FILE, JSON.stringify(data, null, 2)); }
+function saveAnomalies(data) { atomicSave(ANOMALIES_FILE, data); }
 
 function registerAnomaly(type, customerName, from) {
     const newAnomaly = {
@@ -472,7 +479,7 @@ function loadSettings() {
     } catch (err) { console.error('Error loading settings:', err); }
     return def;
 }
-function saveSettings(data) { fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2)); }
+function saveSettings(data) { atomicSave(SETTINGS_FILE, data); }
 
 function loadPlatforms() {
     try {
@@ -480,7 +487,7 @@ function loadPlatforms() {
     } catch (err) {}
     return ['Shilajit Resina', 'Combos Promocionales'];
 }
-function savePlatforms(data) { fs.writeFileSync(PLATFORMS_FILE, JSON.stringify(data, null, 2)); }
+function savePlatforms(data) { atomicSave(PLATFORMS_FILE, data); }
 
 function loadProviders() {
     try {
@@ -488,7 +495,7 @@ function loadProviders() {
     } catch (err) {}
     return ['Himalaya Natural', 'Laboratorio Oficial'];
 }
-function saveProviders(data) { fs.writeFileSync(PROVIDERS_FILE, JSON.stringify(data, null, 2)); }
+function saveProviders(data) { atomicSave(PROVIDERS_FILE, data); }
 
 function loadCampaigns() {
     try {
@@ -496,7 +503,7 @@ function loadCampaigns() {
     } catch (err) { console.error('Error loading campaigns:', err); }
     return [];
 }
-function saveCampaigns(data) { fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify(data, null, 2)); }
+function saveCampaigns(data) { atomicSave(CAMPAIGNS_FILE, data); }
 
 // --- DATA INITIALIZATION ---
 let inventory = loadInventory();
@@ -518,8 +525,30 @@ function loadCustomers() {
     }
     return [];
 }
-function saveCustomers(data) { fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(data, null, 2)); }
+function saveCustomers(data) { atomicSave(CUSTOMERS_FILE, data); }
 let customersDb = loadCustomers();
+
+// --- RESTAURACIÓN DE EMERGENCIA ---
+// Si los chats están vacíos pero los clientes existen (ej. corrupción en reinicio),
+// reconstruir los contenedores de chat básicos para no perder los contactos.
+if (Object.keys(chats).length < customersDb.length) {
+    let restoredCount = 0;
+    for (const customer of customersDb) {
+        if (!chats[customer.phone]) {
+            chats[customer.phone] = {
+                customerName: customer.name || 'Cliente Recuperado',
+                messages: [],
+                tags: ['interesado'], // Etiqueta por defecto para que no se pierdan
+                updatedAt: customer.firstSeen || Date.now()
+            };
+            restoredCount++;
+        }
+    }
+    if (restoredCount > 0) {
+        console.log(`⚠️ [EMERGENCIA] Se han restaurado ${restoredCount} chats básicos desde customers.json`);
+        saveChats(chats);
+    }
+}
 
 function loadKnowledgeBase() {
     try {
@@ -531,7 +560,7 @@ function loadKnowledgeBase() {
     }
     return [];
 }
-function saveKnowledgeBase(data) { fs.writeFileSync(KNOWLEDGE_BASE_FILE, JSON.stringify(data, null, 2)); }
+function saveKnowledgeBase(data) { atomicSave(KNOWLEDGE_BASE_FILE, data); }
 let knowledgeBaseDb = loadKnowledgeBase();
 
 function loadStores() {
@@ -544,7 +573,7 @@ function loadStores() {
     }
     return [];
 }
-function saveStores(data) { fs.writeFileSync(STORES_FILE, JSON.stringify(data, null, 2)); }
+function saveStores(data) { atomicSave(STORES_FILE, data); }
 let storesDb = loadStores();
 
 // MIGRACIÓN A BASE DE CONOCIMIENTO DINÁMICA
@@ -3117,6 +3146,38 @@ app.get('/api/recover-leads', async (req, res) => {
     res.json({ success: true, message: "Leads recuperados exitosamente", recoveredCount, recoveredChats });
 });
 
+// --- RUTINAS DE SEGURIDAD Y BACKUP ---
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+function backupDatabase() {
+    try {
+        if (!fs.existsSync(CHATS_FILE)) return;
+        const dateStr = new Date().toISOString().split('T')[0];
+        const backupFile = path.join(BACKUP_DIR, `chats_backup_${dateStr}.json`);
+        // Solo hacer backup si no existe el de hoy
+        if (!fs.existsSync(backupFile)) {
+            fs.copyFileSync(CHATS_FILE, backupFile);
+            console.log(`💾 [BACKUP] Copia de seguridad creada: chats_backup_${dateStr}.json`);
+        }
+    } catch (e) {
+        console.error('❌ [BACKUP] Error creando copia de seguridad:', e);
+    }
+}
+setInterval(backupDatabase, 12 * 60 * 60 * 1000); // Revisar cada 12 horas
+backupDatabase(); // Ejecutar al inicio
+
+function gracefulShutdown() {
+    console.log('🛑 [SISTEMA] Recibida señal de apagado. Cerrando conexiones de forma segura...');
+    server.close(() => {
+        console.log('✅ [SISTEMA] Todas las conexiones cerradas. Apagando servidor.');
+        process.exit(0);
+    });
+    // Forzar apagado después de 10s si algo se queda colgado
+    setTimeout(() => process.exit(1), 10000);
+}
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
