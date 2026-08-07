@@ -3110,6 +3110,51 @@ app.get('/api/recover-leads', async (req, res) => {
     
     res.json({ success: true, message: "Leads recuperados exitosamente", recoveredCount, recoveredChats });
 });
+// Escáner Automático de Pedidos Abandonados (Inactividad de 60 min)
+function scanForAbandonedOrders() {
+    const now = Date.now();
+    const SIXTY_MINUTES = 60 * 60 * 1000;
+    let updatedChats = false;
+
+    for (const [chatId, chat] of Object.entries(chats)) {
+        // Ignorar si ya está pagado, entregado, abandonado, o listo para preparar
+        if (!chat.tags || chat.tags.length === 0) continue;
+        const hasTerminalTag = chat.tags.includes('pedidos_abandonados') || 
+                               chat.tags.includes('preparar_pedido') || 
+                               chat.tags.includes('pagado') || 
+                               chat.tags.includes('entregado');
+        if (hasTerminalTag) continue;
+
+        // Comprobar si hay datos parciales recolectados
+        const hasPartialData = chat.orderName || chat.address || chat.city || chat.orderPhone;
+        
+        if (hasPartialData && chat.messages && chat.messages.length > 0) {
+            const lastMsg = chat.messages[chat.messages.length - 1];
+            const lastActivity = Number(chat.updatedAt) || (Number(lastMsg.timestampRaw) || now);
+            
+            // Si pasaron 60 mins desde la última actividad, se marca como abandonado
+            if ((now - lastActivity) > SIXTY_MINUTES) {
+                chat.tags = chat.tags.filter(t => t !== 'interesado' && t !== 'soporte');
+                chat.tags.push('pedidos_abandonados');
+                updatedChats = true;
+                
+                io.emit('tag_updated', { from: chatId, tags: chat.tags });
+                
+                const cName = chat.customerName || chat.orderName || 'Cliente';
+                notifyAdmins(chat, `⚠️ *PEDIDO ABANDONADO POR INACTIVIDAD*\\nEl cliente *${cName}* dejó de responder hace más de 60 minutos teniendo un pedido a medias.`);
+                registerAnomaly('Pedido Abandonado (Inactividad)', cName, chatId);
+                console.log(`🤖 [SISTEMA] Chat ${chatId} marcado como Abandonado por inactividad > 60min.`);
+            }
+        }
+    }
+
+    if (updatedChats) {
+        saveChats(chats);
+    }
+}
+
+// Ejecutar revisión de inactividad cada 30 minutos
+setInterval(scanForAbandonedOrders, 30 * 60 * 1000);
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
