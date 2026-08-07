@@ -2477,11 +2477,11 @@ function getOptimizedChatsPayload() {
         return { id, data, activityTime };
     });
     
-    // Solo enviamos los últimos 800 chats más recientes
+    // Enviamos TODOS los chats para que funcionen las búsquedas de clientes viejos, 
+    // pero limitamos los mensajes de CADA UNO para ahorrar memoria
     chatEntries.sort((a, b) => b.activityTime - a.activityTime);
-    const topChats = chatEntries.slice(0, 800);
     
-    for (const { id, data } of topChats) {
+    for (const { id, data } of chatEntries) {
         // Clonamos superficialmente para no afectar la DB
         optimized[id] = { ...data };
         // Truncamos mensajes a los últimos 30
