@@ -86,9 +86,21 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Cargar chats pesados por HTTP para evitar que el proxy bloquee payloads gigantes
+    fetch(`${SERVER_URL}/api/chats`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('Received initial history via HTTP:', data);
+        setChats(data);
+      })
+      .catch(err => console.error('Error fetching chats via HTTP:', err));
+
     socket.on('initial_chats', (data) => {
-      console.log('Received initial history:', data);
-      setChats(data);
+      // Ignoramos initial_chats del socket si pesa mucho, ya lo traemos por HTTP
+      // pero lo dejamos por compatibilidad o por si viene chiquito
+      if (Object.keys(data).length > 0 && Object.keys(data).length <= 800) {
+        setChats(data);
+      }
     });
 
     socket.on('initial_settings', (data) => {

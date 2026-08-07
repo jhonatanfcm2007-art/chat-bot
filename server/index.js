@@ -2380,6 +2380,11 @@ app.get('/api/providers', (req, res) => res.json(providers));
 app.post('/api/providers', (req, res) => { providers = req.body; saveProviders(providers); io.emit('providers_updated', providers); res.json({success:true}); });
 
 app.get('/api/settings', (req, res) => res.json(settings));
+app.get('/api/chats', (req, res) => {
+    // Para evitar cuellos de botella en Socket.io con bases de datos grandes,
+    // el frontend descarga el payload inicial mediante HTTP GET
+    res.json(getOptimizedChatsPayload());
+});
 app.post('/api/settings', (req, res) => {
     if (req.body.line) {
         settings[req.body.line] = { ...settings[req.body.line], ...req.body.settings };
