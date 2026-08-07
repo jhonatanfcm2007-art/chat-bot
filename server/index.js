@@ -26,7 +26,8 @@ const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    maxHttpBufferSize: 1e8 // Aumentar el límite a 100MB para evitar que falle el envío de historial
 });
 
 const openai = (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 20)
