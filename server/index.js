@@ -1737,6 +1737,7 @@ async function processAIResponse(from, msgBodyLower) {
 
         const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
         
+        io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
         saveChats(chats);
         
         // Evitar spam: Solo notificar si no se ha marcado como registrado definitivamente

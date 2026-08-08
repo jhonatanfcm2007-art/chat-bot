@@ -139,6 +139,20 @@ function App() {
       playAlertSound();
     });
 
+    socket.on('chat_meta_updated', (data) => {
+      setChats(prev => {
+        if (!prev[data.id]) return prev;
+        return {
+          ...prev,
+          [data.id]: {
+            ...prev[data.id],
+            ...data.chat,
+            messages: prev[data.id].messages // mantener los mensajes del frontend
+          }
+        };
+      });
+    });
+
     socket.on('tag_updated', (data) => {
       setChats(prev => {
         if (!prev[data.from]) return prev;
