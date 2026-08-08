@@ -918,10 +918,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                
                <div className="space-y-3">
                  <div className="flex flex-col text-xs">
-                   <span className="text-on-surface-variant font-medium">🛒 Producto:</span>
-                   <span className="text-slate-800 font-semibold">{activeChatData.pendingApprovalProducts || activeChatData.assignedProduct || 'Aún no especificado'}</span>
-                 </div>
-                 <div className="flex flex-col text-xs">
                    <span className="text-on-surface-variant font-medium">👤 Nombre:</span>
                    <span className="text-slate-700">{activeChatData.orderName || activeChatData.customerName || 'No especificado'}</span>
                  </div>
@@ -937,6 +933,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                    <span className="text-on-surface-variant font-medium">🏙️ Municipio / Depto:</span>
                    <span className="text-slate-700">{(activeChatData.city && activeChatData.province) ? `${activeChatData.city}, ${activeChatData.province}` : (activeChatData.city || activeChatData.province || 'No especificado')}</span>
                  </div>
+                 
+                 {(activeChatData.pendingApprovalProducts || activeChatData.assignedProduct) && (
+                   <div className="flex flex-col text-xs pt-2 mt-1 border-t border-slate-100">
+                     <span className="text-on-surface-variant font-medium">🛒 Producto:</span>
+                     <span className="text-slate-800 font-semibold">{activeChatData.pendingApprovalProducts || activeChatData.assignedProduct}</span>
+                   </div>
+                 )}
                  
                  <div className="pt-3 mt-1 border-t border-slate-100 flex justify-between items-center text-xs">
                    <span className="text-on-surface-variant font-medium">Estado:</span>
