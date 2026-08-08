@@ -510,6 +510,17 @@ let inventory = loadInventory();
 let sales = loadSales();
 let chats = loadChats();
 let settings = loadSettings();
+
+// MIGRACIÓN DE PROMPT: Añadir reglas de envío de fotos e interés si no existen
+let settingsModified = false;
+Object.keys(settings).forEach(line => {
+    if (settings[line].systemPrompt && !settings[line].systemPrompt.includes('[ENVIAR_FOTO]')) {
+        settings[line].systemPrompt += `\n\n### ETIQUETAS ESPECIALES OBLIGATORIAS:\n- Si el cliente te pide fotos, imágenes o resultados del producto, debes incluir la etiqueta [ENVIAR_FOTO] en tu respuesta para que el sistema le envíe la foto automáticamente.\n- Tan pronto como identifiques qué combo o producto le interesa al cliente (incluso antes de que confirme el pedido), incluye la etiqueta [INTERES: NombreDelCombo] (ejemplo: [INTERES: Combo 2 Tarros]). Si cambia de opinión, envíala de nuevo con el nuevo interés.`;
+        settingsModified = true;
+    }
+});
+if (settingsModified) saveSettings(settings);
+
 let platforms = loadPlatforms();
 let providers = loadProviders();
 let campaigns = loadCampaigns();
@@ -1715,6 +1726,15 @@ async function processAIResponse(from, msgBodyLower) {
             refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
         }
         
+        // Extraer Interés temprano del producto/combo
+        const interesRegex = /\[INTERES:\s*([^\]]+)\]/i;
+        const intMatch = aiReply.match(interesRegex);
+        if (intMatch) {
+            refreshedChat.pendingApprovalProducts = cleanVal(intMatch[1]);
+            aiReply = aiReply.replace(interesRegex, '').trim();
+            cleanAiReply = cleanAiReply.replace(interesRegex, '').trim();
+        }
+
         const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
         
         saveChats(chats);
