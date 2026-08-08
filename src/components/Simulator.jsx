@@ -919,7 +919,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                <div className="space-y-3">
                  <div className="flex flex-col text-xs">
                    <span className="text-on-surface-variant font-medium">🛒 Producto:</span>
-                   <span className="text-slate-800 font-semibold">{activeChatData.pendingApprovalProducts || 'Aún no especificado'}</span>
+                   <span className="text-slate-800 font-semibold">{activeChatData.pendingApprovalProducts || activeChatData.assignedProduct || 'Aún no especificado'}</span>
                  </div>
                  <div className="flex flex-col text-xs">
                    <span className="text-on-surface-variant font-medium">👤 Nombre:</span>
