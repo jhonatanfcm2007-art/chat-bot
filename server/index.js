@@ -1063,6 +1063,10 @@ async function createShopifyOrder(chat, products) {
         const defaultProvince = countryISO === 'GT' ? 'Guatemala' : (countryISO === 'HN' ? 'Francisco Morazán' : 'Región Metropolitana');
         const provinceVal = chat.province || defaultProvince;
 
+        const isHN = countryISO === 'HN';
+        const finalZip = isHN ? '' : '00000';
+        const addr2 = chat.references ? (isHN ? `${chat.references} - Depto: ${provinceVal}` : chat.references) : (isHN ? `Depto: ${provinceVal}` : '');
+
         const orderData = {
             order: {
                 line_items: [ lineItem ],
@@ -1070,10 +1074,10 @@ async function createShopifyOrder(chat, products) {
                     first_name: firstName,
                     last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
-                    address2: chat.references || '',
+                    address2: addr2,
                     city: chat.city || 'Ciudad',
                     province: provinceVal,
-                    zip: '00000',
+                    zip: finalZip,
                     country: countryISO,
                     phone: finalPhone
                 },
@@ -1081,13 +1085,14 @@ async function createShopifyOrder(chat, products) {
                     first_name: firstName,
                     last_name: lastName,
                     address1: chat.address || 'Pendiente de confirmar',
+                    address2: addr2,
                     city: chat.city || 'Ciudad',
                     province: provinceVal,
-                    zip: '00000',
+                    zip: finalZip,
                     country: countryISO,
                     phone: finalPhone
                 },
-                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nReferencias: ${chat.references || 'No especificadas'}`,
+                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nDepto Detectado: ${provinceVal}\nReferencias: ${chat.references || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
                 financial_status: 'pending',
                 gateway: "Cash on Delivery (COD)",
