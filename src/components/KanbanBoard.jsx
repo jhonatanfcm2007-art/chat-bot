@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpenDropiModal, globalLine = 'all' }) => {
+const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, globalLine = 'all' }) => {
   const [draggedChatId, setDraggedChatId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [selectedLine, setSelectedLine] = useState(globalLine);
@@ -111,13 +111,7 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, onOpen
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={onOpenDropiModal}
-            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[18px]">document_scanner</span>
-            Extraer Guías Dropi
-          </button>
+
           <button 
             onClick={onClose}
             className="p-2 hover:bg-slate-100 text-slate-500 rounded-full transition-colors flex items-center justify-center"

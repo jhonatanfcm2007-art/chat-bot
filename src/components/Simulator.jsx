@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import KanbanBoard from './KanbanBoard';
-import DropiUploadModal from './DropiUploadModal';
+
 
 const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine, onSendTrackingManual, onConfirmBulkTracking }) => {
   const [inputValue, setInputValue] = useState('');
@@ -21,7 +21,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [showKanban, setShowKanban] = useState(false);
-  const [showDropiModal, setShowDropiModal] = useState(false);
+
   const [isAuditing, setIsAuditing] = useState(false);
   const [visibleChatsCount, setVisibleChatsCount] = useState(50);
   const chatEndRef = useRef(null);
@@ -1038,23 +1038,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           onUpdateTag={onUpdateTag} 
           onClose={() => setShowKanban(false)} 
           onSendTrackingManual={onSendTrackingManual}
-          onOpenDropiModal={() => setShowDropiModal(true)}
+
           globalLine={globalLine}
         />
       )}
 
-      {/* 7. Dropi Upload Modal */}
-      {showDropiModal && (
-        <DropiUploadModal 
-          serverUrl={serverUrl}
-          onClose={() => setShowDropiModal(false)}
-          onConfirmResults={(results) => {
-            if (onConfirmBulkTracking) {
-              onConfirmBulkTracking(results);
-            }
-          }}
-        />
-      )}
     </div>
   );
 };

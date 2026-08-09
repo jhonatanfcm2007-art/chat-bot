@@ -325,49 +325,6 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static(UPLOADS_DIR));
 
-app.post('/api/extract-dropi-tracking', async (req, res) => {
-    try {
-        const { imageBase64 } = req.body;
-        if (!imageBase64) return res.status(400).json({ success: false, error: 'No image provided' });
-
-        if (!openai) {
-            return res.status(500).json({ success: false, error: 'OpenAI API key no configurada' });
-        }
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "text",
-                            text: "Extract all orders from this Dropi screenshot. Return ONLY a raw JSON array. For each order, find the customer name, phone number, and tracking number (guía). The JSON should look like this: [{\"cliente\": \"Juan Perez\", \"telefono\": \"50412345678\", \"guia\": \"123456\"}]. If a phone is not visible, leave it empty. DO NOT wrap the JSON in backticks or markdown, return ONLY the JSON. If there are no orders, return []."
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens: 1000
-        });
-
-        let content = response.choices[0].message.content.trim();
-        if (content.startsWith('```')) {
-            content = content.replace(/^```(json)?\n/, '').replace(/\n```$/, '').trim();
-        }
-        
-        const data = JSON.parse(content);
-        res.json({ success: true, data });
-    } catch (error) {
-        console.error('Error extracting Dropi tracking:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 // Servir archivos estáticos del frontend en producción
 const DIST_DIR = path.join(__dirname, '../dist');
@@ -1492,65 +1449,20 @@ app.post('/webhook', async (req, res) => {
                             fs.writeFileSync(filePath, buffer);
                             mediaUrl = `/uploads/${fileName}`;
                         
-                        // GPT Vision analysis si es imagen
+                        // APAGAR IA AL RECIBIR FOTO (A petición del usuario)
                         if (msg.type === 'image') {
-                            try {
-                                const visionResult = await analyzeImage(buffer);
-                                // Guardar el resultado del análisis en el mensaje para que la IA lo sepa
-                                if (visionResult.isReceipt) {
-                                    lastReceiptFrom = from;
-                                    currentChat.lastImageAnalysis = 'COMPROBANTE_DE_PAGO';
-                                    
-                                    // Cambiar etiqueta a 'pago-pendiente' inicialmente
-                                    if (!currentChat.tags?.includes('pago-pendiente')) {
-                                        currentChat.tags = [...(currentChat.tags || []), 'pago-pendiente'];
-                                    }
-
-                                    // Confirmar pago sin entregar cuentas (E-commerce simple)
-                                    currentChat.tags = (currentChat.tags || []).filter(t => t !== 'pago-pendiente');
-                                    if (!currentChat.tags.includes('pagado')) {
-                                        currentChat.tags.push('pagado');
-                                    }
-                                    currentChat.updatedAt = Date.now();
-                                    
-                                    // Sincronizar estado de ventas a pagado
-                                    const customerSales = sales.filter(s => s.customerId === from && !s.paid);
-                                    if (customerSales.length > 0) {
-                                        customerSales.forEach(s => s.paid = true);
-                                        saveSales(sales);
-                                        io.emit('sales_updated', sales);
-                                    }
-
-                                    const confirmMsg = '✅ *¡Pago verificado!* Muchas gracias por tu compra. 🎉';
-                                    await smartSendMessage(from, confirmMsg);
-                                    const botMsg = { id: 'conf-'+Date.now(), from, body: confirmMsg, isMe: true, role: 'bot', timestamp: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }), timestampRaw: Date.now() };
-                                    currentChat.messages.push({ ...botMsg, content: confirmMsg });
-                                    io.emit('message', botMsg);
-
-                                    notifyAdmins(chats[from], `✅ *PAGO DETECTADO* de *${customerName}* (${from}). Venta marcada como pagada.`);
-                                    
-                                    saveChats(chats);
-                                } else {
-                                    currentChat.lastImageAnalysis = visionResult.description;
-                                    
-                                    // APAGAR IA AL RECIBIR FOTO (A petición del usuario)
-                                    currentChat.aiDisabled = true;
-                                    currentChat.tags = [...(currentChat.tags || []).filter(t => t !== 'soporte'), 'soporte'];
-                                    
-                                    io.emit('tag_updated', { from, tags: currentChat.tags });
-                                    io.emit('ai_state_updated', { chatId: from, disabled: true });
-                                    
-                                    notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`);
-                                    registerAnomaly('Soporte Requerido (Imagen)', customerName, from);
-                                    
-                                    if (aiTimers[from]) {
-                                        clearTimeout(aiTimers[from]);
-                                        delete aiTimers[from];
-                                    }
-                                }
-                            } catch (vErr) {
-                                console.error('Vision analysis error:', vErr);
-                                currentChat.lastImageAnalysis = 'No se pudo analizar la imagen';
+                            currentChat.aiDisabled = true;
+                            currentChat.tags = [...(currentChat.tags || []).filter(t => t !== 'soporte'), 'soporte'];
+                            
+                            io.emit('tag_updated', { from, tags: currentChat.tags });
+                            io.emit('ai_state_updated', { chatId: from, disabled: true });
+                            
+                            notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`);
+                            registerAnomaly('Soporte Requerido (Imagen)', customerName, from);
+                            
+                            if (aiTimers[from]) {
+                                clearTimeout(aiTimers[from]);
+                                delete aiTimers[from];
                             }
                         }
 
@@ -2177,44 +2089,7 @@ async function downloadMetaMedia(mediaId, customerPhone) {
     }
 }
 
-// Análisis visual completo de imágenes con GPT Vision
-async function analyzeImage(buffer) {
-    if (!openai) return { isReceipt: false, description: 'Sin OpenAI' };
-    try {
-        const base64 = buffer.toString('base64');
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: `Eres un asistente de análisis visual experto en verificar comprobantes de pago de servicios bancarios colombianos (Nequi, Bancolombia, Daviplata, etc.).
-Analiza la imagen y responde en este formato EXACTO:
-TIPO: [COMPROBANTE_PAGO | MEME | CAPTURA_PANTALLA | SELFIE | PRODUCTO | OTRO]
-DESCRIPCION: [Breve descripción de 1 línea de lo que ves]
 
-Un COMPROBANTE_PAGO es un recibo real de transferencia bancaria. Para ser válido, DEBE mostrar claramente la mayor parte de la siguiente información:
-1. El logo o nombre del banco/billetera (Nequi, Bancolombia, Daviplata, etc.)
-2. El monto de la transacción (dinero transferido)
-3. La fecha y hora de la transacción
-4. Un número de referencia, ID de transacción, aprobación, o número de comprobante.
-Si es una captura de pantalla de un chat de WhatsApp, una foto de un producto, un meme, un saldo de cuenta sin transferencia, o una imagen borrosa donde no se leen los datos, clasifícala como OTRO.` },
-                { role: "user", content: [
-                    { type: "text", text: "Analiza esta imagen." },
-                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
-                ]}
-            ],
-            max_tokens: 150
-        });
-        const reply = response.choices[0].message.content;
-        const isReceipt = reply.includes('COMPROBANTE_PAGO');
-        const descMatch = reply.match(/DESCRIPCION:\s*(.+)/i);
-        const description = descMatch ? descMatch[1].trim() : reply.split('\n').pop().trim();
-        
-        console.log(`👁️ [VISION] Resultado: ${isReceipt ? 'COMPROBANTE' : 'OTRO'} - ${description}`);
-        return { isReceipt, description };
-    } catch (err) { 
-        console.error('GPT Vision error:', err); 
-        return { isReceipt: false, description: 'Error de análisis' };
-    }
-}
 
 app.get('/api/vapid-public-key', (req, res) => {
     res.json({ publicKey: vapidKeys.publicKey });
