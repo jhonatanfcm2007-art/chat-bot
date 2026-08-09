@@ -1086,7 +1086,10 @@ async function createShopifyOrder(chat, products) {
                 },
                 note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nReferencias: ${chat.references || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
-                financial_status: 'pending'
+                financial_status: 'pending',
+                gateway: "Cash on Delivery (COD)",
+                payment_gateway_names: ["Cash on Delivery (COD)"],
+                processing_method: "manual"
             }
         };
 
