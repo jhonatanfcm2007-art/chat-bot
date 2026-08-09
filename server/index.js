@@ -920,20 +920,23 @@ async function createShopifyOrder(chat, products) {
     
     if (prod) {
         targetPricesText = prod.prices || '';
-        const cleanPhone = (chat.from || '').replace(/\D/g, '');
+        const cleanFrom = (chat.from || '').replace(/\D/g, '');
+        const cleanOrderPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : '';
+        const detectPhone = cleanOrderPhone.length > 8 ? cleanOrderPhone : cleanFrom;
         
-        // Inferir el país por el prefijo del cliente
-        if (cleanPhone.startsWith('504')) countryISO = 'HN';
-        else if (cleanPhone.startsWith('503')) countryISO = 'SV';
-        else if (cleanPhone.startsWith('506')) countryISO = 'CR';
-        else if (cleanPhone.startsWith('56')) countryISO = 'CL';
+        // Inferir el país por el prefijo del cliente o del teléfono de la orden
+        if (detectPhone.startsWith('504')) countryISO = 'HN';
+        else if (detectPhone.startsWith('503')) countryISO = 'SV';
+        else if (detectPhone.startsWith('506')) countryISO = 'CR';
+        else if (detectPhone.startsWith('56')) countryISO = 'CL';
+        else if (detectPhone.startsWith('57')) countryISO = 'CO';
         else countryISO = 'GT'; // Fallback
         
         let targetStoreId = prod.defaultStoreId;
         let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
         
         if (prod.priceVariations) {
-            const variation = prod.priceVariations.find(v => v.prefix && cleanPhone.startsWith(v.prefix.replace(/\D/g, '')));
+            const variation = prod.priceVariations.find(v => v.prefix && detectPhone.startsWith(v.prefix.replace(/\D/g, '')));
             if (variation) {
                 if (variation.prices) targetPricesText = variation.prices;
                 if (variation.storeId) targetStoreId = variation.storeId;
