@@ -2946,6 +2946,12 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
             }
         }
         
+        // Bloqueo duro para obligar a enviar a soporte cuando la IA no sabe la respuesta y explica por qué
+        if (/(no tengo información|no te puedo confirmar|no te sabría decir|no dispongo de|lamentablemente no tenemos|no puedo asegurarte|desconozco|no tengo los detalles|no te puedo dar|no estoy seguro|no me es posible responder|no poseo esa información|no contamos con ese dato|no te puedo dar ese dato)/i.test(reply)) {
+            console.log('⚠️ [SISTEMA] Respuesta de ignorancia detectada y bloqueada. Forzando soporte:', reply);
+            reply = "[APAGAR_BOT_SOPORTE]";
+        }
+        
         return reply;
     } catch (e) { 
         console.error('❌ OpenAI API Error:', e.message);
