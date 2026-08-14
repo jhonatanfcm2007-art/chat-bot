@@ -205,10 +205,15 @@ function notifyAdmins(chat, text) {
     let targetPhone = ADMIN_PHONE;
     
     // Check if product has a custom admin phone
-    if (chat && chat.assignedProduct) {
-        const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
-        if (prod && prod.adminPhone && prod.adminPhone.trim() !== '') {
-            targetPhone = prod.adminPhone.trim();
+    if (chat) {
+        let prodName = chat.assignedProduct || chat.pendingApprovalProducts;
+        if (prodName) {
+            // Strip quantities like " x1", " x2" to get base product name
+            prodName = prodName.replace(/\s*x\s*\d+$/i, '').trim();
+            const prod = knowledgeBaseDb.find(p => p.name.trim().toLowerCase() === prodName.toLowerCase());
+            if (prod && prod.adminPhone && prod.adminPhone.trim() !== '') {
+                targetPhone = prod.adminPhone.trim();
+            }
         }
     }
 
@@ -839,10 +844,8 @@ async function registerOrder(to, products) {
 
         console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
         
-        if (ADMIN_PHONE || (chat.assignedProduct && knowledgeBaseDb.some(p => p.name === chat.assignedProduct && p.adminPhone))) {
-            const notif = `✅ *PEDIDO AUTO-APROBADO*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\nEnviando a Shopify y solicitando Dropi automáticamente...`;
-            notifyAdmins(chat, notif);
-        }
+        const notif = `✅ *PEDIDO AUTO-APROBADO*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\nEnviando a Shopify y solicitando Dropi automáticamente...`;
+        notifyAdmins(chat, notif);
 
         createShopifyOrder(chat, productList).then(shopifyRes => {
             if (shopifyRes.success) {
