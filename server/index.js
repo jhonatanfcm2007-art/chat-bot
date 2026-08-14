@@ -232,7 +232,7 @@ function notifyAdmins(chat, text, type = 'sales') {
     
     let forceLine = 1;
     if (type === 'support') {
-        forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 2;
+        forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
     }
     
     smartSendMessage(targetPhone, finalMessage, forceLine);
