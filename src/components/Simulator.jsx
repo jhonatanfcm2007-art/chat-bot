@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import KanbanBoard from './KanbanBoard';
 
 
 const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine, onSendTrackingManual, onConfirmBulkTracking }) => {
@@ -24,7 +23,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [openTagMenu, setOpenTagMenu] = useState(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [showKanban, setShowKanban] = useState(false);
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [visibleChatsCount, setVisibleChatsCount] = useState(50);
@@ -427,13 +425,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     ))}
                   </div>
                 )}
-                <button 
-                  onClick={() => setShowKanban(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-200"
-                >
-                  <span className="material-symbols-outlined text-sm">view_kanban</span>
-                  Tablero Logístico
-                </button>
 
                 {/* COUNTRY MENU */}
                 {isCountryMenuOpen && (
@@ -1082,22 +1073,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
             onClick={(e) => e.stopPropagation()}
           />
-        </div>
       )}
-
-      {/* 6. Kanban Board Overlay */}
-      {showKanban && (
-        <KanbanBoard 
-          chats={chats} 
-          onUpdateTag={onUpdateTag} 
-          onClose={() => setShowKanban(false)} 
-          onSendTrackingManual={onSendTrackingManual}
-          globalLine={globalLine}
-          filterOwner={filterOwner}
-          knowledgeBaseDb={knowledgeBaseDb}
-        />
-      )}
-
     </div>
   );
 };
