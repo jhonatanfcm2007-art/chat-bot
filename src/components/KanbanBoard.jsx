@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, globalLine = 'all' }) => {
+const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, globalLine = 'all', filterOwner = 'all', knowledgeBaseDb = [] }) => {
   const [draggedChatId, setDraggedChatId] = useState(null);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [selectedLine, setSelectedLine] = useState(globalLine);
@@ -62,8 +62,16 @@ const KanbanBoard = ({ chats, onUpdateTag, onClose, onSendTrackingManual, global
   });
 
   const chatList = Object.values(chats || {}).filter(chat => {
-    if (selectedLine === 'all') return true;
-    return chat.waLine == selectedLine; // Use == for string/int comparison
+    const lineMatch = selectedLine === 'all' || chat.waLine == selectedLine; // Use == for string/int comparison
+    
+    const chatProduct = chat.assignedProduct?.trim() || chat.pendingApprovalProducts?.trim();
+    const productKb = knowledgeBaseDb.find(p => p.name.trim() === chatProduct);
+    const chatOwner = productKb ? productKb.owner?.trim() : undefined;
+    const ownerMatch = filterOwner === 'all' || 
+                       (filterOwner === 'sin-asignar' && !chatOwner) || 
+                       (filterOwner !== 'sin-asignar' && chatOwner === filterOwner);
+                       
+    return lineMatch && ownerMatch;
   });
   
   chatList.forEach(chat => {

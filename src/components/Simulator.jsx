@@ -17,6 +17,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
   const [filterCountry, setFilterCountry] = useState('all');
   const [isCountryMenuOpen, setIsCountryMenuOpen] = useState(false);
+  const [filterOwner, setFilterOwner] = useState('all');
+  const [isOwnerMenuOpen, setIsOwnerMenuOpen] = useState(false);
+  const [knowledgeBaseDb, setKnowledgeBaseDb] = useState([]);
+  
   const [openTagMenu, setOpenTagMenu] = useState(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -100,6 +104,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       setIsFilterMenuOpen(false);
       setIsProductMenuOpen(false);
       setIsCountryMenuOpen(false);
+      setIsOwnerMenuOpen(false);
       setActiveMessageMenu(null);
     };
     window.addEventListener('click', handleCloseMenu);
@@ -244,6 +249,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       .then(data => {
         if (Array.isArray(data)) {
           setKbProducts(data.map(p => p.name.trim()));
+          setKnowledgeBaseDb(data);
         }
       })
       .catch(err => console.error("Error fetching knowledge base for simulator:", err));
@@ -253,6 +259,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     ...Object.values(chats).map(c => c.assignedProduct?.trim()).filter(Boolean),
     ...kbProducts
   ])).sort();
+
+  const uniqueOwners = Array.from(new Set(knowledgeBaseDb.map(p => p.owner?.trim()).filter(Boolean))).sort();
 
   const chatSessions = Object.entries(chats)
     .map(([id, data], index) => {
@@ -297,10 +305,17 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       const lineMatch = globalLine === 'all' || chat.waLine === globalLine;
       const productMatch = filterProduct === 'all' || chat.assignedProduct?.trim() === filterProduct;
       
+      const chatProduct = chat.assignedProduct?.trim() || chat.pendingApprovalProducts?.trim();
+      const productKb = knowledgeBaseDb.find(p => p.name.trim() === chatProduct);
+      const chatOwner = productKb ? productKb.owner?.trim() : undefined;
+      const ownerMatch = filterOwner === 'all' || 
+                         (filterOwner === 'sin-asignar' && !chatOwner) || 
+                         (filterOwner !== 'sin-asignar' && chatOwner === filterOwner);
+      
       const chatPhone = String(chat.from).replace('+', '').trim();
       const countryMatch = filterCountry === 'all' || chatPhone.startsWith(filterCountry);
       
-      return searchMatch && tagMatch && lineMatch && productMatch && countryMatch;
+      return searchMatch && tagMatch && lineMatch && productMatch && countryMatch && ownerMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
 
@@ -375,11 +390,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </button>
 
                 <button 
-                  onClick={(e) => { e.stopPropagation(); setIsCountryMenuOpen(!isCountryMenuOpen); setIsFilterMenuOpen(false); setIsProductMenuOpen(false); }}
+                  onClick={(e) => { e.stopPropagation(); setIsCountryMenuOpen(!isCountryMenuOpen); setIsFilterMenuOpen(false); setIsProductMenuOpen(false); setIsOwnerMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterCountry !== 'all' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterCountry !== 'all' ? 'public' : 'public'}</span>
                   {filterCountry !== 'all' ? (filterCountry === '503' ? 'El Salvador' : filterCountry === '504' ? 'Honduras' : filterCountry === '502' ? 'Guatemala' : filterCountry === '56' ? 'Chile' : filterCountry) : 'País'}
+                </button>
+
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsOwnerMenuOpen(!isOwnerMenuOpen); setIsCountryMenuOpen(false); setIsFilterMenuOpen(false); setIsProductMenuOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterOwner !== 'all' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  <span className="material-symbols-outlined text-sm">{filterOwner !== 'all' ? 'person' : 'person_outline'}</span>
+                  {filterOwner !== 'all' ? (filterOwner === 'sin-asignar' ? 'Sin Asignar' : filterOwner) : 'Asesor'}
                 </button>
 
                 {/* PRODUCT MENU */}
@@ -436,6 +459,37 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 )}
 
 
+                {/* OWNER MENU */}
+                {isOwnerMenuOpen && (
+                  <div className="absolute top-full left-48 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
+                    <div 
+                      className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterOwner === 'all' ? 'bg-amber-50' : ''}`}
+                      onClick={() => { setFilterOwner('all'); setIsOwnerMenuOpen(false); }}
+                    >
+                      <span className="material-symbols-outlined text-sm text-slate-400">group</span>
+                      <span className="text-xs font-medium text-slate-600">Todos los Asesores</span>
+                    </div>
+                    {uniqueOwners.map((owner) => (
+                      <div 
+                        key={owner}
+                        onClick={() => { setFilterOwner(owner); setIsOwnerMenuOpen(false); }}
+                        className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterOwner === owner ? 'bg-amber-50' : ''}`}
+                      >
+                        <span className="material-symbols-outlined text-amber-500 text-[18px]">person</span>
+                        <span className="text-[13px] font-medium text-slate-700">{owner}</span>
+                      </div>
+                    ))}
+                    <div 
+                      className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterOwner === 'sin-asignar' ? 'bg-amber-50' : ''}`}
+                      onClick={() => { setFilterOwner('sin-asignar'); setIsOwnerMenuOpen(false); }}
+                    >
+                      <span className="material-symbols-outlined text-slate-400 text-[18px]">person_off</span>
+                      <span className="text-[13px] font-medium text-slate-700">Sin Asignar</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* FILTER MENU */}
                 {isFilterMenuOpen && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
                     <div 
@@ -1038,8 +1092,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           onUpdateTag={onUpdateTag} 
           onClose={() => setShowKanban(false)} 
           onSendTrackingManual={onSendTrackingManual}
-
           globalLine={globalLine}
+          filterOwner={filterOwner}
+          knowledgeBaseDb={knowledgeBaseDb}
         />
       )}
 
