@@ -1073,6 +1073,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
       )}
     </div>
   );
