@@ -167,8 +167,11 @@ app.get('/api/webhook-debug', (req, res) => {
     res.json(webhookLogs);
 });
 
-// Helper Multi-Línea: Resuelve credenciales según la línea del cliente
-function getWhatsAppCredentials(customerPhone) {
+function getWhatsAppCredentials(customerPhone, forceLine = null) {
+    if (forceLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
+    if (forceLine === 2 && WHATSAPP_TOKEN_2 && PHONE_ID_2) return { token: WHATSAPP_TOKEN_2, phoneId: PHONE_ID_2, line: 2 };
+    if (forceLine === 1 && WHATSAPP_TOKEN && PHONE_ID) return { token: WHATSAPP_TOKEN, phoneId: PHONE_ID, line: 1 };
+
     const chat = chats?.[customerPhone];
     if (chat?.waLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) {
         return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
@@ -201,7 +204,7 @@ function getCountryFromPhone(phoneStr) {
     return 'Desconocido';
 }
 
-function notifyAdmins(chat, text) {
+function notifyAdmins(chat, text, type = 'sales') {
     let targetPhone = ADMIN_PHONE;
     
     // Check if product has a custom admin phone
@@ -227,7 +230,12 @@ function notifyAdmins(chat, text) {
     
     const finalMessage = `🌍 *País:* ${country}\n${text}`;
     
-    smartSendMessage(targetPhone, finalMessage);
+    let forceLine = 1;
+    if (type === 'support') {
+        forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 2;
+    }
+    
+    smartSendMessage(targetPhone, finalMessage, forceLine);
 }
 
 // --- PERSISTENCIA ---
@@ -844,14 +852,16 @@ async function registerOrder(to, products) {
 
         console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
         
-        const notif = `✅ *PEDIDO AUTO-APROBADO*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\nEnviando a Shopify y solicitando Dropi automáticamente...`;
-        notifyAdmins(chat, notif);
-
-        createShopifyOrder(chat, productList).then(shopifyRes => {
+        try {
+            const shopifyRes = await createShopifyOrder(chat, productList);
+            
             if (shopifyRes.success) {
                 chat.orderRegistered = true;
                 saveChats(chats);
-                notifyAdmins(chat, `✅ Pedido ${shopifyRes.orderName} enviado a Dropi exitosamente.`);
+                
+                const notif = `✅ *PEDIDO AUTO-APROBADO Y ENVIADO A DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n📦 *Pedido Dropi:* ${shopifyRes.orderName}`;
+                notifyAdmins(chat, notif);
+                
                 smartSendMessage(to, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
                 
                 const now = new Date();
@@ -871,9 +881,13 @@ async function registerOrder(to, products) {
                 saveSales(sales);
                 io.emit('sales_updated', sales);
             } else {
-                notifyAdmins(chat, `❌ Error auto-creando pedido en Shopify: ${shopifyRes.error}`);
+                const errorNotif = `⚠️ *ERROR CREANDO PEDIDO EN DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n❌ *Error:* ${shopifyRes.error}`;
+                notifyAdmins(chat, errorNotif);
             }
-        });
+        } catch (error) {
+            console.error('Error in auto-approve flow:', error);
+            notifyAdmins(chat, `❌ Ocurrió un error inesperado al intentar crear el pedido en Dropi para ${orderName}.`);
+        }
         return;
     }
 
@@ -1471,7 +1485,7 @@ app.post('/webhook', async (req, res) => {
                             io.emit('tag_updated', { from, tags: currentChat.tags });
                             io.emit('ai_state_updated', { chatId: from, disabled: true });
                             
-                            notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`);
+                            notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`, 'support');
                             registerAnomaly('Soporte Requerido (Imagen)', customerName, from);
                             
                             if (aiTimers[from]) {
@@ -1575,7 +1589,7 @@ async function processAIResponse(from, msgBodyLower) {
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
         io.emit('ai_state_updated', { chatId: from, disabled: true });
 
-        notifyAdmins(refreshedChat, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`);
+        notifyAdmins(refreshedChat, `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. La IA se ha apagado para este chat.`, 'support');
         
         delete aiTimers[from];
         return;
@@ -1611,7 +1625,7 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
 
-        notifyAdmins(refreshedChat, alertMsg);
+        notifyAdmins(refreshedChat, alertMsg, 'support');
         registerAnomaly(hasPartialData ? 'Pedido Abandonado' : 'Soporte Requerido', customerName, from);
         delete aiTimers[from];
         return;
@@ -1710,7 +1724,7 @@ async function processAIResponse(from, msgBodyLower) {
             newTags = newTags.filter(t => t !== 'interesado' && t !== 'preparar_pedido' && t !== 'pedido-pendiente');
             newTags.push('pedidos_abandonados');
             changed = true;
-            notifyAdmins(chat, `⚠️ *ANOMALÍA: PEDIDO ABANDONADO*\n\nEl cliente *${customerName}* parece haber abandonado el proceso de compra o la IA se ha atascado. Revisa la conversación.`);
+            notifyAdmins(chat, `⚠️ *ANOMALÍA: PEDIDO ABANDONADO*\n\nEl cliente *${customerName}* parece haber abandonado el proceso de compra o la IA se ha atascado. Revisa la conversación.`, 'support');
             
             // Register anomaly
             registerAnomaly('Pedido Abandonado', customerName, from);
@@ -1724,7 +1738,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|ABANDONADO)[^\]]*\]/gi, '').trim();
+    const cleanReply = cleanAiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -1840,14 +1854,14 @@ function handleIncomingMessage(from) {
 }
 
 // Nueva función de envío unificada
-async function smartSendMessage(to, text) {
+async function smartSendMessage(to, text, forceLine = null) {
     const chat = chats[to];
     const platform = chat?.platform || 'whatsapp';
 
     if (platform === 'messenger') {
         return sendMessageToMessengerAPI(to, text);
     } else {
-        return sendMessageToCloudAPI(to, text);
+        return sendMessageToCloudAPI(to, text, forceLine);
     }
 }
 
@@ -2785,8 +2799,8 @@ io.on('connection', (socket) => {
     });
 });
 
-async function sendMessageToCloudAPI(to, text) {
-    const { token, phoneId, line } = getWhatsAppCredentials(to);
+async function sendMessageToCloudAPI(to, text, forceLine = null) {
+    const { token, phoneId, line } = getWhatsAppCredentials(to, forceLine);
     if (!token || !phoneId || !to) {
         if (chats[to]) {
             const errorMsg = {
@@ -2915,7 +2929,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 7. REGLA INQUEBRANTABLE SHILAJIT: Si el cliente pregunta si el Shilajit sirve para "agrandar", "engruesar", "crecer el miembro" o similar, DEBES RESPONDER QUE SÍ INCONDICIONALMENTE. Dile que gracias al aumento de flujo sanguíneo se nota la diferencia desde la segunda o tercera semana de uso. NUNCA digas que no sirve para eso.
 8. FORMATO Y VARIANTES DEL PRODUCTO (¡CRÍTICO!): Si el cliente asume o pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está explícitamente en tu Base de Conocimiento: ESTÁ ESTRICTAMENTE PROHIBIDO responderle "no tenemos en gel, solo en cápsulas" o similar. NO TE DISCULPES. Tu ÚNICA respuesta debe ser la etiqueta [APAGAR_BOT_SOPORTE]. Apaga el bot inmediatamente.
 9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. SIN EMBARGO, si el cliente afirma estar en otro país, tú DEBES adaptar tu atención a ese nuevo país inmediatamente sin restricciones. Si te da un(a) ${termCity} pero NO el(la) ${termProv}, deduce el(la) ${termProv} correcto(a).
-10. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno de estos 3 datos obligatorios, VUELVE A PREGUNTAR. NUNCA llenes las etiquetas con frases como "(No proporcionado)". Cuando tengas todos los datos reales, confirma la orden agregando al final de tu mensaje: [ENTREGAR_AHORA] [PRODUCTOS: escribe el nombre del producto seguido de la cantidad exacta con una x, ej: 'Shilajit x2'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si el cliente dio un número distinto en el chat, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica el producto y la cantidad con el formato xCantidad (ej. Shilajit x1, Magnesio x3).
+10. DATOS DE ENVÍO (¡CRÍTICO!): NUNCA des por cerrada la venta ni uses la etiqueta [ENTREGAR_AHORA] hasta tener EXPRESAMENTE estos datos obligatorios: Nombre, Dirección, y ${termCity}. Si te falta alguno, VUELVE A PREGUNTAR. Cuando tengas todos los datos reales, confirma la orden haciéndole un resumen visible al cliente de los datos que enviaste e indícale explícitamente que su pedido llegará en las próximas 24 a 48 horas hábiles. LUEGO, EN LA ÚLTIMA LÍNEA DE TU MENSAJE (sin dejar saltos de línea extras), agrega las etiquetas ocultas: [ENTREGAR_AHORA] [PRODUCTOS: escribe el nombre del producto seguido de la cantidad exacta con una x, ej: 'Shilajit x2'] [NOMBRE: xxx] [DIRECCION: xxx] [REFERENCIAS: opcional] [MUNICIPIO: escribe el/la ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [TELEFONO: (solo si lo dio distinto, si no omitir)]. IMPORTANTE: En [PRODUCTOS] SIEMPRE especifica el producto y la cantidad con el formato xCantidad.
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), NO intentes convencerlo de otra cosa ni le digas que tú se la enviarás. DEBES OBLIGATORIAMENTE usar la etiqueta literal ${hasProductImage ? '[ENVIAR_FOTO]' : '[APAGAR_BOT_SOPORTE]'} en tu respuesta${hasProductImage ? ' para que el sistema envíe la foto automáticamente. NO uses [APAGAR_BOT_SOPORTE] en este caso.' : ' para apagar la IA y permitir que un humano le envíe la foto manualmente.'}
 13. OTROS PRODUCTOS Y DESCONOCIMIENTO (¡CRÍTICO!): Si el cliente menciona el nombre de un producto que NO está en tu Base de Conocimiento (ej: "Magnesio", "aceite", etc.), o hace una pregunta sobre detalles del producto (como color, origen, tamaño de la pastilla) de los que no tienes información explícita, o pide una cantidad/combo que no ofreces: ESTÁ ESTRICTAMENTE PROHIBIDO RESPONDER LA DUDA. NO te disculpes, NO des explicaciones, NO intentes continuar la conversación. Tu ÚNICA respuesta en todo el mensaje debe ser la etiqueta [APAGAR_BOT_SOPORTE].
@@ -3022,7 +3036,7 @@ async function runFollowUpSequence() {
                 const aiPrompt = `[INSTRUCCIÓN INTERNA DEL SISTEMA PARA SEGUIMIENTO AUTOMÁTICO]: ${promptType}\n\nEscribe directamente el mensaje para enviarlo al cliente.`;
                 const aiReply = await getAIResponse(aiPrompt, chat.messages.slice(-15), chat.waLine || 1, chatId);
                 
-                const cleanReply = aiReply.replace(/\[PAGO_PENDIENTE\]|\[PRODUCTOS:.+?\]|\[TOTAL:\d+?\]|\[ENTREGAR_AHORA\]|\[APAGAR_BOT_SOPORTE\]/gi, '').trim();
+                const cleanReply = aiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE)[^\]]*\]\s*/gi, ' ').trim();
                 
                 if (cleanReply) {
                     const wamid = await smartSendMessage(chatId, cleanReply);
