@@ -256,7 +256,15 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const uniqueProducts = Array.from(new Set([
     ...Object.values(chats).map(c => c.assignedProduct?.trim()).filter(Boolean),
     ...kbProducts
-  ])).sort();
+  ])).filter(prodName => {
+    if (filterOwner === 'all') return true;
+    
+    const kbEntry = knowledgeBaseDb.find(p => p.name?.trim() === prodName);
+    const owner = kbEntry ? kbEntry.owner?.trim() : undefined;
+    
+    if (filterOwner === 'sin-asignar') return !owner;
+    return owner === filterOwner;
+  }).sort();
 
   const uniqueOwners = Array.from(new Set(knowledgeBaseDb.map(p => p.owner?.trim()).filter(Boolean))).sort();
 
