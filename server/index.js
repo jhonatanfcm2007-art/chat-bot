@@ -614,9 +614,9 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         if (match) finalAdId = match[1];
     }
     
-    // 1. PRIORIDAD ABSOLUTA: Si entra desde un Anuncio, forzamos el cambio de producto.
+    // 1. PRIORIDAD ABSOLUTA: Si entra desde un Anuncio, buscamos en TODA la base de datos sin importar la línea de WA.
     if (finalAdId) {
-        const matched = lineProducts.find(p => p.adIds?.includes(String(finalAdId).trim()));
+        const matched = knowledgeBaseDb.find(p => p.adIds?.includes(String(finalAdId).trim()));
         if (matched) {
             chat.assignedProduct = matched.name;
             return;
@@ -2988,7 +2988,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         return reply;
     } catch (e) { 
         console.error('❌ OpenAI API Error:', e.message);
-        return `⚠️ Error IA: ${e.message || 'Sin respuesta del cerebro'}`; 
+        return `[APAGAR_BOT_SOPORTE]`; 
     }
 }
 
