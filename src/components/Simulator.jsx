@@ -254,7 +254,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   }, [serverUrl]);
 
   const uniqueProducts = Array.from(new Set([
-    ...Object.values(chats).map(c => c.assignedProduct?.trim()).filter(Boolean),
     ...kbProducts
   ])).filter(prodName => {
     if (filterOwner === 'all') return true;
@@ -413,7 +412,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
                 {/* PRODUCT MENU */}
                 {isProductMenuOpen && (
-                  <div className="absolute top-full left-10 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
+                  <div className="absolute top-full left-10 mt-2 w-56 max-h-64 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-y-auto">
                     <div 
                       className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterProduct === 'all' ? 'bg-primary-light' : ''}`}
                       onClick={() => { setFilterProduct('all'); setIsProductMenuOpen(false); }}
