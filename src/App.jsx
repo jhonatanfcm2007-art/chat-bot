@@ -8,7 +8,6 @@ import KnowledgeBase from './components/KnowledgeBase';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
-import ErrorBoundary from './components/ErrorBoundary';
 
 import io from 'socket.io-client';
 
