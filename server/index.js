@@ -226,8 +226,14 @@ function notifyAdmins(chat, text, type = 'sales') {
                 });
             }
             
-            if (prod && prod.adminPhone && prod.adminPhone.trim() !== '') {
-                targetPhone = prod.adminPhone.trim();
+            if (prod) {
+                if (prod.adminPhone && prod.adminPhone.trim() !== '') {
+                    targetPhone = prod.adminPhone.trim();
+                } else {
+                    // El producto existe pero no configuraron su número.
+                    // Descartamos la notificación para no hacer spam al número global.
+                    targetPhone = null;
+                }
             }
         }
     }
