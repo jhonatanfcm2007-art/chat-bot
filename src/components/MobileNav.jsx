@@ -3,8 +3,6 @@ import React from 'react';
 const MobileNav = ({ activeTab, onTabChange }) => {
   const menuItems = [
     { id: 'simulator', icon: 'chat' },
-    { id: 'campaigns', icon: 'campaign' },
-    { id: 'analytics', icon: 'monitoring' },
     { id: 'ai_assistant', icon: 'psychology' },
     { id: 'knowledge_base', icon: 'menu_book' },
   ];

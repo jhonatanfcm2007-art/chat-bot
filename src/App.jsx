@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Simulator from './components/Simulator';
 import AIAssistant from './components/AIAssistant';
 import Campaigns from './components/Campaigns';
-import Remarketing from './components/Remarketing';
 import KnowledgeBase from './components/KnowledgeBase';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import MobileNav from './components/MobileNav';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import io from 'socket.io-client';
 
@@ -672,14 +674,26 @@ function App() {
             globalLine={globalLine}
           />
         );
-      case 'remarketing':
-        return <Remarketing serverUrl={SERVER_URL} />;
       case 'knowledge_base':
         return <KnowledgeBase serverUrl={SERVER_URL} />;
-      case 'analytics':
-      case 'dashboard':
+      case 'simulator':
       default:
-        return <Dashboard accounts={accounts} salesHistory={salesHistory} anomalies={anomalies} chats={chats} onNavigateToChat={handleNavigateToChat} onDeleteSale={handleDeleteSale} onUpdateSale={handleUpdateSale} globalLine={globalLine} />;
+        return (
+          <Simulator 
+            chats={chats}
+            socket={socket}
+            onSendMessage={handleSendMessage}
+            onAssignProduct={handleAssignProduct}
+            onToggleAI={handleToggleAI}
+            onCloseSale={handleCloseSale}
+            onUploadMedia={handleUploadMedia}
+            onDeleteChat={handleDeleteChat}
+            serverUrl={SERVER_URL}
+            globalLine={globalLine}
+            onSendTrackingManual={handleSendTrackingManual}
+            onConfirmBulkTracking={handleConfirmBulkTracking}
+          />
+        );
     }
   };
 
