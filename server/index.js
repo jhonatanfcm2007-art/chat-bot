@@ -258,15 +258,15 @@ function notifyAdmins(chat, text, type = 'sales') {
         const webhookUrl = "https://script.google.com/macros/s/AKfycbw26RxXkXjyX-Q7Sswj_mafxjtvsFW59b3uGN00Zvox-RV0_9O_-OOmWpe8gvntT92-/exec";
         
         const payload = {
-            message: finalMessage,
-            country: country,
-            phone: chat ? chat.from : '',
-            name: chat ? chat.orderName : '',
-            address: chat ? chat.address : '',
-            city: chat ? chat.city : '',
-            province: chat ? chat.province : '',
-            product: chat ? (chat.assignedProduct || chat.pendingApprovalProducts) : '',
-            type: type
+            "fecha": new Date().toISOString(),
+            "Estado": type === 'support' ? 'Soporte/Error' : 'Aprobado',
+            "cliente": chat ? (chat.orderName || '') : '',
+            "telefono": chat ? (chat.from || '') : '',
+            "direccion": chat ? (chat.address || '') : '',
+            "municipio": chat ? (chat.city || '') : '',
+            "departamento": chat ? (chat.province || '') : '',
+            "producto": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
+            "error/info": finalMessage
         };
         
         fetch(webhookUrl, {
