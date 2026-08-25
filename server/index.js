@@ -253,7 +253,31 @@ function notifyAdmins(chat, text, type = 'sales') {
         forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
     }
     
-    smartSendMessage(targetPhone, finalMessage, forceLine);
+    if (targetPhone === ADMIN_PHONE) {
+        // Enviar a Google Sheets en lugar de WhatsApp
+        const webhookUrl = "https://script.google.com/macros/s/AKfycbw26RxXkXjyX-Q7Sswj_mafxjtvsFW59b3uGN00Zvox-RV0_9O_-OOmWpe8gvntT92-/exec";
+        
+        const payload = {
+            message: finalMessage,
+            country: country,
+            phone: chat ? chat.from : '',
+            name: chat ? chat.orderName : '',
+            address: chat ? chat.address : '',
+            city: chat ? chat.city : '',
+            province: chat ? chat.province : '',
+            product: chat ? (chat.assignedProduct || chat.pendingApprovalProducts) : '',
+            type: type
+        };
+        
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Error enviando a Google Sheets:", err));
+    } else {
+        // Socios: Seguir enviando por WhatsApp
+        smartSendMessage(targetPhone, finalMessage, forceLine);
+    }
 }
 
 // --- PERSISTENCIA ---
