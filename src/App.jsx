@@ -535,9 +535,20 @@ function App() {
     setSalesHistory(prev => prev.map(sale => sale.id === saleId ? { ...sale, ...updates } : sale));
   };
 
-  const handleSendMessage = (messageData) => {
-    // messageData: { to: '...', content: '...' }
-    socket.emit('send_message', messageData);
+  const handleSendMessage = async (messageData) => {
+    try {
+      const res = await fetch(`${SERVER_URL}/api/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messageData)
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      return true;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Error de conexión. El mensaje no se pudo enviar.');
+      return false;
+    }
   };
 
   const handleUpdateChatTag = (chatId, tags) => {

@@ -2380,6 +2380,51 @@ app.post('/api/settings', (req, res) => {
     res.json({ success: true, settings });
 });
 
+app.post('/api/send-message', async (req, res) => {
+    try {
+        const { to, content, imageUrl, origin } = req.body;
+        if (content && /^r$/i.test(content.trim())) { 
+            return res.status(200).json({ success: true, message: 'r command disabled' });
+        }
+        
+        let m;
+        if (imageUrl) {
+            await smartSendImage(to, imageUrl, content, origin);
+            m = { 
+                id: 'man-'+Date.now(), 
+                from: to, 
+                body: content || '[Imagen]', 
+                content: content || '[Imagen]', 
+                imageUrl: imageUrl,
+                isMe: true, 
+                role: 'bot', 
+                timestampRaw: Date.now() 
+            };
+        } else {
+            const wamid = await smartSendMessage(to, content);
+            m = { 
+                id: wamid || ('man-'+Date.now()), 
+                wamid: wamid || null,
+                status: 'sent',
+                from: to, 
+                body: content, 
+                content, 
+                isMe: true, 
+                role: 'bot', 
+                timestampRaw: Date.now() 
+            };
+        }
+        if (!chats[to]) { chats[to] = { from: to, messages: [], unreadCount: 0, profileName: 'Desconocido' }; }
+        chats[to].messages.push(m);
+        saveChats(chats);
+        io.emit('chat_updated', chats[to]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Error sending message via API", e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.post('/api/scan-chats', async (req, res) => {
     const { timeframe } = req.body;
     let start, end;
@@ -2760,6 +2805,7 @@ io.on('connection', (socket) => {
             io.emit('tag_updated', { from: chatId, tags }); 
         } 
     });
+
     socket.on('send_message', async ({ to, content, imageUrl, origin }) => {
         if (content && /^r$/i.test(content.trim())) { console.log('El comando r ha sido desactivado'); return; }
         

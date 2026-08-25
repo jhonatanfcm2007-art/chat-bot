@@ -161,17 +161,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       }
     }
     
-    onSendMessage({ 
+    const success = await onSendMessage({ 
       to: selectedChat, 
       content: inputValue, 
       imageUrl: uploadedImageUrl,
       origin: window.location.origin
     });
     
-    setInputValue('');
-    setSelectedFile(null);
-    setFilePreview('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (success) {
+      setInputValue('');
+      setSelectedFile(null);
+      setFilePreview('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const parseTimeString = (timeStr) => {
@@ -327,7 +329,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
 
-  const handleSellToCustomer = () => {
+  const handleSellToCustomer = async () => {
     if (!selectedSaleAccount) return;
     const accountToSell = availableInventory.find(a => String(a.id) === String(selectedSaleAccount));
     if (accountToSell) {
@@ -356,7 +358,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         
         const finalMessage = `${messageHeader}\n\n${accountDetails}${profileDetails}${expDetail}\n\n⚠️ Recuerda NO modificar la contraseña ni alterar otros perfiles para mantener tu garantía.`;
         
-        onSendMessage({ to: selectedChat, content: finalMessage });
+        const success = await onSendMessage({ to: selectedChat, content: finalMessage });
+        if (success) {
+            toast.success('Cuenta entregada con éxito');
+        }
       }
     }
   };
