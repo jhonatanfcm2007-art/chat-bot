@@ -435,6 +435,24 @@ function loadChats() {
             Object.keys(data).forEach(id => {
                 if (!data[id].updatedAt) data[id].updatedAt = Date.now();
             });
+            
+            const entries = Object.entries(data);
+            const MAX_CHATS = 15000;
+            
+            if (entries.length > MAX_CHATS) {
+                console.log(`[LIMPIEZA] Reduciendo chats de ${entries.length} a ${MAX_CHATS} más recientes...`);
+                entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
+                
+                const trimmedData = {};
+                for (let i = 0; i < MAX_CHATS; i++) {
+                    trimmedData[entries[i][0]] = entries[i][1];
+                }
+                
+                // Guardar inmediatamente para liberar espacio en disco
+                atomicSave(CHATS_FILE, trimmedData);
+                return trimmedData;
+            }
+            
             return data;
         }
     } catch (err) { console.error('Error loading chats:', err); }
