@@ -257,6 +257,17 @@ function notifyAdmins(chat, text, type = 'sales') {
         // Enviar a Google Sheets en lugar de WhatsApp
         const webhookUrl = "https://script.google.com/macros/s/AKfycbw26RxXkXjyX-Q7Sswj_mafxjtvsFW59b3uGN00Zvox-RV0_9O_-OOmWpe8gvntT92-/exec";
         
+        let shortInfo = 'Aprobado';
+        if (type === 'support' || finalMessage.includes('ERROR')) {
+            if (finalMessage.includes('❌ *Error:*')) {
+                shortInfo = 'Error: ' + finalMessage.split('❌ *Error:*')[1].trim();
+            } else if (finalMessage.includes('❌ Error en Shopify:')) {
+                shortInfo = 'Error: ' + finalMessage.split('❌ Error en Shopify:')[1].trim();
+            } else {
+                shortInfo = 'Soporte Requerido';
+            }
+        }
+
         const payload = {
             "fecha": new Date().toISOString(),
             "date": new Date().toISOString(),
@@ -275,12 +286,12 @@ function notifyAdmins(chat, text, type = 'sales') {
             "province": chat ? (chat.province || '') : '',
             "producto": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
             "product": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
-            "error/info": finalMessage,
-            "message": finalMessage,
-            "error": finalMessage,
-            "info": finalMessage,
-            "detalle": finalMessage,
-            "text": finalMessage,
+            "error/info": shortInfo,
+            "message": shortInfo,
+            "error": shortInfo,
+            "info": shortInfo,
+            "detalle": shortInfo,
+            "text": shortInfo,
             "country": country
         };
         
