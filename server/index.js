@@ -277,6 +277,10 @@ function notifyAdmins(chat, text, type = 'sales') {
             "product": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
             "error/info": finalMessage,
             "message": finalMessage,
+            "error": finalMessage,
+            "info": finalMessage,
+            "detalle": finalMessage,
+            "text": finalMessage,
             "country": country
         };
         
