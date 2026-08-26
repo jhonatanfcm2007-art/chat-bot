@@ -254,11 +254,17 @@ function notifyAdmins(chat, text, type = 'sales') {
     }
     
     if (targetPhone === ADMIN_PHONE) {
-        // Enviar a Google Sheets en lugar de WhatsApp
+        // Enviar a Google Sheets SOLO pedidos y errores de Dropi.
+        // Los soportes humanos se siguen mandando por WhatsApp.
+        if (type === 'support') {
+            smartSendMessage(targetPhone, finalMessage, forceLine);
+            return;
+        }
+
         const webhookUrl = "https://script.google.com/macros/s/AKfycbw26RxXkXjyX-Q7Sswj_mafxjtvsFW59b3uGN00Zvox-RV0_9O_-OOmWpe8gvntT92-/exec";
         
         let shortInfo = 'Aprobado';
-        if (type === 'support' || finalMessage.includes('ERROR')) {
+        if (finalMessage.includes('ERROR') || finalMessage.includes('❌')) {
             if (finalMessage.includes('❌ *Error:*')) {
                 shortInfo = 'Error: ' + finalMessage.split('❌ *Error:*')[1].trim();
             } else if (finalMessage.includes('❌ Error en Shopify:')) {
