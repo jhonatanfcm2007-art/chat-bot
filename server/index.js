@@ -911,6 +911,8 @@ async function registerOrder(to, products) {
     const orderDep = chat.province || 'No especificado';
     const orderRef = chat.references || 'No especificadas';
 
+    chat.assignedProduct = productList; // <--- FIX: Ensure product is always available for webhooks
+
     const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
 
     if (isComplete) {
@@ -928,6 +930,7 @@ async function registerOrder(to, products) {
             
             if (shopifyRes.success) {
                 chat.orderRegistered = true;
+                chat.assignedProduct = productList; // <--- FIX: Ensure product is available for webhook
                 saveChats(chats);
                 
                 const notif = `✅ *PEDIDO AUTO-APROBADO Y ENVIADO A DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n📦 *Pedido Dropi:* ${shopifyRes.orderName}`;
