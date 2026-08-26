@@ -259,14 +259,25 @@ function notifyAdmins(chat, text, type = 'sales') {
         
         const payload = {
             "fecha": new Date().toISOString(),
+            "date": new Date().toISOString(),
             "Estado": type === 'support' ? 'Soporte/Error' : 'Aprobado',
+            "status": type === 'support' ? 'Soporte/Error' : 'Aprobado',
+            "type": type,
             "cliente": chat ? (chat.orderName || '') : '',
+            "name": chat ? (chat.orderName || '') : '',
             "telefono": chat ? (chat.from || '') : '',
+            "phone": chat ? (chat.from || '') : '',
             "direccion": chat ? (chat.address || '') : '',
+            "address": chat ? (chat.address || '') : '',
             "municipio": chat ? (chat.city || '') : '',
+            "city": chat ? (chat.city || '') : '',
             "departamento": chat ? (chat.province || '') : '',
+            "province": chat ? (chat.province || '') : '',
             "producto": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
-            "error/info": finalMessage
+            "product": chat ? (chat.assignedProduct || chat.pendingApprovalProducts || '') : '',
+            "error/info": finalMessage,
+            "message": finalMessage,
+            "country": country
         };
         
         fetch(webhookUrl, {
