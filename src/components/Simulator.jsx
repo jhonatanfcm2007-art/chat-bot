@@ -42,7 +42,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     'en_ruta': { label: 'En Ruta de Entrega', color: '#F97316', classes: 'bg-orange-50 text-orange-600 border-orange-200/60' },
     'entregado': { label: 'Entregado', color: '#14B8A6', classes: 'bg-teal-50 text-teal-600 border-teal-200/60' },
     'novedad': { label: 'Novedades', color: '#EF4444', classes: 'bg-red-50 text-red-600 border-red-200/60' },
-    'pedidos_abandonados': { label: 'Pedido Abandonado', color: '#6B7280', classes: 'bg-gray-100 text-gray-700 border-gray-300' }
+    'pedidos_abandonados': { label: 'Pedido Abandonado', color: '#6B7280', classes: 'bg-gray-100 text-gray-700 border-gray-300' },
+    'pedido-pendiente': { label: 'Faltan Datos (Pendiente)', color: '#F43F5E', classes: 'bg-rose-50 text-rose-600 border-rose-200/60' }
   };
   
   const currentChatForScroll = selectedChat && chats[selectedChat] 

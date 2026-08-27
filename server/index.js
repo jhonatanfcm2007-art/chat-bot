@@ -999,7 +999,7 @@ async function registerOrder(to, products) {
     // Notificar al admin por WhatsApp para aprobación manual
     const title = '⚠️ *NUEVO PEDIDO (Falta Info)*';
     const notif = `${title}\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n👉 *Aprobar:* Responde APROBAR ${to}\n👉 *Cancelar:* Responde RECHAZAR ${to}`;
-    notifyAdmins(chat, notif);
+    notifyAdmins(chat, notif, 'support');
 
     console.log(`📦 [PEDIDO PENDIENTE] Pedido de ${chat.customerName}: ${productList}. Esperando aprobación del admin (faltan datos).`);
 }
@@ -1441,6 +1441,9 @@ app.post('/webhook', async (req, res) => {
                         
                         smartSendMessage(from, `✅ Pedido ${shopifyRes.orderName} creado en Shopify exitosamente.`);
                         smartSendMessage(targetPhone, `✅ ¡Tu pedido ${shopifyRes.orderName} ha sido confirmado y pronto será despachado!`);
+                        
+                        const notif = `✅ *PEDIDO APROBADO MANUALMENTE Y ENVIADO A DROPI*\n\n👤 *Nombre:* ${targetChat.orderName}\n📱 *Teléfono:* ${targetChat.orderPhone}\n📍 *Dirección:* ${targetChat.address}\n🏙️ *Municipio:* ${targetChat.city}\n🗺️ *Depto:* ${targetChat.province}\n🛒 *Producto:* ${targetChat.assignedProduct || saleProduct}\n\n📦 *Pedido Dropi:* ${shopifyRes.orderName}`;
+                        notifyAdmins(targetChat, notif, 'sales');
                         
                         // Guardar en sales para compatibilidad con el frontend antiguo
                         const now = new Date();
