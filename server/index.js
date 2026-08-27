@@ -254,6 +254,10 @@ function notifyAdmins(chat, text, type = 'sales') {
                     // Descartamos la notificación para no hacer spam al número global.
                     targetPhone = null;
                 }
+            } else {
+                // El producto NO se encontró en la base de conocimiento.
+                // No enviar notificación al admin global (no es su producto).
+                targetPhone = null;
             }
         }
     }
