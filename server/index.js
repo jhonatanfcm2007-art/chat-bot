@@ -335,7 +335,8 @@ function notifyAdmins(chat, text, type = 'sales') {
             "info": shortInfo,
             "detalle": shortInfo,
             "text": shortInfo,
-            "country": country
+            "country": country,
+            "pais": country
         };
         
         fetch(webhookUrl, {
