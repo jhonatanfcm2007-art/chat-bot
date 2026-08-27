@@ -97,6 +97,26 @@ app.get('/api/debug-products', (req, res) => {
     res.json({ total, unassigned, counts, kb: knowledgeBaseDb.map(p => p.name) });
 });
 
+// EMERGENCIA: Resetear aiDisabled de todos los chats de golpe
+app.post('/api/emergency-reset-ai', (req, res) => {
+    let count = 0;
+    Object.values(chats).forEach(chat => {
+        if (chat.aiDisabled) {
+            chat.aiDisabled = false;
+            // Quitar tag de soporte si fue puesto automáticamente
+            if (chat.tags && chat.tags.includes('soporte')) {
+                chat.tags = chat.tags.filter(t => t !== 'soporte');
+            }
+            count++;
+            io.emit('ai_state_updated', { chatId: chat.from, disabled: false });
+            io.emit('tag_updated', { from: chat.from, tags: chat.tags || [] });
+        }
+    });
+    saveChats(chats);
+    console.log(`🔄 [EMERGENCIA] Se reactivó la IA en ${count} chats.`);
+    res.json({ success: true, reactivated: count });
+});
+
 app.post('/api/knowledge-base', (req, res) => {
     const newProduct = { ...req.body, id: 'prod-' + Date.now() };
     knowledgeBaseDb.push(newProduct);
