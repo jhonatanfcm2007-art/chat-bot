@@ -251,18 +251,27 @@ function notifyAdmins(chat, text, type = 'sales') {
                     targetPhone = prod.adminPhone.trim();
                 } else {
                     // El producto existe pero no configuraron su número.
-                    // Descartamos la notificación para no hacer spam al número global.
-                    targetPhone = null;
+                    // Enviar al admin global por WhatsApp (no a Sheets).
+                    targetPhone = '__ADMIN_WA__';
                 }
             } else {
                 // El producto NO se encontró en la base de conocimiento.
-                // No enviar notificación al admin global (no es su producto).
-                targetPhone = null;
+                // Enviar al admin global por WhatsApp (no a Sheets).
+                targetPhone = '__ADMIN_WA__';
             }
         }
     }
 
     if (!targetPhone) return;
+
+    // Productos sin adminPhone o no encontrados → enviar al admin por WhatsApp directamente
+    if (targetPhone === '__ADMIN_WA__') {
+        const country = chat?.from ? getCountryFromPhone(chat.from) : 'Desconocido';
+        const finalMessage = `🌍 *País:* ${country}\n${text}`;
+        const forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
+        smartSendMessage(ADMIN_PHONE, finalMessage, forceLine);
+        return;
+    }
 
     // Append Country Info
     let country = 'Desconocido';
