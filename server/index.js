@@ -1575,21 +1575,9 @@ app.post('/webhook', async (req, res) => {
                             fs.writeFileSync(filePath, buffer);
                             mediaUrl = `/uploads/${fileName}`;
                         
-                        // APAGAR IA AL RECIBIR FOTO (A petición del usuario)
+                        // IA PUEDE RECIBIR FOTOS (Removido apagado forzado para no romper ads con imágenes automáticas)
                         if (msg.type === 'image') {
-                            currentChat.aiDisabled = true;
-                            currentChat.tags = [...(currentChat.tags || []).filter(t => t !== 'soporte'), 'soporte'];
-                            
-                            io.emit('tag_updated', { from, tags: currentChat.tags });
-                            io.emit('ai_state_updated', { chatId: from, disabled: true });
-                            
-                            notifyAdmins(chats[from], `⚠️ *SOPORTE REQUERIDO* por *${customerName}*. El cliente ha enviado una foto/imagen.`, 'support');
-                            registerAnomaly('Soporte Requerido (Imagen)', customerName, from);
-                            
-                            if (aiTimers[from]) {
-                                clearTimeout(aiTimers[from]);
-                                delete aiTimers[from];
-                            }
+                            console.log(`📸 [INFO] El cliente envió una imagen. La IA no se apaga, solo anota que es una foto.`);
                         }
 
                         // OpenAI Whisper transcription for audio
