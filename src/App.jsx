@@ -13,7 +13,14 @@ import io from 'socket.io-client';
 
 // Configuración del Backend para split deployment
 const SERVER_URL = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:3000');
-const socket = io(SERVER_URL);
+const socket = io(SERVER_URL, {
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  transports: ['websocket', 'polling'],
+});
 
 function App() {
   const [activeTab, setActiveTab] = useState('simulator');
@@ -88,13 +95,23 @@ function App() {
 
   useEffect(() => {
     // Cargar chats pesados por HTTP para evitar que el proxy bloquee payloads gigantes
-    fetch(`${SERVER_URL}/api/chats`)
-      .then(res => res.json())
-      .then(data => {
-        console.log('Received initial history via HTTP:', data);
-        setChats(data);
-      })
-      .catch(err => console.error('Error fetching chats via HTTP:', err));
+    const loadChats = () => {
+      fetch(`${SERVER_URL}/api/chats`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Received initial history via HTTP:', Object.keys(data).length, 'chats');
+          setChats(data);
+        })
+        .catch(err => console.error('Error fetching chats via HTTP:', err));
+    };
+
+    loadChats();
+
+    // Recargar chats automáticamente cuando el socket se reconecta
+    socket.on('connect', () => {
+      console.log('🔌 Socket conectado/reconectado. Recargando chats...');
+      loadChats();
+    });
 
     socket.on('initial_chats', (data) => {
       // Ignoramos initial_chats del socket si pesa mucho, ya lo traemos por HTTP
@@ -283,6 +300,7 @@ function App() {
     });
 
     return () => {
+      socket.off('connect');
       socket.off('message');
       socket.off('initial_chats');
       socket.off('initial_settings');

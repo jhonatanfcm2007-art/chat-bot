@@ -27,7 +27,11 @@ const io = new Server(server, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    maxHttpBufferSize: 1e8 // Aumentar el límite a 100MB para evitar que falle el envío de historial
+    maxHttpBufferSize: 1e8,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    transports: ['websocket', 'polling'],
+    allowUpgrades: true
 });
 
 const openai = (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 20)
