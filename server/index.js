@@ -1719,9 +1719,12 @@ async function processAIResponse(from, msgBodyLower) {
         if (!refreshedChat.tags) refreshedChat.tags = [];
         refreshedChat.tags = refreshedChat.tags.filter(t => t !== 'soporte' && t !== 'pedidos_abandonados');
         refreshedChat.tags.push(newTag);
+        
+        refreshedChat.aiDisabled = true; // FIX: Actually disable the AI!
 
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
+        io.emit('ai_state_updated', { chatId: from, disabled: true }); // FIX: Update UI
 
         notifyAdmins(refreshedChat, alertMsg, 'support');
         registerAnomaly(hasPartialData ? 'Pedido Abandonado' : 'Soporte Requerido', customerName, from);
