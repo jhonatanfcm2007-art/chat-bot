@@ -236,6 +236,20 @@ function App() {
         };
       });
     });
+
+    // Sync completo del chat (el backend emite esto cuando el admin envía un mensaje)
+    socket.on('chat_updated', (chatData) => {
+      if (!chatData || !chatData.from) return;
+      setChats(prev => ({
+        ...prev,
+        [chatData.from]: {
+          ...prev[chatData.from],
+          ...chatData,
+          updatedAt: Date.now()
+        }
+      }));
+    });
+
     socket.on('platforms_updated', (data) => {
       if (Array.isArray(data)) {
         setPlatforms(prev => {
@@ -302,11 +316,13 @@ function App() {
     return () => {
       socket.off('connect');
       socket.off('message');
+      socket.off('chat_updated');
       socket.off('initial_chats');
       socket.off('initial_settings');
       socket.off('human_required');
       socket.off('receipt_received');
       socket.off('tag_updated');
+      socket.off('chat_meta_updated');
       socket.off('platforms_updated');
       socket.off('providers_updated');
       socket.off('block_state_updated');
@@ -555,6 +571,32 @@ function App() {
 
   const handleSendMessage = async (messageData) => {
     try {
+      // Mostrar el mensaje inmediatamente en la UI (optimista)
+      const optimisticMsg = {
+        id: 'opt-' + Date.now(),
+        from: messageData.to,
+        body: messageData.content || '[Imagen]',
+        content: messageData.content || '[Imagen]',
+        imageUrl: messageData.imageUrl || null,
+        isMe: true,
+        role: 'bot',
+        timestampRaw: Date.now(),
+        status: 'sending'
+      };
+      
+      setChats(prev => {
+        const chatId = messageData.to;
+        const currentChat = prev[chatId] || { from: chatId, messages: [], waLine: 1 };
+        return {
+          ...prev,
+          [chatId]: {
+            ...currentChat,
+            updatedAt: Date.now(),
+            messages: [...currentChat.messages, optimisticMsg]
+          }
+        };
+      });
+
       const res = await fetch(`${SERVER_URL}/api/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
