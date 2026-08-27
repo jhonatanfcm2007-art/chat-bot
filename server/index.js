@@ -3111,16 +3111,17 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
             }
         }
         
-        // Bloqueo duro para obligar a enviar a soporte cuando la IA no sabe la respuesta y explica por qué
+        // Log de respuestas donde la IA admite no saber (solo informativo, ya no fuerza apagado)
         if (/(no tengo información|no te puedo confirmar|no te sabría decir|no dispongo de|lamentablemente no tenemos|no puedo asegurarte|desconozco|no tengo los detalles|no te puedo dar|no estoy seguro|no me es posible responder|no poseo esa información|no contamos con ese dato|no te puedo dar ese dato)/i.test(reply)) {
-            console.log('⚠️ [SISTEMA] Respuesta de ignorancia detectada y bloqueada. Forzando soporte:', reply);
-            reply = "[APAGAR_BOT_SOPORTE]";
+            console.log('ℹ️ [INFO] La IA admitió no saber algo. Respuesta original enviada al cliente:', reply.substring(0, 100));
         }
         
         return reply;
     } catch (e) { 
         console.error('❌ OpenAI API Error:', e.message);
-        return `[APAGAR_BOT_SOPORTE]`; 
+        // NUNCA apagar el bot por un error temporal de la API.
+        // Devolver un mensaje amigable para que el cliente reintente.
+        return "¡Hola! Disculpa la demora, estoy procesando tu solicitud. ¿Podrías repetirme tu mensaje por favor? 😊"; 
     }
 }
 
