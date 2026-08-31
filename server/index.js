@@ -230,6 +230,7 @@ function getCountryFromPhone(phoneStr) {
 
 function notifyAdmins(chat, text, type = 'sales') {
     let targetPhone = ADMIN_PHONE;
+    let isFernando = false;
     
     // Check if product has a custom admin phone
     if (chat) {
@@ -251,6 +252,10 @@ function notifyAdmins(chat, text, type = 'sales') {
             }
             
             if (prod) {
+                if (prod.owner && prod.owner.toLowerCase().includes('fernando')) {
+                    isFernando = true;
+                }
+                
                 if (prod.adminPhone && prod.adminPhone.trim() !== '') {
                     targetPhone = prod.adminPhone.trim();
                 } else {
@@ -290,7 +295,9 @@ function notifyAdmins(chat, text, type = 'sales') {
         forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
     }
     
-    if (targetPhone === ADMIN_PHONE) {
+    const sendToSheets = (targetPhone === ADMIN_PHONE) || isFernando;
+
+    if (sendToSheets) {
         // Enviar a Google Sheets SOLO pedidos y errores de Dropi.
         // Los soportes humanos se siguen mandando por WhatsApp.
         if (type === 'support') {
@@ -344,8 +351,13 @@ function notifyAdmins(chat, text, type = 'sales') {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).catch(err => console.error("Error enviando a Google Sheets:", err));
+        
+        // Si es de Fernando (u otro socio) pero también fue a Sheets, igual queremos notificarle a su WhatsApp
+        if (targetPhone !== ADMIN_PHONE) {
+            smartSendMessage(targetPhone, finalMessage, forceLine);
+        }
     } else {
-        // Socios: Seguir enviando por WhatsApp
+        // Otros socios (que no son Fernando y no van a Sheets): Seguir enviando por WhatsApp
         smartSendMessage(targetPhone, finalMessage, forceLine);
     }
 }
