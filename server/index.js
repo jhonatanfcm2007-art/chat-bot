@@ -246,8 +246,12 @@ function notifyAdmins(chat, text, type = 'sales') {
             if (!prod) {
                 prod = knowledgeBaseDb.find(p => {
                     const lowerKBName = p.name.toLowerCase();
-                    return lowerProdName.includes(lowerKBName) || 
-                           (p.keywords && p.keywords.some(kw => lowerProdName.includes(kw.toLowerCase().trim())));
+                    const nameMatch = lowerProdName.includes(lowerKBName) || lowerKBName.includes(lowerProdName);
+                    const kwMatch = p.keywords && p.keywords.some(kw => {
+                        const lowerKw = kw.toLowerCase().trim();
+                        return lowerProdName.includes(lowerKw) || lowerKw.includes(lowerProdName);
+                    });
+                    return nameMatch || kwMatch;
                 });
             }
             
