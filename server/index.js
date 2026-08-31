@@ -258,6 +258,9 @@ function notifyAdmins(chat, text, type = 'sales') {
                 
                 if (prod.adminPhone && prod.adminPhone.trim() !== '') {
                     targetPhone = prod.adminPhone.trim();
+                } else if (isFernando) {
+                    // Fernando es el admin principal. Si su producto no tiene número, asume el número global.
+                    targetPhone = ADMIN_PHONE;
                 } else {
                     // El producto existe pero no configuraron su número.
                     // Enviar al admin global por WhatsApp (no a Sheets).
