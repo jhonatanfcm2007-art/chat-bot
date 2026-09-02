@@ -1755,6 +1755,23 @@ async function processAIResponse(from, msgBodyLower) {
 
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
     
+    // --- SOPORTE SILENCIOSO (Ignorancia de IA) ---
+    if (/\[SOPORTE_SILENCIOSO\]/i.test(aiReply)) {
+        if (!refreshedChat.tags) refreshedChat.tags = [];
+        if (!refreshedChat.tags.includes('soporte')) {
+            refreshedChat.tags.push('soporte');
+        }
+        
+        // NO APAGAR LA IA.
+        saveChats(chats);
+        io.emit('tag_updated', { from, tags: refreshedChat.tags });
+
+        notifyAdmins(refreshedChat, `⚠️ *DUDA TÉCNICA* de *${customerName}*. La IA no tiene la información y ha omitido responder. ¡Respóndele manualmente! (La IA sigue encendida para el resto de la venta).`, 'support');
+        
+        // No enviamos nada al cliente
+        return;
+    }
+
     // --- APAGADO POR IA ---
     if (/\[APAGAR_BOT_SOPORTE\]/i.test(aiReply)) {
         const hasPartialData = refreshedChat.orderName || refreshedChat.address || refreshedChat.city || refreshedChat.orderPhone;
@@ -3140,7 +3157,8 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 17. IDENTIFICACIÓN TEMPRANA (¡MUY IMPORTANTE!): Tan pronto como el cliente mencione o insinúe la cantidad o combo que desea (por ejemplo, "quiero 1 shilajit" o "el combo de 2"), DEBES OBLIGATORIAMENTE incluir la etiqueta oculta [INTERES: Producto xCantidad] en tu respuesta. Ejemplo: "Excelente elección. [INTERES: Shilajit x2] ¿Buscas el Shilajit para...". Si cambia de opinión, envíala de nuevo con el nuevo interés, siempre usando el formato xCantidad.
 18. VERIFICACIÓN DE PRECIO (¡CRÍTICO!): Si el cliente asume un precio incorrecto, pregunta si el producto vale cierta cantidad distinta a la real, o inventa una promoción que no existe (ej. "el de 10?", "a 2 por 30?"), ESTÁ ESTRICTAMENTE PROHIBIDO ignorarlo y avanzar con el pedido. DEBES detenerte y aclararle amablemente cuál es el precio correcto basándote ÚNICAMENTE en la sección 'Precios y Combos', y preguntarle si desea continuar con ese precio antes de pedirle sus datos de envío.
 19. PROHIBICIÓN DE ESTILO DE VIDA: NUNCA le recomiendes al cliente hacer ejercicio, ir al gimnasio, entrenar, hacer entrenamientos, o llevar dietas específicas. BAJO NINGUNA CIRCUNSTANCIA uses las palabras "ejercicio", "entrenamiento", "gimnasio" o "dieta" en tus respuestas. Si el cliente o el anuncio mencionan esas palabras, NO TE ASUSTES NI TE APAGUES, simplemente continúa la venta de forma natural asumiendo que el suplemento funciona por sí solo sin esfuerzo.
-20. CANTIDADES GRANDES O PERSONALIZADAS (¡EL OBJETIVO ES VENDER!): Si el cliente pide una cantidad de producto que no está explícitamente en la lista de combos (por ejemplo, pide 4, 5, o 10 tarros), ¡ACEPTA LA VENTA INMEDIATAMENTE! NUNCA le digas que no ofreces ese paquete. Simplemente dile con entusiasmo "¡Claro que sí podemos enviarte X tarros!", calcula el precio lógico sumando los precios de los combos existentes, y continúa pidiéndole sus datos de envío para cerrar la gran venta.`;
+20. CANTIDADES GRANDES O PERSONALIZADAS (¡EL OBJETIVO ES VENDER!): Si el cliente pide una cantidad de producto que no está explícitamente en la lista de combos (por ejemplo, pide 4, 5, o 10 tarros), ¡ACEPTA LA VENTA INMEDIATAMENTE! NUNCA le digas que no ofreces ese paquete. Simplemente dile con entusiasmo "¡Claro que sí podemos enviarte X tarros!", calcula el precio lógico sumando los precios de los combos existentes, y continúa pidiéndole sus datos de envío para cerrar la gran venta.
+21. IGNORANCIA (SOPORTE SILENCIOSO): Si el cliente hace una pregunta técnica o específica que NO puedes responder con la Base de Conocimiento (ej. cantidad en mg, ingredientes exactos), ESTÁ ESTRICTAMENTE PROHIBIDO dar explicaciones largas o decir 'no tengo acceso'. Tu ÚNICA respuesta debe ser la etiqueta [SOPORTE_SILENCIOSO]. NUNCA envíes más texto con esta etiqueta. Esto alertará a un humano para que responda manualmente, pero tú seguirás activo para continuar la venta después.`;
 
 
 
