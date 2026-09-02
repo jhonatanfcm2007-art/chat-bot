@@ -49,6 +49,8 @@ const WHATSAPP_TOKEN_2 = (process.env.WHATSAPP_TOKEN_2 || '').trim();
 const PHONE_ID_2 = (process.env.WHATSAPP_PHONE_ID_2 || process.env.PHONE_ID_2 || '').trim();
 const WHATSAPP_TOKEN_3 = (process.env.WHATSAPP_TOKEN_3 || '').trim();
 const PHONE_ID_3 = (process.env.WHATSAPP_PHONE_ID_3 || process.env.PHONE_ID_3 || '').trim();
+const WHATSAPP_TOKEN_4 = (process.env.WHATSAPP_TOKEN_4 || '').trim();
+const PHONE_ID_4 = (process.env.WHATSAPP_PHONE_ID_4 || process.env.PHONE_ID_4 || '').trim();
 
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -60,6 +62,7 @@ console.log('📱 Línea 1 - WhatsApp Token:', WHATSAPP_TOKEN ? '✅ Detectado' 
 console.log('📱 Línea 1 - Phone ID:', PHONE_ID ? `✅ ${PHONE_ID}` : '❌ FALTANTE');
 console.log('📱 Línea 2 - Phone ID:', PHONE_ID_2 ? `✅ ${PHONE_ID_2}` : '❌ FALTANTE');
 console.log('📱 Línea 3 - Phone ID:', PHONE_ID_3 ? `✅ ${PHONE_ID_3}` : '❌ FALTANTE');
+console.log('📱 Línea 4 - Phone ID:', PHONE_ID_4 ? `✅ ${PHONE_ID_4}` : '❌ FALTANTE');
 console.log('📱 Línea 2 - WhatsApp Token:', WHATSAPP_TOKEN_2 ? '✅ Detectado' : '⚠️ No configurada');
 console.log('📱 Línea 2 - Phone ID:', PHONE_ID_2 ? `✅ ${PHONE_ID_2}` : '⚠️ No configurada');
 console.log('Admin Phone:', ADMIN_PHONE ? `✅ Detectado (${ADMIN_PHONE})` : '❌ FALTANTE');
@@ -192,11 +195,15 @@ app.get('/api/webhook-debug', (req, res) => {
 });
 
 function getWhatsAppCredentials(customerPhone, forceLine = null) {
+    if (forceLine === 4 && WHATSAPP_TOKEN_4 && PHONE_ID_4) return { token: WHATSAPP_TOKEN_4, phoneId: PHONE_ID_4, line: 4 };
     if (forceLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
     if (forceLine === 2 && WHATSAPP_TOKEN_2 && PHONE_ID_2) return { token: WHATSAPP_TOKEN_2, phoneId: PHONE_ID_2, line: 2 };
     if (forceLine === 1 && WHATSAPP_TOKEN && PHONE_ID) return { token: WHATSAPP_TOKEN, phoneId: PHONE_ID, line: 1 };
 
     const chat = chats?.[customerPhone];
+    if (chat?.waLine === 4 && WHATSAPP_TOKEN_4 && PHONE_ID_4) {
+        return { token: WHATSAPP_TOKEN_4, phoneId: PHONE_ID_4, line: 4 };
+    }
     if (chat?.waLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) {
         return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
     }
@@ -1413,7 +1420,7 @@ app.post('/webhook', async (req, res) => {
         const originalRecipientId = statusObj.recipient_id;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-        const waLine = cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1);
+        const waLine = cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1));
         const recipientId = waLine > 1 ? `${originalRecipientId}_${waLine}` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
@@ -1442,9 +1449,9 @@ app.post('/webhook', async (req, res) => {
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
         
-        console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}'`);
+        console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}' | Line 4: '${PHONE_ID_4}'`);
 
-        const waLine = cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1);
+        const waLine = cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1));
         const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
@@ -1597,7 +1604,9 @@ app.post('/webhook', async (req, res) => {
             // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
             const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-            if (cleanWebhookId === PHONE_ID_3) {
+            if (cleanWebhookId === PHONE_ID_4) {
+                currentChat.waLine = 4;
+            } else if (cleanWebhookId === PHONE_ID_3) {
                 currentChat.waLine = 3;
             } else if (cleanWebhookId === PHONE_ID_2) {
                 currentChat.waLine = 2;
@@ -2226,7 +2235,8 @@ async function downloadMetaMedia(mediaId, customerPhone) {
     // Multi-Línea: Usar el token correcto para descargar media
     let waToken = WHATSAPP_TOKEN;
     if (customerPhone && chats[customerPhone]) {
-        if (chats[customerPhone].waLine === 3 && WHATSAPP_TOKEN_3) waToken = WHATSAPP_TOKEN_3;
+        if (chats[customerPhone].waLine === 4 && WHATSAPP_TOKEN_4) waToken = WHATSAPP_TOKEN_4;
+        else if (chats[customerPhone].waLine === 3 && WHATSAPP_TOKEN_3) waToken = WHATSAPP_TOKEN_3;
         else if (chats[customerPhone].waLine === 2 && WHATSAPP_TOKEN_2) waToken = WHATSAPP_TOKEN_2;
     }
     try {
