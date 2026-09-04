@@ -42,7 +42,7 @@ const KnowledgeBase = ({ serverUrl }) => {
     const payload = { ...editingProduct };
     
     if (typeof payload.adIds === 'string') {
-      payload.adIds = payload.adIds.split(',').map(k => k.trim()).filter(k => k);
+      payload.adIds = payload.adIds.split(/[\s,]+/).map(k => k.trim()).filter(k => k);
     }
 
     const isNew = !editingProduct.id;

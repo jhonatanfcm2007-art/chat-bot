@@ -760,7 +760,7 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
     
     // 1. PRIORIDAD ABSOLUTA: Si entra desde un Anuncio, buscamos en TODA la base de datos sin importar la línea de WA.
     if (finalAdId) {
-        const matched = knowledgeBaseDb.find(p => p.adIds?.includes(String(finalAdId).trim()));
+        const matched = knowledgeBaseDb.find(p => p.adIds?.some(idStr => String(idStr).includes(String(finalAdId).trim())));
         if (matched) {
             chat.assignedProduct = matched.name;
             return;
