@@ -782,6 +782,15 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
             }
         }
     }
+
+    // 3. PRODUCTO ÚNICO POR LÍNEA: Si no hubo match, pero esta línea tiene un único producto exclusivo, lo asignamos por defecto.
+    if (!chat.assignedProduct) {
+        const exclusiveProducts = knowledgeBaseDb.filter(p => p.line === String(waLine));
+        if (exclusiveProducts.length === 1) {
+            chat.assignedProduct = exclusiveProducts[0].name;
+            return;
+        }
+    }
 }
 
 // BACKFILL EXISTING CHATS
@@ -3048,7 +3057,7 @@ async function sendMessageToCloudAPI(to, text, forceLine = null) {
                 const errorMsg = {
                     id: 'error-' + Date.now(),
                     isMe: true,
-                    body: `⚠️ ERROR DEL SISTEMA: Meta rechazó el mensaje. Revisa tu WHATSAPP_TOKEN_3. Detalle: ${errData}`,
+                    body: `⚠️ ERROR DEL SISTEMA: Meta rechazó el mensaje. Revisa tu WHATSAPP_TOKEN_${line}. Detalle: ${errData}`,
                     time: new Date().toLocaleTimeString('es-CO')
                 };
                 chats[to].messages.push(errorMsg);
