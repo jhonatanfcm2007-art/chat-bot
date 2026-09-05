@@ -37,6 +37,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     'soporte': { label: 'Soporte', color: '#64748B', classes: 'bg-slate-50 text-slate-600 border-slate-200/60' },
     'interesado': { label: 'Interesado', color: '#6C5CE7', classes: 'bg-primary-light text-primary border-primary/20' },
     'preparar_pedido': { label: 'Preparar Pedido', color: '#0EA5E9', classes: 'bg-sky-50 text-sky-600 border-sky-200/60' },
+    'pedido_preparado': { label: 'Pedido Preparado', color: '#2563EB', classes: 'bg-blue-50 text-blue-700 border-blue-200/60' },
     'guia_enviada': { label: 'Guía Enviada', color: '#8B5CF6', classes: 'bg-violet-50 text-violet-600 border-violet-200/60' },
     'viajando_destino': { label: 'Viajando a Destino', color: '#3B82F6', classes: 'bg-blue-50 text-blue-600 border-blue-200/60' },
     'en_ruta': { label: 'En Ruta de Entrega', color: '#F97316', classes: 'bg-orange-50 text-orange-600 border-orange-200/60' },
