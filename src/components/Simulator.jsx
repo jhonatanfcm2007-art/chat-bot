@@ -496,7 +496,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
                 {/* FILTER MENU */}
                 {isFilterMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-hidden">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[100] py-1 overflow-y-auto max-h-[70vh]">
                     <div 
                       className={`px-4 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-3 ${filterTag === 'all' ? 'bg-primary-light' : ''}`}
                       onClick={() => { setFilterTag('all'); setIsFilterMenuOpen(false); }}
@@ -608,7 +608,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
                         {openTagMenu && openTagMenu.from === chat.from && (
                            <div 
-                              className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[999] py-1"
+                              className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[999] py-1 max-h-64 overflow-y-auto"
                               style={{ top: openTagMenu.top, left: openTagMenu.left }}
                            >
                               {Object.entries(TAG_UI).map(([key, style]) => (
