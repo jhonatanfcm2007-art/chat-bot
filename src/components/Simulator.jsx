@@ -594,9 +594,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                            onClick={(e) => {
                               e.stopPropagation();
                               const rect = e.currentTarget.getBoundingClientRect();
+                              const spaceBelow = window.innerHeight - rect.bottom;
+                              const spaceAbove = rect.top;
+                              const openUpwards = spaceBelow < 260 && spaceAbove > spaceBelow;
+                              
                               setOpenTagMenu(openTagMenu && openTagMenu.from === chat.from ? null : { 
                                 from: chat.from, 
-                                top: rect.bottom, 
+                                top: openUpwards ? 'auto' : rect.bottom, 
+                                bottom: openUpwards ? window.innerHeight - rect.top + 4 : 'auto',
                                 left: rect.left 
                               });
                            }}
@@ -609,7 +614,11 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                         {openTagMenu && openTagMenu.from === chat.from && (
                            <div 
                               className="fixed w-48 bg-white rounded-xl shadow-2xl border border-slate-200 z-[999] py-1 max-h-64 overflow-y-auto"
-                              style={{ top: openTagMenu.top, left: openTagMenu.left }}
+                              style={{ 
+                                top: openTagMenu.top !== 'auto' ? openTagMenu.top : undefined, 
+                                bottom: openTagMenu.bottom !== 'auto' ? openTagMenu.bottom : undefined,
+                                left: openTagMenu.left 
+                              }}
                            >
                               {Object.entries(TAG_UI).map(([key, style]) => (
                                  <div 
