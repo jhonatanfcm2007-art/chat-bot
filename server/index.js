@@ -2260,7 +2260,10 @@ async function downloadMetaMedia(mediaId, customerPhone) {
     try {
         console.log(`📡 [META] Paso 1: Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
-            headers: { 'Authorization': `Bearer ${waToken}` }
+            headers: { 
+                'Authorization': `Bearer ${waToken}`,
+                'User-Agent': 'curl/7.68.0'
+            }
         });
         const data = await response.json();
         
@@ -2277,7 +2280,10 @@ async function downloadMetaMedia(mediaId, customerPhone) {
         
         while (attempts < 5) {
             const mediaRes = await fetch(downloadUrl, {
-                headers: { 'Authorization': `Bearer ${waToken}` },
+                headers: { 
+                    'Authorization': `Bearer ${waToken}`,
+                    'User-Agent': 'curl/7.68.0'
+                },
                 redirect: 'manual'  // NO seguir redirects automáticamente
             });
             
