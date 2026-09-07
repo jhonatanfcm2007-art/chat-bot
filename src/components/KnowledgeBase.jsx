@@ -170,13 +170,14 @@ const KnowledgeBase = ({ serverUrl }) => {
                   )}
                   <div className="flex gap-2 items-center">
                     <span className={`text-xs px-2 py-1 rounded-md font-semibold border ${
-                      p.line === '1' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
-                      p.line === '2' ? 'bg-purple-50 text-purple-600 border-purple-200' : 
-                      p.line === '3' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                      p.line === '1' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
+                      p.line === '2' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                      p.line === '3' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                       p.line === '4' ? 'bg-orange-50 text-orange-600 border-orange-200' :
-                      'bg-slate-50 text-slate-600 border-slate-200'
+                      p.line === '5' ? 'bg-pink-50 text-pink-600 border-pink-200' :
+                      'bg-slate-100 text-slate-600 border-slate-200'
                     }`}>
-                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : p.line === '3' ? 'Línea 3' : p.line === '4' ? 'Línea 4' : 'Ambas Líneas'}
+                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : p.line === '3' ? 'Línea 3' : p.line === '4' ? 'Línea 4' : p.line === '5' ? 'Línea 5' : 'Ambas Líneas'}
                     </span>
                     <button onClick={() => openEditModal(p)} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors">
                       <span className="material-symbols-outlined text-sm">edit</span>
@@ -250,6 +251,7 @@ const KnowledgeBase = ({ serverUrl }) => {
                   <option value="2">Línea 2</option>
                   <option value="3">Línea 3</option>
                   <option value="4">Línea 4</option>
+                  <option value="5">Línea 5</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">El asistente solo venderá este producto en la línea seleccionada.</p>
               </div>

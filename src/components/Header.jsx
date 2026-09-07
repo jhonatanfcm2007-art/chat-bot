@@ -65,6 +65,7 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
                   { val: 2, label: 'Línea 2', icon: 'looks_two' },
                   { val: 3, label: 'Línea 3', icon: 'looks_3' },
                   { val: 4, label: 'Línea 4', icon: 'looks_4' },
+                  { val: 5, label: 'Línea 5', icon: 'looks_5' },
                 ].map(opt => (
                   <button
                     key={opt.val}
