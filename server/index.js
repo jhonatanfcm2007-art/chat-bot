@@ -3144,8 +3144,11 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
                 // Procesar variaciones de precios según el número de teléfono del cliente
                 let finalPrices = prod.prices;
                 if (prod.priceVariations && prod.priceVariations.length > 0) {
-                    const cleanPhone = String(fromPhone).replace('+', '').trim();
-                    const matchedVar = prod.priceVariations.find(v => v.prefix && cleanPhone.startsWith(v.prefix.replace('+', '').trim()));
+                    const cleanPhone = String(fromPhone).split('_')[0].replace(/\D/g, ''); // Remover sufijos de línea y caracteres no numéricos
+                    const matchedVar = prod.priceVariations.find(v => {
+                        const cleanPrefix = (v.prefix || '').replace(/\D/g, '');
+                        return cleanPrefix && cleanPhone.startsWith(cleanPrefix);
+                    });
                     if (matchedVar && matchedVar.prices) {
                         finalPrices = matchedVar.prices;
                     }
