@@ -1009,12 +1009,10 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                    </div>
                  )}
 
-                 {(activeChatData.orderNotes || activeChatData.references) && (
-                   <div className="flex flex-col text-xs pt-2 mt-1 border-t border-slate-100">
-                     <span className="text-on-surface-variant font-medium">📝 Notas / Novedades:</span>
-                     <span className="text-slate-800 font-semibold">{activeChatData.orderNotes || activeChatData.references}</span>
-                   </div>
-                 )}
+                 <div className="flex flex-col text-xs pt-2 mt-1 border-t border-slate-100">
+                   <span className="text-on-surface-variant font-medium">📝 Notas / Novedades:</span>
+                   <span className="text-slate-800 font-semibold">{activeChatData.orderNotes || activeChatData.references || 'Ninguna'}</span>
+                 </div>
                  
                  <div className="pt-3 mt-1 border-t border-slate-100 flex justify-between items-center text-xs">
                    <span className="text-on-surface-variant font-medium">Estado:</span>
