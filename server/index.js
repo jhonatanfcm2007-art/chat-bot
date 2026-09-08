@@ -1841,9 +1841,23 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // --- REGISTRO DE PEDIDO ---
+    const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null;
+
+    // Extraer Interés temprano del producto/combo en cualquier mensaje
+    const interesRegex = /\[INTERES:\s*([^\]]+)\]/i;
+    const intMatch = cleanAiReply.match(interesRegex);
+    if (intMatch) {
+        refreshedChat.pendingApprovalProducts = cleanVal(intMatch[1]) || refreshedChat.pendingApprovalProducts;
+    }
+
     const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
     
+    // Si la IA ya definió los productos finales, actualizamos la interfaz con esos
+    if (prodsMatch) {
+        refreshedChat.pendingApprovalProducts = cleanVal(prodsMatch[1]) || refreshedChat.pendingApprovalProducts;
+    }
+
     if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
         
@@ -1855,8 +1869,6 @@ async function processAIResponse(from, msgBodyLower) {
         const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
         const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
         
-        const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null;
-
         if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
         if (phoneMatch) refreshedChat.orderPhone = cleanVal(phoneMatch[1]) || refreshedChat.orderPhone;
         if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
@@ -1870,15 +1882,6 @@ async function processAIResponse(from, msgBodyLower) {
             refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
         }
         
-        // Extraer Interés temprano del producto/combo
-        const interesRegex = /\[INTERES:\s*([^\]]+)\]/i;
-        const intMatch = aiReply.match(interesRegex);
-        if (intMatch) {
-            refreshedChat.pendingApprovalProducts = cleanVal(intMatch[1]);
-            aiReply = aiReply.replace(interesRegex, '').trim();
-            cleanAiReply = cleanAiReply.replace(interesRegex, '').trim();
-        }
-
         const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
         
         io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
@@ -1929,7 +1932,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
+    const cleanReply = cleanAiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
     
     await delay(1500);
     if (cleanReply) {
