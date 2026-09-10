@@ -1911,8 +1911,17 @@ async function processAIResponse(from, msgBodyLower) {
                 cleanAiReply = `${visibleMsg}\n\n${hiddenTags}`;
             } else if (geminiResult && !geminiResult.datos_completos && geminiResult.observaciones) {
                 console.log(`⚠️ [GEMINI] Faltan datos según Gemini:`, geminiResult.observaciones);
-                cleanAiReply = `Disculpe, para poder agendar su envío necesitamos una aclaración: ${geminiResult.observaciones}`;
-                isComplete = false; // Bloquear el registro de la orden hasta aclarar
+                
+                refreshedChat.geminiAskCount = (refreshedChat.geminiAskCount || 0) + 1;
+                
+                if (refreshedChat.geminiAskCount >= 2) {
+                    console.log(`⚠️ [GEMINI] Límite de intentos alcanzado (Bucle). Apagando IA.`);
+                    cleanAiReply = `Disculpe, para asegurarnos de que su paquete llegue sin problemas, he notificado a uno de nuestros asesores para que revise su dirección. En breve se comunicarán con usted para confirmar el envío. [APAGAR_BOT_SOPORTE]`;
+                    isComplete = false;
+                } else {
+                    cleanAiReply = `Disculpe, para poder agendar su envío necesitamos una pequeña aclaración: ${geminiResult.observaciones}`;
+                    isComplete = false; // Bloquear el registro de la orden hasta aclarar
+                }
             }
         }
         // --- FIN NORMALIZACIÓN ---

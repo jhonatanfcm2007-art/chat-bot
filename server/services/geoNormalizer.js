@@ -26,7 +26,7 @@ DEBES RETORNAR ESTRICTAMENTE UN OBJETO JSON VÁLIDO con la siguiente estructura:
   "municipio_canton": "Nombre oficial",
   "direccion_estandarizada": "Barrio/Colonia, calle, pasaje, # casa y puntos de referencia limpios",
   "datos_completos": true | false,
-  "observaciones": "Nota breve si falta un punto de referencia clave o si se requiere retiro en punto central"
+  "observaciones": "Si datos_completos es false, HAZ UNA PREGUNTA DE OPCIONES CERRADAS para que el cliente elija (Ej: '¿Ese barrio queda en San Salvador o en La Libertad?' o 'Para enviar por Dropi, ¿podría darnos un punto de referencia cercano como una escuela o parque?')"
 }
 `;
 
