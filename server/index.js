@@ -3117,13 +3117,14 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         let hasProductImage = false;
         
         if (currentChat && currentChat.assignedProduct) {
+            const targetProdLower = currentChat.assignedProduct.toLowerCase().replace(/\s*x\s*\d+$/i, '').trim();
             // Buscar primero en la línea actual
-            let assignedProd = lineProducts.find(p => p.name === currentChat.assignedProduct);
+            let assignedProd = lineProducts.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
             
             // Si no está en la línea actual pero el chat ya lo tiene asignado (ej. por ID de anuncio), 
             // buscarlo en toda la base de datos para no dejar a la IA ciega.
             if (!assignedProd) {
-                assignedProd = knowledgeBaseDb.find(p => p.name === currentChat.assignedProduct);
+                assignedProd = knowledgeBaseDb.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
             }
             
             if (assignedProd) {
