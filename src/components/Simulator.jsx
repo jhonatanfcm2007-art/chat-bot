@@ -371,7 +371,22 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
         }
 
         const kbProd = knowledgeBaseDb.find(p => p.name.trim() === prodName);
-        const finalProductId = kbProd && kbProd.dropiId ? kbProd.dropiId : prodName;
+        let finalProductId = prodName;
+        
+        if (kbProd) {
+            finalProductId = kbProd.dropiId || prodName; // Default a ID global o nombre
+            
+            // Buscar si hay un ID específico en las variaciones para este país
+            if (kbProd.priceVariations && kbProd.priceVariations.length > 0) {
+                const matchedVar = kbProd.priceVariations.find(v => {
+                    const cleanPrefix = (v.prefix || '').replace(/\D/g, '');
+                    return cleanPrefix && rawPhone.startsWith(cleanPrefix);
+                });
+                if (matchedVar && matchedVar.dropiId) {
+                    finalProductId = matchedVar.dropiId;
+                }
+            }
+        }
 
         let precio = 0; 
         

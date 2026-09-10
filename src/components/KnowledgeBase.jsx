@@ -460,7 +460,7 @@ const KnowledgeBase = ({ serverUrl }) => {
                           ))}
                         </select>
                       </div>
-                      <div className="md:col-span-2">
+                      <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">ID Producto en esta tienda (Opcional)</label>
                         <input 
                           type="text"
@@ -471,7 +471,21 @@ const KnowledgeBase = ({ serverUrl }) => {
                             setEditingProduct({...editingProduct, priceVariations: newVariations});
                           }}
                           className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/50"
-                          placeholder="ID en Shopify (si es diferente al principal)"
+                          placeholder="ID en Shopify"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-sky-600 mb-1">ID en Dropi (Exportación CSV)</label>
+                        <input 
+                          type="text"
+                          value={variation.dropiId || ''}
+                          onChange={e => {
+                            const newVariations = [...editingProduct.priceVariations];
+                            newVariations[idx].dropiId = e.target.value;
+                            setEditingProduct({...editingProduct, priceVariations: newVariations});
+                          }}
+                          className="w-full border border-sky-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-sky-500 bg-sky-50"
+                          placeholder="ID en Dropi para este país"
                         />
                       </div>
                     </div>
