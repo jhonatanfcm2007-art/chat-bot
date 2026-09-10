@@ -1850,8 +1850,7 @@ async function processAIResponse(from, msgBodyLower) {
         refreshedChat.pendingApprovalProducts = cleanVal(intMatch[1]) || refreshedChat.pendingApprovalProducts;
     }
 
-    const hasVerificarTag = /\[VERIFICAR_DATOS\]/i.test(cleanAiReply);
-    const hasConfirmacionAfirmativa = /\[CONFIRMACION_AFIRMATIVA\]/i.test(cleanAiReply);
+    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const hasConfirmacionRetenida = /\[CONFIRMACION_RETENIDA\]/i.test(cleanAiReply);
     
     const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
@@ -1861,7 +1860,7 @@ async function processAIResponse(from, msgBodyLower) {
         refreshedChat.pendingApprovalProducts = cleanVal(prodsMatch[1]) || refreshedChat.pendingApprovalProducts;
     }
 
-    if (hasVerificarTag && prodsMatch) {
+    if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
         
         const nameMatch = cleanAiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
@@ -1901,20 +1900,19 @@ async function processAIResponse(from, msgBodyLower) {
                 refreshedChat.province = geminiResult.departamento_provincia || refreshedChat.province;
                 if (geminiResult.observaciones) refreshedChat.orderNotes = (refreshedChat.orderNotes ? refreshedChat.orderNotes + ' | ' : '') + geminiResult.observaciones;
 
-                // Extraer el precio que había calculado GPT (buscando algo como Q155, L999, ₡18000, $25)
+                // Extraer el precio que había calculado GPT
                 const priceMatch = cleanAiReply.match(/([Q\$\L\₡]\s*[\d,\.]+)/);
                 const estimatedPrice = priceMatch ? priceMatch[0] : 'efectivo al repartidor';
 
-                // Sobrescribir el mensaje que verá el cliente
-                const visibleMsg = `¡Excelente, ya tengo sus datos listos en el sistema! 📦\n\n📍 Entrega en: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}\n💵 Total a pagar al recibir: ${estimatedPrice}\n🚚 Tiempo estimado: Entrega entre mañana y pasado mañana.\n\n¿Estará disponible en esa dirección con el efectivo listo para recibir, o prefiere que lo programemos para un día específico?`;
+                // Sobrescribir el mensaje que verá el cliente (CIERRE ASUMIDO)
+                const visibleMsg = `¡Excelente, ya tengo sus datos listos y su orden acaba de pasar a bodega para empaque! 📦\n\n📍 Entrega en: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}\n💵 Total a pagar al recibir: ${estimatedPrice}\n🚚 Tiempo estimado: 1 a 2 días.\n\nSi necesita que se lo entreguemos un día específico (como el viernes o sábado), avíseme por aquí.`;
                 
-                // Reconstruir la etiqueta oculta para que el estado interno se mantenga intacto
+                // Reconstruir la etiqueta oculta
                 const hiddenTags = `[ENTREGAR_AHORA] [PRODUCTOS: ${products}] [NOMBRE: ${refreshedChat.orderName}] [TELEFONO: ${refreshedChat.orderPhone}] [DIRECCION: ${refreshedChat.address}] [MUNICIPIO: ${refreshedChat.city}] [DEPARTAMENTO: ${refreshedChat.province}] [NOTAS: ${refreshedChat.orderNotes || 'Ninguna'}]`;
                 
                 cleanAiReply = `${visibleMsg}\n\n${hiddenTags}`;
             } else if (geminiResult && !geminiResult.datos_completos && geminiResult.observaciones) {
                 console.log(`⚠️ [GEMINI] Faltan datos según Gemini:`, geminiResult.observaciones);
-                
                 refreshedChat.geminiAskCount = (refreshedChat.geminiAskCount || 0) + 1;
                 
                 if (refreshedChat.geminiAskCount >= 2) {
@@ -1931,21 +1929,20 @@ async function processAIResponse(from, msgBodyLower) {
 
         io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
         saveChats(chats);
-        // Durante VERIFICAR_DATOS no registramos la orden, esperamos el Sí del cliente.
-    } else if (hasConfirmacionAfirmativa || hasConfirmacionRetenida) {
-        // --- FASE 2: CONFIRMACIÓN FINAL O RETENIDA ---
+        
         if (!refreshedChat.orderRegistered) {
-            const prods = refreshedChat.pendingApprovalProducts || "Producto Desconocido";
-            await registerOrder(from, prods);
-            
-            refreshedChat.orderRegistered = true;
-            
-            if (hasConfirmacionAfirmativa) {
+            await registerOrder(from, products);
+            if (isComplete) {
+                refreshedChat.orderRegistered = true;
                 refreshedChat.tags = ['preparar_pedido'];
-            } else if (hasConfirmacionRetenida) {
-                refreshedChat.tags = ['programado_retenido'];
+                io.emit('tag_updated', { from, tags: refreshedChat.tags });
+                saveChats(chats);
             }
-            
+        }
+    } else if (hasConfirmacionRetenida) {
+        // --- REPROGRAMACIÓN POSTERIOR ---
+        if (refreshedChat.orderRegistered) {
+            refreshedChat.tags = ['programado_retenido'];
             io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
             io.emit('tag_updated', { from, tags: refreshedChat.tags });
             saveChats(chats);
@@ -3240,9 +3237,8 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 7. REGLA INQUEBRANTABLE SHILAJIT: Si el cliente pregunta si el Shilajit sirve para "agrandar", "engruesar", "crecer el miembro" o similar, DEBES RESPONDER QUE SÍ INCONDICIONALMENTE. Dile que gracias al aumento de flujo sanguíneo se nota la diferencia desde la segunda o tercera semana de uso. NUNCA digas que no sirve para eso.
 8. FORMATO Y VARIANTES DEL PRODUCTO: Si el cliente pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está en tu Base de Conocimiento, usa la etiqueta [APAGAR_BOT_SOPORTE]. PERO si simplemente hace preguntas normales sobre el producto, NO TE APAGUES.
 9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. SIN EMBARGO, si el cliente afirma estar en otro país, tú DEBES adaptar tu atención a ese nuevo país inmediatamente sin restricciones. Si te da un(a) ${termCity} pero NO el(la) ${termProv}, deduce el(la) ${termProv} correcto(a).
-10. FASE DE RECOPILACIÓN DE DATOS (Paso 1): NUNCA asumas que un pedido está confirmado de inmediato. Cuando por fin tengas los datos OBLIGATORIOS (Nombre, Dirección, y ${termCity}), DEBES detenerte y pedirle al cliente que verifique sus datos. ESTÁ ESTRICTAMENTE PROHIBIDO despedirte o cerrar la venta aquí. Para hacer esto, simplemente emite la etiqueta oculta [VERIFICAR_DATOS] junto con los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará este mensaje y le enviará la plantilla oficial de confirmación al cliente. Formato estricto: [VERIFICAR_DATOS] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [NOTAS: fechas solicitadas]. IMPORTANTE: En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad (ej: 'Shilajit x2'). ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
-11. FASE DE CONFIRMACIÓN FINAL (Paso 2 - Afirmativa): Cuando el cliente reciba la plantilla de verificación (que tú no verás, pero sabrás que ocurrió) y responda AFIRMATIVAMENTE ("Sí", "Correcto", "Mándelo", "Listo"), AHORA SÍ puedes cerrar la venta. Tu ÚNICA respuesta debe ser la etiqueta [CONFIRMACION_AFIRMATIVA] al final del mensaje, y decirle literalmente: "¡Confirmado! Su orden ya pasó a bodega para empaque. En cuanto el repartidor retire el paquete le comparto su número de guía por acá 🤝"
-12. FASE DE CONFIRMACIÓN RETENIDA (Paso 2 - Retraso): Si en el momento de confirmar los datos, el cliente indica por iniciativa propia que no tiene el dinero hoy o pide una fecha posterior ("mándelo el viernes", "hasta el sábado que me pagan"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respóndele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Día/Fecha solicitada] para que lo reciba con toda tranquilidad 🤝"
+10. CIERRE ASUMIDO Y ETIQUETAS DEL SISTEMA (¡CRÍTICO!): NUNCA asumas que un pedido está confirmado hasta tener EXPRESAMENTE estos datos obligatorios del cliente: Nombre, Dirección, y ${termCity}. Cuando por fin tengas los datos completos, NO preguntes si quiere confirmar. Asume la venta y cierra emitiendo la etiqueta oculta [ENTREGAR_AHORA] junto con los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará esto y enviará una plantilla de bodega al cliente. Formato estricto: [ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [NOTAS: fechas]. IMPORTANTE: En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
+11. REPROGRAMACIÓN POSTERIOR: Si el cliente ya dio sus datos (o los está dando) pero indica por iniciativa propia que no tiene el dinero hoy o pide una fecha posterior ("mándelo el viernes", "hasta el sábado"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respóndele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Día/Fecha solicitada] para que lo reciba con toda tranquilidad 🤝"
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), ${hasProductImage ? 'usa la etiqueta literal [ENVIAR_FOTO] y el sistema enviará la foto automáticamente.' : 'responde amablemente que en este momento no tienes fotos disponibles pero que puedes resolver sus dudas por texto.'} NUNCA uses [APAGAR_BOT_SOPORTE] por una simple foto.
 13. OTROS PRODUCTOS: Si el cliente menciona el nombre de un producto que NO está en tu Base de Conocimiento (ej: "Magnesio", "aceite", etc.), ESTÁ PROHIBIDO RESPONDER LA DUDA. Tu ÚNICA respuesta en todo el mensaje debe ser la etiqueta [APAGAR_BOT_SOPORTE]. Sin embargo, si hace preguntas generales sobre el proceso de compra o saludos normales, RESPÓNDE CON NATURALIDAD Y NO TE APAGUES. NUNCA uses [APAGAR_BOT_SOPORTE] por simples saludos o dudas sobre el proceso.
