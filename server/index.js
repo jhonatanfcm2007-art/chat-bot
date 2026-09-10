@@ -10,6 +10,7 @@ import OpenAI from 'openai';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { normalizarDireccionConGemini } from './services/geoNormalizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1881,8 +1882,41 @@ async function processAIResponse(from, msgBodyLower) {
             refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
         }
         
-        const isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
+        let isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
         
+        // --- NORMALIZACIÓN CON GEMINI ---
+        if (isComplete && process.env.GEMINI_API_KEY) {
+            console.log(`🧠 [GEMINI] Interceptando dirección para normalizar: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}`);
+            const paisContexto = getCountryFromPhone(from);
+            const rawAddress = `${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}. Ref: ${refreshedChat.references || ''}`;
+            const geminiResult = await normalizarDireccionConGemini(rawAddress, paisContexto);
+            
+            if (geminiResult && geminiResult.datos_completos) {
+                console.log(`✅ [GEMINI] Dirección normalizada exitosamente:`, geminiResult);
+                refreshedChat.address = geminiResult.direccion_estandarizada || refreshedChat.address;
+                refreshedChat.city = geminiResult.municipio_canton || refreshedChat.city;
+                refreshedChat.province = geminiResult.departamento_provincia || refreshedChat.province;
+                if (geminiResult.observaciones) refreshedChat.orderNotes = (refreshedChat.orderNotes ? refreshedChat.orderNotes + ' | ' : '') + geminiResult.observaciones;
+
+                // Extraer el precio que había calculado GPT (buscando algo como Q155, L999, ₡18000, $25)
+                const priceMatch = cleanAiReply.match(/([Q\$\L\₡]\s*[\d,\.]+)/);
+                const estimatedPrice = priceMatch ? priceMatch[0] : 'efectivo al repartidor';
+
+                // Sobrescribir el mensaje que verá el cliente
+                const visibleMsg = `¡Excelente, ya tengo sus datos listos en el sistema! 📦\n\n📍 Entrega en: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}\n💵 Total a pagar al recibir: ${estimatedPrice}\n🚚 Tiempo estimado: Entrega entre mañana y pasado mañana.\n\n¿Estará disponible en esa dirección con el efectivo listo para recibir, o prefiere que lo programemos para un día específico?`;
+                
+                // Reconstruir la etiqueta oculta para que el estado interno se mantenga intacto
+                const hiddenTags = `[ENTREGAR_AHORA] [PRODUCTOS: ${products}] [NOMBRE: ${refreshedChat.orderName}] [TELEFONO: ${refreshedChat.orderPhone}] [DIRECCION: ${refreshedChat.address}] [MUNICIPIO: ${refreshedChat.city}] [DEPARTAMENTO: ${refreshedChat.province}] [NOTAS: ${refreshedChat.orderNotes || 'Ninguna'}]`;
+                
+                cleanAiReply = `${visibleMsg}\n\n${hiddenTags}`;
+            } else if (geminiResult && !geminiResult.datos_completos && geminiResult.observaciones) {
+                console.log(`⚠️ [GEMINI] Faltan datos según Gemini:`, geminiResult.observaciones);
+                cleanAiReply = `Disculpe, para poder agendar su envío necesitamos una aclaración: ${geminiResult.observaciones}`;
+                isComplete = false; // Bloquear el registro de la orden hasta aclarar
+            }
+        }
+        // --- FIN NORMALIZACIÓN ---
+
         io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
         saveChats(chats);
         
