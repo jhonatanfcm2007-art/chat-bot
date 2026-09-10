@@ -538,6 +538,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                     {chatSessions.length} Resultados
                   </span>
                 )}
+                
+                {filterTag === 'preparar_pedido' && (
+                  <a 
+                    href={`${serverUrl}/api/export-dropi`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Exportar estos pedidos para Dropi (CSV)"
+                    className="flex items-center justify-center w-7 h-7 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">download</span>
+                  </a>
+                )}
              </div>
           </div>
           

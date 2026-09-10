@@ -2595,6 +2595,62 @@ app.get('/api/providers', (req, res) => res.json(providers));
 app.post('/api/providers', (req, res) => { providers = req.body; saveProviders(providers); io.emit('providers_updated', providers); res.json({success:true}); });
 
 app.get('/api/settings', (req, res) => res.json(settings));
+
+app.get('/api/export-dropi', (req, res) => {
+    // Filtrar los chats que tienen 'preparar_pedido'
+    const exportableChats = Object.values(chats).filter(chat => chat.tags && chat.tags.includes('preparar_pedido'));
+
+    // Generar CSV (Columnas requeridas por Dropi)
+    let csvContent = "ID del producto,Cantidad,Precio de venta / COD,Nombre,Apellido,Correo (opcional),Código de área,Teléfono,Departamento,Ciudad,Dirección,Punto de referencia,Indicaciones (opcional)\n";
+
+    exportableChats.forEach(chat => {
+        // Parsear nombres
+        const nameParts = (chat.orderName || 'Sin Nombre').split(' ');
+        const nombre = nameParts[0] || '';
+        const apellido = nameParts.slice(1).join(' ') || '';
+
+        // Parsear teléfono y código de área
+        let rawPhone = (chat.orderPhone || '').replace(/\D/g, ''); // Limpiar símbolos
+        let areaCode = "503"; // Default El Salvador si no coincide
+        let phoneNum = rawPhone;
+        
+        if (rawPhone.startsWith("503") || rawPhone.startsWith("504") || rawPhone.startsWith("506")) { 
+            areaCode = rawPhone.substring(0, 3); 
+            phoneNum = rawPhone.substring(3); 
+        } else if (rawPhone.startsWith("57")) { 
+            areaCode = "57"; 
+            phoneNum = rawPhone.substring(2); 
+        }
+
+        // Parsear producto y cantidad
+        // Ej: pendingApprovalProducts = "Shilajit x2"
+        let prodName = "";
+        let qty = 1;
+        
+        if (chat.pendingApprovalProducts) {
+            prodName = chat.pendingApprovalProducts.split(' x')[0].trim();
+            const matchQty = chat.pendingApprovalProducts.match(/x\s*(\d+)/i);
+            if (matchQty) qty = parseInt(matchQty[1]);
+        }
+
+        // Precio
+        let precio = 0; // Dropi a veces asume que 0 = precio del sistema. Dejar en 0 o extraer si es necesario.
+        
+        // Direcciones y limpieza de comas para CSV
+        const dep = (chat.province || '').replace(/,/g, '');
+        const ciudad = (chat.city || '').replace(/,/g, '');
+        const dir = (chat.address || '').replace(/,/g, '');
+        const ref = (chat.references || '').replace(/,/g, '');
+        const notas = (chat.orderNotes || '').replace(/,/g, '');
+
+        csvContent += `"${prodName}","${qty}","${precio}","${nombre}","${apellido}","","${areaCode}","${phoneNum}","${dep}","${ciudad}","${dir}","${ref}","${notas}"\n`;
+    });
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('pedidos_dropi.csv');
+    return res.send(csvContent);
+});
+
 app.get('/api/chats', (req, res) => {
     // Para evitar cuellos de botella en Socket.io con bases de datos grandes,
     // el frontend descarga el payload inicial mediante HTTP GET
