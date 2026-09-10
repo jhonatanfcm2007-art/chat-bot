@@ -332,6 +332,80 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
 
+  const exportFilteredToDropi = (e) => {
+    e.preventDefault();
+    if (chatSessions.length === 0) {
+      alert("No hay pedidos para exportar con los filtros actuales.");
+      return;
+    }
+    
+    let csvContent = "ID del producto,Cantidad,Precio de venta / COD,Nombre,Apellido,Correo (opcional),Código de área,Teléfono,Departamento,Ciudad,Dirección,Punto de referencia,Indicaciones (opcional)\n";
+
+    chatSessions.forEach(chat => {
+        // Only export if it really has the tag, or just trust the filter? We trust the filter.
+        const nameParts = (chat.orderName || chat.customerName || 'Sin Nombre').split(' ');
+        const nombre = nameParts[0] || '';
+        const apellido = nameParts.slice(1).join(' ') || '';
+
+        let rawPhone = (chat.orderPhone || String(chat.from).split('@')[0] || '').replace(/\D/g, ''); 
+        let areaCode = "503"; 
+        let phoneNum = rawPhone;
+        
+        if (rawPhone.startsWith("503") || rawPhone.startsWith("504") || rawPhone.startsWith("506")) { 
+            areaCode = rawPhone.substring(0, 3); 
+            phoneNum = rawPhone.substring(3); 
+        } else if (rawPhone.startsWith("57")) { 
+            areaCode = "57"; 
+            phoneNum = rawPhone.substring(2); 
+        }
+
+        let prodName = "";
+        let qty = 1;
+        
+        if (chat.pendingApprovalProducts) {
+            prodName = chat.pendingApprovalProducts.split(' x')[0].trim();
+            const matchQty = chat.pendingApprovalProducts.match(/x\s*(\d+)/i);
+            if (matchQty) qty = parseInt(matchQty[1]);
+        } else if (chat.assignedProduct) {
+            prodName = chat.assignedProduct.trim();
+        }
+
+        let precio = 0; 
+        
+        const cleanCSV = (str) => {
+            if (!str) return '';
+            let cleaned = str.toString().replace(/"/g, '""').replace(/\n/g, ' ');
+            if (cleaned.includes(',') || cleaned.includes('"')) return `"${cleaned}"`;
+            return cleaned;
+        };
+
+        const col1 = cleanCSV(prodName);
+        const col2 = qty;
+        const col3 = precio;
+        const col4 = cleanCSV(nombre);
+        const col5 = cleanCSV(apellido);
+        const col6 = ""; 
+        const col7 = areaCode;
+        const col8 = phoneNum;
+        const col9 = cleanCSV(chat.province || chat.departamento || '');
+        const col10 = cleanCSV(chat.city || chat.municipio || '');
+        const col11 = cleanCSV(chat.address || '');
+        const col12 = cleanCSV(chat.references || '');
+        const col13 = cleanCSV(chat.orderNotes || chat.observaciones || '');
+
+        csvContent += `${col1},${col2},${col3},${col4},${col5},${col6},${col7},${col8},${col9},${col10},${col11},${col12},${col13}\n`;
+    });
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `pedidos_dropi_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleSellToCustomer = async () => {
     if (!selectedSaleAccount) return;
     const accountToSell = availableInventory.find(a => String(a.id) === String(selectedSaleAccount));
@@ -395,16 +469,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                 </button>
 
                 {filterTag === 'preparar_pedido' && (
-                  <a 
-                    href={`${serverUrl}/api/export-dropi`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                  <button 
+                    onClick={exportFilteredToDropi}
                     title="Exportar pedidos Dropi (CSV)"
                     className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap bg-green-500 text-white hover:bg-green-600 shadow-sm animate-pulse-once"
                   >
                     <span className="material-symbols-outlined text-sm">download</span>
                     Dropi CSV
-                  </a>
+                  </button>
                 )}
 
                 <button 
