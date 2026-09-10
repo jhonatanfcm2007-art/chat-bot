@@ -384,18 +384,31 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       <section className={`w-full md:w-[400px] flex-shrink-0 flex flex-col bg-white overflow-hidden relative z-10 border-r border-outline-variant ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-5 pb-2">
           <div className="flex items-center justify-between mb-4">
-             <div className="relative flex items-center gap-2">
+             <div className="relative flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); setIsProductMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterTag !== 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filterTag !== 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterTag !== 'all' ? 'filter_list_off' : 'filter_list'}</span>
                   {filterTag !== 'all' ? TAG_UI[filterTag]?.label : 'Filtrar'}
                 </button>
 
+                {filterTag === 'preparar_pedido' && (
+                  <a 
+                    href={`${serverUrl}/api/export-dropi`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Exportar pedidos Dropi (CSV)"
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap bg-green-500 text-white hover:bg-green-600 shadow-sm animate-pulse-once"
+                  >
+                    <span className="material-symbols-outlined text-sm">download</span>
+                    Dropi CSV
+                  </a>
+                )}
+
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsProductMenuOpen(!isProductMenuOpen); setIsFilterMenuOpen(false); setIsCountryMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterProduct !== 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filterProduct !== 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterProduct !== 'all' ? 'inventory_2' : 'inventory'}</span>
                   {filterProduct !== 'all' ? filterProduct : 'Producto'}
@@ -403,7 +416,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsCountryMenuOpen(!isCountryMenuOpen); setIsFilterMenuOpen(false); setIsProductMenuOpen(false); setIsOwnerMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${filterCountry !== 'all' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filterCountry !== 'all' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   <span className="material-symbols-outlined text-sm">{filterCountry !== 'all' ? 'public' : 'public'}</span>
                   {filterCountry !== 'all' ? (filterCountry === '503' ? 'El Salvador' : filterCountry === '504' ? 'Honduras' : filterCountry === '502' ? 'Guatemala' : filterCountry === '56' ? 'Chile' : filterCountry) : 'País'}
@@ -537,18 +550,6 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                   <span className="text-xs font-medium bg-primary-light text-primary px-2 py-0.5 rounded-md">
                     {chatSessions.length} Resultados
                   </span>
-                )}
-                
-                {filterTag === 'preparar_pedido' && (
-                  <a 
-                    href={`${serverUrl}/api/export-dropi`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    title="Exportar estos pedidos para Dropi (CSV)"
-                    className="flex items-center justify-center w-7 h-7 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-lg">download</span>
-                  </a>
                 )}
              </div>
           </div>
