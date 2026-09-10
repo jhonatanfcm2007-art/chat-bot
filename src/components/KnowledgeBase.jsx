@@ -237,6 +237,17 @@ const KnowledgeBase = ({ serverUrl }) => {
                     <option value="Daniel">Daniel</option>
                   </select>
                 </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">ID en Dropi (Exportación CSV)</label>
+                  <input 
+                    type="text"
+                    value={editingProduct.dropiId || ''}
+                    onChange={e => setEditingProduct({...editingProduct, dropiId: e.target.value})}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all bg-sky-50"
+                    placeholder="Ej. ID-XUF9P"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Este código se usará en la primera columna del CSV de exportación.</p>
+                </div>
               </div>
 
               <div>

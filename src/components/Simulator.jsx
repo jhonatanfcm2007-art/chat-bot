@@ -370,6 +370,9 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             prodName = chat.assignedProduct.trim();
         }
 
+        const kbProd = knowledgeBaseDb.find(p => p.name.trim() === prodName);
+        const finalProductId = kbProd && kbProd.dropiId ? kbProd.dropiId : prodName;
+
         let precio = 0; 
         
         const cleanCSV = (str) => {
@@ -379,7 +382,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
             return cleaned;
         };
 
-        const col1 = cleanCSV(prodName);
+        const col1 = cleanCSV(finalProductId);
         const col2 = qty;
         const col3 = precio;
         const col4 = cleanCSV(nombre);
