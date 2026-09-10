@@ -31,12 +31,13 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const prevSelectedChatRef = useRef(selectedChat);
   const prevChatsLengthRef = useRef(0);
 
-  const TAG_UI = {
+    const TAG_UI = {
     'pagado': { label: 'Pagado', color: '#10B981', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
     'pago-pendiente': { label: 'Pago Pendiente', color: '#F59E0B', classes: 'bg-amber-50 text-amber-700 border-amber-200/60' },
     'soporte': { label: 'Soporte', color: '#64748B', classes: 'bg-slate-50 text-slate-600 border-slate-200/60' },
     'interesado': { label: 'Interesado', color: '#6C5CE7', classes: 'bg-primary-light text-primary border-primary/20' },
     'preparar_pedido': { label: 'Preparar Pedido', color: '#0EA5E9', classes: 'bg-sky-50 text-sky-600 border-sky-200/60' },
+    'programado_retenido': { label: 'Programado / Retenido', color: '#D946EF', classes: 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200/60' },
     'pedido_preparado': { label: 'Pedido Preparado', color: '#2563EB', classes: 'bg-blue-50 text-blue-700 border-blue-200/60' },
     'guia_enviada': { label: 'Guía Enviada', color: '#8B5CF6', classes: 'bg-violet-50 text-violet-600 border-violet-200/60' },
     'viajando_destino': { label: 'Viajando a Destino', color: '#3B82F6', classes: 'bg-blue-50 text-blue-600 border-blue-200/60' },
