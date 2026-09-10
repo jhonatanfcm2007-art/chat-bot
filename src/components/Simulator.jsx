@@ -384,7 +384,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       <section className={`w-full md:w-[400px] flex-shrink-0 flex flex-col bg-white overflow-hidden relative z-10 border-r border-outline-variant ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-5 pb-2">
           <div className="flex items-center justify-between mb-4">
-             <div className="relative flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+             <div className="relative flex flex-wrap items-center gap-2 pb-1">
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsFilterMenuOpen(!isFilterMenuOpen); setIsProductMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${filterTag !== 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
