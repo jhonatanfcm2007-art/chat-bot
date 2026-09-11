@@ -1331,7 +1331,7 @@ async function createShopifyOrder(chat, products) {
                 customer: {
                     first_name: firstName,
                     last_name: lastName,
-                    phone: finalPhone
+                    email: `${finalPhone.replace('+', '')}@whatsapp.bot`
                 },
                 note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nDepto Detectado: ${provinceVal}\nReferencias: ${chat.references || 'No especificadas'}`,
                 tags: 'whatsapp-bot, contraentrega',
