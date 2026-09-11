@@ -1355,7 +1355,7 @@ async function createShopifyOrder(chat, products) {
         }
     } catch (e) {
         console.error('❌ Excepción Shopify:', e);
-        return { success: false, error: e.message };
+        return { success: false, error: `${e.message} (URL intentada: https://${SHOPIFY_URL.replace(/^https?:\/\//, '').replace(/\/$/, '').trim()}/admin/api/2024-01/orders.json)` };
     }
 }
 
