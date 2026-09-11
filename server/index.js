@@ -1106,7 +1106,18 @@ async function createShopifyOrder(chat, products) {
     }
 
     // SOBRESCRIBIR con credenciales específicas del producto si existen
-    const prod = knowledgeBaseDb.find(p => p.name === chat.assignedProduct);
+    const searchName = chat.assignedProduct || products || '';
+    let prod = knowledgeBaseDb.find(p => p.name === searchName);
+    
+    // Búsqueda difusa por si la IA agregó cantidades (Ej: "1 Frasco Shilajit" vs "Shilajit")
+    if (!prod) {
+        prod = knowledgeBaseDb.find(p => {
+            const lowerKBName = p.name.toLowerCase();
+            const lowerSearchName = searchName.toLowerCase();
+            return lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+        });
+    }
+
     let targetPricesText = '';
     
     if (prod) {
@@ -1147,6 +1158,11 @@ async function createShopifyOrder(chat, products) {
             SHOPIFY_URL = prod.shopifyStoreUrl;
             SHOPIFY_TOKEN = prod.shopifyAccessToken;
             PRODUCT_ID = prod.shopifyProductId || PRODUCT_ID;
+        } else if (storesDb.length > 0) {
+            // Fallback real a la Tienda Global (la primera configurada) si no hay legacy
+            SHOPIFY_URL = storesDb[0].shopifyStoreUrl;
+            SHOPIFY_TOKEN = storesDb[0].shopifyAccessToken;
+            PRODUCT_ID = targetProductId || PRODUCT_ID;
         }
     }
 
