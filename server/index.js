@@ -1256,7 +1256,11 @@ async function createShopifyOrder(chat, products) {
 
         const isHN = countryISO === 'HN';
         const finalZip = isHN ? '' : '00000';
-        const addr2 = chat.references ? (isHN ? `${chat.references} - Depto: ${provinceVal}` : chat.references) : (isHN ? `Depto: ${provinceVal}` : '');
+        
+        // Juntar dirección y referencias en address1 para evitar que SoyDrop se bloquee al leer address2
+        const refText = chat.references ? ` - Ref: ${chat.references}` : '';
+        const hnText = isHN ? ` (Depto: ${provinceVal})` : '';
+        const combinedAddress = `${chat.address || 'Pendiente de confirmar'}${refText}${hnText}`;
 
         const orderData = {
             order: {
@@ -1264,8 +1268,8 @@ async function createShopifyOrder(chat, products) {
                 shipping_address: {
                     first_name: firstName,
                     last_name: lastName,
-                    address1: chat.address || 'Pendiente de confirmar',
-                    address2: addr2,
+                    address1: combinedAddress.substring(0, 250), // Limitar longitud por seguridad
+                    address2: '', // SE DEJA VACÍO PARA NO ROMPER INTEGRACIONES
                     city: chat.city || 'Ciudad',
                     province: provinceVal,
                     zip: finalZip,
@@ -1275,8 +1279,8 @@ async function createShopifyOrder(chat, products) {
                 billing_address: {
                     first_name: firstName,
                     last_name: lastName,
-                    address1: chat.address || 'Pendiente de confirmar',
-                    address2: addr2,
+                    address1: combinedAddress.substring(0, 250),
+                    address2: '',
                     city: chat.city || 'Ciudad',
                     province: provinceVal,
                     zip: finalZip,
