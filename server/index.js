@@ -1140,21 +1140,20 @@ async function createShopifyOrder(chat, products) {
         const detectPhone = cleanOrderPhone.length > 8 ? cleanOrderPhone : cleanFrom;
         
         // Inferir el país: 1. Desde la IA, 2. Desde el prefijo
-        if (chat.country && chat.country.length === 2) {
-            countryISO = chat.country.toUpperCase();
-        } else if (detectPhone.startsWith('504')) {
-            countryISO = 'HN';
-        } else if (detectPhone.startsWith('503')) {
-            countryISO = 'SV';
-        } else if (detectPhone.startsWith('506')) {
-            countryISO = 'CR';
-        } else if (detectPhone.startsWith('56')) {
-            countryISO = 'CL';
-        } else if (detectPhone.startsWith('57')) {
-            countryISO = 'CO';
-        } else {
-            countryISO = 'GT'; // Fallback
-        }
+        let aiCountry = chat.country ? chat.country.toUpperCase().trim() : '';
+        if (aiCountry === 'HN' || aiCountry.includes('HONDURAS')) countryISO = 'HN';
+        else if (aiCountry === 'CO' || aiCountry.includes('COLOMBIA')) countryISO = 'CO';
+        else if (aiCountry === 'GT' || aiCountry.includes('GUATEMALA')) countryISO = 'GT';
+        else if (aiCountry === 'SV' || aiCountry.includes('SALVADOR')) countryISO = 'SV';
+        else if (aiCountry === 'CR' || aiCountry.includes('COSTA')) countryISO = 'CR';
+        else if (aiCountry === 'CL' || aiCountry.includes('CHILE')) countryISO = 'CL';
+        else if (aiCountry.length === 2) countryISO = aiCountry;
+        else if (detectPhone.startsWith('504')) countryISO = 'HN';
+        else if (detectPhone.startsWith('503')) countryISO = 'SV';
+        else if (detectPhone.startsWith('506')) countryISO = 'CR';
+        else if (detectPhone.startsWith('56')) countryISO = 'CL';
+        else if (detectPhone.startsWith('57')) countryISO = 'CO';
+        else countryISO = 'GT'; // Fallback
         
         let targetStoreId = prod.defaultStoreId;
         let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
