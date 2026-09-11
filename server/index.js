@@ -1107,15 +1107,28 @@ async function createShopifyOrder(chat, products) {
 
     // SOBRESCRIBIR con credenciales específicas del producto si existen
     const searchName = chat.assignedProduct || products || '';
-    let prod = knowledgeBaseDb.find(p => p.name === searchName);
+    
+    // FILTRAR PRIMERO POR LA LÍNEA DE WHATSAPP (Evita mezclar tiendas si hay varios productos con el mismo nombre)
+    const lineProducts = knowledgeBaseDb.filter(p => {
+        const pLine = p.line || '1';
+        return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
+    });
+
+    let prod = lineProducts.find(p => p.name === searchName);
     
     // Búsqueda difusa por si la IA agregó cantidades (Ej: "1 Frasco Shilajit" vs "Shilajit")
     if (!prod) {
-        prod = knowledgeBaseDb.find(p => {
+        prod = lineProducts.find(p => {
+            if (!p.name) return false;
             const lowerKBName = p.name.toLowerCase();
             const lowerSearchName = searchName.toLowerCase();
             return lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
         });
+    }
+
+    // Si aún no lo encuentra en la línea, buscar en toda la base (fallback)
+    if (!prod) {
+        prod = knowledgeBaseDb.find(p => p.name === searchName);
     }
 
     let targetPricesText = '';
