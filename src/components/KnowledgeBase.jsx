@@ -342,8 +342,9 @@ const KnowledgeBase = ({ serverUrl }) => {
                       value={editingProduct.defaultStoreId || ''}
                       onChange={e => setEditingProduct({...editingProduct, defaultStoreId: e.target.value})}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
+                      required
                     >
-                      <option value="">Usar Tienda Global (Por defecto)</option>
+                      <option value="" disabled>-- Selecciona una Tienda --</option>
                       {stores.map(store => (
                         <option key={store.id} value={store.id}>
                           {store.owner} - {store.name}

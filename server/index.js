@@ -1158,11 +1158,6 @@ async function createShopifyOrder(chat, products) {
             SHOPIFY_URL = prod.shopifyStoreUrl;
             SHOPIFY_TOKEN = prod.shopifyAccessToken;
             PRODUCT_ID = prod.shopifyProductId || PRODUCT_ID;
-        } else if (storesDb.length > 0) {
-            // Fallback real a la Tienda Global (la primera configurada) si no hay legacy
-            SHOPIFY_URL = storesDb[0].shopifyStoreUrl;
-            SHOPIFY_TOKEN = storesDb[0].shopifyAccessToken;
-            PRODUCT_ID = targetProductId || PRODUCT_ID;
         }
     }
 
