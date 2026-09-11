@@ -1126,13 +1126,22 @@ async function createShopifyOrder(chat, products) {
         const cleanOrderPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : '';
         const detectPhone = cleanOrderPhone.length > 8 ? cleanOrderPhone : cleanFrom;
         
-        // Inferir el país por el prefijo del cliente o del teléfono de la orden
-        if (detectPhone.startsWith('504')) countryISO = 'HN';
-        else if (detectPhone.startsWith('503')) countryISO = 'SV';
-        else if (detectPhone.startsWith('506')) countryISO = 'CR';
-        else if (detectPhone.startsWith('56')) countryISO = 'CL';
-        else if (detectPhone.startsWith('57')) countryISO = 'CO';
-        else countryISO = 'GT'; // Fallback
+        // Inferir el país: 1. Desde la IA, 2. Desde el prefijo
+        if (chat.country && chat.country.length === 2) {
+            countryISO = chat.country.toUpperCase();
+        } else if (detectPhone.startsWith('504')) {
+            countryISO = 'HN';
+        } else if (detectPhone.startsWith('503')) {
+            countryISO = 'SV';
+        } else if (detectPhone.startsWith('506')) {
+            countryISO = 'CR';
+        } else if (detectPhone.startsWith('56')) {
+            countryISO = 'CL';
+        } else if (detectPhone.startsWith('57')) {
+            countryISO = 'CO';
+        } else {
+            countryISO = 'GT'; // Fallback
+        }
         
         let targetStoreId = prod.defaultStoreId;
         let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
@@ -1883,6 +1892,7 @@ async function processAIResponse(from, msgBodyLower) {
         const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
         const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
         const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
+        const paisMatch = cleanAiReply.match(/\[PAIS:?\s*([^\]]+)\]/i);
         const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
         const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
         
@@ -1891,6 +1901,8 @@ async function processAIResponse(from, msgBodyLower) {
         if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
         if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
         if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
+        if (paisMatch) refreshedChat.country = cleanVal(paisMatch[1]).toUpperCase() || refreshedChat.country;
+        if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
         if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
         if (notesMatch) refreshedChat.orderNotes = cleanVal(notesMatch[1]) || refreshedChat.orderNotes;
         
@@ -1994,7 +2006,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
+    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -3308,7 +3320,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 7. REGLA INQUEBRANTABLE SHILAJIT: Si el cliente pregunta si el Shilajit sirve para "agrandar", "engruesar", "crecer el miembro" o similar, DEBES RESPONDER QUE SÍ INCONDICIONALMENTE. Dile que gracias al aumento de flujo sanguíneo se nota la diferencia desde la segunda o tercera semana de uso. NUNCA digas que no sirve para eso.
 8. FORMATO Y VARIANTES DEL PRODUCTO: Si el cliente pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está en tu Base de Conocimiento, usa la etiqueta [APAGAR_BOT_SOPORTE]. PERO si simplemente hace preguntas normales sobre el producto, NO TE APAGUES.
 9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. SIN EMBARGO, si el cliente afirma estar en otro país, tú DEBES adaptar tu atención a ese nuevo país inmediatamente sin restricciones. Si te da un(a) ${termCity} pero NO el(la) ${termProv}, deduce el(la) ${termProv} correcto(a).
-10. CIERRE ASUMIDO Y ETIQUETAS DEL SISTEMA (¡CRÍTICO!): NUNCA asumas que un pedido está confirmado hasta tener EXPRESAMENTE estos datos obligatorios del cliente: Nombre, Dirección, y ${termCity}. Cuando por fin tengas los datos completos, NO preguntes si quiere confirmar. Asume la venta y cierra emitiendo la etiqueta oculta [ENTREGAR_AHORA] junto con los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará esto y enviará una plantilla de bodega al cliente. Formato estricto: [ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [NOTAS: fechas]. IMPORTANTE: En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
+10. CIERRE ASUMIDO Y ETIQUETAS DEL SISTEMA (¡CRÍTICO!): NUNCA asumas que un pedido está confirmado hasta tener EXPRESAMENTE estos datos obligatorios del cliente: Nombre, Dirección, y ${termCity}. Cuando por fin tengas los datos completos, NO preguntes si quiere confirmar. Asume la venta y cierra emitiendo la etiqueta oculta [ENTREGAR_AHORA] junto con los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará esto y enviará una plantilla de bodega al cliente. Formato estricto: [ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [PAIS: ISO de 2 letras del destino, ej HN, CO, SV, CR, CL, GT] [NOTAS: fechas]. IMPORTANTE: En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
 11. REPROGRAMACIÓN POSTERIOR: Si el cliente ya dio sus datos (o los está dando) pero indica por iniciativa propia que no tiene el dinero hoy o pide una fecha posterior ("mándelo el viernes", "hasta el sábado"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respóndele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Día/Fecha solicitada] para que lo reciba con toda tranquilidad 🤝"
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
 12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), ${hasProductImage ? 'usa la etiqueta literal [ENVIAR_FOTO] y el sistema enviará la foto automáticamente.' : 'responde amablemente que en este momento no tienes fotos disponibles pero que puedes resolver sus dudas por texto.'} NUNCA uses [APAGAR_BOT_SOPORTE] por una simple foto.
