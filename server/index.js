@@ -1146,8 +1146,17 @@ async function createShopifyOrder(chat, products) {
         let targetStoreId = prod.defaultStoreId;
         let targetProductId = prod.defaultShopifyProductId || prod.shopifyProductId;
         
+        // Mapear el ISO al prefijo telefónico para buscar variaciones correctamente
+        let effectivePrefix = detectPhone;
+        if (countryISO === 'HN') effectivePrefix = '504';
+        else if (countryISO === 'SV') effectivePrefix = '503';
+        else if (countryISO === 'CR') effectivePrefix = '506';
+        else if (countryISO === 'GT') effectivePrefix = '502';
+        else if (countryISO === 'CL') effectivePrefix = '56';
+        else if (countryISO === 'CO') effectivePrefix = '57';
+
         if (prod.priceVariations) {
-            const variation = prod.priceVariations.find(v => v.prefix && detectPhone.startsWith(v.prefix.replace(/\D/g, '')));
+            const variation = prod.priceVariations.find(v => v.prefix && effectivePrefix.startsWith(v.prefix.replace(/\D/g, '')));
             if (variation) {
                 if (variation.prices) targetPricesText = variation.prices;
                 if (variation.storeId) targetStoreId = variation.storeId;
