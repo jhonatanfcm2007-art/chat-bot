@@ -1473,6 +1473,34 @@ app.get('/webhook/messenger', (req, res) => {
     else res.sendStatus(403);
 });
 
+// ==========================================
+// WEBHOOK DE SOYDROP (ACTUALIZACIONES DE GUÍA)
+// ==========================================
+app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
+    try {
+        console.log('📦 [SOYDROP WEBHOOK] Notificación recibida:', JSON.stringify(req.body, null, 2));
+        const payload = req.body;
+        
+        // Responder rápido para que SoyDrop no bloquee el webhook (exige respuesta 2xx en < 10s)
+        res.status(200).json({ received: true });
+
+        if (payload.type === 'order.status_changed' && payload.data) {
+            const { status, statusLabel, trackingUrl, shipmentNumber, orderId } = payload.data;
+            
+            console.log(`🚚 Estado actualizado: ${statusLabel} para la orden ${orderId}`);
+            
+            // Aquí agregaremos la lógica para extraer el teléfono y enviar el WhatsApp
+            // Estamos registrando el log primero para ver si SoyDrop envía el teléfono oculto en el payload
+            // o si necesitamos consultar su API usando las llaves (Key ID / Secret).
+        }
+    } catch (error) {
+        console.error('❌ Error procesando webhook de SoyDrop:', error);
+        if (!res.headersSent) {
+            res.status(500).send('Error');
+        }
+    }
+});
+
 app.post('/webhook', async (req, res) => {
     const body = req.body;
     
