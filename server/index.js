@@ -298,7 +298,7 @@ function notifyAdmins(chat, text, type = 'sales') {
     if (targetPhone === '__ADMIN_WA__') {
         const country = chat?.from ? getCountryFromPhone(chat.from) : 'Desconocido';
         const finalMessage = `🌍 *País:* ${country}\n${text}`;
-        const forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
+        const forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 4;
         smartSendMessage(ADMIN_PHONE, finalMessage, forceLine);
         return;
     }
@@ -313,7 +313,7 @@ function notifyAdmins(chat, text, type = 'sales') {
     
     let forceLine = 1;
     if (type === 'support') {
-        forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 3;
+        forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 4;
     }
     
     const sendToSheets = (targetPhone === ADMIN_PHONE) || isFernando;
