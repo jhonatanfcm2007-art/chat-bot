@@ -1892,6 +1892,14 @@ async function processAIResponse(from, msgBodyLower) {
         saveChats(chats);
     }
 
+    // Pasar contexto del usuario (Nombre de WhatsApp y Teléfono) para que no lo pida
+    const cleanPhoneForAI = from.replace(/\D/g, '');
+    const nameForAI = refreshedChat.customerName || 'No especificado';
+    allMessages.push({ 
+        role: 'system', 
+        content: `CONTEXTO DEL USUARIO: Tienes acceso a los datos de WhatsApp del cliente. Su número es "${cleanPhoneForAI}" y su nombre es "${nameForAI}". Asume estos datos como correctos para el pedido y NO se los pidas (a menos que el cliente te dé otros distintos).` 
+    });
+
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
     
     // --- SOPORTE SILENCIOSO (Ignorancia de IA) ---
@@ -3409,7 +3417,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 7. REGLA INQUEBRANTABLE SHILAJIT: Si el cliente pregunta si el Shilajit sirve para "agrandar", "engruesar", "crecer el miembro" o similar, DEBES RESPONDER QUE SÍ INCONDICIONALMENTE. Dile que gracias al aumento de flujo sanguíneo se nota la diferencia desde la segunda o tercera semana de uso. NUNCA digas que no sirve para eso.
 8. FORMATO Y VARIANTES DEL PRODUCTO: Si el cliente pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está en tu Base de Conocimiento, usa la etiqueta [APAGAR_BOT_SOPORTE]. PERO si simplemente hace preguntas normales sobre el producto, NO TE APAGUES.
 9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. SIN EMBARGO, si el cliente afirma estar en otro país, tú DEBES adaptar tu atención a ese nuevo país inmediatamente sin restricciones. Si te da un(a) ${termCity} pero NO el(la) ${termProv}, deduce el(la) ${termProv} correcto(a).
-10. CIERRE ASUMIDO Y ETIQUETAS DEL SISTEMA (¡CRÍTICO!): NUNCA asumas que un pedido está confirmado hasta tener EXPRESAMENTE estos datos obligatorios del cliente: Nombre, Teléfono, Dirección, y ${termCity}. Cuando por fin tengas los datos completos, NO preguntes si quiere confirmar. Asume la venta y cierra emitiendo la etiqueta oculta [ENTREGAR_AHORA] junto con TODOS los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará esto y enviará una plantilla de bodega al cliente.
+10. CIERRE ASUMIDO Y ETIQUETAS DEL SISTEMA (¡CRÍTICO!): Para confirmar un pedido necesitas: Nombre, Teléfono, Dirección, y ${termCity}. ¡OJO! El sistema SIEMPRE te enviará el Nombre y el Teléfono del cliente en un mensaje de "CONTEXTO DEL USUARIO". NO le pidas el nombre ni el teléfono al cliente, asume que esos datos del sistema son los correctos para el envío (a menos que el cliente indique que es para otra persona). Cuando tengas la dirección y municipio, asume la venta y cierra emitiendo la etiqueta oculta [ENTREGAR_AHORA] junto con TODOS los datos recopilados en la ÚLTIMA LÍNEA de tu mensaje. El sistema interceptará esto y enviará una plantilla de bodega al cliente.
 Formato estricto OBLIGATORIO:
 [ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [TELEFONO: número extraído o el prefijo] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [PAIS: ISO de 2 letras del destino, ej HN, CO, SV, CR, CL, GT] [NOTAS: fechas]
 IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
