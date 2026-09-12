@@ -1485,13 +1485,48 @@ app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
         res.status(200).json({ received: true });
 
         if (payload.type === 'order.status_changed' && payload.data) {
-            const { status, statusLabel, trackingUrl, shipmentNumber, orderId } = payload.data;
+            const { status, statusLabel, trackingUrl, shipmentNumber, orderId, orderNumber } = payload.data;
             
-            console.log(`🚚 Estado actualizado: ${statusLabel} para la orden ${orderId}`);
+            console.log(`🚚 Estado actualizado: ${statusLabel} para la orden interna ${orderId} (Ref: ${orderNumber})`);
             
-            // Aquí agregaremos la lógica para extraer el teléfono y enviar el WhatsApp
-            // Estamos registrando el log primero para ver si SoyDrop envía el teléfono oculto en el payload
-            // o si necesitamos consultar su API usando las llaves (Key ID / Secret).
+            // Ignorar los eventos de prueba de SoyDrop
+            if (payload.test) {
+                console.log('ℹ️ Evento de prueba ignorado.');
+                return;
+            }
+
+            // Intentar buscar a quién le pertenece este pedido en nuestra base local de ventas
+            // SoyDrop suele enviar el número de orden de Shopify en 'orderNumber' (ej: "1552" o "#1552")
+            if (orderNumber) {
+                const cleanOrderNum = String(orderNumber).replace('#', '').trim();
+                
+                // Buscar en el array de ventas locales
+                const sale = sales.find(s => {
+                    const cleanRef = String(s.reference || '').replace('#', '').trim();
+                    return cleanRef === cleanOrderNum;
+                });
+
+                if (sale && sale.customerId) {
+                    const to = sale.customerId;
+                    console.log(`✅ ¡Encontramos al cliente! Número: ${to}. Enviando WhatsApp de actualización...`);
+                    
+                    let msg = `📦 *ACTUALIZACIÓN DE TU PEDIDO (${sale.reference})*\n\nHola ${sale.customer}, el estado de tu paquete ha cambiado a: *${statusLabel}*.`;
+                    
+                    if (trackingUrl) {
+                        msg += `\n\n📍 Puedes rastrear tu envío en tiempo real aquí:\n${trackingUrl}`;
+                    }
+                    if (shipmentNumber) {
+                        msg += `\n\n🚚 Número de guía: ${shipmentNumber}`;
+                    }
+                    
+                    msg += `\n\nCualquier duda, estamos a tu disposición.`;
+
+                    // Enviar mensaje de WhatsApp
+                    smartSendMessage(to, msg);
+                } else {
+                    console.log(`⚠️ No se encontró la venta local para la referencia: ${orderNumber}`);
+                }
+            }
         }
     } catch (error) {
         console.error('❌ Error procesando webhook de SoyDrop:', error);
