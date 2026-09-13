@@ -2425,20 +2425,15 @@ async function sendMessageToMessengerAPI(psid, text) {
 }
 
 async function downloadMetaMedia(mediaId, customerPhone) {
-    // Multi-Línea: Usar el token correcto para descargar media
-    let waToken = WHATSAPP_TOKEN;
-    if (customerPhone && chats[customerPhone]) {
-        if (chats[customerPhone]?.waLine === 5 && WHATSAPP_TOKEN_5) waToken = WHATSAPP_TOKEN_5;
-        else if (chats[customerPhone]?.waLine === 4 && WHATSAPP_TOKEN_4) waToken = WHATSAPP_TOKEN_4;
-        else if (chats[customerPhone].waLine === 3 && WHATSAPP_TOKEN_3) waToken = WHATSAPP_TOKEN_3;
-        else if (chats[customerPhone].waLine === 2 && WHATSAPP_TOKEN_2) waToken = WHATSAPP_TOKEN_2;
-    }
+    // Usar la función centralizada para obtener el token correcto
+    const { token: waToken } = getWhatsAppCredentials(customerPhone);
+    
     try {
         console.log(`📡 [META] Paso 1: Obteniendo URL para Media ID: ${mediaId}`);
         const response = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
             headers: { 
                 'Authorization': `Bearer ${waToken}`,
-                'User-Agent': 'curl/7.68.0'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
         const data = await response.json();
@@ -2458,7 +2453,7 @@ async function downloadMetaMedia(mediaId, customerPhone) {
             const mediaRes = await fetch(downloadUrl, {
                 headers: { 
                     'Authorization': `Bearer ${waToken}`,
-                    'User-Agent': 'curl/7.68.0'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 },
                 redirect: 'manual'  // NO seguir redirects automáticamente
             });
