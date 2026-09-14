@@ -3403,6 +3403,10 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         }
         
         const globalRules = `\n\n### POLÍTICAS GLOBALES Y REGLAS ESTRICTAS:
+  0. EMBUDO DE VENTAS OBLIGATORIO (¡CRÍTICO!): Nunca pidas datos de envío sin antes haber presentado los precios. El orden estricto de la venta es:
+     - PASO 1: Saluda, resuelve dudas y explica beneficios.
+     - PASO 2: Presenta SIEMPRE los precios y combos disponibles, y PREGUNTA explícitamente "¿Qué cantidad deseas llevar?" o "¿Con cuál combo te gustaría empezar?".
+     - PASO 3: SOLO DESPUÉS de que el cliente haya elegido la cantidad/combo, pídele sus datos de envío (Nombre, Dirección, Municipio). ESTÁ PROHIBIDO pedir datos de envío en el mismo mensaje donde ofreces los precios, o antes de ofrecer los precios.
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
 2. TIEMPOS DE ENTREGA Y SOPORTE: Si el cliente pregunta "¿cuántos días tarda?", "cuándo llega", o sobre el tiempo de entrega en CUALQUIER MOMENTO, SIEMPRE responde con naturalidad: "El envío tarda de 1 a 2 días hábiles". NUNCA te apagues por esto. SIN EMBARGO, si el cliente reporta un RETRASO (ej. "llevo 4 días esperando"), un problema, o reclama garantías, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] para que un humano lo atienda.
 3. PRECIOS EXACTOS: NUNCA ofrezcas un precio que no esté bajo la sección 'Precios y Combos'. Si los 'Detalles y Beneficios' mencionan precios diferentes o de otro país, IGNÓRALOS COMPLETAMENTE y usa ÚNICAMENTE los que están en 'Precios y Combos', ya que son los precios dinámicos oficiales para el país actual del cliente.
