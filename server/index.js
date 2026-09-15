@@ -1907,7 +1907,7 @@ async function processAIResponse(from, msgBodyLower) {
     const cleanPhoneForAI = from.replace(/\D/g, '');
     allMessages.push({ 
         role: 'system', 
-        content: `CONTEXTO DEL USUARIO: Tienes acceso al número de WhatsApp del cliente: "${cleanPhoneForAI}". ASUME este número para el envío y NO se lo pidas. ¡PERO OJO! NO tienes su nombre real (el nombre de su perfil de WhatsApp suele ser un apodo inútil como "flaca" o "usuario123"). DEBES pedirle su NOMBRE Y APELLIDO real para poder hacer el envío.` 
+        content: `[SISTEMA]: Tienes el teléfono del cliente: "${cleanPhoneForAI}". NUNCA lo pidas. Sobre su nombre: SI el cliente YA lo dijo en la conversación, ÚSALO. Si NO lo ha dicho nunca, pídelo amablemente.` 
     });
 
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
@@ -3453,7 +3453,10 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}` },
-                ...history.map(m => ({ role: m.role==='user'?'user':'assistant', content: m.content||m.body })),
+                ...history.map(m => ({ 
+                    role: m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant'), 
+                    content: m.content || m.body 
+                })),
                 { role: "user", content: message }
             ]
         });
