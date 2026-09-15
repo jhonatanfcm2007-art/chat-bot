@@ -294,12 +294,18 @@ function notifyAdmins(chat, text, type = 'sales') {
 
     if (!targetPhone) return;
 
-    // Productos sin adminPhone o no encontrados → enviar al admin por WhatsApp directamente
+    // Productos sin adminPhone o no encontrados -> enviar al admin por WhatsApp directamente
     if (targetPhone === '__ADMIN_WA__') {
         const country = chat?.from ? getCountryFromPhone(chat.from) : 'Desconocido';
-        const finalMessage = `🌍 *País:* ${country}\n${text}`;
+        const finalMessage = `🌎 *País:* ${country}\n${text}`;
         const forceLine = parseInt(process.env.SUPPORT_WA_LINE) || 4;
-        smartSendMessage(ADMIN_PHONE, finalMessage, forceLine);
+        
+        // Si el admin principal solo quiere notificaciones de la Línea 4, bloqueamos el WhatsApp si no es L4.
+        if (chat && chat.waLine && chat.waLine !== 4) {
+            console.log(`[NOTIFICACIÓN SILENCIADA] Omitiendo WA al admin global (Línea ${chat.waLine} != 4)`);
+        } else {
+            smartSendMessage(ADMIN_PHONE, finalMessage, forceLine);
+        }
         return;
     }
 
@@ -309,7 +315,7 @@ function notifyAdmins(chat, text, type = 'sales') {
         country = getCountryFromPhone(chat.from);
     }
     
-    const finalMessage = `🌍 *País:* ${country}\n${text}`;
+    const finalMessage = `🌎 *País:* ${country}\n${text}`;
     
     let forceLine = 1;
     if (type === 'support') {
@@ -322,7 +328,11 @@ function notifyAdmins(chat, text, type = 'sales') {
         // Enviar a Google Sheets SOLO pedidos y errores de Dropi.
         // Los soportes humanos se siguen mandando por WhatsApp.
         if (type === 'support') {
-            smartSendMessage(targetPhone, finalMessage, forceLine);
+            if (targetPhone === ADMIN_PHONE && chat && chat.waLine && chat.waLine !== 4) {
+                console.log(`[NOTIFICACIÓN SILENCIADA] Omitiendo soporte WA al admin global (Línea ${chat.waLine} != 4)`);
+            } else {
+                smartSendMessage(targetPhone, finalMessage, forceLine);
+            }
             return;
         }
 
