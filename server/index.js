@@ -1136,9 +1136,17 @@ async function createShopifyOrder(chat, products) {
         });
     }
 
-    // Si aún no lo encuentra en la línea, buscar en toda la base (fallback)
+    // Si aún no lo encuentra en la línea, buscar en toda la base (fallback exacto y luego difuso)
     if (!prod) {
         prod = knowledgeBaseDb.find(p => p.name === searchName);
+        if (!prod) {
+            prod = knowledgeBaseDb.find(p => {
+                if (!p.name) return false;
+                const lowerKBName = p.name.toLowerCase();
+                const lowerSearchName = searchName.toLowerCase();
+                return lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+            });
+        }
     }
 
     let targetPricesText = '';
@@ -1193,8 +1201,10 @@ async function createShopifyOrder(chat, products) {
                 SHOPIFY_TOKEN = store.shopifyAccessToken;
                 PRODUCT_ID = targetProductId || PRODUCT_ID;
             }
-        } else if (prod.shopifyStoreUrl && prod.shopifyAccessToken) {
-            // Soporte de compatibilidad hacia atrás
+        } 
+        
+        // Fallback: Si no encontró la tienda o no tiene credenciales, intenta usar las del producto directamente
+        if ((!SHOPIFY_URL || !SHOPIFY_TOKEN) && prod.shopifyStoreUrl && prod.shopifyAccessToken) {
             SHOPIFY_URL = prod.shopifyStoreUrl;
             SHOPIFY_TOKEN = prod.shopifyAccessToken;
             PRODUCT_ID = prod.shopifyProductId || PRODUCT_ID;
