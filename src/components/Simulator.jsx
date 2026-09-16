@@ -11,6 +11,18 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [filterTag, setFilterTag] = useState('all');
   const [showContactInfo, setShowContactInfo] = useState(false);
   
+  const renderMessageText = (text) => {
+    if (!text) return '';
+    const cleaned = text.replace(/\[AUDIO\]:? ?/, '🎤 ');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return cleaned.split(urlRegex).map((part, i) => {
+      if (part.match(urlRegex)) {
+        return <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline break-all">{part}</a>;
+      }
+      return part;
+    });
+  };
+
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [filterProduct, setFilterProduct] = useState('all');
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
@@ -924,7 +936,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                           })()}
 
                           <p className="text-[13px] leading-relaxed font-normal whitespace-pre-wrap">
-                            {msg.content?.replace(/\[AUDIO\]:? ?/, '🎙️ ')}
+                            {renderMessageText(msg.content)}
                           </p>
                           
                           <div className="flex justify-end items-center gap-1 mt-1">

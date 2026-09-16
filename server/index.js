@@ -1721,7 +1721,11 @@ app.post('/webhook', async (req, res) => {
                 msgBody = '[CONTACTOS]';
                 break;
             case 'location':
-                msgBody = '[UBICACIÓN]';
+                if (msg.location && msg.location.latitude && msg.location.longitude) {
+                    msgBody = `[UBICACIÓN] https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}`;
+                } else {
+                    msgBody = '[UBICACIÓN]';
+                }
                 break;
             case 'reaction':
                 msgBody = `[REACCIÓN: ${msg.reaction?.emoji || ''}]`;
