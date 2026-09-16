@@ -1899,7 +1899,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Respuesta IA
-    const allMessages = refreshedChat.messages.slice(-15);
+    const allMessages = refreshedChat.messages.slice(-35);
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
