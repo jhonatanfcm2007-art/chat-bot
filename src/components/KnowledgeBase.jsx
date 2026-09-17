@@ -280,53 +280,64 @@ const KnowledgeBase = ({ serverUrl }) => {
               </div>
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Imagen del Producto (Opcional)</label>
-                <div className="flex items-center gap-4">
-                  {editingProduct.imageUrl ? (
-                    <div className="relative group">
-                      <img src={editingProduct.imageUrl.startsWith('http') ? editingProduct.imageUrl : `${serverUrl}${editingProduct.imageUrl}`} alt="Producto" className="w-16 h-16 object-cover rounded-lg border border-slate-300 shadow-sm" />
-                      <button type="button" onClick={() => setEditingProduct({...editingProduct, imageUrl: ''})} className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow hover:bg-red-600 transition-colors">
-                        <span className="material-symbols-outlined text-[14px]">close</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 bg-slate-200 rounded-lg border border-slate-300 border-dashed flex items-center justify-center text-slate-400">
-                      <span className="material-symbols-outlined">image</span>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-                        
-                        const reader = new FileReader();
-                        reader.onloadend = async () => {
-                          try {
-                            const res = await fetch(`${serverUrl}/api/upload`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                filename: file.name,
-                                base64: reader.result
-                              })
-                            });
-                            const data = await res.json();
-                            if (data.url) {
-                              setEditingProduct({...editingProduct, imageUrl: data.url});
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Imágenes de Bienvenida Automáticas (Opcional)</label>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-3">
+                    {(editingProduct.welcomeImages || []).map((imgUrl, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={imgUrl.startsWith('http') ? imgUrl : `${serverUrl}${imgUrl}`} alt="Producto" className="w-16 h-16 object-cover rounded-lg border border-slate-300 shadow-sm" />
+                        <button type="button" onClick={() => {
+                          const newImages = [...(editingProduct.welcomeImages || [])];
+                          newImages.splice(idx, 1);
+                          setEditingProduct({...editingProduct, welcomeImages: newImages});
+                        }} className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow hover:bg-red-600 transition-colors">
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center">
+                      <label className="cursor-pointer text-sm py-2 px-4 rounded-full border-0 font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px]">upload</span>
+                        Seleccionar fotos
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          multiple
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files);
+                            if (files.length === 0) return;
+                            
+                            const newImages = [...(editingProduct.welcomeImages || [])];
+                            
+                            for (const file of files) {
+                              const reader = new FileReader();
+                              await new Promise((resolve) => {
+                                reader.onloadend = async () => {
+                                  try {
+                                    const res = await fetch(`${serverUrl}/api/upload`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ filename: file.name, base64: reader.result })
+                                    });
+                                    const data = await res.json();
+                                    if (data.url) newImages.push(data.url);
+                                  } catch (err) {
+                                    alert('Error al subir la imagen ' + file.name);
+                                  }
+                                  resolve();
+                                };
+                                reader.readAsDataURL(file);
+                              });
                             }
-                          } catch (err) {
-                            alert('Error al subir la imagen');
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }}
-                      className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">Sube una foto. Si el cliente pide fotos, la IA la enviará automáticamente.</p>
+                            setEditingProduct({...editingProduct, welcomeImages: newImages});
+                            e.target.value = ''; // Reset input
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
+                  <p className="text-xs text-slate-500 mt-1">Sube las fotos de tu producto. Cuando un cliente inicie un chat, el bot le enviará estas imágenes automáticamente antes de responder.</p>
                 </div>
               </div>
 

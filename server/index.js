@@ -1924,6 +1924,31 @@ async function processAIResponse(from, msgBodyLower) {
         content: `[SISTEMA]: Tienes el teléfono del cliente: "${cleanPhoneForAI}". NUNCA lo pidas. Sobre su nombre: SI el cliente YA lo dijo en la conversación, ÚSALO. Si NO lo ha dicho nunca, pídelo amablemente.` 
     });
 
+    // --- AUTOMATIC WELCOME IMAGES ---
+    const userMessagesCount = refreshedChat.messages.filter(m => !m.isMe).length;
+    if (userMessagesCount === 1) {
+        if (refreshedChat.assignedProduct) {
+            const prod = knowledgeBaseDb.find(p => p.name === refreshedChat.assignedProduct);
+            if (prod && prod.welcomeImages && prod.welcomeImages.length > 0) {
+                console.log(`[SISTEMA] Enviando ${prod.welcomeImages.length} imágenes de bienvenida para ${prod.name}`);
+                for (const imgUrl of prod.welcomeImages) {
+                    await smartSendImage(from, imgUrl, "", null);
+                    refreshedChat.messages.push({
+                        id: 'bot-'+Date.now()+Math.random(),
+                        role: 'assistant',
+                        isMe: true,
+                        body: '[IMAGEN AUTOMÁTICA ENVIADA AL CLIENTE]',
+                        content: '[IMAGEN AUTOMÁTICA ENVIADA AL CLIENTE]',
+                        fileUrl: imgUrl,
+                        status: 'sent',
+                        timestampRaw: Date.now()
+                    });
+                }
+                saveChats(chats);
+            }
+        }
+    }
+
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
     
     // --- SOPORTE SILENCIOSO (Ignorancia de IA) ---
@@ -1966,24 +1991,6 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     let cleanAiReply = aiReply;
-
-    // --- ENVÍO DE FOTO AUTOMÁTICA ---
-    const hasFotoTag = /\[ENVIAR_FOTO\]/i.test(aiReply);
-    if (hasFotoTag) {
-        if (refreshedChat.assignedProduct) {
-            const prod = knowledgeBaseDb.find(p => p.name === refreshedChat.assignedProduct);
-            if (prod && prod.imageUrl) {
-                await smartSendImage(from, prod.imageUrl, "", null);
-                refreshedChat.messages.push({
-                    role: 'assistant',
-                    isMe: true,
-                    body: '[FOTO ENVIADA AL CLIENTE]'
-                });
-                cleanAiReply = cleanAiReply.replace(/\[ENVIAR_FOTO\]/gi, '').trim();
-                saveChats(chats);
-            }
-        }
-    }
 
     // --- REGISTRO DE PEDIDO ---
     const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null;
@@ -3449,7 +3456,6 @@ Formato estricto OBLIGATORIO:
 IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
 11. REPROGRAMACIÓN POSTERIOR Y DÍAS HÁBILES: La transportadora trabaja SOLO de Lunes a Sábado. ¡NO HACEMOS ENTREGAS LOS DOMINGOS! Si un cliente pide entrega para un domingo, dile que no es posible y ofrécele amablemente entregar el sábado o el lunes. Si pide fecha posterior válida ("mándelo el viernes"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respóndele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Día/Fecha solicitada] para que lo reciba con toda tranquilidad 🤝"
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
-12. MULTIMEDIA / FOTOS: Si el cliente pide explícitamente ver una foto, imagen o video del producto (ej: "mandame fotos", "quiero ver las pastillas"), ${hasProductImage ? 'usa la etiqueta literal [ENVIAR_FOTO] y el sistema enviará la foto automáticamente.' : 'responde amablemente que en este momento no tienes fotos disponibles pero que puedes resolver sus dudas por texto.'} NUNCA uses [APAGAR_BOT_SOPORTE] por una simple foto.
   13. OTROS PRODUCTOS Y ERRORES ORTOGRÁFICOS: Si el cliente pregunta CLARAMENTE por otra marca o producto totalmente distinto que NO está en tu Base de Conocimiento, ESTÁ PROHIBIDO RESPONDER. Tu ÚNICA respuesta debe ser la etiqueta [APAGAR_BOT_SOPORTE]. ¡PERO OJO! Los clientes cometen muchos errores de ortografía (ej. escribir "say" en vez de "soy", o escribir mal el nombre del producto). Usa el sentido común: si la palabra rara parece un error ortográfico o de tipeo, asume que está hablando de tu producto y CONTINÚA LA VENTA con naturalidad sin apagarte.
 14. MONEDA Y PAÍS: Asegúrate de ofrecer EXCLUSIVAMENTE los precios, promociones y la moneda que hagan sentido con el país donde el cliente indica estar (o en su defecto ${countryContext}). IGNORA los precios de la Base de Conocimiento que pertenezcan a otros países. NUNCA digas que no haces envíos a un país si el cliente te está pidiendo comprar desde allí.
 15. PROHIBIDO DAR CONSEJOS MÉDICOS O EXPLICACIONES: NUNCA sugieras al cliente que consulte a un médico, especialista o profesional de la salud. Si el cliente pregunta si el producto sirve para una enfermedad, síntoma o condición médica y la respuesta NO está en los 'Detalles y Beneficios': NO INVENTES NADA. Tu ÚNICA respuesta debe ser [APAGAR_BOT_SOPORTE]. SIN EMBARGO, si el cliente menciona un síntoma y SÍ tenemos un producto en la Base de Conocimiento diseñado para eso, DEBES recomendárselo y no rechazar su consulta.
@@ -3655,3 +3661,6 @@ process.on('SIGINT', gracefulShutdown);
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
 });
+
+
+
