@@ -8,6 +8,8 @@ import KnowledgeBase from './components/KnowledgeBase';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
+import Login from './components/Login';
+import UsersManager from './components/UsersManager';
 
 import io from 'socket.io-client';
 
@@ -23,6 +25,10 @@ const socket = io(SERVER_URL, {
 });
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('crm_user')) || null; }
+    catch { return null; }
+  });
   const [activeTab, setActiveTab] = useState('simulator');
   const [chats, setChats] = useState({});
   const [selectedChat, setSelectedChat] = useState(null);
@@ -716,7 +722,7 @@ function App() {
       case 'simulator':
         return (
           <Simulator 
-            chats={chats} 
+            chats={filteredChats} 
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
             onSendMessage={handleSendMessage} 
@@ -746,18 +752,24 @@ function App() {
         );
       case 'knowledge_base':
         return <KnowledgeBase serverUrl={SERVER_URL} />;
-      case 'simulator':
+      case 'users':
+        return <UsersManager serverUrl={SERVER_URL} currentUser={currentUser} />;
       default:
         return (
           <Simulator 
-            chats={chats}
-            socket={socket}
-            onSendMessage={handleSendMessage}
-            onAssignProduct={handleAssignProduct}
-            onToggleAI={handleToggleAI}
-            onCloseSale={handleCloseSale}
-            onUploadMedia={handleUploadMedia}
+            chats={filteredChats} 
+            selectedChat={selectedChat} 
+            onSelectChat={setSelectedChat}
+            onSendMessage={handleSendMessage} 
+            accounts={accounts}
+            salesHistory={salesHistory}
+            onSale={handleSale}
+            onUpdateTag={handleUpdateChatTag}
             onDeleteChat={handleDeleteChat}
+            onDeleteMessage={handleDeleteMessage}
+            onBulkClearTags={handleBulkClearTags}
+            onToggleAI={handleToggleAI}
+            onToggleBlock={handleToggleBlock}
             serverUrl={SERVER_URL}
             globalLine={globalLine}
             onSendTrackingManual={handleSendTrackingManual}
@@ -766,6 +778,16 @@ function App() {
         );
     }
   };
+
+  if (!currentUser) {
+    return <Login serverUrl={SERVER_URL} onLogin={(u) => {
+      setCurrentUser(u);
+      localStorage.setItem('crm_user', JSON.stringify(u));
+    }} />;
+  }
+
+  // Filter chats by role
+  const filteredChats = currentUser.role === 'admin' ? chats : Object.fromEntries(Object.entries(chats).filter(([_, c]) => currentUser.assignedLines.includes(c.waLine || 1)));
 
   return (
     <Layout 
@@ -777,6 +799,7 @@ function App() {
       serverUrl={SERVER_URL}
       globalLine={globalLine}
       setGlobalLine={setGlobalLine}
+      currentUser={currentUser}
     >
       {renderContent()}
     </Layout>

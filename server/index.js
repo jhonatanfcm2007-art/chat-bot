@@ -403,6 +403,18 @@ const PLATFORMS_FILE = path.join(DATA_DIR, 'platforms.json');
 const PROVIDERS_FILE = path.join(DATA_DIR, 'providers.json');
 const CAMPAIGNS_FILE = path.join(DATA_DIR, 'campaigns.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+
+let inventory = [];
+let anomalies = [];
+let sales = [];
+let chats = {};
+let settings = {};
+let platforms = [];
+let providers = [];
+let campaigns = [];
+let customers = [];
+let users = [];
 const KNOWLEDGE_BASE_FILE = path.join(DATA_DIR, 'knowledge_base.json');
 const STORES_FILE = path.join(DATA_DIR, 'stores.json');
 const ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
@@ -516,14 +528,35 @@ if (fs.existsSync(DIST_DIR)) {
 // Funciones seguras de guardado atómico
 let isSaving = false;
 function atomicSave(filePath, data) {
+    const tempFile = `${filePath}.tmp.${Date.now()}`;
     try {
-        const tmpPath = filePath + '.tmp';
-        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
-        fs.renameSync(tmpPath, filePath); // Operación atómica a nivel de OS
-    } catch (e) {
-        console.error(`Error en guardado atómico para ${filePath}:`, e);
+        fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
+        fs.renameSync(tempFile, filePath);
+    } catch (err) {
+        console.error(`Error saving ${filePath}:`, err);
+        try { fs.unlinkSync(tempFile); } catch (e) {}
     }
 }
+
+function loadUsers() {
+    try {
+        if (fs.existsSync(USERS_FILE)) {
+            return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        }
+    } catch (err) { console.error('Error loading users:', err); }
+    
+    // Default admin
+    const defaultAdmin = {
+        id: 'admin',
+        username: 'admin',
+        password: '123',
+        role: 'admin',
+        assignedLines: [1, 2, 3, 4, 5]
+    };
+    atomicSave(USERS_FILE, [defaultAdmin]);
+    return [defaultAdmin];
+}
+function saveUsers(data) { atomicSave(USERS_FILE, data); }
 
 function loadInventory() {
     try {
@@ -664,9 +697,11 @@ Object.keys(settings).forEach(line => {
 });
 if (settingsModified) saveSettings(settings);
 
+settings = loadSettings();
 let platforms = loadPlatforms();
 let providers = loadProviders();
 let campaigns = loadCampaigns();
+let users = loadUsers();
 let anomalies = loadAnomalies();
 
 function loadCustomers() {
@@ -2772,6 +2807,24 @@ app.get('/api/providers', (req, res) => res.json(providers));
 app.post('/api/providers', (req, res) => { providers = req.body; saveProviders(providers); io.emit('providers_updated', providers); res.json({success:true}); });
 
 app.get('/api/settings', (req, res) => res.json(settings));
+
+// Auth & Users
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
+        const { password, ...userInfo } = user;
+        res.json({ success: true, user: userInfo });
+    } else {
+        res.status(401).json({ success: false, error: 'Credenciales inválidas' });
+    }
+});
+app.get('/api/users', (req, res) => res.json(users));
+app.post('/api/users', (req, res) => { 
+    users = req.body; 
+    saveUsers(users); 
+    res.json({ success: true }); 
+});
 
 app.get('/api/export-dropi', (req, res) => {
     // Filtrar los chats que tienen 'preparar_pedido'

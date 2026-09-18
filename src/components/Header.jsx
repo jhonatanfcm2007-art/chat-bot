@@ -6,9 +6,10 @@ const TAB_TITLES = {
   analytics: 'Reportes',
   remarketing: 'Remarketing',
   knowledge_base: 'Conocimiento',
+  users: 'Usuarios',
 };
 
-const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine }) => {
+const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClick, onClearNotifications, globalLine, setGlobalLine, currentUser }) => {
   const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
 
   return (
@@ -29,6 +30,22 @@ const Header = ({ activeTab, onTabChange, notifications = [], onNotificationClic
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
+        {currentUser && (
+          <div className="hidden md:flex items-center gap-2 mr-2">
+            <span className="text-sm font-medium text-slate-600">{currentUser.username}</span>
+            <button
+              onClick={() => {
+                localStorage.removeItem('crm_user');
+                window.location.reload();
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              title="Cerrar sesión"
+            >
+              <span className="material-symbols-outlined text-[20px]">logout</span>
+            </button>
+          </div>
+        )}
+
         {/* Notifications */}
         <button
           onClick={onNotificationClick}

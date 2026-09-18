@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 
-const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine }) => {
+const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine, currentUser }) => {
   const [expanded, setExpanded] = useState(false);
   const [lineMenuOpen, setLineMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'simulator', icon: 'chat', label: 'Chats' },
-    { id: 'ai_assistant', icon: 'psychology', label: 'Entrenar IA' },
-    { id: 'knowledge_base', icon: 'menu_book', label: 'Conocimiento' },
+    ...(currentUser?.role === 'admin' ? [
+      { id: 'ai_assistant', icon: 'psychology', label: 'Entrenar IA' },
+      { id: 'knowledge_base', icon: 'menu_book', label: 'Conocimiento' },
+      { id: 'users', icon: 'people', label: 'Usuarios' },
+    ] : [])
   ];
 
   return (
