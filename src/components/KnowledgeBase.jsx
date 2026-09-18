@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 const KnowledgeBase = ({ serverUrl }) => {
   const [products, setProducts] = useState([]);
   const [stores, setStores] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,7 +13,17 @@ const KnowledgeBase = ({ serverUrl }) => {
   useEffect(() => {
     fetchProducts();
     fetchStores();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${serverUrl}/api/users`);
+      const data = await res.json();
+      // Filter out admin if they only want to transfer to socios/agents, but admin is fine
+      setUsers(data);
+    } catch(e) { console.error('Error fetching users:', e); }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -75,6 +86,24 @@ const KnowledgeBase = ({ serverUrl }) => {
     }
   };
 
+  const handleTransfer = async (product, newOwner) => {
+    if (!window.confirm(`¿Seguro que quieres transferir "${product.name}" a ${newOwner}?`)) return;
+    try {
+      const payload = { ...product, owner: newOwner };
+      if (typeof payload.adIds === 'string') {
+        payload.adIds = payload.adIds.split(/[\s,]+/).map(k => k.trim()).filter(k => k);
+      }
+      const res = await fetch(`${serverUrl}/api/knowledge-base/${product.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) fetchProducts();
+    } catch (e) {
+      console.error('Error transferring product:', e);
+    }
+  };
+
   const openNewModal = () => {
     setEditingProduct({ name: '', owner: 'Fernando', adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
@@ -107,16 +136,19 @@ const KnowledgeBase = ({ serverUrl }) => {
         <div className="flex items-center gap-3">
           <div className="relative flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
             <span className="material-symbols-outlined text-slate-400 text-sm mr-2">filter_alt</span>
-            <select 
-              value={ownerFilter}
-              onChange={e => setOwnerFilter(e.target.value)}
-              className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
-            >
-              <option value="Todos">Todos los Socios</option>
-              <option value="Fernando">Fernando</option>
-              <option value="Nicolas">Nicolás</option>
-              <option value="Daniel">Daniel</option>
-            </select>
+              <select 
+                value={ownerFilter}
+                onChange={e => setOwnerFilter(e.target.value)}
+                className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
+              >
+                <option value="Todos">Todos los Socios</option>
+                {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+                {users.map(u => (
+                  <option key={u.id} value={u.username}>{u.username}</option>
+                ))}
+              </select>
           </div>
           <button 
             onClick={() => setIsStoresModalOpen(true)}
@@ -158,9 +190,24 @@ const KnowledgeBase = ({ serverUrl }) => {
                       <span className="material-symbols-outlined text-primary">inventory_2</span>
                       {p.name}
                     </h3>
-                    <span className="inline-block mt-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">
-                      Socio: {p.owner || 'Fernando'}
-                    </span>
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="inline-block text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">
+                        Socio:
+                      </span>
+                      <select 
+                        value={p.owner || 'Fernando'} 
+                        onChange={(e) => handleTransfer(p, e.target.value)}
+                        className="text-xs font-semibold text-primary outline-none bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      >
+                        {/* Default static values in case they aren't in users list */}
+                        {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                        {users.map(u => (
+                          <option key={u.id} value={u.username}>{u.username}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   {p.adminPhone && (
                     <div className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 mt-1">
@@ -232,9 +279,12 @@ const KnowledgeBase = ({ serverUrl }) => {
                     onChange={e => setEditingProduct({...editingProduct, owner: e.target.value})}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all bg-white"
                   >
-                    <option value="Fernando">Fernando</option>
-                    <option value="Nicolas">Nicolás</option>
-                    <option value="Daniel">Daniel</option>
+                    {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
+    <option key={name} value={name}>{name}</option>
+  ))}
+  {users.map(u => (
+    <option key={u.id} value={u.username}>{u.username}</option>
+  ))}
                   </select>
                 </div>
                 <div className="md:col-span-2">
@@ -649,9 +699,12 @@ const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl }) => {
                     onChange={e => setEditingStore({...editingStore, owner: e.target.value})}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50 bg-white"
                   >
-                    <option value="Fernando">Fernando</option>
-                    <option value="Nicolas">Nicolás</option>
-                    <option value="Daniel">Daniel</option>
+                    {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
+    <option key={name} value={name}>{name}</option>
+  ))}
+  {users.map(u => (
+    <option key={u.id} value={u.username}>{u.username}</option>
+  ))}
                     <option value="General">General / Empresa</option>
                   </select>
                 </div>
