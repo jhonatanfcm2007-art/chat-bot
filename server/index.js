@@ -2481,11 +2481,16 @@ async function downloadMetaMedia(mediaId, customerPhone) {
         let attempts = 0;
         
         while (attempts < 5) {
+            const isCdn = downloadUrl.includes('fbcdn.net') || downloadUrl.includes('whatsapp.net');
+            const fetchHeaders = { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            };
+            if (!isCdn) {
+                fetchHeaders['Authorization'] = `Bearer ${waToken}`;
+            }
+
             const mediaRes = await fetch(downloadUrl, {
-                headers: { 
-                    'Authorization': `Bearer ${waToken}`,
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                },
+                headers: fetchHeaders,
                 redirect: 'manual'  // NO seguir redirects automáticamente
             });
             
