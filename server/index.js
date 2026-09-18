@@ -2826,7 +2826,7 @@ app.post('/api/login', (req, res) => {
         return res.json({ success: true, user: adminUser });
     }
 
-    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+    const user = users.find(u => (u.username || '').trim().toLowerCase() === username.toLowerCase() && u.password === password);
     if (user) {
         const { password, ...userInfo } = user;
         res.json({ success: true, user: userInfo });
