@@ -682,10 +682,10 @@ function loadCampaigns() {
 function saveCampaigns(data) { atomicSave(CAMPAIGNS_FILE, data); }
 
 // --- DATA INITIALIZATION ---
-let inventory = loadInventory();
-let sales = loadSales();
-let chats = loadChats();
-let settings = loadSettings();
+inventory = loadInventory();
+sales = loadSales();
+chats = loadChats();
+settings = loadSettings();
 
 // MIGRACIÓN DE PROMPT: Añadir reglas de envío de fotos e interés si no existen
 let settingsModified = false;
@@ -698,11 +698,11 @@ Object.keys(settings).forEach(line => {
 if (settingsModified) saveSettings(settings);
 
 settings = loadSettings();
-let platforms = loadPlatforms();
-let providers = loadProviders();
-let campaigns = loadCampaigns();
-let users = loadUsers();
-let anomalies = loadAnomalies();
+platforms = loadPlatforms();
+providers = loadProviders();
+campaigns = loadCampaigns();
+users = loadUsers();
+anomalies = loadAnomalies();
 
 function loadCustomers() {
     try {
