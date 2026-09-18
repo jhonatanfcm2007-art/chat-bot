@@ -1542,10 +1542,32 @@ app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
                     
                     msg += `\n\nCualquier duda, estamos a tu disposición.`;
 
-                    // Enviar mensaje de WhatsApp
-                    smartSendMessage(to, msg);
+                    // Enviar mensaje de WhatsApp y guardar en historial
+                    (async () => {
+                        try {
+                            const wamid = await smartSendMessage(to, msg);
+                            if (chats[to]) {
+                                const newMsg = {
+                                    id: wamid || ('webhook-'+Date.now()),
+                                    wamid: wamid || null,
+                                    status: 'sent',
+                                    from: to,
+                                    body: msg,
+                                    content: msg,
+                                    isMe: true,
+                                    role: 'bot',
+                                    timestampRaw: Date.now()
+                                };
+                                chats[to].messages.push(newMsg);
+                                saveChats(chats);
+                                io.emit('message', { ...newMsg, waLine: chats[to].waLine });
+                            }
+                        } catch (err) {
+                            console.error('Error enviando notificación de SoyDrop:', err);
+                        }
+                    })();
                 } else {
-                    console.log(`⚠️ No se encontró la venta local para la referencia: ${orderNumber}`);
+                    console.log(`❌ No se encontró la venta local para la referencia: ${orderNumber}`);
                 }
             }
         }
