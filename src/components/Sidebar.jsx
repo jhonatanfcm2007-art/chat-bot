@@ -108,7 +108,7 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine, currentUse
                 { val: 3, label: 'Línea 3', icon: 'looks_3' },
                 { val: 4, label: 'Línea 4', icon: 'looks_4' },
                 { val: 5, label: 'Línea 5', icon: 'looks_5' },
-              ].map(opt => (
+              ].filter(opt => opt.val === 'all' || currentUser?.role === 'admin' || (currentUser?.assignedLines && currentUser.assignedLines.includes(opt.val))).map(opt => (
                 <button
                   key={opt.val}
                   onClick={() => { setGlobalLine(opt.val); setLineMenuOpen(false); }}
@@ -117,7 +117,7 @@ const Sidebar = ({ activeTab, onTabChange, globalLine, setGlobalLine, currentUse
                   `}
                 >
                   <span className="material-symbols-outlined text-[16px]">{opt.icon}</span>
-                  {opt.label}
+                  {opt.label === 'Todas las Líneas' && currentUser?.role !== 'admin' ? 'Mis Líneas' : opt.label}
                 </button>
               ))}
             </div>
