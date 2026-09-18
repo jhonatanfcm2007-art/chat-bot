@@ -83,12 +83,13 @@ const UsersManager = ({ serverUrl, currentUser }) => {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Rol</label>
               <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                <option value="agent">Agente (Limitado)</option>
+                <option value="agent">Agente (Solo Chats)</option>
+                <option value="socio">Socio (Chats + Conocimiento)</option>
                 <option value="admin">Administrador (Total)</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Líneas Asignadas (Solo Agentes)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Líneas Asignadas (Socios y Agentes)</label>
               <div className="flex flex-wrap gap-2">
                 {[1, 2, 3, 4, 5].map(line => (
                   <button key={line} onClick={() => toggleLine(line)} className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${formData.assignedLines?.includes(line) ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
@@ -121,8 +122,8 @@ const UsersManager = ({ serverUrl, currentUser }) => {
                 <tr key={u.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-800">{u.username}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {u.role === 'admin' ? 'Admin' : 'Agente'}
+                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'socio' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {u.role === 'admin' ? 'Admin' : u.role === 'socio' ? 'Socio' : 'Agente'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
