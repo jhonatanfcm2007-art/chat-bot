@@ -1173,7 +1173,12 @@ async function createShopifyOrder(chat, products) {
             if (!p.name) return false;
             const lowerKBName = p.name.toLowerCase();
             const lowerSearchName = searchName.toLowerCase();
-            return lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+            const nameMatch = lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+            const kwMatch = p.keywords && p.keywords.some(kw => {
+                const lowerKw = kw.toLowerCase().trim();
+                return lowerSearchName.includes(lowerKw) || lowerKw.includes(lowerSearchName);
+            });
+            return nameMatch || kwMatch;
         });
     }
 
@@ -1185,7 +1190,12 @@ async function createShopifyOrder(chat, products) {
                 if (!p.name) return false;
                 const lowerKBName = p.name.toLowerCase();
                 const lowerSearchName = searchName.toLowerCase();
-                return lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+                const nameMatch = lowerSearchName.includes(lowerKBName) || lowerKBName.includes(lowerSearchName);
+                const kwMatch = p.keywords && p.keywords.some(kw => {
+                    const lowerKw = kw.toLowerCase().trim();
+                    return lowerSearchName.includes(lowerKw) || lowerKw.includes(lowerSearchName);
+                });
+                return nameMatch || kwMatch;
             });
         }
     }
@@ -3549,7 +3559,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
   Cuando tengas TODO (nombre real, lugar de entrega, municipio, Y cantidad elegida), DEBES usar la etiqueta oculta [ENTREGAR_AHORA] para cerrar la venta. ¡ATENCIÓN, ESTO ES VITAL! NUNCA exijas una "dirección completa". Si el cliente te da el nombre de una oficina, un local, una escuela, o un punto de referencia corto (ej. "en oficina Agrolibano", "por el parque", "casa verde"), ASUME QUE ESA ES SU DIRECCIÓN Y CIERRA LA VENTA INMEDIATAMENTE emitiendo la etiqueta [ENTREGAR_AHORA]. ¡NO LE VUELVAS A PEDIR LA DIRECCIÓN SI YA TE DIO UN LUGAR O REFERENCIA! Es OBLIGATORIO emitir la etiqueta en la ÚLTIMA LÍNEA de tu mensaje.
 Formato estricto OBLIGATORIO:
 [ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [TELEFONO: número extraído o el prefijo] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [PAIS: ISO de 2 letras del destino, ej HN, CO, SV, CR, CL, GT] [NOTAS: fechas]
-IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ÚNICAMENTE nombre base y cantidad. ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
+IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ÚNICAMENTE EL NOMBRE EXACTO DEL PRODUCTO de la base de conocimiento (ej. "Neuropathy") y la cantidad. JAMÁS inventes nombres genéricos como "crema" o "combo de 2 cremas" si no se llaman así en tu catálogo. ¡Esto es CRÍTICO para que el sistema reconozca el pedido! ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
 11. REPROGRAMACIÓN POSTERIOR Y DÍAS HÁBILES: La transportadora trabaja SOLO de Lunes a Sábado. ¡NO HACEMOS ENTREGAS LOS DOMINGOS! Si un cliente pide entrega para un domingo, dile que no es posible y ofrécele amablemente entregar el sábado o el lunes. Si pide fecha posterior válida ("mándelo el viernes"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respóndele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Día/Fecha solicitada] para que lo reciba con toda tranquilidad 🤝"
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
   13. OTROS PRODUCTOS Y ERRORES ORTOGRÁFICOS: Si el cliente pregunta CLARAMENTE por otra marca o producto totalmente distinto que NO está en tu Base de Conocimiento, ESTÁ PROHIBIDO RESPONDER. Tu ÚNICA respuesta debe ser la etiqueta [APAGAR_BOT_SOPORTE]. ¡PERO OJO! Los clientes cometen muchos errores de ortografía (ej. escribir "say" en vez de "soy", o escribir mal el nombre del producto). Usa el sentido común: si la palabra rara parece un error ortográfico o de tipeo, asume que está hablando de tu producto y CONTINÚA LA VENTA con naturalidad sin apagarte.
