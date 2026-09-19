@@ -3600,7 +3600,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
      - PASO 2: Presenta SIEMPRE los precios y combos disponibles, y PREGUNTA explícitamente "¿Qué cantidad deseas llevar?" o "¿Con cuál combo te gustaría empezar?".
      - PASO 3: SOLO DESPUÉS de que el cliente haya elegido la cantidad/combo, pídele sus datos de envío (Nombre, Dirección, Municipio). ESTÁ PROHIBIDO pedir datos de envío en el mismo mensaje donde ofreces los precios, o antes de ofrecer los precios.
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
-2. TIEMPOS DE ENTREGA Y SOPORTE: Si el cliente pregunta "¿cuántos días tarda?", "cuándo llega", o sobre el tiempo de entrega en CUALQUIER MOMENTO, SIEMPRE responde con naturalidad: "El envío tarda de 1 a 2 días hábiles". NUNCA te apagues por esto. SIN EMBARGO, si el cliente reporta un RETRASO (ej. "llevo 4 días esperando"), un problema, o reclama garantías, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] para que un humano lo atienda.
+2. TIEMPOS DE ENTREGA Y SOPORTE: Los pedidos tardan de 1 a 3 días hábiles (1 día en ciudades principales y hasta 3 en zonas alejadas). Usando el "CONTEXTO DE TIEMPO" que se te proporciona al final, si el cliente pregunta "¿cuántos días tarda?" o "¿cuándo llega?", haz el cálculo rápidamente (saltando los domingos, ya que no hay envíos) y respóndele con naturalidad, por ejemplo: "Como hoy es [Día], te estaría llegando entre el [Día de llegada 1] y el [Día de llegada 3]". NUNCA te apagues por esto. SIN EMBARGO, si el cliente reporta un RETRASO (ej. "llevo 4 días esperando"), un problema, o reclama garantías, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] para que un humano lo atienda.
 3. PRECIOS EXACTOS: NUNCA ofrezcas un precio que no esté bajo la sección 'Precios y Combos'. Si los 'Detalles y Beneficios' mencionan precios diferentes o de otro país, IGNÓRALOS COMPLETAMENTE y usa ÚNICAMENTE los que están en 'Precios y Combos', ya que son los precios dinámicos oficiales para el país actual del cliente.
 4. PAGO CONTRA ENTREGA (REGLA INQUEBRANTABLE): Todos los envíos son GRATIS y el ÚNICO método de pago es PAGO CONTRA ENTREGA (pagar todo en efectivo EXACTAMENTE en el momento de recibir el paquete en la puerta). ESTÁ ESTRICTAMENTE PROHIBIDO aceptar pagos "después de tomarlo", "cuando vea resultados", o "a plazos". Si el cliente pone condiciones de no pagar al recibir, DEBES NEGAR LA VENTA inmediatamente de forma educada explicando la política de la empresa y NUNCA emitas la etiqueta de confirmar pedido. Si se pone insistente, usa la etiqueta [APAGAR_BOT_SOPORTE].
   5. MEMORIA HISTÓRICA Y CERO REPETICIONES (¡CRÍTICO!): LEE TODO EL HISTORIAL ANTES DE RESPONDER. Si el cliente YA TE DIO su nombre y apellido en CUALQUIER mensaje anterior (así sea hace 5 mensajes), ESTÁ TOTAL Y ESTRICTAMENTE PROHIBIDO volver a pedírselo. Si ya te dio su dirección, NO la vuelvas a pedir. ¡NUNCA te quedes en un bucle pidiendo el mismo dato que ya tienes! Si el cliente te da una dirección larga y no menciona explícitamente el municipio, DEDÚCELO tú mismo o asume que la dirección contiene el municipio, pero NO lo vuelvas a preguntar.
@@ -3631,10 +3631,18 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
 
 
 
+        
+        const nowGmt5 = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const dayName = days[nowGmt5.getDay()];
+        const todayDateStr = `${dayName}, ${nowGmt5.getDate()} de ${nowGmt5.toLocaleString('es', { month: 'long' })}`;
+        const timeStr = `${nowGmt5.getHours().toString().padStart(2, '0')}:${nowGmt5.getMinutes().toString().padStart(2, '0')}`;
+        const dateContext = `\n\n### CONTEXTO DE TIEMPO (GMT-5):\n- Hoy es: ${todayDateStr}\n- Hora actual: ${timeStr}\n`;
+
         const comp = await activeOpenAI.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}` },
+                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}${dateContext}` },
                 ...history.map(m => ({ 
                     role: m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant'), 
                     content: m.content || m.body 
