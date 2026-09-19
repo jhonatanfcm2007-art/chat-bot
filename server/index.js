@@ -1386,7 +1386,7 @@ async function createShopifyOrder(chat, products) {
         const firstName = nameParts[0] || 'Cliente';
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '.';
 
-        let finalPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : chat.from.replace(/\D/g, '');
+        let finalPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : chat.from.split('@')[0].split('_')[0].replace(/\D/g, '');
         
         // Estandarizar prefijo de país
         if (countryISO === 'GT' && !finalPhone.startsWith('502')) {
