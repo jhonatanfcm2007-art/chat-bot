@@ -611,7 +611,7 @@ function loadChats() {
 }
 
 let pendingSaveTimer = null;
-
+let isChatsSaving = false;
 let saveQueued = false;
 
 async function asyncAtomicSave(filePath, data) {
