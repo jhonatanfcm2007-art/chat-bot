@@ -744,18 +744,6 @@ Object.keys(settings).forEach(line => {
 });
 if (settingsModified) saveSettings(settings);
 
-let kbModified = false;
-knowledgeBaseDb.forEach(p => {
-    if (p.name && p.name.toLowerCase().includes('neuropathy')) {
-        if (!p.keywords) p.keywords = [];
-        if (!p.keywords.includes('neurophaty')) p.keywords.push('neurophaty');
-        if (!p.keywords.includes('neuro')) p.keywords.push('neuro');
-        kbModified = true;
-    }
-});
-if (kbModified) saveKnowledgeBase(knowledgeBaseDb);
-
-
 settings = loadSettings();
 platforms = loadPlatforms();
 providers = loadProviders();
@@ -810,6 +798,20 @@ function loadKnowledgeBase() {
 }
 function saveKnowledgeBase(data) { atomicSave(KNOWLEDGE_BASE_FILE, data); }
 let knowledgeBaseDb = loadKnowledgeBase();
+
+let kbModified = false;
+knowledgeBaseDb.forEach(p => {
+    if (p.name && p.name.toLowerCase().includes('neuropathy')) {
+        if (!p.keywords) p.keywords = [];
+        if (!p.keywords.includes('neurophaty')) p.keywords.push('neurophaty');
+        if (!p.keywords.includes('neuro')) p.keywords.push('neuro');
+        kbModified = true;
+    }
+});
+if (kbModified) saveKnowledgeBase(knowledgeBaseDb);
+
+
+
 
 function loadStores() {
     try {
