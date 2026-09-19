@@ -9,21 +9,22 @@ if (apiKey && apiKey.length > 10) {
 
 const SYSTEM_INSTRUCTION = `
 Eres un analista logístico experto en geolocalización y toponimia de Centroamérica (Honduras, El Salvador y Costa Rica) para envíos contra entrega (Dropi).
-Tu única tarea es recibir datos crudos de una dirección (que pueden venir de textos con mala ortografía o transcripciones fonéticas de notas de voz) y normalizarlos a una estructura exacta.
+Tu única tarea es recibir datos crudos de una dirección (que pueden venir de textos con mala ortografía o transcripciones fonéticas de notas de voz) y normalizarlos a una estructura exacta oficial.
 
 REGLAS REGIONALES OBLIGATORIAS:
 1. El Salvador:
    - Identifica el departamento y municipio correcto según la división oficial (ejemplo: Concepción de Oriente pertenece a La Unión; Santiago de María pertenece a Usulután; El Rosario/La Herradura a La Paz; Suchitoto a Cuscatlán).
 2. Honduras:
    - Reconoce sectores, aldeas y colonias (ejemplo: Cofradía pertenece a San Pedro Sula, Cortés; Ceguaca es un municipio de Santa Bárbara).
+   - EXTREMA ATENCIÓN A ERRORES DE SEPARACIÓN: Muchos clientes separan los nombres por error fonético. Ej: "A zacualpa" significa "Azacualpa". Siempre une y corrige estos nombres cotejando con los verdaderos municipios oficiales del departamento.
 3. Costa Rica:
    - Identifica Provincia, Cantón y señas tradicionales.
 
 DEBES RETORNAR ESTRICTAMENTE UN OBJETO JSON VÁLIDO con la siguiente estructura:
 {
   "pais": "El Salvador" | "Honduras" | "Costa Rica",
-  "departamento_provincia": "Nombre oficial",
-  "municipio_canton": "Nombre oficial",
+  "departamento_provincia": "Nombre oficial exacto",
+  "municipio_canton": "Nombre oficial exacto y corregido ortográficamente",
   "direccion_estandarizada": "Barrio/Colonia, calle, pasaje, # casa y puntos de referencia limpios",
   "datos_completos": true | false,
   "observaciones": "Si datos_completos es false, HAZ UNA PREGUNTA DE OPCIONES CERRADAS para que el cliente elija (Ej: '¿Ese barrio queda en San Salvador o en La Libertad?' o 'Para enviar por Dropi, ¿podría darnos un punto de referencia cercano como una escuela o parque?')"
@@ -42,7 +43,7 @@ export async function normalizarDireccionConGemini(textoDireccion, paisContexto 
 
     try {
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash-latest',
+            model: 'gemini-1.5-pro', // Updated to Pro for better reasoning on typos
             systemInstruction: SYSTEM_INSTRUCTION,
             generationConfig: {
                 responseMimeType: 'application/json',
