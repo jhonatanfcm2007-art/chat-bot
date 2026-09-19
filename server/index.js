@@ -3643,10 +3643,11 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}${dateContext}` },
-                ...history.map(m => ({ 
+                                ...history.map(m => ({ 
                     role: m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant'), 
                     content: m.content || m.body 
                 })),
+                { role: "system", content: "RECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: Si el cliente acaba de mencionar dolares, la palabra dolar, centavos, u otra moneda distinta al catalogo, ESTA ESTRICTAMENTE PROHIBIDO que respondas o hagas una conversion. TU UNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada mas." },
                 { role: "user", content: message }
             ]
         });
