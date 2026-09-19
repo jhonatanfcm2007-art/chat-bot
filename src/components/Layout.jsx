@@ -36,7 +36,7 @@ const Layout = ({ children, activeTab, onTabChange, notifications, onNotificatio
       </div>
 
       {/* Mobile bottom nav */}
-      <MobileNav activeTab={activeTab} onTabChange={onTabChange} />
+      <MobileNav activeTab={activeTab} onTabChange={onTabChange} currentUser={currentUser} />
     </div>
   );
 };

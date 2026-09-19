@@ -751,7 +751,7 @@ function App() {
           />
         );
       case 'knowledge_base':
-        return <KnowledgeBase serverUrl={SERVER_URL} />;
+        return <KnowledgeBase serverUrl={SERVER_URL} currentUser={currentUser} />;
       case 'users':
         return <UsersManager serverUrl={SERVER_URL} currentUser={currentUser} />;
       default:

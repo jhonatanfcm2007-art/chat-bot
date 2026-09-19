@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const KnowledgeBase = ({ serverUrl }) => {
+const KnowledgeBase = ({ serverUrl, currentUser }) => {
   const [products, setProducts] = useState([]);
   const [stores, setStores] = useState([]);
   const [users, setUsers] = useState([]);
@@ -8,7 +8,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoresModalOpen, setIsStoresModalOpen] = useState(false);
-  const [ownerFilter, setOwnerFilter] = useState('Todos');
+  const [ownerFilter, setOwnerFilter] = useState(currentUser?.role === 'admin' ? 'Todos' : (currentUser?.username || 'Todos'));
 
   useEffect(() => {
     fetchProducts();
@@ -105,7 +105,7 @@ const KnowledgeBase = ({ serverUrl }) => {
   };
 
   const openNewModal = () => {
-    setEditingProduct({ name: '', owner: 'Fernando', adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
+    setEditingProduct({ name: '', owner: currentUser?.role === 'admin' ? 'Fernando' : (currentUser?.username || 'Fernando'), adIds: '', prices: '', details: '', line: 'Ambas', priceVariations: [], adminPhone: '', defaultStoreId: '', defaultShopifyProductId: '' });
     setIsModalOpen(true);
   };
 
@@ -134,7 +134,7 @@ const KnowledgeBase = ({ serverUrl }) => {
           <p className="text-slate-500 mt-1">Entrena al asistente con tus productos, precios y flujos de venta</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
+          {currentUser?.role === 'admin' && (<div className="relative flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
             <span className="material-symbols-outlined text-slate-400 text-sm mr-2">filter_alt</span>
               <select 
                 value={ownerFilter}
@@ -150,6 +150,7 @@ const KnowledgeBase = ({ serverUrl }) => {
                 ))}
               </select>
           </div>
+          )}
           <button 
             onClick={() => setIsStoresModalOpen(true)}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-50 hover:text-primary transition-all flex items-center gap-2 shadow-sm font-medium"
@@ -194,19 +195,22 @@ const KnowledgeBase = ({ serverUrl }) => {
                       <span className="inline-block text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">
                         Socio:
                       </span>
-                      <select 
-                        value={p.owner || 'Fernando'} 
-                        onChange={(e) => handleTransfer(p, e.target.value)}
-                        className="text-xs font-semibold text-primary outline-none bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                      >
-                        {/* Default static values in case they aren't in users list */}
-                        {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
-                          <option key={name} value={name}>{name}</option>
-                        ))}
-                        {users.map(u => (
-                          <option key={u.id} value={u.username}>{u.username}</option>
-                        ))}
-                      </select>
+                      {currentUser?.role === 'admin' ? (
+                        <select 
+                          value={p.owner || 'Fernando'} 
+                          onChange={(e) => handleTransfer(p, e.target.value)}
+                          className="text-xs font-semibold text-primary outline-none bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                        >
+                          {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                          {users.map(u => (
+                            <option key={u.id} value={u.username}>{u.username}</option>
+                          ))}
+                        </select>
+                        ) : (
+                          <span className="text-xs font-semibold text-primary px-1">{p.owner || 'Fernando'}</span>
+                        )}
                     </div>
                   </div>
                   {p.adminPhone && (
@@ -276,6 +280,8 @@ const KnowledgeBase = ({ serverUrl }) => {
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Socio / Propietario</label>
                   <select 
                     value={editingProduct.owner || 'Fernando'}
+                      disabled={currentUser?.role !== 'admin'}
+                      title={currentUser?.role !== 'admin' ? 'Solo administradores pueden cambiar el propietario' : ''}
                     onChange={e => setEditingProduct({...editingProduct, owner: e.target.value})}
                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all bg-white"
                   >
@@ -648,7 +654,7 @@ const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl }) => {
               <div className="flex justify-between items-center">
                 <p className="text-sm text-slate-500">Configura tiendas una sola vez para seleccionarlas fácilmente en tus productos.</p>
                 <button 
-                  onClick={() => setEditingStore({ owner: 'Fernando', name: '', shopifyStoreUrl: '', shopifyAccessToken: '' })}
+                  onClick={() => setEditingStore({ owner: currentUser?.role === 'admin' ? 'Fernando' : (currentUser?.username || 'Fernando'), name: '', shopifyStoreUrl: '', shopifyAccessToken: '' })}
                   className="bg-primary text-white px-3 py-1.5 rounded-lg text-sm hover:bg-primary-dark transition-all flex items-center gap-1 shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[18px]">add</span>
@@ -697,6 +703,7 @@ const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl }) => {
                   <select 
                     value={editingStore.owner}
                     onChange={e => setEditingStore({...editingStore, owner: e.target.value})}
+                      disabled={currentUser?.role !== 'admin'}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50 bg-white"
                   >
                     {['Fernando', 'Nicolás', 'Daniel'].filter(n => !users.find(u => u.username === n)).map(name => (
