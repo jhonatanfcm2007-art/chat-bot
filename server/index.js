@@ -526,7 +526,6 @@ if (fs.existsSync(DIST_DIR)) {
 
 // --- DATA LOADING & SAVING ---
 // Funciones seguras de guardado atómico
-let isSaving = false;
 function atomicSave(filePath, data) {
     const tempFile = `${filePath}.tmp.${Date.now()}`;
     try {
@@ -612,7 +611,7 @@ function loadChats() {
 }
 
 let pendingSaveTimer = null;
-let isSaving = false;
+
 let saveQueued = false;
 
 async function asyncAtomicSave(filePath, data) {
@@ -632,13 +631,13 @@ function saveChats(data) {
     if (pendingSaveTimer) return; // Ya hay un guardado programado
     pendingSaveTimer = setTimeout(async () => {
         pendingSaveTimer = null;
-        if (isSaving) {
+        if (isChatsSaving) {
             saveQueued = true; // Si esta guardando, encolar para el siguiente ciclo
             return;
         }
-        isSaving = true;
+        isChatsSaving = true;
         await asyncAtomicSave(CHATS_FILE, chats);
-        isSaving = false;
+        isChatsSaving = false;
         if (saveQueued) {
             saveQueued = false;
             saveChats(chats);
