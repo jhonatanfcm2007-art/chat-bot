@@ -607,11 +607,6 @@ let pendingSaveTimer = null;
 let isChatsSaving = false;
 let saveQueued = false;
 
-async 
-
-
-
-
 function loadAnomalies() {
     if (fs.existsSync(ANOMALIES_FILE)) {
         try { return JSON.parse(fs.readFileSync(ANOMALIES_FILE, 'utf-8')); } catch (e) { console.error('Error cargando anomalías:', e); }
@@ -3815,6 +3810,7 @@ process.on('SIGINT', gracefulShutdown);
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
 });
+
 
 
 
