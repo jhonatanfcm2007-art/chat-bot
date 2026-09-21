@@ -756,7 +756,7 @@ function App() {
       case 'users':
         return <UsersManager serverUrl={SERVER_URL} currentUser={currentUser} />;
       case 'incidents':
-        return <Incidents BACKEND_URL={SERVER_URL} socket={socket} />;
+        return <Incidents BACKEND_URL={SERVER_URL} socket={socket} onSelectChat={(chatId) => { setSelectedChat(chatId); setActiveTab('simulator'); }} />;
       default:
         return (
           <Simulator 

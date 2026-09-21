@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-function Incidents({ BACKEND_URL, socket }) {
+function Incidents({ BACKEND_URL, socket, onSelectChat }) {
     const [incidents, setIncidents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedIncident, setSelectedIncident] = useState(null);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -101,7 +102,7 @@ function Incidents({ BACKEND_URL, socket }) {
                                             {inc.chatId === 'AMBIGUOUS_MATCH' ? <span className="text-red-500 font-medium">Revisión manual</span> : (inc.chatId ? 'Asignado' : 'No encontrado')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-primary hover:text-primary-hover font-medium bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">
+                                            <button onClick={() => setSelectedIncident(inc)} className="text-primary hover:text-primary-hover font-medium bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">
                                                 Ver Detalles
                                             </button>
                                         </td>
