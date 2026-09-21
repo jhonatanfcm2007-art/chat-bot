@@ -91,6 +91,24 @@ export async function initDB(dataDir) {
     }
 }
 
+export async function getDbIncidents() {
+    if (!pool) return null;
+    const { rows } = await pool.query('SELECT id, data FROM incidents');
+    const incidents = [];
+    for (const row of rows) {
+        incidents.push(row.data);
+    }
+    return incidents;
+}
+
+export async function saveDbIncident(id, data) {
+    if (!pool) return;
+    await pool.query(
+        'INSERT INTO incidents (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data',
+        [id, JSON.stringify(data)]
+    );
+}
+
 export async function getDbChats() {
     if (!pool) return null;
     const { rows } = await pool.query('SELECT id, data FROM chats');

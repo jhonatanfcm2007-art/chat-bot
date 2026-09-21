@@ -11,7 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { normalizarDireccionConGemini } from './services/geoNormalizer.js';
-import { initDB, getDbChats, getDbStore, saveDbChat, deleteDbChat, saveDbStore } from './db.js';
+import { initDB, getDbChats, getDbStore, saveDbChat, deleteDbChat, saveDbStore, getDbIncidents, saveDbIncident } from './db.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +21,12 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ 
+    limit: '50mb',
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const server = http.createServer(app);
@@ -438,7 +443,7 @@ if (isPgEnabled) {
     campaigns = await getDbStore('campaigns', []);
     customers = await getDbStore('customers', []);
     users = await getDbStore('users', []);
-    incidents = await getDbStore('incidents', []);
+    incidents = await getDbIncidents();
     knowledgeBaseDb = await getDbStore('knowledge_base', []);
     storesDb = await getDbStore('stores', []);
 }
@@ -459,6 +464,18 @@ function savePlatforms(data) { if (isPgEnabled) saveDbStore('platforms', data); 
 function saveProviders(data) { if (isPgEnabled) saveDbStore('providers', data); else atomicSave(PROVIDERS_FILE, data); }
 function saveCampaigns(data) { if (isPgEnabled) saveDbStore('campaigns', data); else atomicSave(CAMPAIGNS_FILE, data); }
 function saveCustomers(data) { if (isPgEnabled) saveDbStore('customers', data); else atomicSave(CUSTOMERS_FILE, data); }
+
+async function saveIncidents(data) {
+    if (isPgEnabled) {
+        // Guardar cada incidencia individualmente en PostgreSQL para no perder cambios (Fase 1 feedback)
+        for (const inc of data) {
+            await saveDbIncident(inc.id, inc);
+        }
+    } else {
+        await asyncAtomicSave(INCIDENTS_FILE, data);
+    }
+}
+
 function saveUsers(data) { if (isPgEnabled) saveDbStore('users', data); else atomicSave(USERS_FILE, data); }
 function saveKnowledgeBase(data) { if (isPgEnabled) saveDbStore('knowledge_base', data); else atomicSave(KNOWLEDGE_BASE_FILE, data); }
 function saveStores(data) { if (isPgEnabled) saveDbStore('stores', data); else atomicSave(STORES_FILE, data); }
