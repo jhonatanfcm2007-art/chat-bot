@@ -898,7 +898,8 @@ Ejemplo:
 - Si el cliente muestra interés real en comprar (ej. pregunta precios, envío) pero aún no deja datos de envío, incluye (solo una vez) al final de tu respuesta la etiqueta: [INTERESADO]
 - Si el cliente estaba en proceso de dar sus datos y luego se desanima o la conversación se estanca sin llegar a la venta, incluye la etiqueta: [ABANDONADO]`;
 
-    if (!settings["1"].systemPrompt || !settings["1"].systemPrompt.includes('APAGAR_BOT_SOPORTE')) {
+    if (!settings['1']) settings['1'] = { systemPrompt: '' };
+    if (!settings['1'].systemPrompt || !settings['1'].systemPrompt.includes('APAGAR_BOT_SOPORTE')) {
         settings["1"].systemPrompt = basePrompt;
         settings["2"].systemPrompt = basePrompt;
         saveSettings(settings);
@@ -1526,38 +1527,45 @@ app.get('/webhook/messenger', (req, res) => {
 app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
     try {
         const secret = process.env.SOYDROP_WEBHOOK_SECRET;
+        if (!secret) {
+            console.error('?O [SOYDROP WEBHOOK] RECHAZADO: SOYDROP_WEBHOOK_SECRET no est configurado en produccion.');
+            return res.status(401).json({ error: 'Webhook secret not configured' });
+        }
+
         const signature = req.headers['x-dropi-signature'] || req.headers['x-soydrop-signature'];
-        
-        if (secret && signature && req.rawBody) {
-            const crypto = await import('crypto');
-            const hmac = crypto.createHmac('sha256', secret);
-            const digest = hmac.update(req.rawBody).digest('hex');
-            if (digest !== signature) {
-                console.error('?O [SOYDROP WEBHOOK] Firma HMAC invǭlida. Bloqueando peticion.');
-                return res.status(401).json({ error: 'Invalid signature' });
-            }
-            console.log('o. [SOYDROP WEBHOOK] Firma HMAC validada correctamente.');
-        } else if (!secret) {
-            console.warn('?O [SOYDROP WEBHOOK] Advertencia: SOYDROP_WEBHOOK_SECRET no configurado. Validacion de firma omitida.');
+        if (!signature || !req.rawBody) {
+            return res.status(401).json({ error: 'Missing signature or body' });
         }
 
-        console.log('?Y"? [SOYDROP WEBHOOK] Notificacin recibida:', JSON.stringify(req.body, null, 2));
+        const crypto = await import('crypto');
+        const hmac = crypto.createHmac('sha256', secret);
+        const digest = hmac.update(req.rawBody).digest('hex');
+        
+        if (digest !== signature) {
+            console.error('?O [SOYDROP WEBHOOK] RECHAZADO: Firma HMAC invlida.');
+            return res.status(401).json({ error: 'Invalid signature' });
+        }
+        
         const payload = req.body;
-        
-        // Deduplication using processedWebhooks cache
-        if (!global.processedWebhooks) global.processedWebhooks = new Set();
         const eventId = payload.id || req.headers['x-soydrop-event-id'];
-        if (eventId) {
-            if (global.processedWebhooks.has(eventId)) {
-                console.log('?O [SOYDROP WEBHOOK] Evento duplicado ignorado:', eventId);
-                return res.status(200).json({ received: true, duplicate: true });
+        
+        if (eventId && pool) {
+            try {
+                // Persistent deduplication in PostgreSQL
+                const result = await pool.query(
+                    'INSERT INTO webhook_events (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',
+                    [eventId]
+                );
+                if (result.rowCount === 0) {
+                    console.log('?O [SOYDROP WEBHOOK] IGNORADO: Evento duplicado persistente', eventId);
+                    return res.status(200).json({ received: true, duplicate: true });
+                }
+            } catch (err) {
+                console.error('Error DB deduplication:', err);
             }
-            global.processedWebhooks.add(eventId);
-            // Keep set small
-            if (global.processedWebhooks.size > 1000) global.processedWebhooks.clear();
         }
 
-        // Responder rpido para que SoyDrop no bloquee el webhook (exige respuesta 2xx en < 10s)
+        // Responder rpido
         res.status(200).json({ received: true });
 
         if (payload.type === 'order.status_changed' && payload.data) {
@@ -2877,7 +2885,8 @@ app.post('/api/incidents/import', async (req, res) => {
                 phone: getCol('teléfono') || getCol('telefono'),
                 courier: getCol('courier'),
                 country: getCol('país') || getCol('pais'),
-                internalState: isDelivered ? 'Cerrado/Entregado' : 'Pendiente de contactar',
+                internalState: isDelivered ? 'No contactar: envío entregado' : 'Pendiente de contactar',
+                needsReview: false,
                 createdAt: Date.now()
             };
 
@@ -2897,8 +2906,15 @@ app.post('/api/incidents/import', async (req, res) => {
 
             if (existingIdx !== -1) {
                 const existing = incidents[existingIdx];
-                // Update but preserve internalState if it has progressed
-                incidents[existingIdx] = { ...existing, ...data, internalState: existing.internalState, createdAt: existing.createdAt };
+                // If it already exists, verify if it's identical or needs review
+                const dataDiffers = existing.reason !== data.reason || existing.incidentStatus !== data.incidentStatus;
+                incidents[existingIdx] = { 
+                    ...existing, 
+                    ...data, 
+                    internalState: existing.internalState, 
+                    createdAt: existing.createdAt,
+                    needsReview: dataDiffers ? true : existing.needsReview
+                };
                 updateCount++;
             } else {
                 incidents.push(data);
