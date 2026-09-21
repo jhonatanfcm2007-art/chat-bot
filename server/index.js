@@ -530,89 +530,22 @@ if (fs.existsSync(DIST_DIR)) {
 // Funciones seguras de guardado atómico
 
 
-function loadUsers() {
-    let loadedUsers = [];
-    try {
-        if (fs.existsSync(USERS_FILE)) {
-            loadedUsers = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-            if (!Array.isArray(loadedUsers)) loadedUsers = [];
-        }
-    } catch (err) { console.error('Error loading users:', err); }
-    
-    if (loadedUsers.length === 0 || !loadedUsers.some(u => u.role === 'admin')) {
-        const defaultAdmin = {
-            id: 'admin',
-            username: 'admin',
-            password: '123',
-            role: 'admin',
-            assignedLines: [1, 2, 3, 4, 5]
-        };
-        // Avoid duplicates if there's an issue
-        loadedUsers = loadedUsers.filter(u => u.id !== 'admin');
-        loadedUsers.push(defaultAdmin);
-        atomicSave(USERS_FILE, loadedUsers);
-    }
-    return loadedUsers;
-}
 
 
-function loadInventory() {
-    try {
-        if (fs.existsSync(INVENTORY_FILE)) return JSON.parse(fs.readFileSync(INVENTORY_FILE, 'utf-8'));
-    } catch (err) { console.error('Error loading inventory:', err); }
-    return [];
-}
 
 
-function loadSales() {
-    try {
-        if (fs.existsSync(SALES_FILE)) return JSON.parse(fs.readFileSync(SALES_FILE, 'utf-8'));
-    } catch (err) { console.error('Error loading sales:', err); }
-    return [];
-}
 
 
-function loadChats() {
-    try {
-        if (fs.existsSync(CHATS_FILE)) {
-            const data = JSON.parse(fs.readFileSync(CHATS_FILE, 'utf-8'));
-            Object.keys(data).forEach(id => {
-                if (!data[id].updatedAt) data[id].updatedAt = Date.now();
-            });
-            
-            const entries = Object.entries(data);
-            const MAX_CHATS = 15000;
-            
-            if (entries.length > MAX_CHATS) {
-                console.log(`[LIMPIEZA] Reduciendo chats de ${entries.length} a ${MAX_CHATS} más recientes...`);
-                entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
-                
-                const trimmedData = {};
-                for (let i = 0; i < MAX_CHATS; i++) {
-                    trimmedData[entries[i][0]] = entries[i][1];
-                }
-                
-                // Guardar inmediatamente para liberar espacio en disco
-                atomicSave(CHATS_FILE, trimmedData);
-                return trimmedData;
-            }
-            
-            return data;
-        }
-    } catch (err) { console.error('Error loading chats:', err); }
-    return {};
-}
+
+
+
+
 
 let pendingSaveTimer = null;
 let isChatsSaving = false;
 let saveQueued = false;
 
-function loadAnomalies() {
-    if (fs.existsSync(ANOMALIES_FILE)) {
-        try { return JSON.parse(fs.readFileSync(ANOMALIES_FILE, 'utf-8')); } catch (e) { console.error('Error cargando anomalías:', e); }
-    }
-    return [];
-}
+
 
 
 function registerAnomaly(type, customerName, from) {
@@ -630,63 +563,20 @@ function registerAnomaly(type, customerName, from) {
     io.emit('anomalies_updated', anomalies);
 }
 
-function loadSettings() {
-    const defSingle = { 
-        systemPrompt: "Eres el asesor comercial virtual oficial de ventas de Shilajit 100% Puro Resina en Colombia por WhatsApp. Eres directo, amable, altamente persuasivo y muy eficiente. Usa emojis con moderación.\n\n### INFORMACIÓN DEL PRODUCTO (SHILAJIT):\n- ¿Qué es?: Es una sustancia natural y milenaria recolectada en las alturas del Himalaya, rica en ácido fúlvico y más de 84 minerales biodisponibles.\n- Beneficios principales: Aumenta la energía y resistencia física, potencia el rendimiento masculino, combate la fatiga y el cansancio, eleva la vitalidad y apoya los niveles naturales de testosterona.\n- Modo de uso: Tomar una pequeña porción del tamaño de un grano de arroz (incluye cuchara dosificadora) disuelta en agua tibia, té, café o leche caliente una o dos veces al día.\n\n### REGLA INQUEBRANTABLE - MÉTODOS DE PAGO Y ENVÍO:\n- ÚNICAMENTE se maneja PAGO CONTRAENTREGA en toda Colombia.\n- El envío es GRATIS a nivel nacional.\n- El cliente paga en efectivo únicamente cuando recibe el producto en la puerta de su casa o trabajo.\n- NUNCA solicites pagos por anticipado ni giros antes de recibir.\n\n### ESTRATEGIA DE VENTA Y CIERRE:\n1. **COTIZACIÓN**: Si preguntan precios, presenta los precios y promociones de forma atractiva resaltando el ahorro en los combos.\n   - 1 Tarro (30g): $89.000 COP\n   - Combo 2 Tarros: $149.000 COP (Ahorra $29.000)\n   - Combo 3 Tarros: $199.000 COP (Máximo Ahorro)\n2. **TOMA DE DATOS PARA DESPACHO (¡MUY IMPORTANTE!)**: Cuando el cliente confirme que quiere pedir (ej: \"quiero uno\", \"envíamelo\", \"quiero el combo 2x\", \"listo\", \"dale\", \"pedir\"), solicítale amablemente los 5 datos necesarios para programar su envío Pago Contraentrega:\n   - 👤 Nombre completo\n   - 📞 Número de celular\n   - 📍 Ciudad y Departamento\n   - 🏠 Dirección exacta y Barrio\n   - 🛒 Producto o Combo elegido\n3. **REGISTRO DE PEDIDO**: Cuando el cliente te entregue sus datos de despacho completos, TU RESPUESTA DEBE INCLUIR ESTAS ETIQUETAS (y nada más):\n   [ENTREGAR_AHORA]\n   [PRODUCTOS: NombreDelProducto]\n   Ejemplo perfecto: \"¡Excelente decisión! Ya he registrado tu pedido. En breve coordinamos el despacho. [ENTREGAR_AHORA] [PRODUCTOS: Shilajit 100% Puro Resina 30g] [NOMBRE: Juan Pérez] [TELEFONO: 504 32453434] [DIRECCION: Calle 123] [MUNICIPIO: Tegucigalpa] [DEPARTAMENTO: Francisco Morazán] [PAIS: HN]\"\n\n### SOPORTE Y ASESORÍA:\n- Si el cliente reporta una novedad de entrega o pregunta por su número de guía, usa [APAGAR_BOT_SOPORTE] para que un humano lo atienda.",
-        welcomeAudioEnabled: false,
-        welcomeAudioUrl: '',
-        welcomeImageEnabled: false,
-        welcomeImageUrl: ''
-    };
-    
-    const def = { "1": { ...defSingle }, "2": { ...defSingle } };
-    
-    try {
-        if (fs.existsSync(SETTINGS_FILE)) {
-            const data = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
-            // Migración: si el JSON antiguo no tiene "1", asumimos que es el formato viejo plano
-            if (!data["1"]) {
-                return { "1": { ...defSingle, ...data }, "2": { ...defSingle } };
-            }
-            return { 
-                "1": { ...defSingle, ...(data["1"] || {}) }, 
-                "2": { ...defSingle, ...(data["2"] || {}) } 
-            };
-        }
-    } catch (err) { console.error('Error loading settings:', err); }
-    return def;
-}
 
 
-function loadPlatforms() {
-    try {
-        if (fs.existsSync(PLATFORMS_FILE)) return JSON.parse(fs.readFileSync(PLATFORMS_FILE, 'utf-8'));
-    } catch (err) {}
-    return ['Shilajit Resina', 'Combos Promocionales'];
-}
 
 
-function loadProviders() {
-    try {
-        if (fs.existsSync(PROVIDERS_FILE)) return JSON.parse(fs.readFileSync(PROVIDERS_FILE, 'utf-8'));
-    } catch (err) {}
-    return ['Himalaya Natural', 'Laboratorio Oficial'];
-}
 
 
-function loadCampaigns() {
-    try {
-        if (fs.existsSync(CAMPAIGNS_FILE)) return JSON.parse(fs.readFileSync(CAMPAIGNS_FILE, 'utf-8'));
-    } catch (err) { console.error('Error loading campaigns:', err); }
-    return [];
-}
+
+
+
+
 
 
 // --- DATA INITIALIZATION ---
-inventory = loadInventory();
-sales = loadSales();
-chats = loadChats();
-settings = loadSettings();
+
 
 
 // MIGRACIÓN DE PROMPT: Añadir reglas de envío de fotos e interés si no existen
@@ -706,25 +596,6 @@ Object.keys(settings).forEach(line => {
 });
 if (settingsModified) saveSettings(settings);
 
-settings = loadSettings();
-platforms = loadPlatforms();
-providers = loadProviders();
-campaigns = loadCampaigns();
-users = loadUsers();
-anomalies = loadAnomalies();
-
-function loadCustomers() {
-    try {
-        if (fs.existsSync(CUSTOMERS_FILE)) {
-            return JSON.parse(fs.readFileSync(CUSTOMERS_FILE, 'utf-8'));
-        }
-    } catch (e) {
-        console.error('Error loading customers:', e);
-    }
-    return [];
-}
-
-let customersDb = loadCustomers();
 
 // --- RESTAURACIÓN DE EMERGENCIA ---
 // Si los chats están vacíos pero los clientes existen (ej. corrupción en reinicio),
@@ -748,18 +619,8 @@ if (Object.keys(chats).length < customersDb.length) {
     }
 }
 
-function loadKnowledgeBase() {
-    try {
-        if (fs.existsSync(KNOWLEDGE_BASE_FILE)) {
-            return JSON.parse(fs.readFileSync(KNOWLEDGE_BASE_FILE, 'utf-8'));
-        }
-    } catch (e) {
-        console.error('Error loading knowledge base:', e);
-    }
-    return [];
-}
 
-let knowledgeBaseDb = loadKnowledgeBase();
+
 
 let kbModified = false;
 knowledgeBaseDb.forEach(p => {
@@ -775,18 +636,8 @@ if (kbModified) saveKnowledgeBase(knowledgeBaseDb);
 
 
 
-function loadStores() {
-    try {
-        if (fs.existsSync(STORES_FILE)) {
-            return JSON.parse(fs.readFileSync(STORES_FILE, 'utf-8'));
-        }
-    } catch (e) {
-        console.error('Error loading stores:', e);
-    }
-    return [];
-}
 
-let storesDb = loadStores();
+
 
 // MIGRACIÓN A BASE DE CONOCIMIENTO DINÁMICA
 (function initKnowledgeBase() {
@@ -3810,6 +3661,8 @@ process.on('SIGINT', gracefulShutdown);
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);
 });
+
+
 
 
 
