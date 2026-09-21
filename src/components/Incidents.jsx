@@ -32,12 +32,12 @@ function Incidents({ BACKEND_URL, socket }) {
 
         const reader = new FileReader();
         reader.onload = async (event) => {
-            const csvText = event.target.result;
+            const base64 = event.target.result;
             try {
                 const res = await fetch(`${BACKEND_URL}/api/incidents/import`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ csvText })
+                    body: JSON.stringify({ filename: file.name, base64 })
                 });
                 const result = await res.json();
                 if (result.success) {
@@ -50,7 +50,7 @@ function Incidents({ BACKEND_URL, socket }) {
                 alert('Error de red al importar.');
             }
         };
-        reader.readAsText(file);
+        reader.readAsDataURL(file);
     };
 
     return (
@@ -58,7 +58,7 @@ function Incidents({ BACKEND_URL, socket }) {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <h1 className="text-lg font-semibold text-on-surface">Módulo de Incidencias (Soy Drop)</h1>
                 <div className="flex gap-3">
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv, .xlsx" className="hidden" />
                     <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 border border-slate-200 bg-white transition-colors">
                         <span className="material-symbols-outlined text-lg text-emerald-500">upload_file</span>
                         <span className="font-medium text-sm text-on-surface">Importar CSV</span>
