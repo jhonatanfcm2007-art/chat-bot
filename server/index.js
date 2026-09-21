@@ -506,7 +506,7 @@ function saveChats(data) {
         const dirtyChats = [];
         for (const id in chats) {
             const chat = chats[id];
-            const hash = `${chat.messages?.length || 0}-${chat.updatedAt || 0}-${chat.tags?.length || 0}-${chat.assignedProduct || ''}-${chat.aiDisabled ? 1 : 0}-${chat.isBlocked ? 1 : 0}-${chat.trackingNumber || ''}-${chat.customerName || ''}`;
+            const hash = `${chat.messages?.length || 0}-${chat.updatedAt || 0}-${chat.tags?.join(',') || ''}-${chat.assignedProduct || ''}-${chat.aiDisabled ? 1 : 0}-${chat.isBlocked ? 1 : 0}-${chat.trackingNumber || ''}-${chat.customerName || ''}`;
             
             if (chatHashes[id] !== hash) {
                 dirtyChats.push({ id, data: chat });
