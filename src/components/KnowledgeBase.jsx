@@ -597,6 +597,8 @@ const KnowledgeBase = ({ serverUrl, currentUser }) => {
           fetchStores={fetchStores} 
           onClose={() => setIsStoresModalOpen(false)} 
           serverUrl={serverUrl} 
+          currentUser={currentUser} 
+          users={users} 
         />
       )}
     </div>
