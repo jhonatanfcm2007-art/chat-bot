@@ -936,18 +936,7 @@ function backfillProducts() {
         saveChats(chats);
         console.log('✅ [CONFIG] Productos asignados a chats antiguos tras escaneo completo.');
         
-        // Emit updated chats to clients so the UI updates in real-time
-        if (typeof io !== 'undefined') {
-            io.emit('initial_state', { 
-                chats, 
-                settings, 
-                accounts, 
-                products: productsDb, 
-                globalRules,
-                knowledgeBase: knowledgeBaseDb,
-                customers: customersDb
-            });
-        }
+        // Removemos el emit incorrecto porque las variables accounts, productsDb, customersDb no existen en el backend
     }
 }
 
