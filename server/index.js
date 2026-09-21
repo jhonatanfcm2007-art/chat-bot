@@ -1528,11 +1528,11 @@ app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
     try {
         const secret = process.env.SOYDROP_WEBHOOK_SECRET;
         if (!secret) {
-            console.error('?O [SOYDROP WEBHOOK] RECHAZADO: SOYDROP_WEBHOOK_SECRET no est configurado en produccion.');
+            console.error('?O [SOYDROP WEBHOOK] RECHAZADO: SOYDROP_WEBHOOK_SECRET no est configurado.');
             return res.status(401).json({ error: 'Webhook secret not configured' });
         }
 
-        const signature = req.headers['x-dropi-signature'] || req.headers['x-soydrop-signature'];
+        const signature = req.headers['x-drop-signature'] || req.headers['x-soydrop-signature'];
         if (!signature || !req.rawBody) {
             return res.status(401).json({ error: 'Missing signature or body' });
         }
@@ -1547,22 +1547,38 @@ app.post('/api/soydrop/webhook', express.json(), async (req, res) => {
         }
         
         const payload = req.body;
-        const eventId = payload.id || req.headers['x-soydrop-event-id'];
+        const eventId = payload.id || req.headers['x-soydrop-event-id'] || payload.orderNumber; // Fallback if no event id
         
+        let client;
         if (eventId && pool) {
+            client = await pool.connect();
             try {
-                // Persistent deduplication in PostgreSQL
-                const result = await pool.query(
+                await client.query('BEGIN');
+                
+                const result = await client.query(
                     'INSERT INTO webhook_events (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',
                     [eventId]
                 );
+                
                 if (result.rowCount === 0) {
+                    await client.query('ROLLBACK');
+                    client.release();
                     console.log('?O [SOYDROP WEBHOOK] IGNORADO: Evento duplicado persistente', eventId);
                     return res.status(200).json({ received: true, duplicate: true });
                 }
             } catch (err) {
+                if (client) { await client.query('ROLLBACK'); client.release(); }
                 console.error('Error DB deduplication:', err);
+                return res.status(500).json({ error: 'DB Error' });
             }
+        }
+
+        // --- Logica de procesamiento aqui (Fase 2 lo expandira) ---
+        // Aca se haran los cambios. Como todo salio bien:
+        
+        if (client) {
+            await client.query('COMMIT');
+            client.release();
         }
 
         // Responder rpido
@@ -2869,7 +2885,8 @@ app.post('/api/incidents/import', async (req, res) => {
             const existingIdx = incidents.findIndex(inc => inc.id === incidentId);
             
             // Check if marked as delivered
-            const isDelivered = (shipmentStatus || '').toLowerCase().includes('entregado');
+            const cleanShipmentStatus = (shipmentStatus || '').toLowerCase().trim();
+            const isDelivered = cleanShipmentStatus === 'entregado';
             
             const data = {
                 id: incidentId,
