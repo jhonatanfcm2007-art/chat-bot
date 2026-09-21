@@ -36,6 +36,20 @@ export async function initDB(dataDir) {
             );
         `);
 
+        
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS incidents (
+                id VARCHAR(255) PRIMARY KEY,
+                data JSONB NOT NULL
+            );
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS webhook_events (
+                id VARCHAR(255) PRIMARY KEY,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
         // Check if migration is needed
         const { rows } = await pool.query('SELECT COUNT(*) as count FROM chats');
         if (parseInt(rows[0].count) === 0) {
