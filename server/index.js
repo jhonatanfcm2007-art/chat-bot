@@ -85,7 +85,7 @@ app.get('/api/health', async (req, res) => {
 
 // Endpoint Remarketing
 app.get('/api/customers', (req, res) => {
-    res.json(customersDb);
+    res.json(customers);
 });
 
 // Endpoints Base de Conocimiento
@@ -600,9 +600,9 @@ if (settingsModified) saveSettings(settings);
 // --- RESTAURACIÓN DE EMERGENCIA ---
 // Si los chats están vacíos pero los clientes existen (ej. corrupción en reinicio),
 // reconstruir los contenedores de chat básicos para no perder los contactos.
-if (Object.keys(chats).length < customersDb.length) {
+if (Object.keys(chats).length < customers.length) {
     let restoredCount = 0;
-    for (const customer of customersDb) {
+    for (const customer of customers) {
         if (!chats[customer.phone]) {
             chats[customer.phone] = {
                 customerName: customer.name || 'Cliente Recuperado',
@@ -748,7 +748,7 @@ function backfillProducts() {
         saveChats(chats);
         console.log('✅ [CONFIG] Productos asignados a chats antiguos tras escaneo completo.');
         
-        // Removemos el emit incorrecto porque las variables accounts, productsDb, customersDb no existen en el backend
+        // Removemos el emit incorrecto porque las variables accounts, productsDb, customers no existen en el backend
     }
 }
 
@@ -1544,9 +1544,9 @@ app.post('/webhook', async (req, res) => {
         const customerName = contacts?.[0]?.profile?.name || from;
 
         // Guardar cliente en Remarketing DB
-        if (from !== ADMIN_PHONE && !customersDb.some(c => c.phone === from)) {
-            customersDb.push({ phone: from, name: customerName, firstSeen: Date.now() });
-            saveCustomers(customersDb);
+        if (from !== ADMIN_PHONE && !customers.some(c => c.phone === from)) {
+            customers.push({ phone: from, name: customerName, firstSeen: Date.now() });
+            saveCustomers(customers);
         }
 
         // Comandos Admin (Shopify Approval)
