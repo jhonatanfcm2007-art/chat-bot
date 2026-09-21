@@ -776,6 +776,7 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         const matched = knowledgeBaseDb.find(p => p.adIds?.some(idStr => String(idStr).includes(String(finalAdId).trim())));
         if (matched) {
             chat.assignedProduct = matched.name;
+            chat.assignedProductId = matched.id;
             return;
         }
     }
@@ -801,6 +802,7 @@ function assignProductToChat(chat, msgBody, adId, waLine, fromPhone) {
         const exclusiveProducts = knowledgeBaseDb.filter(p => p.line === String(waLine));
         if (exclusiveProducts.length === 1) {
             chat.assignedProduct = exclusiveProducts[0].name;
+            chat.assignedProductId = exclusiveProducts[0].id;
             return;
         }
     }
@@ -1100,16 +1102,25 @@ async function createShopifyOrder(chat, products) {
         countryISO = 'HN';
     }
 
-    // SOBRESCRIBIR con credenciales específicas del producto si existen
+        // SOBRESCRIBIR con credenciales
     const searchName = chat.assignedProduct || products || '';
     
-    // FILTRAR PRIMERO POR LA LÍNEA DE WHATSAPP (Evita mezclar tiendas si hay varios productos con el mismo nombre)
+    // FILTRAR PRIMERO POR LA LÍNEA DE WHATSAPP
     const lineProducts = knowledgeBaseDb.filter(p => {
         const pLine = p.line || '1';
         return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
     });
 
-    let prod = lineProducts.find(p => p.name === searchName);
+    let prod = null;
+    // 1. Búsqueda por ID exacto (Prioridad absoluta desde Anuncios)
+    if (chat.assignedProductId) {
+        prod = knowledgeBaseDb.find(p => p.id === chat.assignedProductId);
+    }
+    
+    // 2. Fallback a búsqueda por nombre exacto
+    if (!prod) {
+        prod = lineProducts.find(p => p.name === searchName);
+    }
     
     // Búsqueda difusa por si la IA agregó cantidades (Ej: "1 Frasco Shilajit" vs "Shilajit")
     if (!prod) {
@@ -2019,6 +2030,21 @@ async function processAIResponse(from, msgBodyLower) {
         refreshedChat.pendingApprovalProducts = cleanVal(intMatch[1]) || refreshedChat.pendingApprovalProducts;
     }
 
+        // Fallback por si la IA alucina el resumen en Markdown en lugar de usar etiquetas ocultas
+    if (!/\[ENTREGAR_AHORA\]/i.test(cleanAiReply) && /\*\*Nombre\*\*:/i.test(cleanAiReply) && /\*\*(Producto|Productos)\*\*:/i.test(cleanAiReply)) {
+        const fbProd = cleanAiReply.match(/\*\*(?:Producto|Productos)\*\*:\s*(.+)/i);
+        const fbName = cleanAiReply.match(/\*\*Nombre\*\*:\s*(.+)/i);
+        const fbPhone = cleanAiReply.match(/\*\*(?:Teléfono|Telefono|Tel)\*\*:\s*(.+)/i);
+        const fbDir = cleanAiReply.match(/\*\*(?:Dirección|Direccion)\*\*:\s*(.+)/i);
+        const fbMun = cleanAiReply.match(/\*\*(?:Municipio|Ciudad)\*\*:\s*(.+)/i);
+        const fbDep = cleanAiReply.match(/\*\*(?:Departamento|Provincia|Estado)\*\*:\s*(.+)/i);
+        
+        if (fbProd && fbName && fbDir) {
+            cleanAiReply += ` [ENTREGAR_AHORA] [PRODUCTOS: ${fbProd[1]}] [NOMBRE: ${fbName[1]}] [TELEFONO: ${fbPhone ? fbPhone[1] : ''}] [DIRECCION: ${fbDir[1]}] [MUNICIPIO: ${fbMun ? fbMun[1] : ''}] [DEPARTAMENTO: ${fbDep ? fbDep[1] : ''}]`;
+            console.log("✅ [SISTEMA] Fallback de etiquetas aplicado desde Markdown");
+        }
+    }
+
     const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const hasConfirmacionRetenida = /\[CONFIRMACION_RETENIDA\]/i.test(cleanAiReply);
     
@@ -2104,12 +2130,7 @@ async function processAIResponse(from, msgBodyLower) {
         
         if (!refreshedChat.orderRegistered) {
             await registerOrder(from, products);
-            if (isComplete) {
-                refreshedChat.orderRegistered = true;
-                refreshedChat.tags = ['preparar_pedido'];
-                io.emit('tag_updated', { from, tags: refreshedChat.tags });
-                saveChats(chats);
-            }
+            
         }
     } else if (hasConfirmacionRetenida) {
         // --- REPROGRAMACIÓN POSTERIOR ---
