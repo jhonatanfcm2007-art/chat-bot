@@ -3549,20 +3549,25 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
                 if (prod.adIds && prod.adIds.length > 0) {
                     knowledgeContext += `IDs de Anuncio asociados: ${prod.adIds.join(', ')}\n`;
                 }
-                knowledgeContext += `Detalles y Beneficios:\n${prod.details}\n`;
+                                let detailsText = prod.details || '';
+                let finalPrices = prod.prices;
                 
                 // Procesar variaciones de precios según el número de teléfono del cliente
-                let finalPrices = prod.prices;
                 if (prod.priceVariations && prod.priceVariations.length > 0) {
-                    const cleanPhone = String(fromPhone).split('_')[0].replace(/\D/g, ''); // Remover sufijos de línea y caracteres no numéricos
+                    const cleanPhone = String(fromPhone).split('_')[0].replace(/\D/g, ''); 
                     const matchedVar = prod.priceVariations.find(v => {
                         const cleanPrefix = (v.prefix || '').replace(/\D/g, '');
                         return cleanPrefix && cleanPhone.startsWith(cleanPrefix);
                     });
                     if (matchedVar && matchedVar.prices) {
                         finalPrices = matchedVar.prices;
+                        // BORRAMOS físicamente cualquier precio hardcodeado (Lempiras, Quetzales, Córdobas, Dólares) 
+                        // del guion de ventas para que la IA nunca vea la moneda del otro país.
+                        detailsText = detailsText.replace(/[LQC\$]\s*\.?\s*\d+([.,]\d+)?/gi, "[MENCIONA AQUÍ EL PRECIO DE LA TABLA PRECIOS Y COMBOS]");
                     }
                 }
+                
+                knowledgeContext += `Detalles y Beneficios:\n${detailsText}\n`;
                 knowledgeContext += `Precios y Combos:\n${finalPrices}\n`;
             });
         } else {
