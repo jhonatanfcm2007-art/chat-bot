@@ -11,6 +11,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { normalizarDireccionConGemini } from './services/geoNormalizer.js';
+import { initDB, getDbChats, getDbStore, saveDbChat, deleteDbChat, saveDbStore } from './db.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -526,16 +528,7 @@ if (fs.existsSync(DIST_DIR)) {
 
 // --- DATA LOADING & SAVING ---
 // Funciones seguras de guardado atómico
-function atomicSave(filePath, data) {
-    const tempFile = `${filePath}.tmp.${Date.now()}`;
-    try {
-        fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
-        fs.renameSync(tempFile, filePath);
-    } catch (err) {
-        console.error(`Error saving ${filePath}:`, err);
-        try { fs.unlinkSync(tempFile); } catch (e) {}
-    }
-}
+
 
 function loadUsers() {
     let loadedUsers = [];
@@ -561,7 +554,7 @@ function loadUsers() {
     }
     return loadedUsers;
 }
-function saveUsers(data) { atomicSave(USERS_FILE, data); }
+
 
 function loadInventory() {
     try {
@@ -569,7 +562,7 @@ function loadInventory() {
     } catch (err) { console.error('Error loading inventory:', err); }
     return [];
 }
-function saveInventory(data) { atomicSave(INVENTORY_FILE, data); }
+
 
 function loadSales() {
     try {
@@ -577,7 +570,7 @@ function loadSales() {
     } catch (err) { console.error('Error loading sales:', err); }
     return [];
 }
-function saveSales(data) { atomicSave(SALES_FILE, data); }
+
 
 function loadChats() {
     try {
@@ -614,36 +607,9 @@ let pendingSaveTimer = null;
 let isChatsSaving = false;
 let saveQueued = false;
 
-async function asyncAtomicSave(filePath, data) {
-    const tempFile = `${filePath}.tmp.${Date.now()}`;
-    try {
-        // Ejecutamos en el background (aunque stringify es sincrono, fs promises no bloquea el I/O)
-        const json = JSON.stringify(data, null, 2); 
-        await fs.promises.writeFile(tempFile, json, 'utf8');
-        await fs.promises.rename(tempFile, filePath);
-    } catch (err) {
-        console.error(`[SAVE] Error asincrono en ${filePath}:`, err);
-        try { await fs.promises.unlink(tempFile); } catch (e) {}
-    }
-}
+async 
 
-function saveChats(data) {
-    if (pendingSaveTimer) return; // Ya hay un guardado programado
-    pendingSaveTimer = setTimeout(async () => {
-        pendingSaveTimer = null;
-        if (isChatsSaving) {
-            saveQueued = true; // Si esta guardando, encolar para el siguiente ciclo
-            return;
-        }
-        isChatsSaving = true;
-        await asyncAtomicSave(CHATS_FILE, chats);
-        isChatsSaving = false;
-        if (saveQueued) {
-            saveQueued = false;
-            saveChats(chats);
-        }
-    }, 5000); // Guardar cada 5 segundos maximo
-}
+
 
 
 function loadAnomalies() {
@@ -652,7 +618,7 @@ function loadAnomalies() {
     }
     return [];
 }
-function saveAnomalies(data) { atomicSave(ANOMALIES_FILE, data); }
+
 
 function registerAnomaly(type, customerName, from) {
     const newAnomaly = {
@@ -695,7 +661,7 @@ function loadSettings() {
     } catch (err) { console.error('Error loading settings:', err); }
     return def;
 }
-function saveSettings(data) { atomicSave(SETTINGS_FILE, data); }
+
 
 function loadPlatforms() {
     try {
@@ -703,7 +669,7 @@ function loadPlatforms() {
     } catch (err) {}
     return ['Shilajit Resina', 'Combos Promocionales'];
 }
-function savePlatforms(data) { atomicSave(PLATFORMS_FILE, data); }
+
 
 function loadProviders() {
     try {
@@ -711,7 +677,7 @@ function loadProviders() {
     } catch (err) {}
     return ['Himalaya Natural', 'Laboratorio Oficial'];
 }
-function saveProviders(data) { atomicSave(PROVIDERS_FILE, data); }
+
 
 function loadCampaigns() {
     try {
@@ -719,7 +685,7 @@ function loadCampaigns() {
     } catch (err) { console.error('Error loading campaigns:', err); }
     return [];
 }
-function saveCampaigns(data) { atomicSave(CAMPAIGNS_FILE, data); }
+
 
 // --- DATA INITIALIZATION ---
 inventory = loadInventory();
@@ -762,7 +728,7 @@ function loadCustomers() {
     }
     return [];
 }
-function saveCustomers(data) { atomicSave(CUSTOMERS_FILE, data); }
+
 let customersDb = loadCustomers();
 
 // --- RESTAURACIÓN DE EMERGENCIA ---
@@ -797,7 +763,7 @@ function loadKnowledgeBase() {
     }
     return [];
 }
-function saveKnowledgeBase(data) { atomicSave(KNOWLEDGE_BASE_FILE, data); }
+
 let knowledgeBaseDb = loadKnowledgeBase();
 
 let kbModified = false;
@@ -824,7 +790,7 @@ function loadStores() {
     }
     return [];
 }
-function saveStores(data) { atomicSave(STORES_FILE, data); }
+
 let storesDb = loadStores();
 
 // MIGRACIÓN A BASE DE CONOCIMIENTO DINÁMICA
