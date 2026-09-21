@@ -93,7 +93,7 @@ function Incidents({ BACKEND_URL, socket }) {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{inc.firstName} {inc.lastName} <br/><span className="text-xs text-slate-500">{inc.phone}</span></td>
                                         <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate" title={inc.reason}>{inc.reason || <span className="text-slate-400 italic">Sin motivo especificado</span>}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={\`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full \${inc.internalState === 'Pendiente de contactar' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'}\`}>
+                                            <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${inc.internalState === 'Pendiente de contactar' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'}`}>
                                                 {inc.internalState}
                                             </span>
                                         </td>
