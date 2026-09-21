@@ -3555,7 +3555,7 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
         const timeStr = `${nowGmt5.getHours().toString().padStart(2, '0')}:${nowGmt5.getMinutes().toString().padStart(2, '0')}`;
         const dateContext = `\n\n### CONTEXTO DE TIEMPO (GMT-5):\n- Hoy es: ${todayDateStr}\n- Hora actual: ${timeStr}\n`;
 
-        const comp = await activeOpenAI.chat.completions.create({
+        const comp = await activeOpenAI.chat.completions.create({ 
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}${dateContext}` },
@@ -3564,9 +3564,7 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
                     content: m.content || m.body 
                 })),
                 { role: "system", content: "RECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente menciona dolares, centavos u otra moneda distinta al catalogo. 2) Si el cliente pide ver fotos, imagenes, como es el producto, o dice que quiere verla. EN CUALQUIERA DE ESTOS DOS CASOS, ESTA ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU UNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada mas, para que un humano asuma el control." },
-                { role: "user", content: message }
-            ]
-        });
+                { role: "user", content: message } ] }, { timeout: 15000 });
         
         let reply = comp.choices[0].message.content;
         
