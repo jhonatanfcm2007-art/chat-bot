@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Inventory from './components/Inventory';
+import Incidents from './components/Incidents';
 import Simulator from './components/Simulator';
 import AIAssistant from './components/AIAssistant';
 import Campaigns from './components/Campaigns';
