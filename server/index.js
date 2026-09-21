@@ -3159,7 +3159,7 @@ io.on('connection', (socket) => {
         }
         
         saveChats(chats);
-        io.emit('initial_chats', getOptimizedChatsPayload());
+        io.emit('chat_updated', chats[chatId]);
 
         // Send WhatsApp message
         const cName = chat.customerName || chat.orderName || chat.from.split('@')[0];
@@ -3231,13 +3231,13 @@ io.on('connection', (socket) => {
                     if (!chat.messages) chat.messages = [];
                     chat.messages.push(newMsg);
                     io.emit('message', { ...newMsg, waLine: chat.waLine });
+                    io.emit('chat_updated', chat);
                 } catch (error) {
                     console.error('Error in bulk tracking for', targetChatId, error);
                 }
             }
         }
         saveChats(chats);
-        io.emit('initial_chats', getOptimizedChatsPayload());
     });
 
     socket.on('create_campaign', (data) => {
@@ -3649,7 +3649,7 @@ IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELE
                     role: m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant'), 
                     content: m.content || m.body 
                 })),
-                { role: "system", content: "RECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: Si el cliente acaba de mencionar dolares, la palabra dolar, centavos, u otra moneda distinta al catalogo, ESTA ESTRICTAMENTE PROHIBIDO que respondas o hagas una conversion. TU UNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada mas." },
+                { role: "system", content: "RECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente menciona dolares, centavos u otra moneda distinta al catalogo. 2) Si el cliente pide ver fotos, imagenes, como es el producto, o dice que quiere verla. EN CUALQUIERA DE ESTOS DOS CASOS, ESTA ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU UNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada mas, para que un humano asuma el control." },
                 { role: "user", content: message }
             ]
         });
