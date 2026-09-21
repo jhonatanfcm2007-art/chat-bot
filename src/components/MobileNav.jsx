@@ -3,6 +3,7 @@ import React from 'react';
 const MobileNav = ({ activeTab, onTabChange, currentUser }) => {
   const menuItems = [
     { id: 'simulator', icon: 'chat' },
+    { id: 'incidents', icon: 'local_shipping' },
     { id: 'knowledge_base', icon: 'menu_book' },
     ...(['admin', 'socio'].includes(currentUser?.role) ? [
       { id: 'ai_assistant', icon: 'psychology' }

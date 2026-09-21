@@ -755,6 +755,8 @@ function App() {
         return <KnowledgeBase serverUrl={SERVER_URL} currentUser={currentUser} />;
       case 'users':
         return <UsersManager serverUrl={SERVER_URL} currentUser={currentUser} />;
+      case 'incidents':
+        return <Incidents BACKEND_URL={SERVER_URL} socket={socket} />;
       default:
         return (
           <Simulator 
