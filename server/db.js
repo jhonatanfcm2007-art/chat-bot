@@ -70,12 +70,12 @@ export async function initDB(dataDir) {
             ];
 
             for (const key of filesToStore) {
-                const filepath = path.join(dataDir, \`\${key}.json\`);
+                const filepath = path.join(dataDir, `${key}.json`);
                 if (fs.existsSync(filepath)) {
-                    console.log(\`Migrando \${key}.json...\`);
+                    console.log(`Migrando ${key}.json...`);
                     const data = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
                     await pool.query(
-                        \`INSERT INTO json_store (key, data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data\`,
+                        `INSERT INTO json_store (key, data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data`,
                         [key, JSON.stringify(data)]
                     );
                 }
