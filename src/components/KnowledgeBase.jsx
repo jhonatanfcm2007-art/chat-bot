@@ -603,7 +603,7 @@ const KnowledgeBase = ({ serverUrl, currentUser }) => {
   );
 };
 
-const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl }) => {
+const StoresManagerModal = ({ stores, fetchStores, onClose, serverUrl, currentUser, users }) => {
   const [editingStore, setEditingStore] = useState(null);
 
   const handleSaveStore = async (e) => {
