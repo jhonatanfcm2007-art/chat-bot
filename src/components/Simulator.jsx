@@ -176,15 +176,19 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
       }
     }
     
-    const success = await onSendMessage({ 
-      to: selectedChat, 
-      content: inputValue, 
-      imageUrl: uploadedImageUrl,
-      origin: window.location.origin
-    });
-    
-    if (success) {
+    const currentInput = inputValue;
       setInputValue('');
+      const textarea = document.querySelector('textarea');
+      if (textarea) textarea.style.height = 'auto';
+
+      const success = await onSendMessage({ 
+        to: selectedChat, 
+        content: currentInput, 
+        imageUrl: uploadedImageUrl,
+        origin: window.location.origin
+      });
+      
+      if (success) {
       setSelectedFile(null);
       setFilePreview('');
       if (fileInputRef.current) fileInputRef.current.value = '';
