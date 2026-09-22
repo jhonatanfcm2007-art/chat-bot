@@ -34,7 +34,7 @@ app.post('/api/soydrop/test-access', async (req, res) => {
 
     let browser;
     try {
-        console.log(\`[Playwright] Lanzando Chromium...\`);
+        console.log(`[Playwright] Lanzando Chromium...`);
         browser = await chromium.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -45,7 +45,7 @@ app.post('/api/soydrop/test-access', async (req, res) => {
         );
         const page = await context.newPage();
 
-        console.log(\`[Playwright] Navegando a \${loginUrl}...\`);
+        console.log(`[Playwright] Navegando a \${loginUrl}...`);
         await page.goto(loginUrl, { waitUntil: 'networkidle', timeout: 30000 });
 
         // Intentar detectar si estamos en login
@@ -85,7 +85,7 @@ app.post('/api/soydrop/test-access', async (req, res) => {
         if (dashboardElements.length === 0) {
             // Si no vemos elementos típicos de navegación, devolveremos un fragmento del DOM para analizarlo.
             const bodyHtml = await page.evaluate(() => document.body.innerHTML.substring(0, 1000));
-            throw new Error(\`La URL cambió, pero no detectamos elementos típicos de un panel (nav, aside). Primeros 1000 chars del DOM:\\n\${bodyHtml}\`);
+            throw new Error(`La URL cambió, pero no detectamos elementos típicos de un panel (nav, aside). Primeros 1000 chars del DOM:\\n\${bodyHtml}`);
         }
 
         const pageTitle = await page.title();
@@ -111,5 +111,5 @@ app.post('/api/soydrop/test-access', async (req, res) => {
 app.get('/health', (req, res) => res.send('Playwright Service is running'));
 
 app.listen(PORT, () => {
-    console.log(\`Playwright service listening on port \${PORT}\`);
+    console.log(`Playwright service listening on port \${PORT}`);
 });
