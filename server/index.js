@@ -7,7 +7,6 @@ import { Server } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { fetchIncidentHistory } from './playwrightService.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
