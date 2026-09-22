@@ -2924,35 +2924,67 @@ app.post('/api/incidents/draft/generate', async (req, res) => {
         const incident = incidents.find(i => i.id === incidentId);
         if (!incident) return res.status(404).json({ error: 'Incident not found' });
         
+        let currentOpenai = typeof openai !== 'undefined' ? openai : null;
+        if (!currentOpenai && process.env.OPENAI_API_KEY) {
+            const OpenAI = (await import('openai')).default;
+            currentOpenai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        }
+        if (!currentOpenai) return res.status(500).json({ error: 'OpenAI no configurado' });
+
         let chatContext = '';
+        // "Comprobar que la informacin del chat corresponde a este pedido y sigue siendo aplicable"
+        // Since we only have the last 15 messages, we just pass them if a chat exists, and instruct the AI to check if they actually talk about this order/product.
         if (incident.chatId && incident.chatId !== 'AMBIGUOUS_MATCH') {
             const chat = db.chats.find(c => c.id === incident.chatId);
             if (chat && chat.messages) {
-                // Get last 15 messages to understand context
                 chatContext = chat.messages.slice(-15).map(m => `${m.role === 'user' ? 'Cliente' : 'Asesor/Bot'}: ${m.body || m.content}`).join('\n');
             }
         }
         
-        const systemPrompt = `Eres un asistente de atención al cliente experto en logística para e-commerce. Tu tarea es redactar un borrador de mensaje de WhatsApp (breve, amable, natural y en español) para un cliente que tiene una incidencia con su entrega.
-        
-Reglas estrictas:
-- El mensaje NO debe exceder los 2-3 párrafos cortos.
-- Si la incidencia es por no poder contactar al cliente o porque no estaba, pregúntale educadamente a qué hora o cuándo puede atender al transportador.
-- Si el conductor NO dejó detalles del motivo ("Sin motivo especificado") o está vacío, pregunta si hubo algún inconveniente con la entrega SIN inventar el motivo.
-- Usa el contexto del chat para NO pedir información que el cliente ya dio (ej. si en los últimos mensajes ya dio una dirección alternativa o celular, confírmala en lugar de pedirla de nuevo).
-- NO inventes datos ni prometas fechas exactas de entrega.
-- Dirígete al cliente por su nombre: ${incident.firstName} ${incident.lastName}.
-- El pedido es el #${incident.orderNumber}.
-- El motivo reportado por la transportadora es: "${incident.reason || 'Sin detalles proporcionados'}".
-- Categoría de la incidencia: ${incident.category || 'No categorizado'}.
+        const systemPrompt = `Eres un asistente experto en logística para e-commerce. Tu tarea es analizar el motivo de una incidencia de entrega y decidir a quién debes escribirle el borrador.
 
-Contexto reciente del chat con el cliente:
-${chatContext || '(No hay contexto previo de chat)'}
+Datos del pedido:
+- Cliente: ${incident.firstName} ${incident.lastName}
+- Pedido: #${incident.orderNumber}
+- Motivo reportado por la transportadora: "${incident.reason || ''}"
+- Categoría: ${incident.category || 'No categorizado'}
+- Aclaración previa de la transportadora (si existe): ${incident.transporterClarifications ? incident.transporterClarifications.map(c=>c.text).join(' | ') : 'Ninguna'}
 
-Escribe SOLO el contenido del mensaje a enviar, sin comillas ni aclaraciones extras.`;
-        
-        const draft = await getAIResponse(systemPrompt, [], 1, incident.phone);
-        res.json({ draft });
+Contexto reciente del chat con el cliente (evalúa si realmente están hablando de este pedido):
+${chatContext || '(No hay contexto de chat para validar)'}
+
+REGLAS DE DECISIÓN:
+1. Evalúa el "Motivo reportado". Si está VACÍO, o dice textos genéricos como "El conductor creó esta incidencia sin proporcionar detalles adicionales", o cualquier texto que NO explique qué ocurrió exactamente, el motivo es INSUFICIENTE.
+2. Si existe una "Aclaración previa de la transportadora" que SÍ explica el problema, entonces el motivo pasa a ser CLARO gracias a la aclaración.
+3. Si el motivo es INSUFICIENTE, genera ÚNICAMENTE un borrador dirigido al transportador (Para Soy Drop). NO debes preguntarle al cliente.
+4. Si el motivo es CLARO (o hay aclaración), genera ÚNICAMENTE un borrador dirigido al cliente (Para WhatsApp). Usa el contexto del chat para no repetir preguntas.
+
+REGLAS DEL BORRADOR SOY DROP:
+- Máximo 240 caracteres.
+- Breve y directo. Ejemplo: "Hola, ¿pueden indicar el motivo específico de esta incidencia y qué información necesitan para gestionar la entrega?".
+
+REGLAS DEL BORRADOR WHATSAPP:
+- Breve, amable, natural, en español, 2-3 párrafos cortos.
+- Si no responden, pregunta cuándo pueden atender al transportador.
+- NO inventes datos ni prometas fechas.
+- Si el contexto del chat revela que el cliente ya dio una solución (ej. dio otra dirección), confírmalo en vez de pedirlo de nuevo.
+
+RESPONDE ÚNICAMENTE CON UN JSON EN ESTE FORMATO:
+{
+  "isReasonSufficient": true/false,
+  "draftSoyDrop": "texto o null",
+  "draftWhatsApp": "texto o null",
+  "reasoning": "Breve explicación de tu decisión"
+}`;
+
+        const response = await currentOpenai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: systemPrompt }],
+            response_format: { type: 'json_object' }
+        });
+
+        const result = JSON.parse(response.choices[0].message.content);
+        res.json(result);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Failed to generate draft' });
@@ -2961,11 +2993,22 @@ Escribe SOLO el contenido del mensaje a enviar, sin comillas ni aclaraciones ext
 
 app.put('/api/incidents/:id/draft', (req, res) => {
     const { id } = req.params;
-    const { draftMessage } = req.body;
+    const { draftMessage, draftSoyDrop, transporterClarification } = req.body;
     
     const idx = incidents.findIndex(i => i.id === id);
     if (idx !== -1) {
-        incidents[idx].draftMessage = draftMessage;
+        if (draftMessage !== undefined) incidents[idx].draftMessage = draftMessage;
+        if (draftSoyDrop !== undefined) incidents[idx].draftSoyDrop = draftSoyDrop;
+        
+        if (transporterClarification) {
+            if (!incidents[idx].transporterClarifications) incidents[idx].transporterClarifications = [];
+            incidents[idx].transporterClarifications.push({
+                text: transporterClarification,
+                date: new Date().toISOString(),
+                source: 'Manual'
+            });
+        }
+        
         saveIncidents(incidents);
         io.emit('incidents_updated', incidents);
         res.json({ success: true, incident: incidents[idx] });

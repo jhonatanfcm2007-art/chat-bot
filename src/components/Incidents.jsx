@@ -6,10 +6,14 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
     const [selectedIncident, setSelectedIncident] = useState(null);
     const fileInputRef = useRef(null);
 
-    // Nuevos estados para el borrador
-    const [draft, setDraft] = useState('');
+    // States para borradores
+    const [draftWhatsApp, setDraftWhatsApp] = useState('');
+    const [draftSoyDrop, setDraftSoyDrop] = useState('');
+    const [clarificationInput, setClarificationInput] = useState('');
+    
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isSavingClarification, setIsSavingClarification] = useState(false);
 
     useEffect(() => {
         fetch(`${BACKEND_URL}/api/incidents`)
@@ -25,7 +29,6 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
 
         socket.on('incidents_updated', (data) => {
             setIncidents(data);
-            // Actualizar localmente si el seleccionado cambió
             setSelectedIncident(prev => {
                 if (prev) {
                     const updated = data.find(i => i.id === prev.id);
@@ -40,12 +43,15 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
         };
     }, [BACKEND_URL, socket]);
 
-    // Cargar borrador al abrir el modal
     useEffect(() => {
         if (selectedIncident) {
-            setDraft(selectedIncident.draftMessage || '');
+            setDraftWhatsApp(selectedIncident.draftMessage || '');
+            setDraftSoyDrop(selectedIncident.draftSoyDrop || '');
+            setClarificationInput('');
         } else {
-            setDraft('');
+            setDraftWhatsApp('');
+            setDraftSoyDrop('');
+            setClarificationInput('');
         }
     }, [selectedIncident]);
 
@@ -86,8 +92,15 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                 body: JSON.stringify({ incidentId: selectedIncident.id })
             });
             const data = await res.json();
-            if (data.draft) {
-                setDraft(data.draft);
+            
+            if (res.ok) {
+                if (data.draftSoyDrop) setDraftSoyDrop(data.draftSoyDrop);
+                if (data.draftWhatsApp) setDraftWhatsApp(data.draftWhatsApp);
+                
+                // Mostrar pequeña notificación del razonamiento de la IA
+                if (data.reasoning) {
+                    console.log("IA Reasoning:", data.reasoning);
+                }
             } else {
                 alert('Error al generar el borrador: ' + (data.error || 'Desconocido'));
             }
@@ -99,19 +112,21 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
         }
     };
 
-    const handleSaveDraft = async () => {
+    const handleSaveDrafts = async () => {
         if (!selectedIncident) return;
         setIsSavingDraft(true);
         try {
             const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/draft`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ draftMessage: draft })
+                body: JSON.stringify({ 
+                    draftMessage: draftWhatsApp,
+                    draftSoyDrop: draftSoyDrop
+                })
             });
             const data = await res.json();
             if (data.success) {
                 setSelectedIncident(data.incident);
-                // No mostrar alert para no ser invasivo, pero podrías
             } else {
                 alert('Error al guardar borrador.');
             }
@@ -120,6 +135,32 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
             alert('Error de red al guardar.');
         } finally {
             setIsSavingDraft(false);
+        }
+    };
+
+    const handleSaveClarification = async () => {
+        if (!selectedIncident || !clarificationInput.trim()) return;
+        setIsSavingClarification(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/draft`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    transporterClarification: clarificationInput.trim()
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSelectedIncident(data.incident);
+                setClarificationInput('');
+            } else {
+                alert('Error al guardar aclaración.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de red al guardar aclaración.');
+        } finally {
+            setIsSavingClarification(false);
         }
     };
 
@@ -185,14 +226,16 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
             
             {selectedIncident && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h3 className="font-semibold text-lg text-slate-800">Detalles de la Incidencia</h3>
                             <button onClick={() => setSelectedIncident(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
-                        <div className="p-6 overflow-y-auto flex-1">
+                        
+                        <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-6">
+                            {/* TOP INFO GRID */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div>
@@ -204,75 +247,119 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                                         <p className="text-sm font-medium text-slate-800">{selectedIncident.firstName} {selectedIncident.lastName}</p>
                                         <p className="text-sm text-slate-500">{selectedIncident.phone}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Destino</p>
-                                        <p className="text-sm text-slate-700">{selectedIncident.country} - {selectedIncident.courier}</p>
-                                    </div>
                                 </div>
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Estado Soy Drop</p>
-                                        <p className="text-sm text-slate-700"><span className="font-medium text-slate-800">Envío:</span> {selectedIncident.shipmentStatus}</p>
-                                        <p className="text-sm text-slate-700"><span className="font-medium text-slate-800">Incidencia:</span> {selectedIncident.incidentStatus}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Categoría</p>
-                                        <p className="text-sm font-medium text-slate-800">{selectedIncident.category}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Motivo / Mensaje del Conductor</p>
+                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Motivo Reportado</p>
                                         <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
-                                            <p className="text-sm text-amber-900 leading-relaxed">{selectedIncident.reason || 'Sin detalles proporcionados por la transportadora.'}</p>
+                                            <p className="text-sm text-amber-900 leading-relaxed">{selectedIncident.reason || 'Sin detalles proporcionados.'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Aclaraciones de Soy Drop</p>
+                                        {selectedIncident.transporterClarifications && selectedIncident.transporterClarifications.length > 0 ? (
+                                            <div className="space-y-2 mb-2">
+                                                {selectedIncident.transporterClarifications.map((clar, idx) => (
+                                                    <div key={idx} className="bg-blue-50 border border-blue-100 rounded-md p-2">
+                                                        <p className="text-xs text-blue-900">{clar.text}</p>
+                                                        <span className="text-[10px] text-blue-400">{new Date(clar.date).toLocaleDateString()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400 mb-2">Ninguna aclaración registrada.</p>
+                                        )}
+                                        
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                value={clarificationInput}
+                                                onChange={(e) => setClarificationInput(e.target.value)}
+                                                placeholder="Añadir respuesta de Soy Drop..."
+                                                className="flex-1 text-xs px-2 py-1.5 border border-slate-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary"
+                                            />
+                                            <button 
+                                                onClick={handleSaveClarification}
+                                                disabled={isSavingClarification || !clarificationInput.trim()}
+                                                className="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-medium rounded-md disabled:opacity-50 transition-colors"
+                                            >
+                                                Guardar
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            {/* SECCIÓN DEL BORRADOR */}
+                            {/* DRAFT SECTION */}
                             {(() => {
                                 const isDelivered = selectedIncident.internalState?.toLowerCase().includes('entregado');
-                                const isDoubtful = selectedIncident.chatId === 'AMBIGUOUS_MATCH' || !selectedIncident.chatId;
-                                const isDraftChanged = draft !== (selectedIncident.draftMessage || '');
+                                // La asociación dudosa solo debe bloquear WhatsApp, no SoyDrop
+                                const isDoubtfulWA = selectedIncident.chatId === 'AMBIGUOUS_MATCH' || !selectedIncident.chatId;
+                                
+                                const isDraftsChanged = 
+                                    draftWhatsApp !== (selectedIncident.draftMessage || '') || 
+                                    draftSoyDrop !== (selectedIncident.draftSoyDrop || '');
                                 
                                 return (
-                                <div className="mt-6 border-t border-slate-100 pt-6">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Borrador de WhatsApp (IA)</h4>
+                                <div className="border-t border-slate-100 pt-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Preparación de Mensajes (IA)</h4>
                                         
                                         {isDelivered ? (
                                             <span className="text-xs text-slate-500 font-medium px-2 py-1 bg-slate-100 rounded-md">Bloqueado (Entregado)</span>
-                                        ) : isDoubtful ? (
-                                            <span className="text-xs text-amber-600 font-medium px-2 py-1 bg-amber-50 rounded-md">Requiere revisión manual</span>
                                         ) : (
                                             <button 
                                                 onClick={handleGenerateDraft} 
                                                 disabled={isGenerating || isSavingDraft}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
                                             >
                                                 <span className={"material-symbols-outlined text-[16px]" + (isGenerating ? " animate-spin" : "")}>
                                                     {isGenerating ? 'sync' : 'auto_awesome'}
                                                 </span>
-                                                {isGenerating ? 'Generando...' : 'Preparar mensaje'}
+                                                {isGenerating ? 'Analizando motivo...' : 'Generar Borradores (IA)'}
                                             </button>
                                         )}
                                     </div>
                                     
-                                    <textarea 
-                                        value={draft}
-                                        onChange={(e) => setDraft(e.target.value)}
-                                        disabled={isDelivered || isDoubtful}
-                                        placeholder={isDelivered ? "No se requiere contactar." : isDoubtful ? "Verifica el chat asignado antes de redactar." : "Haz clic en 'Preparar mensaje' o escribe tu borrador aquí..."}
-                                        className="w-full h-24 p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none disabled:bg-slate-50 disabled:text-slate-500"
-                                    ></textarea>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Soy Drop Box */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-xs font-medium text-slate-500">Borrador para Soy Drop (Max 240 char)</label>
+                                            <textarea 
+                                                value={draftSoyDrop}
+                                                onChange={(e) => setDraftSoyDrop(e.target.value)}
+                                                disabled={isDelivered}
+                                                placeholder="Mensaje para el transportador..."
+                                                maxLength={240}
+                                                className="w-full h-24 p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:bg-slate-50 disabled:text-slate-500"
+                                            ></textarea>
+                                            <span className="text-[10px] text-slate-400 text-right">{draftSoyDrop.length}/240</span>
+                                        </div>
+
+                                        {/* WhatsApp Box */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-xs font-medium text-slate-500 flex justify-between">
+                                                Borrador para WhatsApp
+                                                {isDoubtfulWA && <span className="text-amber-500 font-semibold">Chat dudoso / no asignado</span>}
+                                            </label>
+                                            <textarea 
+                                                value={draftWhatsApp}
+                                                onChange={(e) => setDraftWhatsApp(e.target.value)}
+                                                disabled={isDelivered || isDoubtfulWA}
+                                                placeholder={isDoubtfulWA ? "Revisa la asociación del chat primero." : "Mensaje para el cliente..."}
+                                                className="w-full h-24 p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none disabled:bg-slate-50 disabled:text-slate-500"
+                                            ></textarea>
+                                        </div>
+                                    </div>
                                     
-                                    {isDraftChanged && !isDelivered && !isDoubtful && (
-                                        <div className="flex justify-end mt-2">
+                                    {isDraftsChanged && !isDelivered && (
+                                        <div className="flex justify-end mt-4">
                                             <button 
-                                                onClick={handleSaveDraft}
+                                                onClick={handleSaveDrafts}
                                                 disabled={isSavingDraft}
                                                 className="px-4 py-1.5 text-xs font-medium text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
                                             >
-                                                {isSavingDraft ? 'Guardando...' : 'Guardar borrador'}
+                                                {isSavingDraft ? 'Guardando...' : 'Guardar cambios'}
                                             </button>
                                         </div>
                                     )}
@@ -289,12 +376,6 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                                 <button onClick={() => onSelectChat && onSelectChat(selectedIncident.chatId)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
                                     <span className="material-symbols-outlined text-lg">chat</span>
                                     Abrir en Chats
-                                </button>
-                            )}
-                            {(!selectedIncident.chatId || selectedIncident.chatId === 'AMBIGUOUS_MATCH') && (
-                                <button disabled className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-400 text-sm font-medium rounded-lg cursor-not-allowed">
-                                    <span className="material-symbols-outlined text-lg">chat_error</span>
-                                    Chat no enlazado
                                 </button>
                             )}
                         </div>
