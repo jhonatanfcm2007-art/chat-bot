@@ -2935,7 +2935,7 @@ app.post('/api/incidents/draft/generate', async (req, res) => {
         // "Comprobar que la informacin del chat corresponde a este pedido y sigue siendo aplicable"
         // Since we only have the last 15 messages, we just pass them if a chat exists, and instruct the AI to check if they actually talk about this order/product.
         if (incident.chatId && incident.chatId !== 'AMBIGUOUS_MATCH') {
-            const chat = db.chats.find(c => c.id === incident.chatId);
+            const chat = chats[incident.chatId];
             if (chat && chat.messages) {
                 chatContext = chat.messages.slice(-15).map(m => `${m.role === 'user' ? 'Cliente' : 'Asesor/Bot'}: ${m.body || m.content}`).join('\n');
             }
