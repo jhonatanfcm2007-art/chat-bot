@@ -2741,7 +2741,7 @@ app.post('/api/upload', (req, res) => {
         res.json({ url: `/uploads/${uniqueName}` });
     } catch (e) {
         console.error('Upload error:', e);
-        res.status(500).send('Upload failed');
+        res.status(500).send('Upload failed: ' + e.message);
     }
 });
 

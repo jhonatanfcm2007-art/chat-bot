@@ -166,7 +166,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
           const data = await response.json();
           uploadedImageUrl = data.url;
         } else {
-          alert('Error al subir la imagen');
+          const errText = await response.text();
+            alert('Error del servidor: ' + errText + ' | Status: ' + response.status);
           return;
         }
       } catch (err) {
