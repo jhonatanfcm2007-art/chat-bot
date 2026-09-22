@@ -6,6 +6,11 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
     const [selectedIncident, setSelectedIncident] = useState(null);
     const fileInputRef = useRef(null);
 
+    // Nuevos estados para el borrador
+    const [draft, setDraft] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+
     useEffect(() => {
         fetch(`${BACKEND_URL}/api/incidents`)
             .then(res => res.json())
@@ -20,12 +25,29 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
 
         socket.on('incidents_updated', (data) => {
             setIncidents(data);
+            // Actualizar localmente si el seleccionado cambió
+            setSelectedIncident(prev => {
+                if (prev) {
+                    const updated = data.find(i => i.id === prev.id);
+                    return updated || prev;
+                }
+                return prev;
+            });
         });
 
         return () => {
             socket.off('incidents_updated');
         };
     }, [BACKEND_URL, socket]);
+
+    // Cargar borrador al abrir el modal
+    useEffect(() => {
+        if (selectedIncident) {
+            setDraft(selectedIncident.draftMessage || '');
+        } else {
+            setDraft('');
+        }
+    }, [selectedIncident]);
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
@@ -52,6 +74,53 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
             }
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleGenerateDraft = async () => {
+        if (!selectedIncident) return;
+        setIsGenerating(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/incidents/draft/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ incidentId: selectedIncident.id })
+            });
+            const data = await res.json();
+            if (data.draft) {
+                setDraft(data.draft);
+            } else {
+                alert('Error al generar el borrador: ' + (data.error || 'Desconocido'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de red al generar.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleSaveDraft = async () => {
+        if (!selectedIncident) return;
+        setIsSavingDraft(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/draft`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draftMessage: draft })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSelectedIncident(data.incident);
+                // No mostrar alert para no ser invasivo, pero podrías
+            } else {
+                alert('Error al guardar borrador.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de red al guardar.');
+        } finally {
+            setIsSavingDraft(false);
+        }
     };
 
     return (
@@ -112,8 +181,8 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                         </tbody>
                     </table>
                 </div>
-
-                        )}
+            )}
+            
             {selectedIncident && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -158,6 +227,59 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                                     </div>
                                 </div>
                             </div>
+                            
+                            {/* SECCIÓN DEL BORRADOR */}
+                            {(() => {
+                                const isDelivered = selectedIncident.internalState?.toLowerCase().includes('entregado');
+                                const isDoubtful = selectedIncident.chatId === 'AMBIGUOUS_MATCH' || !selectedIncident.chatId;
+                                const isDraftChanged = draft !== (selectedIncident.draftMessage || '');
+                                
+                                return (
+                                <div className="mt-6 border-t border-slate-100 pt-6">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Borrador de WhatsApp (IA)</h4>
+                                        
+                                        {isDelivered ? (
+                                            <span className="text-xs text-slate-500 font-medium px-2 py-1 bg-slate-100 rounded-md">Bloqueado (Entregado)</span>
+                                        ) : isDoubtful ? (
+                                            <span className="text-xs text-amber-600 font-medium px-2 py-1 bg-amber-50 rounded-md">Requiere revisión manual</span>
+                                        ) : (
+                                            <button 
+                                                onClick={handleGenerateDraft} 
+                                                disabled={isGenerating || isSavingDraft}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                <span className={"material-symbols-outlined text-[16px]" + (isGenerating ? " animate-spin" : "")}>
+                                                    {isGenerating ? 'sync' : 'auto_awesome'}
+                                                </span>
+                                                {isGenerating ? 'Generando...' : 'Preparar mensaje'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <textarea 
+                                        value={draft}
+                                        onChange={(e) => setDraft(e.target.value)}
+                                        disabled={isDelivered || isDoubtful}
+                                        placeholder={isDelivered ? "No se requiere contactar." : isDoubtful ? "Verifica el chat asignado antes de redactar." : "Haz clic en 'Preparar mensaje' o escribe tu borrador aquí..."}
+                                        className="w-full h-24 p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none disabled:bg-slate-50 disabled:text-slate-500"
+                                    ></textarea>
+                                    
+                                    {isDraftChanged && !isDelivered && !isDoubtful && (
+                                        <div className="flex justify-end mt-2">
+                                            <button 
+                                                onClick={handleSaveDraft}
+                                                disabled={isSavingDraft}
+                                                className="px-4 py-1.5 text-xs font-medium text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                {isSavingDraft ? 'Guardando...' : 'Guardar borrador'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                );
+                            })()}
+                            
                         </div>
                         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                             <button onClick={() => setSelectedIncident(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 rounded-lg transition-colors">

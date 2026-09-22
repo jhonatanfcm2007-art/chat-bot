@@ -1066,9 +1066,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                                      e.target.style.height = 'auto';
                                  }
                              }}
-                           /> setInputValue(e.target.value)}
-                           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                         />
+                           />
                        </div>
                        <button 
                          onClick={handleSend}
