@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
 import OpenAI from 'openai';
+import { fetchIncidentHistory } from './playwrightService.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -2988,6 +2989,23 @@ RESPONDE ÚNICAMENTE CON UN JSON EN ESTE FORMATO:
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Failed to generate draft' });
+    }
+});
+
+
+app.post('/api/incidents/:id/fetch-history', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const incident = incidents.find(i => i.id === id);
+        if (!incident) return res.status(404).json({ error: 'Incident not found' });
+
+        // Esto usar Playwright para conectarse a Soy Drop y extraer el historial
+        const history = await fetchIncidentHistory(incident.orderNumber, incident.trackingNumber);
+        
+        res.json({ success: true, history });
+    } catch (e) {
+        console.error("Error fetching history:", e);
+        res.status(500).json({ error: e.message || 'Error al conectar con Soy Drop' });
     }
 });
 
