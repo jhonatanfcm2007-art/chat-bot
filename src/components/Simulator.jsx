@@ -1044,11 +1044,24 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                          className="hidden" 
                        />
                        <div className="flex-grow flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all">
-                         <input 
-                           className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-400" 
-                           placeholder={filePreview ? "Añadir un comentario..." : "Escribe un mensaje..."} 
-                           value={inputValue}
-                           onChange={(e) => setInputValue(e.target.value)}
+                         <textarea 
+                             className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-400 resize-none min-h-[20px] max-h-[120px] py-0 m-0 leading-relaxed custom-scrollbar flex items-center" 
+                             rows={1}
+                             placeholder={filePreview ? "Añadir un comentario..." : "Escribe un mensaje..."} 
+                             value={inputValue}
+                             onChange={(e) => {
+                                 setInputValue(e.target.value);
+                                 e.target.style.height = 'auto';
+                                 e.target.style.height = (e.target.scrollHeight) + 'px';
+                             }}
+                             onKeyDown={(e) => {
+                                 if (e.key === 'Enter' && !e.shiftKey) {
+                                     e.preventDefault();
+                                     handleSend();
+                                     e.target.style.height = 'auto';
+                                 }
+                             }}
+                           /> setInputValue(e.target.value)}
                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                          />
                        </div>
