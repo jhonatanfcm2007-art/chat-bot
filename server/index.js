@@ -2937,7 +2937,7 @@ app.post('/api/incidents/draft/generate', async (req, res) => {
         if (incident.chatId && incident.chatId !== 'AMBIGUOUS_MATCH') {
             const chat = chats[incident.chatId];
             if (chat && chat.messages) {
-                chatContext = chat.messages.slice(-15).map(m => `${m.role === 'user' ? 'Cliente' : 'Asesor/Bot'}: ${m.body || m.content}`).join('\n');
+                chatContext = chat.messages.slice(-15).map(m => `${!m.isMe ? 'Cliente' : 'Asesor/Bot'}: ${m.body || m.content}`).join('\n');
             }
         }
         
