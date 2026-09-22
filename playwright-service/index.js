@@ -110,6 +110,6 @@ app.post('/api/soydrop/test-access', async (req, res) => {
 
 app.get('/health', (req, res) => res.send('Playwright Service is running'));
 
-app.listen(PORT, () => {
+app.listen(PORT, '::', () => {
     console.log(`Playwright service listening on port \${PORT}`);
 });
