@@ -84,13 +84,13 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
     };
 
     
-    const handleTestAccess = async (loginUrl, dashboardSelector) => {
+    const handleTestAccess = async () => {
         setIsFetchingHistory(true);
         try {
             const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/test-access`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ loginUrl, dashboardSelector })
+                body: JSON.stringify({}) // Fix: no enviar objeto circular
             });
             const data = await res.json();
             if (data.success) {
@@ -100,7 +100,7 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
             }
         } catch (e) {
             console.error(e);
-            alert('Error de red conectando al servidor principal.');
+            alert('Error de red al servidor:\n' + e.message);
         } finally {
             setIsFetchingHistory(false);
         }
