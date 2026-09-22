@@ -1222,7 +1222,7 @@ async function createShopifyOrder(chat, products) {
         }
         
         if (targetStoreId) {
-            const store = storesDb.find(s => s.id === targetStoreId);
+            const store = storesDb.find(s => s.id === targetStoreId || s.name === targetStoreId);
             if (store) {
                 SHOPIFY_URL = store.shopifyStoreUrl;
                 SHOPIFY_TOKEN = store.shopifyAccessToken;
@@ -3045,7 +3045,18 @@ app.get('/api/export-dropi', (req, res) => {
         const ref = (chat.references || '').replace(/,/g, '');
         const notas = (chat.orderNotes || '').replace(/,/g, '');
 
-        csvContent += `"${prodName}","${qty}","${precio}","${nombre}","${apellido}","","${areaCode}","${phoneNum}","${dep}","${ciudad}","${dir}","${ref}","${notas}"\n`;
+        let finalDropiId = prodName;
+        const kbProd = knowledgeBaseDb.find(p => p.id === chat.assignedProductId) || knowledgeBaseDb.find(p => p.name === prodName);
+        if (kbProd) {
+            finalDropiId = kbProd.id;
+            if (kbProd.priceVariations) {
+                const variation = kbProd.priceVariations.find(v => v.prefix && (rawPhone.startsWith(v.prefix.replace(/\D/g, '')) || areaCode.includes(v.prefix.replace(/\D/g, ''))));
+                if (variation && variation.dropiId) {
+                    finalDropiId = variation.dropiId;
+                }
+            }
+        }
+        csvContent += `"${finalDropiId}","${qty}","${precio}","${nombre}","${apellido}","","${areaCode}","${phoneNum}","${dep}","${ciudad}","${dir}","${ref}","${notas}"\n`;
     });
 
     res.header('Content-Type', 'text/csv');
