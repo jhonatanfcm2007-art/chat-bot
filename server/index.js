@@ -2181,11 +2181,24 @@ async function processAIResponse(from, msgBodyLower) {
     const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
     const hasConfirmacionRetenida = /\[CONFIRMACION_RETENIDA\]/i.test(cleanAiReply);
     
-    const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
+        const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
     
     // Si la IA ya definió los productos finales, actualizamos la interfaz con esos
     if (prodsMatch) {
-        refreshedChat.pendingApprovalProducts = cleanVal(prodsMatch[1]) || refreshedChat.pendingApprovalProducts;
+        let rawProducts = cleanVal(prodsMatch[1]);
+        
+        // INTERCEPTAR Y TRADUCIR EL ID AL NOMBRE VISUAL PARA LA UI
+        const idMatch = rawProducts.match(/(\d{4,})/);
+        if (idMatch) {
+             const foundKb = knowledgeBaseDb.find(p => p.id === idMatch[1] || String(p.id) === idMatch[1]);
+             if (foundKb) {
+                 refreshedChat.assignedProductId = foundKb.id;
+                 refreshedChat.assignedProduct = foundKb.name;
+                 rawProducts = rawProducts.replace(idMatch[1], foundKb.name);
+             }
+        }
+        
+        refreshedChat.pendingApprovalProducts = rawProducts || refreshedChat.pendingApprovalProducts;
     }
 
     if (hasOrderTag && prodsMatch) {
