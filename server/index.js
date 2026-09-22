@@ -1254,8 +1254,9 @@ async function createShopifyOrder(chat, products) {
         
         // Extraer la cantidad del texto del producto (ej: "Combo 2 Cremas", "Shilajit x2", "2 Frascos")
         let orderQty = 1;
-        const qtyMatch = products.match(/(?:x\s*|combo\s*|pack\s*)([2-9])/i) || 
-                         products.match(/([2-9])\s*(?:frasco|tarro|unidad|combo|crema|caja|botella|x)/i);
+        const qtyMatch = products.match(/(?:\s+x\s*|combo\s*|pack\s*)([1-9]\d*)/i) || 
+                         products.match(/\b([1-9]\d*)\s*(?:frasco|tarro|unidad|combo|crema|caja|botella)/i) ||
+                         products.match(/x\s*([1-9]\d*)$/i);
         if (qtyMatch && qtyMatch[1]) {
             orderQty = parseInt(qtyMatch[1], 10);
         }
