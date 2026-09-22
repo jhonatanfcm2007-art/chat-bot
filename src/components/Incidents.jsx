@@ -283,13 +283,7 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                                         <div className="flex justify-between items-center mb-1">
                                             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Aclaraciones de Soy Drop</p>
                                             <button 
-                                                onClick={() => {
-                                                    const url = prompt("Confirma la URL real de inicio de sesión de Soy Drop (ej. https://app.dropi.hn/login):", "https://app.dropi.hn/login");
-                                                    if (!url) return;
-                                                    const selector = prompt("Ingresa un selector CSS de un elemento EXCLUSIVO del panel autenticado (ej. .sidebar, #user-menu, nav) para comprobar que pasamos el login:", ".sidebar");
-                                                    if (!selector) return;
-                                                    handleTestAccess(url, selector);
-                                                }}
+                                                onClick={handleTestAccess}
                                                 disabled={isFetchingHistory}
                                                 className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50"
                                             >

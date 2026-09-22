@@ -2995,27 +2995,28 @@ RESPONDE ÚNICAMENTE CON UN JSON EN ESTE FORMATO:
 
 app.post('/api/incidents/:id/test-access', async (req, res) => {
     try {
-        const { loginUrl, dashboardSelector } = req.body;
-        
-        // Esta es la URL del nuevo servicio interno de Railway (p. ej. http://soydrop-playwright.railway.internal:3001)
-        // El usuario deberá configurarla como variable en el backend principal.
-        const serviceUrl = process.env.PLAYWRIGHT_SERVICE_URL;
-
+        let serviceUrl = process.env.PLAYWRIGHT_SERVICE_URL;
         if (!serviceUrl) {
-            return res.status(500).json({ error: "Falta configurar la variable PLAYWRIGHT_SERVICE_URL en este backend principal." });
+            return res.status(500).json({ error: "Falta configurar PLAYWRIGHT_SERVICE_URL en este backend principal." });
+        }
+        
+        // Evitar el doble HTTP y trailing slashes
+        serviceUrl = serviceUrl.trim().replace(/\/$/, '');
+        if (!/^https?:\/\//i.test(serviceUrl)) {
+            serviceUrl = 'http://' + serviceUrl;
         }
 
         const fetchRes = await fetch(`${serviceUrl}/api/soydrop/test-access`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ loginUrl, dashboardSelector })
+            body: JSON.stringify({}) // No enviamos URL arbitraria, el microservicio usa su propia config
         });
 
         const data = await fetchRes.json();
         res.json(data);
     } catch (e) {
         console.error("Error connecting to Playwright Service:", e);
-        res.status(500).json({ error: 'Fallo la conexión con el microservicio de Playwright: ' + e.message });
+        res.status(500).json({ error: 'Fallo la conexión de red con el microservicio: ' + e.message });
     }
 });
 
