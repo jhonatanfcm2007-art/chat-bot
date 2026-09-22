@@ -84,24 +84,23 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
     };
 
     
-    const handleFetchHistory = async () => {
-        if (!selectedIncident) return;
+    const handleTestAccess = async (loginUrl, dashboardSelector) => {
         setIsFetchingHistory(true);
         try {
-            const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/fetch-history`, {
-                method: 'POST'
+            const res = await fetch(`${BACKEND_URL}/api/incidents/${selectedIncident.id}/test-access`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginUrl, dashboardSelector })
             });
             const data = await res.json();
-            if (res.ok && data.success) {
-                // Agregar al historial de aclaraciones de la app para visualización (solo en prueba)
-                const newClarifications = data.history.map(h => h.text).join('\n');
-                alert('Conexión exitosa a Soy Drop:\n' + newClarifications);
+            if (data.success) {
+                alert('ÉXITO:\n' + data.message + '\nURL Final: ' + data.details.url + '\nTítulo: ' + data.details.title);
             } else {
-                alert('Error conectando a Soy Drop: ' + (data.error || 'Desconocido'));
+                alert('ERROR:\n' + (data.error || 'Desconocido'));
             }
         } catch (e) {
             console.error(e);
-            alert('Error de red conectando a Soy Drop.');
+            alert('Error de red conectando al servidor principal.');
         } finally {
             setIsFetchingHistory(false);
         }
@@ -284,14 +283,20 @@ function Incidents({ BACKEND_URL, socket, onSelectChat }) {
                                         <div className="flex justify-between items-center mb-1">
                                             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Aclaraciones de Soy Drop</p>
                                             <button 
-                                                onClick={handleFetchHistory}
+                                                onClick={() => {
+                                                    const url = prompt("Confirma la URL real de inicio de sesión de Soy Drop (ej. https://app.dropi.hn/login):", "https://app.dropi.hn/login");
+                                                    if (!url) return;
+                                                    const selector = prompt("Ingresa un selector CSS de un elemento EXCLUSIVO del panel autenticado (ej. .sidebar, #user-menu, nav) para comprobar que pasamos el login:", ".sidebar");
+                                                    if (!selector) return;
+                                                    handleTestAccess(url, selector);
+                                                }}
                                                 disabled={isFetchingHistory}
                                                 className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50"
                                             >
                                                 <span className={"material-symbols-outlined text-[14px]" + (isFetchingHistory ? " animate-spin" : "")}>
                                                     {isFetchingHistory ? 'sync' : 'travel_explore'}
                                                 </span>
-                                                {isFetchingHistory ? 'Conectando...' : 'Ver historial real'}
+                                                {isFetchingHistory ? 'Probando...' : 'Probar acceso a Soy Drop'}
                                             </button>
                                         </div>
                                         {selectedIncident.transporterClarifications && selectedIncident.transporterClarifications.length > 0 ? (

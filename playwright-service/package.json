@@ -1,0 +1,16 @@
+{
+  "name": "playwright-service",
+  "version": "1.0.0",
+  "description": "Servicio aislado para automatización de Soy Drop",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "playwright": "^1.42.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  }
+}

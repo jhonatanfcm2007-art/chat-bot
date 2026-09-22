@@ -2993,19 +2993,29 @@ RESPONDE ÚNICAMENTE CON UN JSON EN ESTE FORMATO:
 });
 
 
-app.post('/api/incidents/:id/fetch-history', async (req, res) => {
+app.post('/api/incidents/:id/test-access', async (req, res) => {
     try {
-        const { id } = req.params;
-        const incident = incidents.find(i => i.id === id);
-        if (!incident) return res.status(404).json({ error: 'Incident not found' });
-
-        // Esto usar Playwright para conectarse a Soy Drop y extraer el historial
-        const history = await fetchIncidentHistory(incident.orderNumber, incident.trackingNumber);
+        const { loginUrl, dashboardSelector } = req.body;
         
-        res.json({ success: true, history });
+        // Esta es la URL del nuevo servicio interno de Railway (p. ej. http://soydrop-playwright.railway.internal:3001)
+        // El usuario deberá configurarla como variable en el backend principal.
+        const serviceUrl = process.env.PLAYWRIGHT_SERVICE_URL;
+
+        if (!serviceUrl) {
+            return res.status(500).json({ error: "Falta configurar la variable PLAYWRIGHT_SERVICE_URL en este backend principal." });
+        }
+
+        const fetchRes = await fetch(`${serviceUrl}/api/soydrop/test-access`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ loginUrl, dashboardSelector })
+        });
+
+        const data = await fetchRes.json();
+        res.json(data);
     } catch (e) {
-        console.error("Error fetching history:", e);
-        res.status(500).json({ error: e.message || 'Error al conectar con Soy Drop' });
+        console.error("Error connecting to Playwright Service:", e);
+        res.status(500).json({ error: 'Fallo la conexión con el microservicio de Playwright: ' + e.message });
     }
 });
 
