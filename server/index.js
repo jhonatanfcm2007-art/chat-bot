@@ -1125,6 +1125,8 @@ async function createShopifyOrder(chat, products) {
 
         // SOBRESCRIBIR con credenciales
     const searchName = chat.assignedProduct || products || '';
+    const idMatch = products ? products.match(/(\d{4,})/) : null;
+    const aiProductId = idMatch ? idMatch[1] : null;
     
     // FILTRAR PRIMERO POR LA LÍNEA DE WHATSAPP
     const lineProducts = knowledgeBaseDb.filter(p => {
@@ -1132,9 +1134,12 @@ async function createShopifyOrder(chat, products) {
         return pLine === String(waLine) || pLine === 'Ambas' || pLine === 'all';
     });
 
-    let prod = null;
-    // 1. Búsqueda por ID exacto (Prioridad absoluta desde Anuncios)
-    if (chat.assignedProductId) {
+        let prod = null;
+    // 1. Búsqueda por ID exacto (Prioridad absoluta desde Anuncios o IA)
+    if (aiProductId) {
+        prod = knowledgeBaseDb.find(p => p.id === aiProductId || String(p.id) === String(aiProductId));
+    }
+    if (!prod && chat.assignedProductId) {
         prod = knowledgeBaseDb.find(p => p.id === chat.assignedProductId);
     }
     
@@ -3709,7 +3714,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
 
         if (activeProducts.length > 0) {
             activeProducts.forEach(prod => {
-                knowledgeContext += `\n--- PRODUCTO: ${prod.name} ---\n`;
+                knowledgeContext += `\n--- PRODUCTO: ${prod.name} (ID: ${prod.id}) ---\n`;
                 if (prod.keywords && prod.keywords.length > 0) {
                     knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
                 }
@@ -3775,8 +3780,8 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
   REGLA DE ORO DE CIERRE: ¡ESTÁ ESTRICTAMENTE PROHIBIDO EMITIR LA ETIQUETA [ENTREGAR_AHORA] SI EL CLIENTE AÚN NO HA ELEGIDO QUÉ COMBO O CANTIDAD DESEA LLEVAR! Si el cliente te da sus datos pero no ha elegido la cantidad, AGRADÉCELE Y PRESÉNTALE LOS COMBOS Y PRECIOS ANTES DE CONFIRMAR.
   Cuando tengas TODO (nombre real, lugar de entrega, municipio, Y cantidad elegida), DEBES usar la etiqueta oculta [ENTREGAR_AHORA] para cerrar la venta. ¡ATENCIÓN, ESTO ES VITAL! NUNCA exijas una "dirección completa". Si el cliente te da el nombre de una oficina, un local, una escuela, o un punto de referencia corto (ej. "en oficina Agrolibano", "por el parque", "casa verde"), ASUME QUE ESA ES SU DIRECCIÓN Y CIERRA LA VENTA INMEDIATAMENTE emitiendo la etiqueta [ENTREGAR_AHORA]. ¡NO LE VUELVAS A PEDIR LA DIRECCIÓN SI YA TE DIO UN LUGAR O REFERENCIA! Es OBLIGATORIO emitir la etiqueta en la ÚLTIMA LÍNEA de tu mensaje.
 Formato estricto OBLIGATORIO:
-[ENTREGAR_AHORA] [PRODUCTOS: NombreBase xCant] [NOMBRE: xxx] [TELEFONO: número extraído o el prefijo] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [PAIS: ISO de 2 letras del destino, ej HN, CO, SV, CR, CL, GT] [NOTAS: fechas]
-IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ÚNICAMENTE EL NOMBRE EXACTO DEL PRODUCTO de la base de conocimiento (ej. "Neuropathy") y la cantidad. JAMÁS inventes nombres genéricos como "crema" o "combo de 2 cremas" si no se llaman así en tu catálogo. ¡Esto es CRÍTICO para que el sistema reconozca el pedido! ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
+[ENTREGAR_AHORA] [PRODUCTOS: ID_DEL_PRODUCTO xCant] [NOMBRE: xxx] [TELEFONO: número extraído o el prefijo] [DIRECCION: SOLO calle, número o barrio] [REFERENCIAS: referencias] [MUNICIPIO: ${termCity}] [DEPARTAMENTO: deduce el/la ${termProv}] [PAIS: ISO de 2 letras del destino, ej HN, CO, SV, CR, CL, GT] [NOTAS: fechas]
+IMPORTANTE: ¡Asegúrate de incluir SIEMPRE las etiquetas de [PAIS: ...] y [TELEFONO: ...]! En [PRODUCTOS] usa ESTRICTAMENTE EL ID NUMÉRICO DEL PRODUCTO (ej. 170945) de la base de conocimiento y la cantidad. JAMÁS uses nombres ni palabras, SOLO EL ID NUMÉRICOgo. ¡Esto es CRÍTICO para que el sistema reconozca el pedido! ¡JAMÁS incluyas el municipio o departamento dentro de [DIRECCION: ...]!
 11. TIEMPOS DE ENVIO Y REPROGRAMACION: Los envios tardan SIEMPRE de 1 a 3 dias habiles. NUNCA PROMETAS ENTREGAS PARA HOY MISMO. Si el cliente pregunta si puede llegar hoy o manana, dile amablemente que tarda de 1 a 3 dias habiles (calcula y mencionable que dia aproximado le llegaria basandote en la fecha actual que te da el sistema). La transportadora trabaja SOLO de Lunes a Sabado. NO HACEMOS ENTREGAS LOS DOMINGOS. Si pide una fecha posterior valida (ej. "mandelo el viernes de la proxima semana"), NO DESCARTES EL PEDIDO. Emite la etiqueta [CONFIRMACION_RETENIDA] al final del mensaje y respondele literalmente: "Entendido, no se preocupe. Se lo dejamos programado para entrega el [Dia/Fecha solicitada] para que lo reciba con toda tranquilidad �""
 11. VALIDACIÓN GEOGRÁFICA: Si al recibir los datos notas que el(la) ${termCity} o ${termProv} NO existen, o la dirección es falsa, NO lo corrijas. Simplemente usa la etiqueta [APAGAR_BOT_SOPORTE].
   13. OTROS PRODUCTOS Y ERRORES ORTOGRÁFICOS: Si el cliente pregunta CLARAMENTE por otra marca o producto totalmente distinto que NO está en tu Base de Conocimiento, ESTÁ PROHIBIDO RESPONDER. Tu ÚNICA respuesta debe ser la etiqueta [APAGAR_BOT_SOPORTE]. ¡PERO OJO! Los clientes cometen muchos errores de ortografía (ej. escribir "say" en vez de "soy", o escribir mal el nombre del producto). Usa el sentido común: si la palabra rara parece un error ortográfico o de tipeo, asume que está hablando de tu producto y CONTINÚA LA VENTA con naturalidad sin apagarte.
