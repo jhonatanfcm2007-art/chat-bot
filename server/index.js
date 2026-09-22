@@ -22,7 +22,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 app.use(cors());
 app.use(express.json({ 
-    limit: '50mb',
+    limit: '150mb',
     verify: (req, res, buf) => {
         req.rawBody = buf;
     }
