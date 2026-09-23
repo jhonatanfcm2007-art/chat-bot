@@ -1280,7 +1280,7 @@ async function createShopifyOrder(chat, products) {
                     new RegExp(`^[^0-9]*${orderQty}\\s*[^0-9]`, 'i').test(line) || 
                     new RegExp(`Combo ${orderQty}`, 'i').test(line)
                 ) {
-                    const match = line.match(/(?:Q|L|\$|₡)\s*([0-9.,]+)/i);
+                    const match = line.match(/(?:Q|L|\$|₡|C\$|C|RD\$|S\/)\s*([0-9.,]+)/i);
                     if (match) {
                         foundPrice = parseFloat(match[1].replace(/,/g, ''));
                         break;
@@ -1290,7 +1290,7 @@ async function createShopifyOrder(chat, products) {
             
             // Fallback si no encontró la línea exacta pero ordenó 1
             if (foundPrice === null && orderQty === 1) {
-                const match = targetPricesText.match(/(?:Q|L|\$|₡)\s*([0-9.,]+)/i);
+                const match = targetPricesText.match(/(?:Q|L|\$|₡|C\$|C|RD\$|S\/)\s*([0-9.,]+)/i);
                 if (match) foundPrice = parseFloat(match[1].replace(/,/g, ''));
             }
             
