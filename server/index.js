@@ -1197,12 +1197,16 @@ async function createShopifyOrder(chat, products) {
         else if (aiCountry === 'SV' || aiCountry.includes('SALVADOR')) countryISO = 'SV';
         else if (aiCountry === 'CR' || aiCountry.includes('COSTA')) countryISO = 'CR';
         else if (aiCountry === 'CL' || aiCountry.includes('CHILE')) countryISO = 'CL';
+        else if (aiCountry === 'NI' || aiCountry.includes('NICARAGUA')) countryISO = 'NI';
+        else if (aiCountry === 'PA' || aiCountry.includes('PANAMA')) countryISO = 'PA';
         else if (aiCountry.length === 2) countryISO = aiCountry;
         else if (detectPhone.startsWith('504')) countryISO = 'HN';
         else if (detectPhone.startsWith('503')) countryISO = 'SV';
         else if (detectPhone.startsWith('506')) countryISO = 'CR';
         else if (detectPhone.startsWith('56')) countryISO = 'CL';
         else if (detectPhone.startsWith('57')) countryISO = 'CO';
+        else if (detectPhone.startsWith('505')) countryISO = 'NI';
+        else if (detectPhone.startsWith('507')) countryISO = 'PA';
         else countryISO = 'GT'; // Fallback
         
         let targetStoreId = prod.defaultStoreId;
@@ -1216,6 +1220,8 @@ async function createShopifyOrder(chat, products) {
         else if (countryISO === 'GT') effectivePrefix = '502';
         else if (countryISO === 'CL') effectivePrefix = '56';
         else if (countryISO === 'CO') effectivePrefix = '57';
+        else if (countryISO === 'NI') effectivePrefix = '505';
+        else if (countryISO === 'PA') effectivePrefix = '507';
 
         if (prod.priceVariations) {
             const variation = prod.priceVariations.find(v => v.prefix && effectivePrefix.startsWith(v.prefix.replace(/\D/g, '')));
