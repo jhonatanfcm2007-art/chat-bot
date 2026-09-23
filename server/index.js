@@ -3860,6 +3860,8 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
         let activeProducts = lineProducts;
         const currentChat = chats[fromPhone];
         let hasProductImage = false;
+let detectedCountry = getCountryFromPhone(fromPhone);
+let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guatemala';
         
         if (currentChat && currentChat.assignedProduct) {
             const targetProdLower = currentChat.assignedProduct.toLowerCase().replace(/\s*x\s*\d+$/i, '').trim();
@@ -3896,9 +3898,12 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
                 if (prod.priceVariations && prod.priceVariations.length > 0) {
                     const cleanPhone = String(fromPhone).split('_')[0].replace(/\D/g, ''); 
                     const matchedVar = prod.priceVariations.find(v => {
-                        const cleanPrefix = (v.prefix || '').replace(/\D/g, '');
-                        return cleanPrefix && cleanPhone.startsWith(cleanPrefix);
-                    });
+        const rawPrefix = String(v.prefix || '').trim().toUpperCase();
+        const cleanPrefix = rawPrefix.replace(/\D/g, '');
+        if (cleanPrefix && cleanPhone.startsWith(cleanPrefix)) return true;
+        if (rawPrefix === detectedCountry.toUpperCase()) return true;
+        return false;
+    });
                     if (matchedVar && matchedVar.prices) {
                         finalPrices = matchedVar.prices;
                         // BORRAMOS físicamente cualquier precio hardcodeado (Lempiras, Quetzales, Córdobas, Dólares) 
@@ -3914,9 +3919,7 @@ async function getAIResponse(message, history = [], waLine = 1, fromPhone = '') 
             knowledgeContext += "No hay productos registrados en la base de conocimiento.\n";
         }
 
-        // Regla inquebrantable de seguridad para evitar alucinaciones y políticas generales
-        let detectedCountry = getCountryFromPhone(fromPhone);
-        let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : "Guatemala"; // Default
+        
         
         let termCity = "Municipio";
         let termProv = "Departamento";
@@ -3967,7 +3970,8 @@ Formato estricto OBLIGATORIO:
 23. UBICACIÓN Y TIENDAS FÍSICAS: Si el cliente pregunta "¿dónde están ubicados?", "¿dónde queda la tienda?", "¿tienen local?", o similar, DEBES responder SIEMPRE que operan EXCLUSIVAMENTE como TIENDA VIRTUAL con envíos gratis a todo el país y que el pago es 100% CONTRA ENTREGA al recibir el paquete en la puerta. INMEDIATAMENTE DESPUÉS, invítalo a elegir un combo o pregúntale a qué dirección le gustaría el envío para avanzar. NUNCA inventes direcciones de locales.
   24. PREGUNTAS DE CONFIANZA EN EL CIERRE (¡CRÍTICO!): Si el cliente ya dio sus datos y hace una pregunta de confianza como "¿es seguro?", "¿sí funciona?", "¿me aseguras que es excelente?", "¿me garantiza que es original?", NUNCA uses [APAGAR_BOT_SOPORTE]. Simplemente respóndele con muchísima seguridad que SÍ, que el producto es 100% original, garantizado y excelente, y CIERRA LA VENTA INMEDIATAMENTE emitiendo la etiqueta [ENTREGAR_AHORA] en ese mismo mensaje para no dejar enfriar al cliente.
   25. COMPRAS POSPUESTAS: Si el cliente indica que comprará después, que le escribamos luego, o que hará el pedido en unos días, quincena, o fin de mes, ESTÁ ESTRICTAMENTE PROHIBIDO apagarte. Simplemente respóndele de forma amable y servicial, diciéndole que con gusto estarás a su disposición para cuando desee realizar el pedido (ej: "¡Perfecto! Quedo a tu entera disposición para cuando desees realizar tu pedido. ¡Que tengas un excelente día!").
-  26. FIN DE LA CONVERSACIÓN Y DESPEDIDAS: Si el cliente envía frases cortas de cortesía finalizando la interacción (ej. 'gracias', 'ok', 'a la orden', 'amén', 'igualmente', 'bien', 'perfecto') DESPUÉS de que el pedido ya fue confirmado o la charla ya terminó, ESTÁ ESTRICTAMENTE PROHIBIDO responderle. Tu ÚNICA salida permitida para no generar bucles infinitos de respuestas es escribir la etiqueta literal [FIN_CORTESIA] sin nada más. El sistema se encargará de no enviar nada. NUNCA respondas con más cortesías.`;
+  26. FIN DE LA CONVERSACIÓN Y DESPEDIDAS: Si el cliente envía frases cortas de cortesía finalizando la interacción (ej. 'gracias', 'ok', 'a la orden', 'amén', 'igualmente', 'bien', 'perfecto') DESPUÉS de que el pedido ya fue confirmado o la charla ya terminó, ESTÁ ESTRICTAMENTE PROHIBIDO responderle. Tu ÚNICA salida permitida para no generar bucles infinitos de respuestas es escribir la etiqueta literal [FIN_CORTESIA] sin nada más. El sistema se encargará de no enviar nada. NUNCA respondas con más cortesías.
+  27. INSISTENCIA EN EL PRECIO (¡SENTIDO COMÚN!): Si el cliente te pregunta directamente "cuál es el precio", "cuánto vale", "precio", etc., ¡DALE LOS PRECIOS INMEDIATAMENTE! Ignora cualquier regla de tu embudo que te prohíba dar precios sin que respondan otra cosa. ¡El objetivo es vender! NUNCA uses [APAGAR_BOT_SOPORTE] por esto. NUNCA respondas con excusas ni explicaciones.`;
 
 
 
