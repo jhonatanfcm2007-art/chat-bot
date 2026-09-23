@@ -2221,7 +2221,18 @@ async function processAIResponse(from, msgBodyLower) {
         const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
         
         if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
-        if (phoneMatch) refreshedChat.orderPhone = cleanVal(phoneMatch[1]) || refreshedChat.orderPhone;
+        if (phoneMatch) {
+            let extractedPhone = cleanVal(phoneMatch[1]);
+            const basePhone = from.split('@')[0].split('_')[0].replace(/\D/g, '');
+            const cleanExtracted = extractedPhone ? extractedPhone.replace(/\D/g, '') : '';
+            
+            // Fix: IA hallucinating waLine at the end of the phone number
+            if (cleanExtracted === basePhone + (refreshedChat.waLine || 1)) {
+                extractedPhone = basePhone;
+            }
+            
+            refreshedChat.orderPhone = extractedPhone || refreshedChat.orderPhone;
+        }
         if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
         if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
         if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
