@@ -1168,7 +1168,21 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
                    <span className="text-slate-800 font-semibold">{activeChatData.orderNotes || activeChatData.references || 'Ninguna'}</span>
                  </div>
                  
-                 <div className="pt-3 mt-1 border-t border-slate-100 flex justify-between items-center text-xs">
+                 
+                   <div className="flex flex-col text-xs pt-2 mt-1 border-t border-slate-100">
+                     <span className="text-on-surface-variant font-medium">📦 Guía Dropi:</span>
+                     <div className="flex justify-between items-center mt-1">
+                       <span className="text-slate-800 font-semibold">{activeChatData.orders && activeChatData.orders.length > 0 ? activeChatData.orders[activeChatData.orders.length - 1].guide : (activeChatData.trackingGuide || 'Pendiente')}</span>
+                       <button 
+                         onClick={handleFetchGuides} 
+                         disabled={isFetchingGuides}
+                         className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md text-[10px] font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                       >
+                         {isFetchingGuides ? 'BUSCANDO...' : 'RECOGER GUÍA'}
+                       </button>
+                     </div>
+                   </div>
+                   <div className="pt-3 mt-1 border-t border-slate-100 flex justify-between items-center text-xs">
                    <span className="text-on-surface-variant font-medium">Estado:</span>
                    <span className={`px-2 py-1 rounded-md font-semibold ${activeChatData.orderRegistered ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                      {activeChatData.orderRegistered ? '✅ Enviado a WhatsApp' : '⏳ Pendiente de envío'}
