@@ -2136,6 +2136,15 @@ async function processAIResponse(from, msgBodyLower) {
         return;
     }
 
+    // --- FIN CORTESIA (Evitar bucles de agradecimientos) ---
+    if (/\[FIN_CORTESIA\]/i.test(aiReply)) {
+        // No enviamos nada al cliente, solo cortamos el bucle.
+        const cName = refreshedChat.customerName || refreshedChat.orderName || 'Cliente';
+        console.log(`[SISTEMA] Bucle de cortesía evitado con ${cName}.`);
+        return;
+    }
+
+
     // --- APAGADO POR IA ---
     if (/\[APAGAR_BOT_SOPORTE\]/i.test(aiReply)) {
         const hasPartialData = refreshedChat.orderName || refreshedChat.address || refreshedChat.city || refreshedChat.orderPhone;
@@ -2336,7 +2345,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO)[^\]]*\]\s*/gi, ' ').trim();
+    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO|FIN_CORTESIA)[^\]]*\]\s*/gi, ' ').trim();
     
     await delay(1500);
     if (cleanReply) {
