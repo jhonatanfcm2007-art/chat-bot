@@ -2071,7 +2071,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Respuesta IA
-    const allMessages = refreshedChat.messages.slice(-35);
+    const allMessages = refreshedChat.messages.slice(-12); // Token optimization
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
