@@ -46,7 +46,7 @@ app.post('/api/soydrop/test-access', async (req, res) => {
         const page = await context.newPage();
 
         console.log(`[Playwright] Navegando a \${loginUrl}...`);
-        await page.goto(loginUrl, { waitUntil: 'networkidle', timeout: 30000 });
+        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         // Intentar detectar si estamos en login
         const emailInput = await page.$('input[type="email"], input[name="email"], input[id="email"]');
