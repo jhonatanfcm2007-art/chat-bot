@@ -154,6 +154,12 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
 
         console.log("[Playwright] Buscando filas en la tabla principal...");
         await page.waitForSelector('table tbody tr', { timeout: 15000 }).catch(() => {});
+        
+        // Scroll down a few times to trigger lazy loading if any
+        for (let i = 0; i < 3; i++) {
+            await page.evaluate(() => window.scrollBy(0, 1000));
+            await page.waitForTimeout(500);
+        }
 
         const rows = await page.$$('table tbody tr');
         let matchedRow = null;
@@ -171,8 +177,12 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
             for (const cell of cells) {
                 rowTextArr.push(await cell.innerText());
             }
-            const fullRowText = rowTextArr.join(' ').toLowerCase();
-            const searchName = customerName.toLowerCase().trim();
+            const fullRowText = rowTextArr.join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
+            const searchName = customerName.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
+            
+            // Collect seen text to debug if needed
+            if (!page.seenTexts) page.seenTexts = [];
+            page.seenTexts.push(fullRowText.substring(0, 30));
 
             if (fullRowText.includes(searchName)) {
                 matchedRow = row;
@@ -200,7 +210,8 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         }
 
         if (!matchedRow) {
-            throw new Error(`No se encontró ninguna orden para el cliente: ${customerName}`);
+            const seen = (page.seenTexts || []).join(' | ');
+            throw new Error(`No se encontró ninguna orden para el cliente: ${customerName}. Vistos: ${seen}`);
         }
 
         console.log(`[Playwright] Orden encontrada. Guía detectada: ${guide}. Abriendo detalles...`);
