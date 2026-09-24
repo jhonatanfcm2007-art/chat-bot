@@ -129,8 +129,8 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
     }
 
     const loginUrl = process.env.SOYDROP_LOGIN_URL || 'https://app.dropi.hn/login';
-    // Mover de /login a /orders-history
-    const ordersUrl = loginUrl.replace('/login', '/orders-history');
+    // Mover de /login a /orders-history y forzar la carga de 500 elementos de una vez
+    const ordersUrl = loginUrl.replace('/login', '/orders-history') + '?limit=500';
 
     let browser;
     try {
@@ -169,7 +169,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         }
 
         // Scroll down a few times to trigger lazy loading if any (fallback)
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 2; i++) {
             await page.evaluate(() => {
                 window.scrollBy(0, 3000);
                 const tableWrap = document.querySelector('.table-responsive, .table-container');
