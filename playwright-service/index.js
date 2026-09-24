@@ -57,11 +57,8 @@ app.post('/api/soydrop/test-access', async (req, res) => {
             const passInput = await page.$('input[type="password"], input[name="password"], input[id="password"]');
             if (passInput) await passInput.fill(password);
             
-            const submitBtn = await page.$('button[type="submit"], button:has-text("Ingresar"), button:has-text("Login")');
-            if (submitBtn) {
-                await submitBtn.click();
-                await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-            }
+            await passInput.press('Enter');
+            await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
         }
 
         console.log("[Playwright] Verificando acceso exitoso...");
