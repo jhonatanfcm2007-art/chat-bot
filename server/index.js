@@ -3436,6 +3436,8 @@ app.post('/api/send-guide-message', async (req, res) => {
                 id: msgId,
                 isMe: true,
                 body: messageText,
+                content: messageText,
+                timestampRaw: Date.now(),
                 time: new Date().toLocaleTimeString('es-CO')
             };
             chat.messages.push(newMsg);
@@ -4410,6 +4412,8 @@ async function syncDropiGuides() {
                             id: order.guideMessageId,
                             isMe: true,
                             body: msg,
+                            content: msg,
+                            timestampRaw: Date.now(),
                             time: new Date().toLocaleTimeString('es-CO')
                         });
                         
