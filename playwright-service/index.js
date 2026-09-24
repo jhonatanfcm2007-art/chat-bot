@@ -140,7 +140,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         const page = await context.newPage();
         
         console.log(`[Playwright] Navegando a ${ordersUrl}...`);
-        await page.goto(ordersUrl, { waitUntil: 'networkidle', timeout: 30000 });
+        await page.goto(ordersUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         if (page.url().includes('login')) {
             throw new Error("La sesión expiró. Vuelve a probar acceso primero.");
