@@ -3405,8 +3405,9 @@ app.post('/api/settings', (req, res) => {
 app.post('/api/send-guide-message', async (req, res) => {
     try {
         const { chatId, guide, messageText } = req.body;
-        if (!chatId || !guide || !messageText) {
-            return res.status(400).json({ success: false, error: 'Faltan parámetros requeridos.' });
+        
+        if (!chatId || !guide || !messageText || messageText.trim() === '') {
+            return res.status(400).json({ success: false, error: 'Faltan parámetros requeridos o el mensaje está vacío.' });
         }
         
         const chat = chats[chatId];
