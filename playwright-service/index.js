@@ -172,7 +172,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
                 matchedRow = row;
                 rowDetails = rowTextArr;
                 
-                const headers = await page.$eval('table thead th', ths => ths.map(th => th.innerText.toLowerCase()));
+                const headers = await page.$$eval('table thead th', ths => ths.map(th => th.innerText.toLowerCase()));
                 
                 let guideIndex = headers.findIndex(h => h.includes('guía') || h.includes('guia'));
                 let statusIndex = headers.findIndex(h => h.includes('estado'));
