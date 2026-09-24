@@ -149,7 +149,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         console.log("[Playwright] Buscando filas en la tabla principal...");
         await page.waitForSelector('table tbody tr', { timeout: 15000 }).catch(() => {});
 
-        const rows = await page.$('table tbody tr');
+        const rows = await page.$$('table tbody tr');
         let matchedRow = null;
         let guide = null;
         let soyDropOrder = null;
@@ -158,7 +158,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         let rowDetails = [];
 
         for (const row of rows) {
-            const cells = await row.$('td');
+            const cells = await row.$$('td');
             if (!cells || cells.length < 5) continue;
             
             const rowTextArr = [];
