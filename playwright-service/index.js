@@ -215,6 +215,8 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
 
                 if (statusIndex >= 0 && statusIndex < rowTextArr.length) status = rowTextArr[statusIndex].trim();
                 
+                soyDropOrder = rowTextArr[0] ? rowTextArr[0].trim().split('\n')[0] : null;
+                
                 clickTarget = await row.$('a, button.btn-info, button[title="Detalles"], button i.fa-eye');
                 if (!clickTarget) {
                     const firstBtn = await row.$('button');

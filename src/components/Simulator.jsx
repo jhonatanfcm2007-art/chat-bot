@@ -101,12 +101,14 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
     } else {
       msg += 'Te confirmamos que tu pedido ya va en camino hacia tu dirección. 🚚💨\n\n';
     }
-    msg += '🧾 *Orden:* ' + (order.soyDropOrder || 'Desconocido') + '\n';
+    if (order.soyDropOrder && order.soyDropOrder !== '?' && order.soyDropOrder !== 'No detectada' && order.soyDropOrder !== 'Desconocido') {
+      msg += '🧾 *Orden:* ' + order.soyDropOrder + '\n';
+    }
     msg += '🔢 *Guía:* ' + (order.guide || 'Desconocida') + '\n';
-    if (order.status) {
+    if (order.status && order.status !== 'Desconocido' && order.status !== 'No detectado') {
       msg += '📌 *Estado Actual:* ' + order.status + '\n\n';
     }
-    msg += 'Te estaremos avisando cualquier novedad. ¡Gracias por tu compra! ✨';
+    msg += '¡Gracias por tu compra! ✨';
     return msg;
   };
 
