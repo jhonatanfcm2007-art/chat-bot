@@ -3421,23 +3421,33 @@ app.post('/api/send-guide-message', async (req, res) => {
         
         const actualOrderIndex = chat.orders.findIndex(o => o.guide === guide);
 
-        const phone = chat.orderPhone || chatId.split('@')[0].split('_')[0];
+        // Use smartSendMessage correctly passing the chatId so it can determine the correct platform/waLine
+        const sendResult = await smartSendMessage(chatId, messageText);
         
-        // Use smartSendMessage
-        const sendResult = await smartSendMessage(phone, messageText);
-        
-        if (sendResult && sendResult.success) {
+        if (sendResult) {
+            const msgId = (typeof sendResult === 'object' ? sendResult.id : sendResult) || Date.now().toString();
+            
             chat.orders[actualOrderIndex].guideStatus = 'enviada';
-            chat.orders[actualOrderIndex].guideMessageId = sendResult.id || Date.now().toString();
+            chat.orders[actualOrderIndex].guideMessageId = msgId;
             chat.orders[actualOrderIndex].guideSentAt = new Date().toISOString();
             
+            // Añadir el mensaje al historial del chat para que el usuario lo vea
+            const newMsg = {
+                id: msgId,
+                isMe: true,
+                body: messageText,
+                time: new Date().toLocaleTimeString('es-CO')
+            };
+            chat.messages.push(newMsg);
+            
             saveChats(chats);
+            io.emit('message', { ...newMsg, from: chatId });
             io.emit('chat_meta_updated', { id: chatId, chat });
             res.json({ success: true });
         } else {
             chat.orders[actualOrderIndex].guideStatus = 'error';
             saveChats(chats);
-            res.status(500).json({ success: false, error: (sendResult && sendResult.error) ? sendResult.error : 'Error desconocido al enviar WhatsApp' });
+            res.status(500).json({ success: false, error: 'Error desconocido al enviar WhatsApp. Revisa si pasaron 24h.' });
         }
     } catch (e) {
         console.error('Error al enviar guía:', e);
