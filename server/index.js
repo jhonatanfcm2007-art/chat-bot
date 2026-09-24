@@ -3028,7 +3028,7 @@ app.post('/api/fetch-guides', async (req, res) => {
         }
 
         const chat = chats[chatId];
-        const customerName = chat.customerName || chat.orderName;
+        const customerName = chat.orderName || chat.customerName;
         if (!customerName) {
             return res.status(400).json({ success: false, error: "El chat no tiene un nombre de cliente registrado." });
         }
