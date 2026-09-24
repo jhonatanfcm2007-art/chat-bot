@@ -125,7 +125,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
 
     setIsSendingGuide(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/send-guide-message`, {
+      const response = await fetch(`${serverUrl}/api/send-guide-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: selectedChat, guide: order.guide, messageText: draftText })
