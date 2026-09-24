@@ -1324,10 +1324,19 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
                          
                          let statusColor = 'bg-slate-100 text-slate-600';
                          let statusText = 'Pendiente de envío';
-                         if (order.guideStatus === 'enviada') {
-                             statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
-                             statusText = '✅ Guía enviada';
-                         } else if (order.guideStatus === 'error') {
+                           if (order.guideStatus === 'enviada') {
+                               const sentMsg = activeChatData?.messages?.find(m => m.id === order.guideMessageId);
+                               if (sentMsg?.status === 'read') {
+                                   statusColor = 'bg-blue-50 text-blue-600 border border-blue-200';
+                                   statusText = '✓✓ Leído';
+                               } else if (sentMsg?.status === 'delivered') {
+                                   statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                                   statusText = '✓✓ Entregado';
+                               } else {
+                                   statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                                   statusText = '✓ Aceptado (WhatsApp)';
+                               }
+} else if (order.guideStatus === 'error') {
                              statusColor = 'bg-red-50 text-red-600 border border-red-200';
                              statusText = '❌ Error al enviar';
                          } else if (isSendingGuide) {
