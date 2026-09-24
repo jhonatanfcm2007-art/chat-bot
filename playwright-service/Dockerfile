@@ -1,5 +1,5 @@
 # Utilizamos la imagen oficial de Playwright que ya contiene Chromium y todas sus dependencias de SO
-FROM mcr.microsoft.com/playwright:v1.47.0-jammy
+FROM mcr.microsoft.com/playwright:v1.63.0-jammy
 
 WORKDIR /app
 
