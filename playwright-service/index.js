@@ -58,7 +58,16 @@ app.post('/api/soydrop/test-access', async (req, res) => {
             if (passInput) await passInput.fill(password);
             
             await passInput.press('Enter');
+            
+            // Fallback por si Enter no dispara el form: buscar botón genérico y hacer clic
+            try {
+                const btn = await page.$('button[type="submit"], .btn-primary, button:has-text("Ingresar"), button:has-text("Acceder"), button:has-text("Entrar")');
+                if (btn) await btn.click();
+            } catch (e) {}
+
             await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+            await page.waitForTimeout(3000); // Darle 3 segundos extra
+    
         }
 
         console.log("[Playwright] Verificando acceso exitoso...");
@@ -71,7 +80,7 @@ app.post('/api/soydrop/test-access', async (req, res) => {
             if (bodyText.includes('recaptcha') || bodyText.toLowerCase().includes('verificar')) {
                 throw new Error("Se detectó un bloqueo de verificación (Captcha/2FA) en el formulario de acceso.");
             }
-            throw new Error("El inicio de sesión falló. El formulario de acceso aún está visible. ¿Credenciales incorrectas?");
+            throw new Error("FALLO LOGIN. Texto en pantalla: " + bodyText.replace(/\n/g, " ").substring(0, 300));
         }
 
         // Verificación 2: Elementos exclusivos de sesión iniciada.
