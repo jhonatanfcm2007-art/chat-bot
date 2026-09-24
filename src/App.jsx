@@ -722,7 +722,7 @@ function App() {
     switch (activeTab) {
       case 'simulator':
         return (
-          <Simulator 
+          <Simulator settings={settings} settings={settings} 
             chats={filteredChats} 
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
@@ -759,7 +759,7 @@ function App() {
         return <Incidents BACKEND_URL={SERVER_URL} socket={socket} onSelectChat={(chatId) => { setSelectedChat(chatId); setActiveTab('simulator'); }} />;
       default:
         return (
-          <Simulator 
+          <Simulator settings={settings} 
             chats={filteredChats} 
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}

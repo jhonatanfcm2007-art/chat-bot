@@ -1,7 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 
-const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine, onSendTrackingManual, onConfirmBulkTracking }) => {
+const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine, onSendTrackingManual, onConfirmBulkTracking }) => {
+  
+  const toggleAutoSync = async () => {
+    const newVal = !settings.autoSyncGuides;
+    try {
+      await fetch(serverUrl + '/api/settings/toggle-auto-guides', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoSyncGuides: newVal })
+      });
+    } catch(e) {}
+  };
+  
+  const toggleAutoSend = async () => {
+    const newVal = !settings.autoSendGuides;
+    try {
+      await fetch(serverUrl + '/api/settings/toggle-auto-guides', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoSendGuides: newVal })
+      });
+    } catch(e) {}
+  };
+
   const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
@@ -9,6 +32,8 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
+  const [filterGuide, setFilterGuide] = useState('all');
+  const [isGuideMenuOpen, setIsGuideMenuOpen] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
   
   const renderMessageText = (text) => {
