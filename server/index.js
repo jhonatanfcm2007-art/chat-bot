@@ -3396,6 +3396,49 @@ app.post('/api/settings', (req, res) => {
     res.json({ success: true, settings });
 });
 
+app.post('/api/send-guide-message', async (req, res) => {
+    try {
+        const { chatId, guide, messageText } = req.body;
+        if (!chatId || !guide || !messageText) {
+            return res.status(400).json({ success: false, error: 'Faltan parámetros requeridos.' });
+        }
+        
+        const chat = chats[chatId];
+        if (!chat) return res.status(404).json({ success: false, error: 'Chat no encontrado.' });
+        
+        if (!chat.orders) chat.orders = [];
+        const orderIndex = chat.orders.findIndex(o => o.guide === guide);
+        if (orderIndex === -1) {
+            // Si la guía no está en el historial (ej. era de la versión vieja), la agregamos al vuelo
+            chat.orders.push({ guide, soyDropOrder: 'Desconocido', status: 'Desconocido' });
+        }
+        
+        const actualOrderIndex = chat.orders.findIndex(o => o.guide === guide);
+
+        const phone = chat.orderPhone || chatId.split('@')[0].split('_')[0];
+        
+        // Use smartSendMessage
+        const sendResult = await smartSendMessage(phone, messageText);
+        
+        if (sendResult && sendResult.success) {
+            chat.orders[actualOrderIndex].guideStatus = 'enviada';
+            chat.orders[actualOrderIndex].guideMessageId = sendResult.id || Date.now().toString();
+            chat.orders[actualOrderIndex].guideSentAt = new Date().toISOString();
+            
+            saveChats(chats);
+            io.emit('chat_meta_updated', { id: chatId, chat });
+            res.json({ success: true });
+        } else {
+            chat.orders[actualOrderIndex].guideStatus = 'error';
+            saveChats(chats);
+            res.status(500).json({ success: false, error: (sendResult && sendResult.error) ? sendResult.error : 'Error desconocido al enviar WhatsApp' });
+        }
+    } catch (e) {
+        console.error('Error al enviar guía:', e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.post('/api/send-message', async (req, res) => {
     try {
         const { to, content, imageUrl, origin } = req.body;
