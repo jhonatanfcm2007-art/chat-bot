@@ -155,8 +155,21 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         console.log("[Playwright] Buscando filas en la tabla principal...");
         await page.waitForSelector('table tbody tr', { timeout: 15000 }).catch(() => {});
         
-        // Scroll down a few times to trigger lazy loading if any
-        for (let i = 0; i < 15; i++) {
+        // Intentar usar el buscador de Dropi para encontrarlo rápido sin depender del scroll
+        try {
+            const searchInput = await page.$('input[placeholder*="uscar"], input[type="search"], input[placeholder*="orden"], input.search');
+            if (searchInput) {
+                console.log("[Playwright] Buscador detectado. Buscando: " + customerName);
+                await searchInput.fill(customerName.trim());
+                await searchInput.press('Enter');
+                await page.waitForTimeout(4000); // Darle tiempo a Dropi de filtrar
+            }
+        } catch (e) {
+            console.log("[Playwright] No se pudo usar el buscador, usando fallback de scroll.");
+        }
+
+        // Scroll down a few times to trigger lazy loading if any (fallback)
+        for (let i = 0; i < 20; i++) {
             await page.evaluate(() => {
                 window.scrollBy(0, 3000);
                 const tableWrap = document.querySelector('.table-responsive, .table-container');
