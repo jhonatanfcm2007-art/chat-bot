@@ -156,9 +156,13 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
         await page.waitForSelector('table tbody tr', { timeout: 15000 }).catch(() => {});
         
         // Scroll down a few times to trigger lazy loading if any
-        for (let i = 0; i < 3; i++) {
-            await page.evaluate(() => window.scrollBy(0, 1000));
-            await page.waitForTimeout(500);
+        for (let i = 0; i < 15; i++) {
+            await page.evaluate(() => {
+                window.scrollBy(0, 3000);
+                const tableWrap = document.querySelector('.table-responsive, .table-container');
+                if (tableWrap) tableWrap.scrollTop = tableWrap.scrollHeight;
+            });
+            await page.waitForTimeout(400);
         }
 
         const rows = await page.$$('table tbody tr');
@@ -182,7 +186,7 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
             
             // Collect seen text to debug if needed
             if (!page.seenTexts) page.seenTexts = [];
-            page.seenTexts.push(fullRowText.substring(0, 30));
+            page.seenTexts.push(fullRowText.substring(0, 80));
 
             if (fullRowText.includes(searchName)) {
                 matchedRow = row;
