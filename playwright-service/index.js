@@ -205,7 +205,23 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
 
         console.log(`[Playwright] Orden encontrada. Guía detectada: ${guide}. Abriendo detalles...`);
         
-        await clickTarget.click();
+        try {
+            // Click the element. Use force: true to bypass visibility checks, 
+            // and try/catch to handle detached elements (React re-renders)
+            await clickTarget.click({ force: true, timeout: 5000 });
+        } catch (err) {
+            console.log("[Playwright] Falló el click normal, intentando forzar por Javascript o reubicando...");
+            // Si el DOM se despegó, volvemos a buscar la fila
+            await page.evaluate((cName) => {
+                const trs = Array.from(document.querySelectorAll('table tbody tr'));
+                const tr = trs.find(r => r.innerText.toLowerCase().includes(cName.toLowerCase().trim()));
+                if (tr) {
+                    const btn = tr.querySelector('a, button.btn-info, button[title="Detalles"], button i.fa-eye') || tr.querySelector('button') || tr.querySelector('td');
+                    if (btn) btn.click();
+                }
+            }, customerName);
+        }
+
         await page.waitForTimeout(3000); // Esperar modal o redirección
         
         const pageText = await page.evaluate(() => document.body.innerText);
