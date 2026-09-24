@@ -34,6 +34,7 @@ const Simulator = ({ chats, selectedChat, onSelectChat, onSendMessage, accounts 
   
   const [openTagMenu, setOpenTagMenu] = useState(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
+  const [isFetchingGuides, setIsFetchingGuides] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const [isAuditing, setIsAuditing] = useState(false);
