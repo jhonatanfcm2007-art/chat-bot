@@ -52,12 +52,18 @@ app.post('/api/soydrop/test-access', async (req, res) => {
         const emailInput = await page.$('input[type="email"], input[name="email"], input[id="email"]');
         if (emailInput) {
             console.log("[Playwright] Formulario de login detectado. Ingresando credenciales...");
+            await page.waitForTimeout(2000); // Esperar a que la página cargue sus scripts internos (React)
+            await emailInput.focus();
             await emailInput.fill(email);
+            await page.waitForTimeout(500); // Pausa breve
             
             const passInput = await page.$('input[type="password"], input[name="password"], input[id="password"]');
-            if (passInput) await passInput.fill(password);
-            
-            await passInput.press('Enter');
+            if (passInput) {
+                await passInput.focus();
+                await passInput.fill(password);
+                await page.waitForTimeout(500);
+                await passInput.press('Enter');
+            }
             
             // Fallback por si Enter no dispara el form: buscar botón genérico y hacer clic
             try {
