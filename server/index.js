@@ -3068,47 +3068,28 @@ app.post('/api/fetch-guides', async (req, res) => {
             return res.status(500).json(data);
         }
 
-        let matchedCount = 0;
-
-        // data.orders es un array de filas [ [col1, col2, col3], [col1, col2, col3] ]
-        const orders = data.orders || [];
-        
-        for (const row of orders) {
-            if (!Array.isArray(row)) continue;
+        // Playwright ahora nos devuelve la guía de ESTE pedido específicamente
+        if (data.guide && data.guide !== 'No detectada') {
+            chat.trackingGuide = data.guide;
+            // Guardar historial del pedido en un array por si queremos almacenar múltiples pedidos
+            if (!chat.orders) chat.orders = [];
             
-            // Buscar un teléfono en la fila
-            const phoneCell = row.find(cell => /\d{8,}/.test(String(cell).replace(/\D/g, '')));
-            if (!phoneCell) continue;
-            
-            const rawPhone = phoneCell.replace(/\D/g, '');
-            
-            // Buscar una guía en la fila. Suele ser alfanumérica, larga, o en una celda que dice 'Guía'
-            // O podemos asumir que es la celda más larga que no es un nombre.
-            // Por simplicidad, tomaremos cualquier cadena que parezca una guía (ej. alfanumérico largo sin espacios)
-            const guideCell = row.find(cell => {
-                const str = String(cell).trim();
-                return str.length > 6 && str.length < 30 && /^[A-Z0-9_-]+$/i.test(str) && !/^\d+$/.test(str);
-            });
-
-            if (rawPhone && guideCell) {
-                // Buscar si tenemos este chat
-                for (const chatId in chats) {
-                    const c = chats[chatId];
-                    if (!c.orderPhone) continue;
-                    
-                    const cPhone = c.orderPhone.replace(/\D/g, '');
-                    // Si el teléfono de la tabla incluye o es igual al del chat
-                    if (rawPhone.includes(cPhone) || cPhone.includes(rawPhone)) {
-                        c.trackingGuide = guideCell.trim();
-                        matchedCount++;
-                        io.emit('chat_meta_updated', { id: chatId, chat: c });
-                    }
-                }
+            const existingOrder = chat.orders.find(o => o.guide === data.guide);
+            if (!existingOrder) {
+                chat.orders.push({
+                    guide: data.guide,
+                    soyDropOrder: data.soyDropOrder,
+                    status: data.status,
+                    phoneScraped: data.phone,
+                    date: new Date().toISOString()
+                });
             }
+            
+            saveChats(chats);
+            io.emit('chat_meta_updated', { id: chatId, chat });
         }
-        
-        saveChats(chats);
-        res.json({ success: true, matchedCount, sample: orders.slice(0, 3) });
+
+        res.json({ success: true, orderData: data });
 
     } catch (e) {
         console.error("Error al obtener guías:", e);
