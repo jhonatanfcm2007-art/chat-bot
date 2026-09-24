@@ -3074,8 +3074,8 @@ app.post('/api/fetch-guides', async (req, res) => {
             // Guardar historial del pedido en un array por si queremos almacenar múltiples pedidos
             if (!chat.orders) chat.orders = [];
             
-            const existingOrder = chat.orders.find(o => o.guide === data.guide);
-            if (!existingOrder) {
+            const existingOrderIndex = chat.orders.findIndex(o => o.guide === data.guide);
+            if (existingOrderIndex === -1) {
                 chat.orders.push({
                     guide: data.guide,
                     soyDropOrder: data.soyDropOrder,
@@ -3083,6 +3083,12 @@ app.post('/api/fetch-guides', async (req, res) => {
                     phoneScraped: data.phone,
                     date: new Date().toISOString()
                 });
+            } else {
+                // Actualizar los datos del pedido existente
+                chat.orders[existingOrderIndex].status = data.status;
+                chat.orders[existingOrderIndex].soyDropOrder = data.soyDropOrder;
+                chat.orders[existingOrderIndex].phoneScraped = data.phone;
+                chat.orders[existingOrderIndex].date = new Date().toISOString();
             }
             
             saveChats(chats);
