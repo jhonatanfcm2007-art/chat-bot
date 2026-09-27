@@ -314,6 +314,10 @@ function App() {
       });
     });
 
+    socket.on('campaign_progress', (p) => {
+      setCampaigns(prev => prev.map(c => c.id === p.id ? { ...c, sentCount: p.sentCount, failedCount: p.failedCount, status: p.status } : c));
+    });
+
     socket.on('campaigns_updated', (data) => {
       if (Array.isArray(data)) {
         setCampaigns(data);
@@ -335,6 +339,7 @@ function App() {
       socket.off('block_state_updated');
       socket.off('message_deleted');
       socket.off('campaigns_updated');
+      socket.off('campaign_progress');
       socket.off('inventory_updated');
       socket.off('sales_updated');
       socket.off('anomalies_updated');

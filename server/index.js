@@ -2945,8 +2945,10 @@ async function processCampaign(campaignId) {
         }
 
         saveCampaigns(campaigns);
-        // Evitar fuga de Egress: Solo emitimos estado al Frontend cada 5 mensajes o si ya terminó
-        if (campaign.sentCount % 5 === 0 || !activeCampaigns[campaignId]) {
+        // Evitar fuga de Egress: Emitimos PROGRESO ligero (unos bytes) en cada mensaje
+        io.emit('campaign_progress', { id: campaign.id, sentCount: campaign.sentCount, failedCount: campaign.failedCount, status: campaign.status });
+        // Emitimos la lista completa de contactos (pesada) SOLO cuando termina la campaña
+        if (!activeCampaigns[campaignId]) {
             io.emit('campaigns_updated', campaigns);
         }
 
