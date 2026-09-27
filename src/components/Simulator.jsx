@@ -250,12 +250,6 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
     return () => window.removeEventListener('click', handleCloseMenu);
   }, []);
 
-  useEffect(() => {
-    setSelectedFile(null);
-    setFilePreview('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [selectedChat]);
-
 
     const handleSend = async (text, file, preview) => {
     if ((!text.trim() && !preview) || !selectedChat) return;
