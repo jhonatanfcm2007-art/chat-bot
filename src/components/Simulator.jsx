@@ -229,9 +229,6 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [selectedChat]);
 
-  
-    reader.readAsDataURL(file);
-  };
 
     const handleSend = async (text, file, preview) => {
     if ((!text.trim() && !preview) || !selectedChat) return;
