@@ -122,10 +122,10 @@ app.post('/api/soydrop/test-access', async (req, res) => {
 
 
 app.post('/api/soydrop/get-guide', async (req, res) => {
-    const { customerName, phoneHint } = req.body;
+    const { customerName, phoneHint, targetSoyDropOrder } = req.body;
     
-    if (!customerName) {
-        return res.status(400).json({ success: false, error: "Se requiere customerName para buscar la guía." });
+    if (!customerName && !targetSoyDropOrder) {
+        return res.status(400).json({ success: false, error: "Se requiere customerName o targetSoyDropOrder para buscar." });
     }
 
     const loginUrl = process.env.SOYDROP_LOGIN_URL || 'https://app.dropi.hn/login';
@@ -195,13 +195,16 @@ app.post('/api/soydrop/get-guide', async (req, res) => {
                 rowTextArr.push(await cell.innerText());
             }
             const fullRowText = rowTextArr.join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
-            const searchName = customerName.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
+            const searchName = customerName ? customerName.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ') : '';
             
             // Collect seen text to debug if needed
             if (!page.seenTexts) page.seenTexts = [];
             page.seenTexts.push(fullRowText.substring(0, 80));
 
-            if (fullRowText.includes(searchName)) {
+            const matchByDropiOrder = targetSoyDropOrder && (rowTextArr[0] || '').includes(targetSoyDropOrder);
+            const matchByName = searchName && fullRowText.includes(searchName);
+
+            if (matchByDropiOrder || matchByName) {
                 matchedRow = row;
                 rowDetails = rowTextArr;
                 

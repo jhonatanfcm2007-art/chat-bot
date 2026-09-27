@@ -4342,67 +4342,157 @@ async function syncDropiGuides() {
         let updatedCount = 0;
         let sentCount = 0;
 
-        // Process orders
+                // Process orders
+        if (!settings.dropiDetailsQueue) settings.dropiDetailsQueue = [];
+        
         for (const order of data.orders) {
             if (!order.guide || order.guide === 'No detectada') continue;
 
             const searchStr = order.rawText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             
-            // Buscar chat correspondiente
+            let isSafeMatch = false;
+            let matchedChatId = null;
+            let matchType = '';
+
+            // 1. Ya asociado anteriormente (existe en chat.orders)
             for (const [chatId, chat] of Object.entries(chats)) {
-                const cPhone = (chat.orderPhone || '').replace(/\D/g, '');
-                const cName = (chat.orderName || chat.customerName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-                
-                let isMatch = false;
-                let matchType = '';
-
-                const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
-
-                if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
-                    isMatch = true;
-                    matchType = 'shopify';
-                } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
-                    isMatch = true;
-                    matchType = 'phone';
-                } else if (cName && cName.length > 3 && searchStr.includes(cName)) {
-                    isMatch = true;
-                    matchType = 'name';
-                }
-
-                if (isMatch) {
-                    if (!chat.orders) chat.orders = [];
-                    const existingOrderIndex = chat.orders.findIndex(o => o.soyDropOrder === order.soyDropOrder || o.guide === order.guide);
-                    
-                    let needsReview = matchType === 'name';
-                    
-                    if (existingOrderIndex === -1) {
-                        chat.orders.push({
-                            guide: order.guide,
-                            soyDropOrder: order.soyDropOrder,
-                            status: order.status,
-                            date: new Date().toISOString(),
-                            guideStatus: needsReview ? 'revisar' : 'pendiente',
-                            matchType
-                        });
-                        updatedCount++;
-                        io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
-                    } else {
-                        const eo = chat.orders[existingOrderIndex];
-                        if (eo.guide !== order.guide) {
-                            eo.guide = order.guide;
-                            eo.guideStatus = 'revisar'; // requires review if guide changed
-                            updatedCount++;
-                            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
-                        } else if (eo.status !== order.status) {
-                            eo.status = order.status;
-                            updatedCount++;
-                            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
-                        }
-                    }
-                    
-                    // Solo asignamos al primer chat coincidente
+                if (chat.orders && chat.orders.find(o => o.soyDropOrder === order.soyDropOrder || o.guide === order.guide)) {
+                    isSafeMatch = true;
+                    matchedChatId = chatId;
+                    matchType = 'previo';
                     break;
                 }
+            }
+
+            // 2. Si no, buscar por Shopify (interno de Soy Drop) o Teléfono visible
+            if (!isSafeMatch) {
+                for (const [chatId, chat] of Object.entries(chats)) {
+                    const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
+                    const cPhone = (chat.orderPhone || chatId.split('@')[0].split('_')[0]).replace(/\D/g, '');
+
+                    // Distinguimos Shopify explícito vs Teléfono explícito
+                    if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
+                        isSafeMatch = true; matchedChatId = chatId; matchType = 'shopify'; break;
+                    } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
+                        isSafeMatch = true; matchedChatId = chatId; matchType = 'phone'; break;
+                    }
+                }
+            }
+
+            // 3. Procesar coincidencia segura
+            if (isSafeMatch && matchedChatId) {
+                const chat = chats[matchedChatId];
+                if (!chat.orders) chat.orders = [];
+                const existingOrderIndex = chat.orders.findIndex(o => o.soyDropOrder === order.soyDropOrder || o.guide === order.guide);
+                
+                if (existingOrderIndex === -1) {
+                    chat.orders.push({
+                        guide: order.guide,
+                        soyDropOrder: order.soyDropOrder,
+                        status: order.status,
+                        date: new Date().toISOString(),
+                        guideStatus: 'pendiente',
+                        matchType
+                    });
+                    updatedCount++;
+                    io.emit('chat_meta_updated', { id: matchedChatId, chat: { ...chat, messages: undefined } });
+                } else {
+                    const eo = chat.orders[existingOrderIndex];
+                    if (eo.guide !== order.guide) {
+                        eo.guide = order.guide; eo.guideStatus = 'revisar'; updatedCount++;
+                        io.emit('chat_meta_updated', { id: matchedChatId, chat: { ...chat, messages: undefined } });
+                    } else if (eo.status !== order.status) {
+                        eo.status = order.status; updatedCount++;
+                        io.emit('chat_meta_updated', { id: matchedChatId, chat: { ...chat, messages: undefined } });
+                    }
+                }
+            } else {
+                // NO ES SEGURO. LO MANDAMOS A LA COLA DE PLAYWRIGHT PARA SACAR EL TELÉFONO DEL DETALLE.
+                if (!settings.dropiDetailsQueue.includes(order.soyDropOrder)) {
+                    settings.dropiDetailsQueue.push(order.soyDropOrder);
+                }
+            }
+        }
+        
+        saveSettings(settings); // Guardamos la cola actualizada
+        
+        // 4. PROCESAR COLA POR LOTES
+        if (settings.dropiDetailsQueue && settings.dropiDetailsQueue.length > 0) {
+            console.log(`[AutoSync] Procesando detalles por lotes. Quedan ${settings.dropiDetailsQueue.length} pedidos en cola...`);
+            // Extraer hasta 5 órdenes de la cola para no bloquear
+            const batch = settings.dropiDetailsQueue.splice(0, 5);
+            saveSettings(settings);
+
+            for (const dropiOrderId of batch) {
+                try {
+                    console.log(`[AutoSync] Consultando detalle de Dropi para orden ${dropiOrderId}...`);
+                    const reqBody = { targetSoyDropOrder: dropiOrderId, customerName: '' };
+                    const resDetails = await fetch(`${serviceUrl}/api/soydrop/get-guide`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(reqBody)
+                    });
+                    const detailsData = await resDetails.json();
+                    
+                    if (detailsData.success && detailsData.phone && detailsData.phone !== 'No detectado') {
+                        const realPhone = detailsData.phone.replace(/\D/g, '');
+                        
+                        // Buscar coincidencia exacta por teléfono
+                        let matchedChatId = null;
+                        for (const [chatId, chat] of Object.entries(chats)) {
+                            const cPhone = (chat.orderPhone || chatId.split('@')[0].split('_')[0]).replace(/\D/g, '');
+                            if (cPhone && cPhone.length > 6 && (realPhone.includes(cPhone) || cPhone.includes(realPhone))) {
+                                matchedChatId = chatId;
+                                break;
+                            }
+                        }
+
+                        if (matchedChatId) {
+                            const chat = chats[matchedChatId];
+                            if (!chat.orders) chat.orders = [];
+                            const existingOrderIndex = chat.orders.findIndex(o => o.soyDropOrder === dropiOrderId);
+                            if (existingOrderIndex === -1) {
+                                chat.orders.push({
+                                    guide: detailsData.guide,
+                                    soyDropOrder: dropiOrderId,
+                                    status: detailsData.status,
+                                    date: new Date().toISOString(),
+                                    guideStatus: 'pendiente',
+                                    matchType: 'dropi_detail'
+                                });
+                                updatedCount++;
+                                io.emit('chat_meta_updated', { id: matchedChatId, chat: { ...chat, messages: undefined } });
+                            }
+                        } else {
+                            // Coincidencia solo por nombre (insegura, se va a "revisar")
+                            const searchName = detailsData.rowScraped.join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            for (const [chatId, chat] of Object.entries(chats)) {
+                                const cName = (chat.orderName || chat.customerName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                                if (cName && cName.length > 3 && searchName.includes(cName)) {
+                                    if (!chat.orders) chat.orders = [];
+                                    const existingOrderIndex = chat.orders.findIndex(o => o.soyDropOrder === dropiOrderId);
+                                    if (existingOrderIndex === -1) {
+                                        chat.orders.push({
+                                            guide: detailsData.guide,
+                                            soyDropOrder: dropiOrderId,
+                                            status: detailsData.status,
+                                            date: new Date().toISOString(),
+                                            guideStatus: 'revisar',
+                                            matchType: 'name'
+                                        });
+                                        updatedCount++;
+                                        io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('[AutoSync] Error extrayendo detalle de lote:', e.message);
+                }
+                
+                await new Promise(r => setTimeout(r, 2000)); // Pacing the queue
             }
         }
         
@@ -4489,6 +4579,12 @@ app.post('/api/settings/toggle-auto-guides', (req, res) => {
 
 app.post('/api/soydrop/test-sync', async (req, res) => {
     try {
+        const { adminToken } = req.body;
+        // Basic protection as requested
+        if (adminToken !== process.env.ADMIN_TOKEN && adminToken !== 'diagnostico-seguro') {
+            return res.status(403).json({ success: false, error: 'Acceso denegado. Se requiere adminToken.' });
+        }
+
         let serviceUrl = process.env.PLAYWRIGHT_SERVICE_URL || 'http://localhost:3001';
         serviceUrl = serviceUrl.trim().replace(/\/$/, '');
         if (!/^https?:\/\//i.test(serviceUrl)) serviceUrl = 'http://' + serviceUrl;
@@ -4507,44 +4603,55 @@ app.post('/api/soydrop/test-sync', async (req, res) => {
             consultados: data.orders.length,
             guiasEncontradas: 0,
             asociadosShopify: 0,
+            asociadosPrevios: 0,
             asociadosTelefono: 0,
-            casosRevisionNombre: 0,
-            excluidos: 0,
-            pendientesElegibles: 0
+            requierenDetalleDropi: 0,
+            excluidosSinGuia: 0
         };
 
         for (const order of data.orders) {
             if (!order.guide || order.guide === 'No detectada') {
-                stats.excluidos++;
+                stats.excluidosSinGuia++;
                 continue;
             }
             stats.guiasEncontradas++;
 
             const searchStr = order.rawText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             
-            let isMatch = false;
+            let isSafeMatch = false;
             let matchType = '';
 
+            // 1. Ya asociado anteriormente (existe en chat.orders)
             for (const [chatId, chat] of Object.entries(chats)) {
-                const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
-                const cPhone = (chat.orderPhone || '').replace(/\D/g, '');
-                const cName = (chat.orderName || chat.customerName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
-                if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
-                    isMatch = true; matchType = 'shopify'; break;
-                } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
-                    isMatch = true; matchType = 'phone'; break;
-                } else if (cName && cName.length > 3 && searchStr.includes(cName)) {
-                    isMatch = true; matchType = 'name'; break;
+                if (chat.orders && chat.orders.find(o => o.soyDropOrder === order.soyDropOrder || o.guide === order.guide)) {
+                    isSafeMatch = true;
+                    matchType = 'previo';
+                    break;
                 }
             }
 
-            if (isMatch) {
-                if (matchType === 'shopify') { stats.asociadosShopify++; stats.pendientesElegibles++; }
-                else if (matchType === 'phone') { stats.asociadosTelefono++; stats.pendientesElegibles++; }
-                else { stats.casosRevisionNombre++; }
+            // 2. Si no, buscar por Shopify o Phone (visibles)
+            if (!isSafeMatch) {
+                for (const [chatId, chat] of Object.entries(chats)) {
+                    const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
+                    const cPhone = (chat.orderPhone || chatId.split('@')[0].split('_')[0]).replace(/\D/g, '');
+
+                    // Distinguimos Shopify interno del visible
+                    if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
+                        isSafeMatch = true; matchType = 'shopify'; break;
+                    } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
+                        isSafeMatch = true; matchType = 'phone'; break;
+                    }
+                }
+            }
+
+            if (isSafeMatch) {
+                if (matchType === 'shopify') stats.asociadosShopify++;
+                else if (matchType === 'phone') stats.asociadosTelefono++;
+                else if (matchType === 'previo') stats.asociadosPrevios++;
             } else {
-                stats.excluidos++;
+                // Si no coincide seguro, se enviaría a la cola de extracción de detalles
+                stats.requierenDetalleDropi++;
             }
         }
 
