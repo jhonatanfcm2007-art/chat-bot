@@ -2326,7 +2326,7 @@ async function processAIResponse(from, msgBodyLower) {
         }
         // --- FIN NORMALIZACIÓN ---
 
-        io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
+        io.emit('chat_meta_updated', { id: from, chat: { ...refreshedChat, messages: undefined } });
         saveChats(chats);
         
         if (!refreshedChat.orderRegistered) {
@@ -2337,7 +2337,7 @@ async function processAIResponse(from, msgBodyLower) {
         // --- REPROGRAMACIÓN POSTERIOR ---
         if (refreshedChat.orderRegistered) {
             refreshedChat.tags = ['programado_retenido'];
-            io.emit('chat_meta_updated', { id: from, chat: refreshedChat });
+            io.emit('chat_meta_updated', { id: from, chat: { ...refreshedChat, messages: undefined } });
             io.emit('tag_updated', { from, tags: refreshedChat.tags });
             saveChats(chats);
         }
@@ -2945,7 +2945,10 @@ async function processCampaign(campaignId) {
         }
 
         saveCampaigns(campaigns);
-        io.emit('campaigns_updated', campaigns);
+        // Evitar fuga de Egress: Solo emitimos estado al Frontend cada 5 mensajes o si ya terminó
+        if (campaign.sentCount % 5 === 0 || !activeCampaigns[campaignId]) {
+            io.emit('campaigns_updated', campaigns);
+        }
 
         // Espera con delay dinámico y aleatorio +/- 20%
         const baseDelay = (campaign.delay || 20) * 1000;
@@ -3119,7 +3122,7 @@ app.post('/api/fetch-guides', async (req, res) => {
             }
             
             saveChats(chats);
-            io.emit('chat_meta_updated', { id: chatId, chat });
+            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
         }
 
         res.json({ success: true, orderData: data });
@@ -3472,7 +3475,7 @@ app.post('/api/send-guide-message', async (req, res) => {
             
             saveChats(chats);
             io.emit('message', { ...newMsg, from: chatId });
-            io.emit('chat_meta_updated', { id: chatId, chat });
+            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
             res.json({ success: true });
         } else {
             chat.orders[actualOrderIndex].guideStatus = 'error';
@@ -3522,7 +3525,8 @@ app.post('/api/send-message', async (req, res) => {
         if (!chats[to]) { chats[to] = { from: to, messages: [], unreadCount: 0, profileName: 'Desconocido' }; }
         chats[to].messages.push(m);
         saveChats(chats);
-        io.emit('chat_updated', chats[to]);
+        io.emit('message', { ...m, waLine: chats[to].waLine || 1 });
+        io.emit('chat_meta_updated', { id: to, chat: { ...chats[to], messages: undefined } });
         res.json({ success: true });
     } catch (e) {
         console.error("Error sending message via API", e);
@@ -3635,7 +3639,8 @@ function getOptimizedChatsPayload() {
 io.on('connection', (socket) => {
     socket.emit('inventory_updated', inventory);
     socket.emit('sales_updated', sales);
-    socket.emit('initial_chats', getOptimizedChatsPayload());
+    // REMOVIDO: socket.emit('initial_chats', getOptimizedChatsPayload());
+    // Esto causaba consumo masivo de Egress al emitir megabytes cada vez que un cliente se reconectaba.
     socket.emit('initial_settings', settings);
     socket.emit('platforms_updated', platforms);
     socket.emit('providers_updated', providers);
@@ -3665,7 +3670,8 @@ io.on('connection', (socket) => {
         }
         
         saveChats(chats);
-        io.emit('chat_updated', chats[chatId]);
+        io.emit('tag_updated', { from: chatId, tags: chat.tags });
+        io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
 
         // Send WhatsApp message
         const cName = chat.customerName || chat.orderName || chat.from.split('@')[0];
@@ -3737,7 +3743,7 @@ io.on('connection', (socket) => {
                     if (!chat.messages) chat.messages = [];
                     chat.messages.push(newMsg);
                     io.emit('message', { ...newMsg, waLine: chat.waLine });
-                    io.emit('chat_updated', chat);
+                    io.emit('chat_meta_updated', { id: targetChatId, chat: { ...chat, messages: undefined } });
                 } catch (error) {
                     console.error('Error in bulk tracking for', targetChatId, error);
                 }
@@ -4377,18 +4383,18 @@ async function syncDropiGuides() {
                             matchType
                         });
                         updatedCount++;
-                        io.emit('chat_meta_updated', { id: chatId, chat });
+                        io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
                     } else {
                         const eo = chat.orders[existingOrderIndex];
                         if (eo.guide !== order.guide) {
                             eo.guide = order.guide;
                             eo.guideStatus = 'revisar'; // requires review if guide changed
                             updatedCount++;
-                            io.emit('chat_meta_updated', { id: chatId, chat });
+                            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
                         } else if (eo.status !== order.status) {
                             eo.status = order.status;
                             updatedCount++;
-                            io.emit('chat_meta_updated', { id: chatId, chat });
+                            io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
                         }
                     }
                     
@@ -4453,7 +4459,7 @@ async function syncDropiGuides() {
                         sentCount++;
                         saveChats(chats);
                         io.emit('message', { ...chat.messages[chat.messages.length - 1], from: chatId });
-                        io.emit('chat_meta_updated', { id: chatId, chat });
+                        io.emit('chat_meta_updated', { id: chatId, chat: { ...chat, messages: undefined } });
                         
                         // Pausa de 3 segundos entre envíos para evitar bloqueos
                         await new Promise(r => setTimeout(r, 3000));
