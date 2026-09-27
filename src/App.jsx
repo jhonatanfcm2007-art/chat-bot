@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Inventory from './components/Inventory';
 import Incidents from './components/Incidents';
 import Simulator from './components/Simulator';
+import ErrorBoundary from './components/ErrorBoundary';
 import AIAssistant from './components/AIAssistant';
 import Campaigns from './components/Campaigns';
 import KnowledgeBase from './components/KnowledgeBase';
@@ -727,7 +728,7 @@ function App() {
     switch (activeTab) {
       case 'simulator':
         return (
-          <Simulator settings={settings} settings={settings} 
+          <ErrorBoundary componentName="Simulator"><Simulator settings={settings} settings={settings} 
             chats={filteredChats} 
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
@@ -745,7 +746,7 @@ function App() {
             globalLine={globalLine}
             onSendTrackingManual={handleSendTrackingManual}
             onConfirmBulkTracking={handleConfirmBulkTracking}
-          />
+          /></ErrorBoundary>
         );
       case 'ai_assistant':
         return (
@@ -764,7 +765,7 @@ function App() {
         return <Incidents BACKEND_URL={SERVER_URL} socket={socket} onSelectChat={(chatId) => { setSelectedChat(chatId); setActiveTab('simulator'); }} />;
       default:
         return (
-          <Simulator settings={settings} 
+          <ErrorBoundary componentName="Simulator"><Simulator settings={settings} 
             chats={filteredChats} 
             selectedChat={selectedChat} 
             onSelectChat={setSelectedChat}
@@ -782,7 +783,7 @@ function App() {
             globalLine={globalLine}
             onSendTrackingManual={handleSendTrackingManual}
             onConfirmBulkTracking={handleConfirmBulkTracking}
-          />
+          /></ErrorBoundary>
         );
     }
   };
