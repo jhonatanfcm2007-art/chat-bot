@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import ChatInput from './ChatInput';
+import React, {  useState, useEffect, useRef , useMemo } from 'react';
 
 
 const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMessage, accounts = [], salesHistory = [], onSale, onUpdateTag, onDeleteChat, onDeleteMessage, onBulkClearTags, onToggleAI, onToggleBlock, serverUrl, globalLine, onSendTrackingManual, onConfirmBulkTracking }) => {
@@ -24,11 +25,6 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
       });
     } catch(e) {}
   };
-
-  const [inputValue, setInputValue] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [filePreview, setFilePreview] = useState('');
-  const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaleAccount, setSelectedSaleAccount] = useState('');
   const [filterTag, setFilterTag] = useState('all');
@@ -233,70 +229,39 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [selectedChat]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      alert('Solo se pueden enviar imágenes');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setSelectedFile(file);
-      setFilePreview(event.target.result);
-    };
+  
     reader.readAsDataURL(file);
   };
 
-  const handleSend = async () => {
-    if ((!inputValue.trim() && !filePreview) || !selectedChat) return;
+    const handleSend = async (text, file, preview) => {
+    if ((!text.trim() && !preview) || !selectedChat) return;
     
     let uploadedImageUrl = null;
     
-    if (filePreview) {
+    if (file) {
       try {
         const response = await fetch(`${serverUrl}/api/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            filename: selectedFile.name,
-            base64: filePreview
+            filename: file.name,
+            base64: preview
           })
         });
-        if (response.ok) {
-          const data = await response.json();
+        const data = await response.json();
+        if (data.success) {
           uploadedImageUrl = data.url;
-        } else {
-          const errText = await response.text();
-            alert('Error del servidor: ' + errText + ' | Status: ' + response.status);
-          return;
         }
-      } catch (err) {
-        console.error('Error uploading image:', err);
-        alert('Error de conexión al subir la imagen');
-        return;
+      } catch (error) {
+        console.error('Error al subir imagen:', error);
       }
     }
     
-    const currentInput = inputValue;
-      setInputValue('');
-      const textarea = document.querySelector('textarea');
-      if (textarea) textarea.style.height = 'auto';
-
-      const success = await onSendMessage({ 
-        to: selectedChat, 
-        content: currentInput, 
-        imageUrl: uploadedImageUrl,
-        origin: window.location.origin
-      });
-      
-      if (success) {
-      setSelectedFile(null);
-      setFilePreview('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    await onSendMessage({ 
+      to: selectedChat, 
+      content: text, 
+      imageUrl: uploadedImageUrl 
+    });
   };
 
   const parseTimeString = (timeStr) => {
@@ -392,7 +357,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
 
   const uniqueOwners = Array.from(new Set(knowledgeBaseDb.map(p => p.owner?.trim()).filter(Boolean))).sort();
 
-  const chatSessions = Object.entries(chats)
+  const chatSessions = useMemo(() => Object.entries(chats)
     .map(([id, data], index) => {
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -448,6 +413,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
       return searchMatch && tagMatch && lineMatch && productMatch && countryMatch && ownerMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
+  }, [chats, searchTerm, filterTag, filterProduct, filterCountry, filterOwner, filterGuide]);
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);
@@ -1133,78 +1099,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
               </div>
             </div>
 
-            <footer className="p-4 bg-white border-t border-outline-variant">
-               {activeChatData.isBlocked ? (
-                 <div className="flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 text-xs font-medium">
-                   <span className="material-symbols-outlined text-sm">block</span>
-                   Contacto bloqueado
-                 </div>
-               ) : (
-                 <div className="flex flex-col gap-3">
-                    {/* Vista previa de imagen seleccionada */}
-                    {filePreview && (
-                      <div className="relative self-start p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
-                        <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
-                        <div className="flex flex-col justify-center">
-                          <span className="text-xs font-medium text-slate-400 leading-none mb-1">Imagen lista para enviar</span>
-                          <span className="text-xs font-medium text-slate-700 truncate max-w-[150px]">{selectedFile?.name}</span>
-                        </div>
-                        <button 
-                          onClick={() => { setSelectedFile(null); setFilePreview(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-lg">close</span>
-                        </button>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-3">
-                       <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                          <span className="material-symbols-outlined text-2xl">mood</span>
-                       </button>
-                       <button 
-                         onClick={() => fileInputRef.current?.click()}
-                         className={`text-slate-400 hover:text-slate-600 transition-colors ${filePreview ? 'text-primary' : ''}`}
-                       >
-                          <span className="material-symbols-outlined text-2xl">attach_file</span>
-                       </button>
-                       <input 
-                         type="file" 
-                         ref={fileInputRef} 
-                         onChange={handleFileChange} 
-                         accept="image/*" 
-                         className="hidden" 
-                       />
-                       <div className="flex-grow flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all">
-                         <textarea 
-                             className="w-full bg-transparent border-none text-sm text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-400 resize-none min-h-[20px] max-h-[120px] py-0 m-0 leading-relaxed custom-scrollbar flex items-center" 
-                             rows={1}
-                             placeholder={filePreview ? "Añadir un comentario..." : "Escribe un mensaje..."} 
-                             value={inputValue}
-                             onChange={(e) => {
-                                 setInputValue(e.target.value);
-                                 e.target.style.height = 'auto';
-                                 e.target.style.height = (e.target.scrollHeight) + 'px';
-                             }}
-                             onKeyDown={(e) => {
-                                 if (e.key === 'Enter' && !e.shiftKey) {
-                                     e.preventDefault();
-                                     handleSend();
-                                     e.target.style.height = 'auto';
-                                 }
-                             }}
-                           />
-                       </div>
-                       <button 
-                         onClick={handleSend}
-                         className="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all shadow-sm"
-                       >
-                         <span className="material-symbols-outlined text-xl">send</span>
-                       </button>
-                    </div>
-                 </div>
-               )}
-            </footer>
+            <ChatInput onSend={handleSend} isBlocked={activeChatData.isBlocked} />
           </>
         ) : (
           <div className="flex-grow flex flex-col items-center justify-center text-center p-12 relative overflow-hidden">
