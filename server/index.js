@@ -2134,6 +2134,17 @@ async function processAIResponse(from, msgBodyLower) {
         }
     }
 
+    // --- PREVENCIÓN DETERMINÍSTICA DE BUCLES DE DESPEDIDA ---
+    const lastBotMsg = refreshedChat.messages.slice().reverse().find(m => m.isMe);
+    const lastBotText = lastBotMsg ? (lastBotMsg.body || lastBotMsg.content || '').toLowerCase() : '';
+    const isBotGoodbye = /gracias a ti|excelente d[ií]a|feliz d[ií]a|hasta luego|estoy aqu[ií] para ayudar|estamos a tu disposici[oó]n|quedo a tu entera disposici[oó]n/i.test(lastBotText);
+    const isPoliteUser = /^(ok|okey|oka|gracias|muchas gracias|vale|listo|bueno|dale|bendiciones|am[eé]n|igualmente|perfecto|excelente|chao|adi[oó]s)\s*$/i.test(msgBodyLower);
+    
+    if (isBotGoodbye && isPoliteUser) {
+        console.log(`[SISTEMA] Cortando bucle infinito de cortesía ANTES de la IA con ${customerName}.`);
+        return; // No llamamos a la IA, no enviamos nada. Fin de la conversación real.
+    }
+
     const aiReply = await getAIResponse(msgBodyLower, allMessages, refreshedChat.waLine, from);
     
     // --- SOPORTE SILENCIOSO (Ignorancia de IA) ---
