@@ -1050,6 +1050,8 @@ async function registerOrder(to, products) {
             if (shopifyRes.success) {
                 chat.orderRegistered = true;
                 if (!chat.assignedProduct) chat.assignedProduct = productList;
+                if (shopifyRes.orderName) chat.shopifyOrderName = shopifyRes.orderName;
+                if (shopifyRes.orderId) chat.shopifyOrderId = shopifyRes.orderId;
                 saveChats(chats);
                 
                 const notif = `✅ *PEDIDO AUTO-APROBADO Y ENVIADO A DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n📦 *Pedido Dropi:* ${shopifyRes.orderName}`;
@@ -4335,7 +4337,12 @@ async function syncDropiGuides() {
                 let isMatch = false;
                 let matchType = '';
 
-                if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
+                const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
+
+                if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
+                    isMatch = true;
+                    matchType = 'shopify';
+                } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
                     isMatch = true;
                     matchType = 'phone';
                 } else if (cName && cName.length > 3 && searchStr.includes(cName)) {
@@ -4459,6 +4466,73 @@ app.post('/api/settings/toggle-auto-guides', (req, res) => {
     if (typeof autoSendGuides !== 'undefined') settings.autoSendGuides = autoSendGuides;
     saveSettings(settings);
     res.json({ success: true, settings });
+});
+
+app.post('/api/soydrop/test-sync', async (req, res) => {
+    try {
+        let serviceUrl = process.env.PLAYWRIGHT_SERVICE_URL || 'http://localhost:3001';
+        serviceUrl = serviceUrl.trim().replace(/\/$/, '');
+        if (!/^https?:\/\//i.test(serviceUrl)) serviceUrl = 'http://' + serviceUrl;
+
+        const fetchRes = await fetch(`${serviceUrl}/api/soydrop/sync-recent-orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await fetchRes.json();
+        if (!data.success || !data.orders) {
+            return res.json({ success: false, error: 'Error fetching from playwright', raw: data });
+        }
+
+        let stats = {
+            consultados: data.orders.length,
+            guiasEncontradas: 0,
+            asociadosShopify: 0,
+            asociadosTelefono: 0,
+            casosRevisionNombre: 0,
+            excluidos: 0,
+            pendientesElegibles: 0
+        };
+
+        for (const order of data.orders) {
+            if (!order.guide || order.guide === 'No detectada') {
+                stats.excluidos++;
+                continue;
+            }
+            stats.guiasEncontradas++;
+
+            const searchStr = order.rawText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            let isMatch = false;
+            let matchType = '';
+
+            for (const [chatId, chat] of Object.entries(chats)) {
+                const cShopifyOrder = (chat.shopifyOrderName || '').toLowerCase().trim();
+                const cPhone = (chat.orderPhone || '').replace(/\D/g, '');
+                const cName = (chat.orderName || chat.customerName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+                if (cShopifyOrder && cShopifyOrder.length > 2 && searchStr.includes(cShopifyOrder)) {
+                    isMatch = true; matchType = 'shopify'; break;
+                } else if (cPhone && cPhone.length > 6 && searchStr.includes(cPhone)) {
+                    isMatch = true; matchType = 'phone'; break;
+                } else if (cName && cName.length > 3 && searchStr.includes(cName)) {
+                    isMatch = true; matchType = 'name'; break;
+                }
+            }
+
+            if (isMatch) {
+                if (matchType === 'shopify') { stats.asociadosShopify++; stats.pendientesElegibles++; }
+                else if (matchType === 'phone') { stats.asociadosTelefono++; stats.pendientesElegibles++; }
+                else { stats.casosRevisionNombre++; }
+            } else {
+                stats.excluidos++;
+            }
+        }
+
+        res.json({ success: true, stats });
+    } catch (e) {
+        res.json({ success: false, error: e.message });
+    }
 });
 
 app.post('/api/soydrop/trigger-sync', async (req, res) => {
