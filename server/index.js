@@ -1275,6 +1275,20 @@ async function createShopifyOrder(chat, products) {
             const lines = targetPricesText.split('\n');
             let foundPrice = null;
             
+            const parseSafePrice = (str) => {
+                let clean = str.trim();
+                const lastComma = clean.lastIndexOf(',');
+                const lastDot = clean.lastIndexOf('.');
+                if (lastComma > lastDot) {
+                    clean = clean.replace(/\./g, '').replace(',', '.');
+                } else if (lastDot !== -1 && lastComma === -1 && lastDot === clean.length - 4) {
+                    clean = clean.replace(/\./g, '');
+                } else {
+                    clean = clean.replace(/,/g, '');
+                }
+                return parseFloat(clean);
+            };
+
             // Buscar línea que coincida con la cantidad
             for (const line of lines) {
                 if (
@@ -1283,7 +1297,7 @@ async function createShopifyOrder(chat, products) {
                 ) {
                     const match = line.match(/(?:Q|L|\$|₡|C\$|C|RD\$|S\/)\s*([0-9.,]+)/i);
                     if (match) {
-                        foundPrice = parseFloat(match[1].replace(/,/g, ''));
+                        foundPrice = parseSafePrice(match[1]);
                         break;
                     }
                 }
@@ -1292,7 +1306,7 @@ async function createShopifyOrder(chat, products) {
             // Fallback si no encontró la línea exacta pero ordenó 1
             if (foundPrice === null && orderQty === 1) {
                 const match = targetPricesText.match(/(?:Q|L|\$|₡|C\$|C|RD\$|S\/)\s*([0-9.,]+)/i);
-                if (match) foundPrice = parseFloat(match[1].replace(/,/g, ''));
+                if (match) foundPrice = parseSafePrice(match[1]);
             }
             
             // Si encontró el precio total para el combo, dividirlo entre orderQty
