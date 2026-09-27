@@ -357,7 +357,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
 
   const uniqueOwners = Array.from(new Set(knowledgeBaseDb.map(p => p.owner?.trim()).filter(Boolean))).sort();
 
-  const chatSessions = useMemo(() => Object.entries(chats)
+  const chatSessions = useMemo(() => { return Object.entries(chats)
     .map(([id, data], index) => {
       const messages = data.messages || [];
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
