@@ -166,7 +166,34 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
   };
 
 
+  
+  const [diagnosticResult, setDiagnosticResult] = useState(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+
+  const handleDiagnoseSync = async () => {
+    const user = JSON.parse(localStorage.getItem('crm_user') || '{}');
+    if (user.role !== 'admin') return alert('Se requieren permisos de administrador.');
+    setIsDiagnosing(true);
+    try {
+      const response = await fetch(`${serverUrl}/api/soydrop/test-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username, password: user.password })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDiagnosticResult({ date: new Date().toLocaleString(), stats: data.stats });
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Error invocando diagnóstico.');
+    }
+    setIsDiagnosing(false);
+  };
+
   const handleFetchGuides = async () => {
+
     if (!selectedChat) return alert("Selecciona un chat primero.");
     setIsFetchingGuides(true);
     try {
@@ -1168,14 +1195,23 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
                  
                                       <div className="flex flex-col text-xs pt-3 mt-1 border-t border-slate-100">
                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-on-surface-variant font-medium">📦 Guías Dropi:</span>
+                        
+                      <span className="text-on-surface-variant font-medium">📦 Guías Dropi:</span>
+                      <div className="flex gap-2">
                         <button 
+                          onClick={handleDiagnoseSync} 
+                          disabled={isDiagnosing}
+                          className="bg-amber-50 text-amber-600 px-2 py-1 rounded-md text-[10px] font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                        >
+                          {isDiagnosing ? 'DIAGNOSTICANDO...' : 'DIAGNÓSTICO'}
+                        </button>
+                        <button 
+ 
                          onClick={handleFetchGuides} 
                          disabled={isFetchingGuides || isSendingGuide}
                          className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md text-[10px] font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50"
                        >
-                         {isFetchingGuides ? 'BUSCANDO...' : 'RECOGER GUÍA'}
-                       </button>
+                         {isFetchingGuides ? 'BUSCANDO...' : 'RECOGER GUÍA'}</button></div>
                      </div>
                      
                      

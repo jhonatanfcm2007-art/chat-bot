@@ -296,7 +296,7 @@ app.get('/health', (req, res) => res.send('Playwright Service is running'));
 
 app.post('/api/soydrop/sync-recent-orders', async (req, res) => {
     const loginUrl = process.env.SOYDROP_LOGIN_URL || 'https://app.dropi.hn/login';
-    const ordersUrl = loginUrl.replace('/login', '/orders-history') + '?limit=100';
+    const ordersUrl = loginUrl.replace('/login', '/orders-history') + '??limit=300';
 
     let browser;
     try {
