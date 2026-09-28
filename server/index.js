@@ -1278,15 +1278,18 @@ async function createShopifyOrder(chat, products) {
             let foundPrice = null;
             
             const parseSafePrice = (str) => {
-                let clean = str.trim();
+                let clean = String(str).trim().replace(/[^0-9.,]/g, '');
+                if (!clean) return 0;
                 const lastComma = clean.lastIndexOf(',');
                 const lastDot = clean.lastIndexOf('.');
-                if (lastComma > lastDot) {
-                    clean = clean.replace(/\./g, '').replace(',', '.');
-                } else if (lastDot !== -1 && lastComma === -1 && lastDot === clean.length - 4) {
-                    clean = clean.replace(/\./g, '');
-                } else {
-                    clean = clean.replace(/,/g, '');
+                if (lastComma !== -1 && lastDot !== -1) {
+                    if (lastComma > lastDot) clean = clean.replace(/\./g, '').replace(',', '.');
+                    else clean = clean.replace(/,/g, '');
+                } else if (lastComma !== -1) {
+                    if (clean.length - 1 - lastComma === 3) clean = clean.replace(/,/g, '');
+                    else clean = clean.replace(',', '.');
+                } else if (lastDot !== -1) {
+                    if (clean.length - 1 - lastDot === 3) clean = clean.replace(/\./g, '');
                 }
                 return parseFloat(clean);
             };
