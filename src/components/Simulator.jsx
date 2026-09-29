@@ -267,9 +267,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
           })
         });
         const data = await response.json();
-        if (data.success) {
-          uploadedImageUrl = data.url;
-        }
+        if (data.url || data.success) { uploadedImageUrl = data.url; }
       } catch (error) {
         console.error('Error al subir imagen:', error);
       }
