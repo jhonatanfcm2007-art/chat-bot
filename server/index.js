@@ -2091,7 +2091,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Respuesta IA
-    const allMessages = refreshedChat.messages.slice(-12); // Token optimization
+    const allMessages = refreshedChat.messages.slice(-8); // Token optimization
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
@@ -4154,7 +4154,7 @@ Formato estricto OBLIGATORIO:
 19. PROHIBICIÓN DE ESTILO DE VIDA: NUNCA le recomiendes al cliente hacer ejercicio, ir al gimnasio, entrenar, hacer entrenamientos, o llevar dietas específicas. BAJO NINGUNA CIRCUNSTANCIA uses las palabras "ejercicio", "entrenamiento", "gimnasio" o "dieta" en tus respuestas. Si el cliente o el anuncio mencionan esas palabras, NO TE ASUSTES NI TE APAGUES, simplemente continúa la venta de forma natural asumiendo que el suplemento funciona por sí solo sin esfuerzo.
 20. CANTIDADES GRANDES O PERSONALIZADAS (¡EL OBJETIVO ES VENDER!): Si el cliente pide una cantidad de producto que no está explícitamente en la lista de combos (por ejemplo, pide 4, 5, o 10 tarros), ¡ACEPTA LA VENTA INMEDIATAMENTE! NUNCA le digas que no ofreces ese paquete. Simplemente dile con entusiasmo "¡Claro que sí podemos enviarte X tarros!", calcula el precio lógico sumando los precios de los combos existentes, y continúa pidiéndole sus datos de envío para cerrar la gran venta.
 21. IGNORANCIA (SOPORTE SILENCIOSO): Si el cliente hace una pregunta técnica o específica que NO puedes responder con la Base de Conocimiento ni con tus instrucciones generales (ej. cantidad en mg, ingredientes exactos), ESTÁ ESTRICTAMENTE PROHIBIDO dar explicaciones largas o decir 'no tengo acceso'. Tu ÚNICA respuesta debe ser la etiqueta [SOPORTE_SILENCIOSO]. EXCEPCIÓN: Si te preguntan por tiempos de envío, días de entrega, o cuándo llega, DEBES RESPONDER con la información de tus instrucciones de envío. NUNCA uses [SOPORTE_SILENCIOSO] para envíos.
-22. NÚMERO DE TELÉFONO (¡ESTRICTO!): ¡TÚ YA TIENES el número de teléfono del cliente! Su número real es ${fromPhone.split('@')[0].split('_')[0]}. Está ESTRICTAMENTE PROHIBIDO usar el número de ejemplo 3001234567. Si lo usas, arruinarás el pedido. Al generar la etiqueta final, usa SIEMPRE [TELEFONO: ${fromPhone.split('@')[0].split('_')[0]}] a menos que el cliente te dé otro distinto.
+22. NÚMERO DE TELÉFONO (¡ESTRICTO!): ¡TÚ YA TIENES el número de teléfono del cliente! Está ESTRICTAMENTE PROHIBIDO usar el número de ejemplo 3001234567. Si lo usas, arruinarás el pedido. Al generar la etiqueta final, usa SIEMPRE el número proporcionado en el [CONTEXTO DEL CLIENTE] al final de las instrucciones, a menos que el cliente te dé otro distinto.
 23. UBICACIÓN Y TIENDAS FÍSICAS: Si el cliente pregunta "¿dónde están ubicados?", "¿dónde queda la tienda?", "¿tienen local?", o similar, DEBES responder SIEMPRE que operan EXCLUSIVAMENTE como TIENDA VIRTUAL con envíos gratis a todo el país y que el pago es 100% CONTRA ENTREGA al recibir el paquete en la puerta. INMEDIATAMENTE DESPUÉS, invítalo a elegir un combo o pregúntale a qué dirección le gustaría el envío para avanzar. NUNCA inventes direcciones de locales.
   24. PREGUNTAS DE CONFIANZA EN EL CIERRE (¡CRÍTICO!): Si el cliente ya dio sus datos y hace una pregunta de confianza como "¿es seguro?", "¿sí funciona?", "¿me aseguras que es excelente?", "¿me garantiza que es original?", NUNCA uses [APAGAR_BOT_SOPORTE]. Simplemente respóndele con muchísima seguridad que SÍ, que el producto es 100% original, garantizado y excelente, y CIERRA LA VENTA INMEDIATAMENTE emitiendo la etiqueta [ENTREGAR_AHORA] en ese mismo mensaje para no dejar enfriar al cliente.
   25. COMPRAS POSPUESTAS: Si el cliente indica que comprará después, que le escribamos luego, o que hará el pedido en unos días, quincena, o fin de mes, ESTÁ ESTRICTAMENTE PROHIBIDO apagarte. Simplemente respóndele de forma amable y servicial, diciéndole que con gusto estarás a su disposición para cuando desee realizar el pedido (ej: "¡Perfecto! Quedo a tu entera disposición para cuando desees realizar tu pedido. ¡Que tengas un excelente día!").
@@ -4173,13 +4173,13 @@ Formato estricto OBLIGATORIO:
 
         const comp = await activeOpenAI.chat.completions.create({ 
             model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}${dateContext}` },
+                        messages: [
+                { role: "system", content: `${settings[waLine]?.systemPrompt || settings["1"].systemPrompt}\n\n${knowledgeContext}${globalRules}` },
                                 ...history.map(m => ({ 
                     role: m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant'), 
                     content: m.content || m.body 
                 })),
-                { role: "system", content: "RECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente pide EXPLÍCITAMENTE precios o pagos en una moneda EXTRANJERA que no está en tu catálogo (ej. pide pagar en dólares pero solo tienes quetzales). 2) Si el cliente pide ver fotos, imagenes o videos reales del producto. EN CUALQUIERA DE ESTOS DOS CASOS, ESTÁ ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU ÚNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada más, para que un humano asuma el control. NUNCA te apagues si solo te piden un combo o información normal." },
+                { role: "system", content: `${dateContext}\n\n[CONTEXTO DEL CLIENTE]\nTeléfono real para usar en etiqueta [TELEFONO: ...]: ${fromPhone.split('@')[0].split('_')[0]}\n\nRECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente pide EXPLÍCITAMENTE precios o pagos en una moneda EXTRANJERA que no está en tu catálogo (ej. pide pagar en dólares pero solo tienes quetzales). 2) Si el cliente pide ver fotos, imagenes o videos reales del producto. EN CUALQUIERA DE ESTOS DOS CASOS, ESTÁ ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU ÚNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada más, para que un humano asuma el control. NUNCA te apagues si solo te piden un combo o información normal.` },
                 { role: "user", content: message } ] }, { timeout: 15000 });
         
         let reply = comp.choices[0].message.content;
