@@ -276,7 +276,8 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
     await onSendMessage({ 
       to: selectedChat, 
       content: text, 
-      imageUrl: uploadedImageUrl 
+      imageUrl: uploadedImageUrl,
+      origin: window.location.origin
     });
   };
 
