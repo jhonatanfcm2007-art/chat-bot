@@ -1785,7 +1785,7 @@ app.post('/webhook', async (req, res) => {
 
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
-        const originalFrom = msg.from;
+        const originalFrom = msg.from || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].wa_id);
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
         
