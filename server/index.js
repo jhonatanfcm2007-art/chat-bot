@@ -215,6 +215,7 @@ function getWhatsAppCredentials(customerPhone, forceLine = null) {
     if (forceLine === 1 && WHATSAPP_TOKEN && PHONE_ID) return { token: WHATSAPP_TOKEN, phoneId: PHONE_ID, line: 1 };
 
     const chat = chats?.[customerPhone];
+    if (chat?.waLine === 6 && WHATSAPP_TOKEN_6 && PHONE_ID_6) { return { token: WHATSAPP_TOKEN_6, phoneId: PHONE_ID_6, line: 6 }; }
     if (chat?.waLine === 5 && WHATSAPP_TOKEN_5 && PHONE_ID_5) {
         return { token: WHATSAPP_TOKEN_5, phoneId: PHONE_ID_5, line: 5 };
     }
