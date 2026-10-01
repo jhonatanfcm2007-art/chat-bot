@@ -1949,8 +1949,7 @@ app.post('/webhook', async (req, res) => {
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
             const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
             if (cleanWebhookId === PHONE_ID_6) {
-                waLineStr = '6';
-                sysPrompt = settings['6']?.systemPrompt || sysPrompt;
+                currentChat.waLine = 6;
             } else if (cleanWebhookId === PHONE_ID_5) {
                 currentChat.waLine = 5;
             } else if (cleanWebhookId === PHONE_ID_4) {
