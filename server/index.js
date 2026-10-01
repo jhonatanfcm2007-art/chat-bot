@@ -61,6 +61,8 @@ const WHATSAPP_TOKEN_4 = (process.env.WHATSAPP_TOKEN_4 || '').trim();
 const PHONE_ID_4 = (process.env.WHATSAPP_PHONE_ID_4 || process.env.PHONE_ID_4 || '').trim();
 const WHATSAPP_TOKEN_5 = (process.env.WHATSAPP_TOKEN_5 || '').trim();
 const PHONE_ID_5 = (process.env.WHATSAPP_PHONE_ID_5 || process.env.PHONE_ID_5 || '').trim();
+const WHATSAPP_TOKEN_6 = (process.env.WHATSAPP_TOKEN_6 || '').trim();
+const PHONE_ID_6 = (process.env.WHATSAPP_PHONE_ID_6 || process.env.PHONE_ID_6 || '').trim();
 
 // Configuración Messenger
 const MESSENGER_PAGE_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
@@ -205,6 +207,7 @@ app.get('/api/webhook-debug', (req, res) => {
 });
 
 function getWhatsAppCredentials(customerPhone, forceLine = null) {
+    if (forceLine === 6 && WHATSAPP_TOKEN_6 && PHONE_ID_6) return { token: WHATSAPP_TOKEN_6, phoneId: PHONE_ID_6, line: 6 };
     if (forceLine === 5 && WHATSAPP_TOKEN_5 && PHONE_ID_5) return { token: WHATSAPP_TOKEN_5, phoneId: PHONE_ID_5, line: 5 };
     if (forceLine === 4 && WHATSAPP_TOKEN_4 && PHONE_ID_4) return { token: WHATSAPP_TOKEN_4, phoneId: PHONE_ID_4, line: 4 };
     if (forceLine === 3 && WHATSAPP_TOKEN_3 && PHONE_ID_3) return { token: WHATSAPP_TOKEN_3, phoneId: PHONE_ID_3, line: 3 };
@@ -1757,7 +1760,7 @@ app.post('/webhook', async (req, res) => {
         const originalRecipientId = statusObj.recipient_id;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-        const waLine = cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1)));
+        const waLine = cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))));
         const recipientId = waLine > 1 ? `${originalRecipientId}_${waLine}` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
@@ -1786,9 +1789,9 @@ app.post('/webhook', async (req, res) => {
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
         
-        console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}' | Line 4: '${PHONE_ID_4}' | Line 5: '${PHONE_ID_5}'`);
+        console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}' | Line 4: '${PHONE_ID_4}' | Line 5: '${PHONE_ID_5}' | Line 6: '${PHONE_ID_6}'`);
 
-        const waLine = cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1)));
+        const waLine = cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))));
         const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
@@ -1945,7 +1948,10 @@ app.post('/webhook', async (req, res) => {
             // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
             const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-            if (cleanWebhookId === PHONE_ID_5) {
+            if (cleanWebhookId === PHONE_ID_6) {
+                waLineStr = '6';
+                sysPrompt = settings['6']?.systemPrompt || sysPrompt;
+            } else if (cleanWebhookId === PHONE_ID_5) {
                 currentChat.waLine = 5;
             } else if (cleanWebhookId === PHONE_ID_4) {
                 currentChat.waLine = 4;
@@ -2794,7 +2800,7 @@ app.post('/api/push-unsubscribe', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/upload', (req, res) => {
+app.post('/api/upload', (req, res) => { console.log('[API UPLOAD] Hit!');
     const { filename, base64 } = req.body;
     if (!filename || !base64) {
         return res.status(400).send('Missing filename or base64 data');
@@ -3494,6 +3500,8 @@ app.post('/api/send-guide-message', async (req, res) => {
 });
 
 app.post('/api/send-message', async (req, res) => {
+    console.log('[API SEND-MESSAGE] payload received:', { to: req.body.to, hasImage: !!req.body.imageUrl, imageUrl: req.body.imageUrl, hasContent: !!req.body.content });
+
     try {
         const { to, content, imageUrl, origin } = req.body;
         if (content && /^r$/i.test(content.trim())) { 
