@@ -430,7 +430,7 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
       return searchMatch && tagMatch && lineMatch && productMatch && countryMatch && ownerMatch;
     })
     .sort((a, b) => b.activityTime - a.activityTime);
-  }, [chats, searchTerm, filterTag, filterProduct, filterCountry, filterOwner, filterGuide]);
+  }, [chats, searchTerm, filterTag, filterProduct, filterCountry, filterOwner, filterGuide, globalLine]);
 
   const customerSales = salesHistory.filter(sale => sale.customerId === selectedChat);
   const availableInventory = accounts.filter(acc => acc.status === 'Available' || parseInt(acc.uses) > 0);

@@ -3636,9 +3636,18 @@ function getOptimizedChatsPayload() {
     
     // Enviamos TODOS los chats para que funcionen las búsquedas de clientes viejos, 
     // pero limitamos los mensajes de CADA UNO para ahorrar memoria
-    chatEntries.sort((a, b) => b.activityTime - a.activityTime);
     
-    for (const { id, data } of chatEntries) {
+    const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+    const filteredEntries = chatEntries.filter(({data, activityTime}) => {
+        if (activityTime > threeDaysAgo) return true;
+        if (data.tags && data.tags.length > 0) return true;
+        return false;
+    });
+    
+    filteredEntries.sort((a, b) => b.activityTime - a.activityTime);
+
+    
+    for (const { id, data } of filteredEntries) {
         // Clonamos superficialmente para no afectar la DB
         optimized[id] = { ...data };
         // Truncamos mensajes a los últimos 30
