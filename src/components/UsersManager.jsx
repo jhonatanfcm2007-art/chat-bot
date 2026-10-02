@@ -91,7 +91,7 @@ const UsersManager = ({ serverUrl, currentUser }) => {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Líneas Asignadas (Socios y Agentes)</label>
               <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5].map(line => (
+                {[1, 2, 3, 4, 5, 6].map(line => (
                   <button key={line} onClick={() => toggleLine(line)} className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${formData.assignedLines?.includes(line) ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     Línea {line}
                   </button>
