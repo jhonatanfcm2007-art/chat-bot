@@ -67,7 +67,7 @@ const UsersManager = ({ serverUrl, currentUser }) => {
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-slate-800">Gestión de Usuarios</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Gestión de Usuarios (Actualizado)</h1>
         
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="text-lg font-semibold mb-4">{isEditing ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
