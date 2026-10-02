@@ -1267,11 +1267,18 @@ async function createShopifyOrder(chat, products) {
         
         // Extraer la cantidad del texto del producto (ej: "Combo 2 Cremas", "Shilajit x2", "2 Frascos")
         let orderQty = 1;
-        const qtyMatch = products.match(/(?:\s+x\s*|combo\s*|pack\s*)([1-9]\d*)/i) || 
-                         products.match(/\b([1-9]\d*)\s*(?:frasco|tarro|unidad|combo|crema|caja|botella)/i) ||
-                         products.match(/x\s*([1-9]\d*)$/i);
-        if (qtyMatch && qtyMatch[1]) {
-            orderQty = parseInt(qtyMatch[1], 10);
+        const promoMatch = products.match(/\b([1-9]\d*)\s*x\s*[1-9]\d*\b/i);
+        if (promoMatch) {
+            orderQty = parseInt(promoMatch[1], 10);
+        } else {
+            const qtyMatch = products.match(/(?:\s+x\s*|combo\s*|pack\s*)([1-9]\d*)/i) || 
+                             products.match(/\b([1-9]\d*)\s*(?:frasco|tarro|unidad|unidades|combo|crema|caja|botella|pz|pieza)/i) ||
+                             products.match(/x\s*([1-9]\d*)$/i) ||
+                             products.match(/\b([1-9]\d*)\s*x\b/i) ||
+                             products.match(/^([1-9]\d*)\s+/);
+            if (qtyMatch && qtyMatch[1]) {
+                orderQty = parseInt(qtyMatch[1], 10);
+            }
         }
 
         // Calcular precio unitario dinámicamente desde el texto de la KB
