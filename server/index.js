@@ -96,6 +96,13 @@ app.get('/api/customers', (req, res) => {
 });
 
 // Endpoints Base de Conocimiento
+app.get('/api/debug/kb-size', (req, res) => {
+    res.json({ count: knowledgeBaseDb.length, size: JSON.stringify(knowledgeBaseDb).length });
+});
+app.get('/api/debug/chat', (req, res) => {
+    const phone = Object.keys(chats).find(k => chats[k].customerName && chats[k].customerName.includes('Gloria'));
+    res.json(phone ? chats[phone] : {error: 'Not found'});
+});
 app.get('/api/knowledge-base', (req, res) => {
     res.json(knowledgeBaseDb);
 });
@@ -4095,15 +4102,26 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
         }
 
         if (activeProducts.length > 0) {
+            const isBroadSearch = activeProducts.length > 3 && (!currentChat || !currentChat.assignedProduct);
+            if (isBroadSearch) {
+                knowledgeContext += "\n⚠️ EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO. OFRÉCELE AMABLEMENTE LOS SIGUIENTES PRODUCTOS DISPONIBLES EN TU CATÁLOGO PARA QUE ELIJA UNO:\n";
+            }
+
             activeProducts.forEach(prod => {
                 knowledgeContext += `\n--- PRODUCTO: ${prod.name} (ID: ${prod.id}) ---\n`;
                 if (prod.keywords && prod.keywords.length > 0) {
                     knowledgeContext += `Palabras clave para activar: ${prod.keywords.join(', ')}\n`;
                 }
+                
+                if (isBroadSearch) {
+                    knowledgeContext += "Menciónale este producto.\n";
+                    return; // SALTA DETALLES COMPLETOS PARA AHORRAR TOKENS
+                }
+
                 if (prod.adIds && prod.adIds.length > 0) {
                     knowledgeContext += `IDs de Anuncio asociados: ${prod.adIds.join(', ')}\n`;
                 }
-                                let detailsText = prod.details || '';
+                let detailsText = prod.details || '';
                 let finalPrices = prod.prices;
                 
                 // Procesar variaciones de precios según el número de teléfono del cliente
@@ -4195,6 +4213,7 @@ Formato estricto OBLIGATORIO:
         const timeStr = `${nowGmt5.getHours().toString().padStart(2, '0')}:${nowGmt5.getMinutes().toString().padStart(2, '0')}`;
         const dateContext = `\n\n### CONTEXTO DE TIEMPO (GMT-5):\n- Hoy es: ${todayDateStr}\n- Hora actual: ${timeStr}\n`;
 
+        console.log("Tokens approx:", (settings[waLine]?.systemPrompt || settings["1"].systemPrompt).length + knowledgeContext.length + globalRules.length);
         const comp = await activeOpenAI.chat.completions.create({ 
             model: "gpt-4o-mini",
                         messages: [
