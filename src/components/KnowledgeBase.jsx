@@ -409,10 +409,9 @@ const KnowledgeBase = ({ serverUrl, currentUser }) => {
                     <select 
                       value={editingProduct.defaultStoreId || ''}
                       onChange={e => setEditingProduct({...editingProduct, defaultStoreId: e.target.value})}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
-                      required
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all bg-white"
                     >
-                      <option value="" disabled>-- Selecciona una Tienda --</option>
+                      <option value="">-- Sin Tienda (Opcional) --</option>
                       {stores.map(store => (
                         <option key={store.id} value={store.id}>
                           {store.owner} - {store.name}
