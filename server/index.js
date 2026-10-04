@@ -97,8 +97,7 @@ app.get('/api/customers', (req, res) => {
 
 // Endpoints Base de Conocimiento
 app.get('/api/debug/kb-size', (req, res) => {
-    const turk = knowledgeBaseDb.find(p => p.name && p.name.toLowerCase().includes('turkesteron'));
-    res.json({ count: knowledgeBaseDb.length, turk });
+    res.json(knowledgeBaseDb);
 });
 app.get('/api/debug/chat_disabled', (req, res) => {
     res.json({ count: knowledgeBaseDb.length, size: JSON.stringify(knowledgeBaseDb).length });
@@ -4171,11 +4170,17 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
         return false;
     });
                     if (matchedVar && matchedVar.prices) {
-                        finalPrices = matchedVar.prices;
-                        // BORRAMOS físicamente cualquier precio hardcodeado (Lempiras, Quetzales, Córdobas, Dólares) 
-                        // del guion de ventas para que la IA nunca vea la moneda del otro país.
-                        detailsText = detailsText.replace(/[LQC\$]\s*\.?\s*\d+([.,]\d+)?/gi, "[MENCIONA AQUÍ EL PRECIO DE LA TABLA PRECIOS Y COMBOS]");
+                        const hasNumbers = /\d/.test(matchedVar.prices);
+                        if (hasNumbers) {
+                            finalPrices = matchedVar.prices;
+                            // BORRAMOS físicamente cualquier precio hardcodeado solo si la variación de país tiene precios reales numéricos
+                            detailsText = detailsText.replace(/[LQC\$]\s*\.?\s*\d+([.,]\d+)?/gi, "[MENCIONA AQUÍ EL PRECIO DE LA TABLA PRECIOS Y COMBOS]");
+                        }
                     }
+                }
+                
+                if (!finalPrices || !/\d/.test(finalPrices)) {
+                    finalPrices = "⚠️ ERROR: NO HAY PRECIOS CONFIGURADOS EN EL CRM. ESTÁ TOTALMENTE PROHIBIDO INVENTAR UN PRECIO, USAR DÓLARES O ADIVINAR. RESPONDE ÚNICAMENTE CON: [APAGAR_BOT_SOPORTE]";
                 }
                 
                 knowledgeContext += `Detalles y Beneficios:\n${detailsText}\n`;
