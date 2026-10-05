@@ -1145,7 +1145,21 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
                {activeChatData.customerName.charAt(0)}
             </div>
             <h2 className="font-semibold text-lg text-on-surface leading-tight">{activeChatData.customerName}</h2>
-            <p className="text-xs font-medium text-on-surface-variant mt-1">{selectedChat.split('_')[0]}</p>
+            <div className="flex items-center gap-1 mt-1 justify-center">
+              <p className="text-xs font-medium text-on-surface-variant">{selectedChat.split('_')[0]}</p>
+              <button 
+                 onClick={() => {
+                     let clean = selectedChat.split('_')[0].replace(/\D/g, '');
+                     if (clean.startsWith('504') || clean.startsWith('505') || clean.startsWith('502') || clean.startsWith('503') || clean.startsWith('506') || clean.startsWith('507')) clean = clean.substring(3);
+                     else if (clean.startsWith('52') || clean.startsWith('57') || clean.startsWith('56')) clean = clean.substring(2);
+                     navigator.clipboard.writeText(clean);
+                 }}
+                 title="Copiar Número (Sin Prefijo)"
+                 className="text-slate-400 hover:text-primary transition-colors flex items-center justify-center p-0.5 rounded"
+              >
+                  <span className="material-symbols-outlined" style={{fontSize: '14px'}}>content_copy</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex-grow overflow-y-auto p-5 space-y-6 custom-scrollbar">
@@ -1158,7 +1172,16 @@ const Simulator = ({ settings = {}, chats, selectedChat, onSelectChat, onSendMes
                <div className="space-y-3">
                  <div className="flex flex-col text-xs">
                    <span className="text-on-surface-variant font-medium">👤 Nombre:</span>
-                   <span className="text-slate-700">{activeChatData.orderName || activeChatData.customerName || 'No especificado'}</span>
+                   <div className="flex items-center gap-1">
+                     <span className="text-slate-700">{activeChatData.orderName || activeChatData.customerName || 'No especificado'}</span>
+                     <button 
+                       onClick={() => navigator.clipboard.writeText(activeChatData.orderName || activeChatData.customerName || 'No especificado')}
+                       title="Copiar Nombre"
+                       className="text-slate-400 hover:text-primary transition-colors flex items-center justify-center p-0.5 rounded"
+                     >
+                        <span className="material-symbols-outlined" style={{fontSize: '14px'}}>content_copy</span>
+                     </button>
+                   </div>
                  </div>
                  <div className="flex flex-col text-xs">
                    <span className="text-on-surface-variant font-medium">📞 Teléfono:</span>
