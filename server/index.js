@@ -1056,6 +1056,23 @@ async function registerOrder(to, products) {
         saveChats(chats);
         io.emit('tag_updated', { from: to, tags: chat.tags });
 
+        const isLocationAddress = chat.address && (chat.address.includes('google.com/maps') || chat.address.includes('[UBICACIÓN]'));
+
+        if (isLocationAddress) {
+            console.log(`📍 [UBICACIÓN] Pedido de ${chat.customerName}: ${productList}. Retenido en preparar_pedido por tener mapa.`);
+            // Enviar notificación a WhatsApp de que hay un pedido con ubicación
+            if (settings && settings[chat.waLine || '1'] && settings[chat.waLine || '1'].notificationPhone) {
+                const notifPhone = settings[chat.waLine || '1'].notificationPhone;
+                const locNotif = `📍 *NUEVO PEDIDO CON UBICACIÓN (REVISIÓN MANUAL REQUERIDA)*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Ubicación:* ${chat.address}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n⚠️ *El pedido NO fue enviado a Shopify. Por favor, revísalo en la pestaña "Preparar Pedido" del CRM.*`;
+                try {
+                    await client.sendMessage(notifPhone + '@c.us', locNotif);
+                } catch (e) {
+                    console.error('Error enviando notif de ubicación:', e);
+                }
+            }
+            return; // Detenemos aquí, NO se va a Shopify
+        }
+
         console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
         
         try {
@@ -4224,13 +4241,13 @@ CAMPOS OBLIGATORIOS PARA VALIDAR EL PEDIDO:
 2. Teléfono (Tú ya tienes el número de teléfono del cliente en un mensaje oculto. JAMÁS se lo pidas, búscalo en tu contexto).
 3. ${termProv} (Obligatorio, PROHIBIDO DEDUCIR).
 4. ${termCity} (Obligatorio, PROHIBIDO DEDUCIR).
-5. Dirección de entrega (CUALQUIERA de las siguientes opciones es válida: dirección exacta, O nombre del barrio, O punto de referencia).
+5. Dirección de entrega (CUALQUIERA de las siguientes opciones es válida: dirección exacta, O nombre del barrio, O punto de referencia, O UN LINK/MENSAJE DE [UBICACIÓN] DE GOOGLE MAPS).
 6. CANTIDAD O COMBO ELEGIDO.
 
 PROHIBICIONES CRÍTICAS:
 - NUNCA inventes, supongas ni intentes "deducir" el ${termCity} o ${termProv} a partir de referencias (como bancos, iglesias o escuelas).
 - En los campos ocultos, NUNCA coloques textos como "(Deduce el municipio...)" ni los dejes en blanco.
-- ¡PROHIBIDO SER REDUNDANTE CON LA DIRECCIÓN! Si el cliente ya te dio un barrio (ej. "Colonia 3 de Mayo", "Nueva vida segunda etapa") o una dirección básica, ACÉPTALA DE INMEDIATO como válida para el campo 5. ESTÁ TOTALMENTE PROHIBIDO pedirle "puntos de referencia", "dirección más exacta" o "detalles adicionales". ¡Cierra la venta con lo que te dio!
+- ¡PROHIBIDO SER REDUNDANTE CON LA DIRECCIÓN! Si el cliente ya te dio un barrio (ej. "Colonia 3 de Mayo"), una dirección básica, O UNA UBICACIÓN GPS (ej. [UBICACIÓN] https...), ACÉPTALA DE INMEDIATO como válida para el campo 5. ESTÁ TOTALMENTE PROHIBIDO pedirle "puntos de referencia", "dirección más exacta" o "detalles adicionales". ¡Cierra la venta con lo que te dio!
 - Si el cliente te da una dirección pero NO ha mencionado explícitamente el ${termCity}, NO confirmes el pedido.
 
 COMPORTAMIENTO ANTE DATOS INCOMPLETOS:
