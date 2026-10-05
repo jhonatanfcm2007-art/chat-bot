@@ -4174,7 +4174,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
                         if (hasNumbers) {
                             finalPrices = matchedVar.prices;
                             // BORRAMOS físicamente cualquier precio hardcodeado solo si la variación de país tiene precios reales numéricos
-                            detailsText = detailsText.replace(/[LQC\$]\s*\.?\s*\d+([.,]\d+)?/gi, "[MENCIONA AQUÍ EL PRECIO DE LA TABLA PRECIOS Y COMBOS]");
+                            
                         }
                     }
                 }
