@@ -1381,12 +1381,22 @@ async function createShopifyOrder(chat, products) {
                     unitPriceVal = options[0].price / orderQty;
                 } else {
                     orderQty = aiQty;
-                    unitPriceVal = options[0].price / orderQty;
+                    // FIX: Si pide 6 pero la opción 0 es para 1, usar el precio de la opción 0, no dividirlo entre 6!
+                    unitPriceVal = options[0].price / options[0].qty; 
                 }
             } else if (options.length > 0) {
                 // Fallback total: usar la primera opción del catálogo
                 orderQty = options[0].qty;
                 unitPriceVal = options[0].price / orderQty;
+            }
+            
+            // BLINDAJE ANTE ALUCINACIONES: Asegurar que el precio unitario a enviar a Shopify JAMÁS sea menor al precio unitario más barato del CRM.
+            if (options.length > 0) {
+                const minAllowedUnitPrice = Math.min(...options.map(o => o.price / o.qty));
+                if (unitPriceVal < minAllowedUnitPrice) {
+                    console.log(`🛡️ [BLINDAJE] Precio inferido (${unitPriceVal}) es menor al mínimo permitido (${minAllowedUnitPrice}). Corrigiendo.`);
+                    unitPriceVal = minAllowedUnitPrice;
+                }
             }
         }
         
