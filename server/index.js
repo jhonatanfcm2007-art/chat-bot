@@ -4214,7 +4214,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
                 }
                 
                 knowledgeContext += `Detalles y Beneficios:\n${detailsText}\n`;
-                knowledgeContext += `Precios y Combos (¡OBLIGATORIO: LEE LOS PRECIOS EXACTAMENTE COMO ESTÁN AQUÍ! SI EL PRECIO DICE "L 900", DI "L 900". ¡ESTÁ ESTRICTAMENTE PROHIBIDO CONVERTIR A DÓLARES O A CUALQUIER OTRA MONEDA! NUNCA USES EL SÍMBOLO $ A MENOS QUE ESTÉ ESCRITO AQUÍ):\n${finalPrices}\n`;
+                knowledgeContext += `Precios y Combos (¡OBLIGATORIO: LEE LOS PRECIOS EXACTAMENTE COMO ESTÁN AQUÍ! RESPETA LA MONEDA EXACTA. NO CONVIERTAS A DÓLARES NI A MONEDA LOCAL SI NO ESTÁ ESCRITO ASÍ. REPRODUCE EL TEXTO DEL PRECIO TAL CUAL APARECE AQUÍ):\n${finalPrices}\n`;
             });
         } else {
             knowledgeContext += "No hay productos registrados en la base de conocimiento.\n";
