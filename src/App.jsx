@@ -229,12 +229,17 @@ function App() {
         // Evitar duplicados por ID
         if (currentChat.messages.some(m => m.id === message.id)) return prev;
 
+        // Limpiar mensaje optimista si coincide el texto
+        const cleanedMessages = currentChat.messages.filter(m => 
+          !(m.status === 'sending' && String(m.id).startsWith('opt-') && m.body === message.body)
+        );
+
         return {
           ...prev,
           [chatId]: {
             ...currentChat,
             updatedAt: Date.now(),
-            messages: [...currentChat.messages, { 
+            messages: [...cleanedMessages, { 
               ...message, 
               content: message.body, 
               timestampRaw: Date.now(),
