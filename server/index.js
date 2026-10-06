@@ -1153,7 +1153,7 @@ async function createShopifyOrder(chat, products) {
     }
 
     // Si es Honduras (Línea 3 o Línea 4)
-    if (waLine === '3' || waLine === '4') {
+    if (waLine === '3') {
         countryISO = 'HN';
     }
 
