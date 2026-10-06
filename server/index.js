@@ -4148,14 +4148,22 @@ let detectedCountry = getCountryFromPhone(fromPhone);
 let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guatemala';
         
         if (currentChat && currentChat.assignedProduct) {
-            const targetProdLower = currentChat.assignedProduct.toLowerCase().replace(/\s*x\s*\d+$/i, '').trim();
-            // Buscar primero en la línea actual
-            let assignedProd = lineProducts.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
+            let assignedProd = null;
+            // Prioridad 1: Búsqueda exacta por ID si existe
+            if (currentChat.assignedProductId) {
+                assignedProd = knowledgeBaseDb.find(p => p.id === currentChat.assignedProductId);
+            }
             
-            // Si no está en la línea actual pero el chat ya lo tiene asignado (ej. por ID de anuncio), 
-            // buscarlo en toda la base de datos para no dejar a la IA ciega.
+            // Prioridad 2: Búsqueda por nombre (fallback)
             if (!assignedProd) {
-                assignedProd = knowledgeBaseDb.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
+                const targetProdLower = currentChat.assignedProduct.toLowerCase().replace(/\s*x\s*\d+$/i, '').trim();
+                assignedProd = lineProducts.find(p => p.name.toLowerCase() === targetProdLower) || 
+                               lineProducts.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
+                
+                if (!assignedProd) {
+                    assignedProd = knowledgeBaseDb.find(p => p.name.toLowerCase() === targetProdLower) || 
+                                   knowledgeBaseDb.find(p => p.name.toLowerCase().includes(targetProdLower) || targetProdLower.includes(p.name.toLowerCase()));
+                }
             }
             
             if (assignedProd) {
