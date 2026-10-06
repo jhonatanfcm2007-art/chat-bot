@@ -44,7 +44,7 @@ export async function normalizarDireccionConGemini(textoDireccion, paisContexto 
 
     try {
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-pro',
+            model: 'gemini-1.5-flash',
             systemInstruction: SYSTEM_INSTRUCTION,
             generationConfig: {
                 responseMimeType: 'application/json',
