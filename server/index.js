@@ -1152,8 +1152,8 @@ async function createShopifyOrder(chat, products) {
         countryISO = 'CL';
     }
 
-    // Si es Honduras (Línea 3)
-    if (waLine === '3') {
+    // Si es Honduras (Línea 3 o Línea 4)
+    if (waLine === '3' || waLine === '4') {
         countryISO = 'HN';
     }
 
@@ -1497,12 +1497,15 @@ async function createShopifyOrder(chat, products) {
 
         let finalPhone = chat.orderPhone ? String(chat.orderPhone).replace(/\D/g, '') : chat.from.split('@')[0].split('_')[0].replace(/\D/g, '');
         
-        // Estandarizar prefijo de país
-        if (countryISO === 'GT' && !finalPhone.startsWith('502')) {
+        // Estandarizar prefijo de país SOLO si la longitud coincide con números locales
+        // (Ej. en CA los números locales tienen 8 dígitos. Si tiene más, suele ser internacional como el +1 de USA).
+        if (countryISO === 'GT' && !finalPhone.startsWith('502') && finalPhone.length === 8) {
             finalPhone = '502' + finalPhone;
-        } else if (countryISO === 'HN' && !finalPhone.startsWith('504')) {
+        } else if (countryISO === 'HN' && !finalPhone.startsWith('504') && finalPhone.length === 8) {
             finalPhone = '504' + finalPhone;
-        } else if (countryISO === 'CL' && !finalPhone.startsWith('56')) {
+        } else if (countryISO === 'SV' && !finalPhone.startsWith('503') && finalPhone.length === 8) {
+            finalPhone = '503' + finalPhone;
+        } else if (countryISO === 'CL' && !finalPhone.startsWith('56') && finalPhone.length === 9) {
             finalPhone = '56' + finalPhone;
         }
         finalPhone = '+' + finalPhone;
