@@ -2569,6 +2569,21 @@ function handleIncomingMessage(from) {
         if (!lastUserMsg) return;
 
         const msgBodyLower = (lastUserMsg.content || '').toLowerCase().trim();
+        
+        // Ignorar reacciones para evitar que el bot responda
+        if (msgBodyLower.startsWith('[reacción:')) {
+            console.log(`ℹ️ [SISTEMA] Ignorando respuesta de IA porque es una reacción.`);
+            delete aiTimers[from];
+            return;
+        }
+
+        // Ignorar mensajes cortos de cortesía/despedida que causan bucles
+        const cortesia = ['gracias', 'muchas gracias', 'gracias bendiciones', 'bendiciones', 'ok', 'ok gracias', 'perfecto', 'excelente', 'bueno', 'listo', 'dale', 'okey'];
+        if (cortesia.includes(msgBodyLower.replace(/[^a-záéíóúñ ]/g, '').trim())) {
+            console.log(`ℹ️ [SISTEMA] Ignorando respuesta de IA porque es un mensaje corto de cortesía (${msgBodyLower}).`);
+            delete aiTimers[from];
+            return;
+        }
 
         processAIResponse(from, msgBodyLower).catch(err => {
             console.error('❌ [CRITICAL ERROR] Excepción no controlada en processAIResponse:', err);
