@@ -228,7 +228,7 @@ const KnowledgeBase = ({ serverUrl, currentUser }) => {
                       p.line === '5' ? 'bg-pink-50 text-pink-600 border-pink-200' :
                       'bg-slate-100 text-slate-600 border-slate-200'
                     }`}>
-                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : p.line === '3' ? 'Línea 3' : p.line === '4' ? 'Línea 4' : p.line === '5' ? 'Línea 5' : p.line === '6' ? 'Línea 6' : 'Ambas Líneas'}
+                      {p.line === '1' ? 'Línea 1' : p.line === '2' ? 'Línea 2' : p.line === '3' ? 'Línea 3' : p.line === '4' ? 'Línea 4' : p.line === '5' ? 'Línea 5' : p.line === '6' ? 'Línea 6' : p.line === '7' ? 'Línea 7' : p.line === '8' ? 'Línea 8' : 'Ambas Líneas'}
                     </span>
                     <button onClick={() => openEditModal(p)} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors">
                       <span className="material-symbols-outlined text-sm">edit</span>
@@ -320,6 +320,8 @@ const KnowledgeBase = ({ serverUrl, currentUser }) => {
                   <option value="4">Línea 4</option>
                   <option value="5">Línea 5</option>
                   <option value="6">Línea 6</option>
+                  <option value="7">Línea 7</option>
+                  <option value="8">Línea 8</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">El asistente solo venderá este producto en la línea seleccionada.</p>
               </div>
