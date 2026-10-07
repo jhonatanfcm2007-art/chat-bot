@@ -1848,7 +1848,7 @@ app.post('/webhook', async (req, res) => {
         const originalRecipientId = statusObj.recipient_id;
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-        const waLine = cleanWebhookId === PHONE_ID_8 ? 8 : (cleanWebhookId === PHONE_ID_7 ? 7 : (cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))));
+        const waLine = cleanWebhookId === PHONE_ID_8 ? 8 : (cleanWebhookId === PHONE_ID_7 ? 7 : (cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))))));
         const recipientId = waLine > 1 ? `${originalRecipientId}_${waLine}` : originalRecipientId;
         const newStatus = statusObj.status; // 'sent', 'delivered', 'read'
         const messageId = statusObj.id;
@@ -1879,7 +1879,7 @@ app.post('/webhook', async (req, res) => {
         
         console.log(`[DEBUG] Webhook received from Phone ID: '${cleanWebhookId}' | Known Line 1: '${PHONE_ID}' | Line 2: '${PHONE_ID_2}' | Line 3: '${PHONE_ID_3}' | Line 4: '${PHONE_ID_4}' | Line 5: '${PHONE_ID_5}' | Line 6: '${PHONE_ID_6}'`);
 
-        const waLine = cleanWebhookId === PHONE_ID_8 ? 8 : (cleanWebhookId === PHONE_ID_7 ? 7 : (cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))));
+        const waLine = cleanWebhookId === PHONE_ID_8 ? 8 : (cleanWebhookId === PHONE_ID_7 ? 7 : (cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))))));
         const from = waLine > 1 ? `${originalFrom}_${waLine}` : originalFrom;
         
         // Descarte de mensajes reales para bloqueo estricto (WhatsApp)
