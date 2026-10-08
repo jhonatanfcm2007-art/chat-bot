@@ -2128,6 +2128,32 @@ app.post('/webhook', async (req, res) => {
                 }
             }
             
+            // --- CRUCE NATIVO SEGURO POR PALABRAS CLAVE (Para mensajes predefinidos) ---
+            if (!currentChat.assignedProductId && msg.text && msg.text.body) {
+                const wLine = String(currentChat.waLine || '1');
+                const lineProducts = knowledgeBaseDb.filter(p => {
+                    const pLine = String(p.line);
+                    return pLine === wLine || pLine === 'Ambas' || pLine === 'all';
+                });
+                
+                const msgBodyLower = msg.text.body.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                // Sort by keyword length descending so longer phrases match first
+                const foundProductByKeyword = lineProducts.find(p => {
+                    if (!p.keywords || p.keywords.length === 0) return false;
+                    return p.keywords.some(kw => {
+                        const cleanKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        return cleanKw.length > 3 && msgBodyLower.includes(cleanKw);
+                    });
+                });
+                
+                if (foundProductByKeyword) {
+                    currentChat.assignedProductId = foundProductByKeyword.id;
+                    currentChat.assignedProduct = foundProductByKeyword.name;
+                    console.log(`🎯 [KEYWORD MATCH NATIVO] Mensaje asignado automáticamente al producto: ${foundProductByKeyword.name} basado en palabras clave.`);
+                }
+            }
+            
             
             
             // DEDUPLICACIÓN DE WEBHOOKS: Ignorar si el mensaje ya fue procesado
@@ -4345,7 +4371,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
                         if (hasNumbers) {
                             finalPrices = matchedVar.prices;
                             // BORRAMOS físicamente cualquier precio hardcodeado solo si la variación de país tiene precios reales numéricos
-                            
+                            detailsText = detailsText.replace(/([\$Q\L\₡\C\€]|usd|mxn|hn|gtq)\s*\d+([.,]\d+)?/gi, '[PRECIO EXCLUSIVO DE ' + detectedCountry.toUpperCase() + ']');
                         }
                     }
                 }
