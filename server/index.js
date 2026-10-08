@@ -2321,7 +2321,7 @@ async function processAIResponse(from, msgBodyLower) {
     const customerName = refreshedChat.customerName;
 
     // Detección de soporte (cliente con problema real)
-    const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja/i;
+    const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|asesor|humano|persona|ayuda/i;
     const isSupport = supportRegex.test(msgBodyLower);
 
     if (isSupport) {
@@ -2757,7 +2757,7 @@ function handleIncomingMessage(from) {
         }
 
         // Ignorar mensajes cortos de cortesía/despedida que causan bucles
-        const cortesia = ['gracias', 'muchas gracias', 'gracias bendiciones', 'bendiciones', 'ok', 'ok gracias', 'perfecto', 'excelente', 'bueno', 'listo', 'dale', 'okey'];
+        const cortesia = ['gracias', 'muchas gracias', 'gracias bendiciones', 'bendiciones'];
         if (cortesia.includes(msgBodyLower.replace(/[^a-záéíóúñ ]/g, '').trim())) {
             console.log(`ℹ️ [SISTEMA] Ignorando respuesta de IA porque es un mensaje corto de cortesía (${msgBodyLower}).`);
             delete aiTimers[from];
