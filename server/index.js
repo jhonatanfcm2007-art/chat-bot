@@ -2267,7 +2267,7 @@ async function processAIResponse(from, msgBodyLower) {
     
     // Contexto de pedido registrado
     if (refreshedChat.orderRegistered) {
-        allMessages.push({ role: 'system', content: 'CONTEXTO ESTRICTO: El cliente YA CONFIRMÓ su pedido exitosamente en el pasado. Si hace preguntas post-venta sobre DOSIS o USO, respóndelas amablemente. Si el cliente simplemente agradece ("gracias"), se despide, envía un emoji o dice que "no" tiene más dudas, RESPÓNDE CORTÉS Y BREVEMENTE (ej: "¡Gracias a ti! Que tengas un excelente día."). NUNCA uses [APAGAR_BOT_SOPORTE] por un simple agradecimiento o despedida. PERO si pregunta por el ESTADO DE SU ENVÍO, NÚMERO DE GUÍA, RASTREO, o reporta un problema grave / retraso, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] y NADA MÁS. Si pregunta cuánto tarda en llegar, respóndele "1 a 2 días hábiles".' });
+        allMessages.push({ role: 'system', content: 'CONTEXTO ESTRICTO: El cliente YA CONFIRMÓ su pedido exitosamente en el pasado. Si hace preguntas post-venta sobre DOSIS o USO, respóndelas amablemente. Si el cliente simplemente agradece ("gracias"), se despide, envía un emoji o dice que "no" tiene más dudas, RESPÓNDE CORTÉS Y BREVEMENTE (ej: "¡Gracias a ti! Que tengas un excelente día."). NUNCA uses [APAGAR_BOT_SOPORTE] por un simple agradecimiento o despedida. PERO si pregunta por el ESTADO DE SU ENVÍO, NÚMERO DE GUÍA, RASTREO, o reporta un problema grave / retraso, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] y NADA MÁS. Si pregunta cuánto tarda en llegar, respóndele "2 a 3 días hábiles (en el transcurso del día)".' });
     }
     
     // Pasar información de análisis de imagen si existe
@@ -2479,7 +2479,7 @@ async function processAIResponse(from, msgBodyLower) {
                 const estimatedPrice = priceMatch ? priceMatch[0] : 'efectivo al repartidor';
 
                 // Sobrescribir el mensaje que verá el cliente (CIERRE ASUMIDO)
-                const visibleMsg = `¡Excelente, ya tengo sus datos listos y su orden acaba de pasar a bodega para empaque! 📦\n\n📍 Entrega en: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}\n💵 Total a pagar al recibir: ${estimatedPrice}\n🚚 Tiempo estimado: 1 a 2 días.\n\nSi necesita que se lo entreguemos un día específico (como el viernes o sábado), avíseme por aquí.`;
+                const visibleMsg = `¡Excelente, ya tengo sus datos listos y su orden acaba de pasar a bodega para empaque! 📦\n\n📍 Entrega en: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}\n💵 Total a pagar al recibir: ${estimatedPrice}\n🚚 Tiempo estimado: 2 a 3 días hábiles.\n\n*(Las entregas se realizan en el transcurso del día según la ruta del repartidor, por lo que no es posible agendar una hora exacta)*`;
                 
                 // Reconstruir la etiqueta oculta
                 const hiddenTags = `[ENTREGAR_AHORA] [PRODUCTOS: ${products}] [NOMBRE: ${refreshedChat.orderName}] [TELEFONO: ${refreshedChat.orderPhone}] [DIRECCION: ${refreshedChat.address}] [MUNICIPIO: ${refreshedChat.city}] [DEPARTAMENTO: ${refreshedChat.province}] [NOTAS: ${refreshedChat.orderNotes || 'Ninguna'}]`;
@@ -4277,9 +4277,9 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
         }
 
         if (activeProducts.length > 0) {
-            const isBroadSearch = activeProducts.length > 3 && (!currentChat || (!currentChat.assignedProduct && !currentChat.assignedProductId));
+            const isBroadSearch = activeProducts.length > 1 && (!currentChat || (!currentChat.assignedProduct && !currentChat.assignedProductId));
             if (isBroadSearch) {
-                knowledgeContext += "\n⚠️ EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO. Pregúntale amable y DIRECTAMENTE qué producto busca o para qué problema de salud necesita ayuda. ESTÁ ESTRICTAMENTE PROHIBIDO enviarle una lista larga con todos los productos del catálogo. Solo menciónale 2 o 3 opciones como máximo si es estrictamente necesario, o simplemente pregúntale qué busca:\n";
+                knowledgeContext += "\n\n⚠️ ¡ALERTA CRÍTICA! EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO Y NO HAY NINGÚN ANUNCIO (ID) ASIGNADO A ESTE CHAT. COMO NO SABES DE QUÉ ESTÁ HABLANDO, ESTÁ ESTRICTAMENTE PROHIBIDO ADIVINAR PRODUCTOS O INVENTAR PRECIOS. DEBES OBLIGATORIAMENTE APAGARTE Y ENVIAR AL CLIENTE A SOPORTE USANDO EXACTAMENTE LA ETIQUETA [APAGAR_BOT_SOPORTE] Y NO DIGAS NADA MÁS.\n\n";
             }
 
             activeProducts.forEach(prod => {
@@ -4289,8 +4289,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
                 }
                 
                 if (isBroadSearch) {
-                    knowledgeContext += "Menciónale este producto.\n";
-                    return; // SALTA DETALLES COMPLETOS PARA AHORRAR TOKENS
+                    return; // NI SIQUIERA MENCIONE EL PRODUCTO PARA EVITAR ALUCINACIONES
                 }
 
                 if (prod.adIds && prod.adIds.length > 0) {
@@ -4349,7 +4348,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
      - PASO 2: Presenta SIEMPRE los precios y combos disponibles, y PREGUNTA explícitamente "¿Qué cantidad deseas llevar?" o "¿Con cuál combo te gustaría empezar?".
      - PASO 3: SOLO DESPUÉS de que el cliente haya elegido la cantidad/combo, pídele sus datos de envío (Nombre, Dirección, Municipio). ESTÁ PROHIBIDO pedir datos de envío en el mismo mensaje donde ofreces los precios, o antes de ofrecer los precios.
 1. NUNCA inventes datos de acceso, correos ni números de guía falsos.
-2. TIEMPOS DE ENTREGA Y SOPORTE: Los pedidos tardan de 1 a 3 días hábiles (1 día en ciudades principales y hasta 3 en zonas alejadas). Usando el "CONTEXTO DE TIEMPO" que se te proporciona al final, si el cliente pregunta "¿cuántos días tarda?" o "¿cuándo llega?", haz el cálculo rápidamente (saltando los domingos, ya que no hay envíos) y respóndele con naturalidad, por ejemplo: "Como hoy es [Día], te estaría llegando entre el [Día de llegada 1] y el [Día de llegada 3]". NUNCA te apagues por esto. SIN EMBARGO, si el cliente reporta un RETRASO (ej. "llevo 4 días esperando"), un problema, o reclama garantías, DEBES OBLIGATORIAMENTE responder ÚNICAMENTE con la etiqueta literal [APAGAR_BOT_SOPORTE] para que un humano lo atienda.
+2. TIEMPOS DE ENTREGA Y SOPORTE: Los pedidos tardan de 2 a 3 días hábiles. ESTÁ ESTRICTAMENTE PROHIBIDO prometer una hora exacta de entrega (ej. "a las 10 am") o asegurar un día específico fijo, ya que los couriers reparten en el transcurso del día según ruta. Si el cliente pide una hora exacta, aclárale amablemente que "Las entregas se realizan de 2 a 3 días hábiles en el transcurso del día y el repartidor le llamará antes de llegar, por lo que no podemos asegurar una hora exacta". NUNCA te apagues por esto. SIN EMBARGO, si el cliente reporta un RETRASO (ej. "llevo 4 días esperando"), un problema, o reclama garantías, usa [APAGAR_BOT_SOPORTE].
 3. PRECIOS EXACTOS Y ADAPTACIÓN DE GUIONES: Tienes estrictamente prohibido ofrecer un precio distinto al que aparece en la sección 'Precios y Combos'. ATENCIÓN: Es muy probable que los textos del embudo en 'Detalles y Beneficios' traigan precios de otro país (ej. "por solo L999"). Si la sección 'Precios y Combos' indica una moneda o valor distinto (ej. "$40"), TIENES LA OBLIGACIÓN ABSOLUTA de recitar el mismo guion de ventas pero SUSTITUYENDO el precio viejo por el nuevo valor de 'Precios y Combos'. NUNCA menciones la moneda vieja.
 4. PAGO CONTRA ENTREGA (REGLA INQUEBRANTABLE): Todos los envíos son GRATIS y el ÚNICO método de pago es PAGO CONTRA ENTREGA (pagar todo en efectivo EXACTAMENTE en el momento de recibir el paquete en la puerta). ESTÁ ESTRICTAMENTE PROHIBIDO aceptar pagos "después de tomarlo", "cuando vea resultados", o "a plazos". Si el cliente pone condiciones de no pagar al recibir, DEBES NEGAR LA VENTA inmediatamente de forma educada explicando la política de la empresa y NUNCA emitas la etiqueta de confirmar pedido. Si se pone insistente, usa la etiqueta [APAGAR_BOT_SOPORTE].
   5. MEMORIA HISTÓRICA Y CERO REPETICIONES: LEE TODO EL HISTORIAL ANTES DE RESPONDER. Si el cliente YA TE DIO su nombre, dirección o municipio en mensajes anteriores, PROHIBIDO volver a pedirlo. SIN EMBARGO, si el cliente da una dirección general (ej. "frente al banco") pero NUNCA ha mencionado el municipio explícitamente, ESTÁ ESTRICTAMENTE PROHIBIDO DEDUCIRLO. Tienes que preguntarle obligatoriamente el municipio.
