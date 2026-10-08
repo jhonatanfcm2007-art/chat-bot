@@ -918,7 +918,8 @@ Ejemplo:
 
 ### ETIQUETAS DE SEGUIMIENTO INTERNO:
 - Si el cliente muestra interés real en comprar (ej. pregunta precios, envío) pero aún no deja datos de envío, incluye (solo una vez) al final de tu respuesta la etiqueta: [INTERESADO]
-- Si el cliente estaba en proceso de dar sus datos y luego se desanima o la conversación se estanca sin llegar a la venta, incluye la etiqueta: [ABANDONADO]`;
+- Si el cliente estaba en proceso de dar sus datos y luego se desanima o la conversación se estanca sin llegar a la venta, incluye la etiqueta: [ABANDONADO]
+- Si el cliente envía CUALQUIER dato parcial para su pedido (ej. solo su nombre o dirección) pero aún no está lista la orden final, incluye la etiqueta: [FALTAN_DATOS]`;
 
     if (!settings['1']) settings['1'] = { systemPrompt: '' };
     if (!settings['2']) settings['2'] = { systemPrompt: '' };
@@ -2093,15 +2094,39 @@ app.post('/webhook', async (req, res) => {
         // Extraer datos del anuncio (Click-to-WhatsApp Ads)
         if (msg.referral) {
             const adInfo = msg.referral.headline || msg.referral.body || 'Facebook/Instagram';
-            const adId = msg.referral.source_id ? ` (ID: ${msg.referral.source_id})` : '';
+            const incomingAdId = msg.referral.source_id || '';
+            const adId = incomingAdId ? ` (ID: ${incomingAdId})` : '';
             const adUrl = msg.referral.source_url ? `\n🔗 Link: ${msg.referral.source_url}` : '';
             msgBody = `📢 [Anuncio: ${adInfo}${adId}]${adUrl}\n\n${msgBody}`;
+            
+            if (incomingAdId) {
+                // We inject a property so we can process it after chat is instantiated
+                msg._incomingAdId = incomingAdId;
+            }
         }
 
         if (msgBody) {
             const isNewChat = !chats[from];
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
+            
+            // --- CRUCE NATIVO SEGURO POR SERVIDOR (Re-activado y corregido) ---
+            if (msg._incomingAdId && !currentChat.assignedProductId) {
+                const wLine = String(currentChat.waLine || '1');
+                const lineProducts = knowledgeBaseDb.filter(p => {
+                    const pLine = String(p.line);
+                    return pLine === wLine || pLine === 'Ambas' || pLine === 'all';
+                });
+                
+                const cleanAdId = String(msg._incomingAdId).trim();
+                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.map(id => String(id).trim()).includes(cleanAdId));
+                
+                if (foundProduct) {
+                    currentChat.assignedProductId = foundProduct.id;
+                    currentChat.assignedProduct = foundProduct.name;
+                    console.log(`🎯 [AD MATCH NATIVO] Anuncio ${msg._incomingAdId} auto-asignado al producto: ${foundProduct.name}`);
+                }
+            }
             
             
             
@@ -2520,6 +2545,7 @@ async function processAIResponse(from, msgBodyLower) {
         // Etiquetas detectadas por la IA
         const isInteresado = /\[INTERESADO\]/i.test(cleanAiReply);
         const isAbandonado = /\[ABANDONADO\]/i.test(cleanAiReply);
+        const isFaltanDatos = /\[FALTAN_DATOS\]/i.test(cleanAiReply);
         
         let newTags = [...(refreshedChat.tags || [])];
         let changed = false;
@@ -2527,6 +2553,12 @@ async function processAIResponse(from, msgBodyLower) {
         if (isInteresado && !newTags.includes('interesado')) {
             newTags = newTags.filter(t => t !== 'activo');
             newTags.push('interesado');
+            changed = true;
+        }
+
+        if (isFaltanDatos && !newTags.includes('pedido-pendiente') && !newTags.includes('preparar_pedido')) {
+            newTags = newTags.filter(t => t !== 'activo' && t !== 'interesado' && t !== 'pedidos_abandonados');
+            newTags.push('pedido-pendiente');
             changed = true;
         }
 
@@ -4357,6 +4389,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
   8. FORMATO Y VARIANTES DEL PRODUCTO: Si el cliente pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está en tu Base de Conocimiento, usa la etiqueta [APAGAR_BOT_SOPORTE]. PERO si simplemente hace preguntas normales sobre el producto, NO TE APAGUES.
   9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. Adapta tu atención a ese país. ¡NUNCA deduzcas el ${termCity} a partir de un simple barrio! PERO si el cliente menciona un lugar importante (Ej: Matagalpa, Managua, San Pedro Sula, Tegucigalpa), ASUME inmediatamente que ese es el ${termCity} y NO vuelvas a preguntarlo. Además, NO le pidas el ${termProv}, el sistema lo deducirá.
   10. CIERRE ESTRICTO Y RECOLECCIÓN DE DATOS (¡CRÍTICO!): Bajo NINGUNA circunstancia des por confirmado un pedido ni despidas al cliente si falta alguno de los datos obligatorios.
+  11. RECOLECCIÓN PARCIAL DE DATOS (FALTAN DATOS): Si el cliente te proporciona CUALQUIER DATO válido para su pedido (por ejemplo, te da su nombre, o te dice su municipio, o te dice su dirección), PERO aún faltan otros datos obligatorios para cerrar la orden, DEBES OBLIGATORIAMENTE incluir al final de tu mensaje la etiqueta oculta: [FALTAN_DATOS]. Esto ayuda al sistema a saber que ya empezaste a recolectar datos.
 
 CAMPOS OBLIGATORIOS PARA VALIDAR EL PEDIDO:
 1. Nombre completo de quien recibe.
