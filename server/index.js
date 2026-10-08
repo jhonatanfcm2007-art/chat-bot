@@ -2111,8 +2111,13 @@ app.post('/webhook', async (req, res) => {
             
             // Si el mensaje trae un Ad ID, intentamos mapearlo de inmediato
             if (msg._incomingAdId) {
-                const lineProducts = knowledgeBaseDb.filter(p => p.line === (currentChat.waLine || '1'));
-                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.includes(msg._incomingAdId));
+                const wLine = String(currentChat.waLine || '1');
+                const lineProducts = knowledgeBaseDb.filter(p => {
+                    const pLine = String(p.line);
+                    return pLine === wLine || pLine === 'Ambas' || pLine === 'all';
+                });
+                const cleanAdId = String(msg._incomingAdId).trim();
+                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.map(id => String(id).trim()).includes(cleanAdId));
                 
                 if (foundProduct) {
                     currentChat.assignedProductId = foundProduct.id;
