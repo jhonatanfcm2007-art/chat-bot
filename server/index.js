@@ -1041,7 +1041,7 @@ function extractSaleData(phone, productStr) {
 // --- REGISTRO DE PEDIDO (PENDIENTE DE APROBACION) ---
 
 // --- META CONVERSIONS API ---
-const crypto = require('crypto');
+const crypto = await import('crypto');
 
 
 async function sendMetaCAPIEvent(chat, productList) {
