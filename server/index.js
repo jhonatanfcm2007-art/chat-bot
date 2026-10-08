@@ -4198,9 +4198,9 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
         }
 
         if (activeProducts.length > 0) {
-            const isBroadSearch = activeProducts.length > 3 && (!currentChat || !currentChat.assignedProduct);
+            const isBroadSearch = activeProducts.length > 3 && (!currentChat || (!currentChat.assignedProduct && !currentChat.assignedProductId));
             if (isBroadSearch) {
-                knowledgeContext += "\n⚠️ EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO. OFRÉCELE AMABLEMENTE LOS SIGUIENTES PRODUCTOS DISPONIBLES EN TU CATÁLOGO PARA QUE ELIJA UNO:\n";
+                knowledgeContext += "\n⚠️ EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO. Pregúntale amable y DIRECTAMENTE qué producto busca o para qué problema de salud necesita ayuda. ESTÁ ESTRICTAMENTE PROHIBIDO enviarle una lista larga con todos los productos del catálogo. Solo menciónale 2 o 3 opciones como máximo si es estrictamente necesario, o simplemente pregúntale qué busca:\n";
             }
 
             activeProducts.forEach(prod => {
