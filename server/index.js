@@ -5037,6 +5037,45 @@ app.get('/api/recover-leads', async (req, res) => {
     res.json({ success: true, message: "Leads recuperados exitosamente", recoveredCount, recoveredChats });
 });
 
+// --- RUTINAS DE MANTENIMIENTO ---
+function cleanOldMedia() {
+    try {
+        if (!fs.existsSync(UPLOADS_DIR)) return;
+        
+        const files = fs.readdirSync(UPLOADS_DIR);
+        const now = Date.now();
+        const maxAgeMs = 15 * 24 * 60 * 60 * 1000; // 15 días
+        
+        let deletedCount = 0;
+        let freedBytes = 0;
+        
+        for (const file of files) {
+            const filePath = path.join(UPLOADS_DIR, file);
+            const stats = fs.statSync(filePath);
+            
+            // Ignorar carpetas o archivos vitales
+            if (stats.isDirectory()) continue;
+            
+            const ageMs = now - stats.mtimeMs;
+            if (ageMs > maxAgeMs) {
+                freedBytes += stats.size;
+                fs.unlinkSync(filePath);
+                deletedCount++;
+            }
+        }
+        
+        if (deletedCount > 0) {
+            const freedMB = (freedBytes / (1024 * 1024)).toFixed(2);
+            console.log(`🧹 [MANTENIMIENTO] Se eliminaron ${deletedCount} archivos multimedia antiguos. Espacio liberado: ${freedMB} MB`);
+        }
+    } catch (err) {
+        console.error('❌ [MANTENIMIENTO] Error limpiando multimedia antigua:', err);
+    }
+}
+// Ejecutar la limpieza una vez al día
+setInterval(cleanOldMedia, 24 * 60 * 60 * 1000);
+setTimeout(cleanOldMedia, 5000); // Ejecutar 5 segundos después de arrancar
+
 // --- RUTINAS DE SEGURIDAD Y BACKUP ---
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
