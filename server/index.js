@@ -2093,15 +2093,9 @@ app.post('/webhook', async (req, res) => {
         // Extraer datos del anuncio (Click-to-WhatsApp Ads)
         if (msg.referral) {
             const adInfo = msg.referral.headline || msg.referral.body || 'Facebook/Instagram';
-            const incomingAdId = msg.referral.source_id || '';
-            const adId = incomingAdId ? ` (ID: ${incomingAdId})` : '';
+            const adId = msg.referral.source_id ? ` (ID: ${msg.referral.source_id})` : '';
             const adUrl = msg.referral.source_url ? `\n🔗 Link: ${msg.referral.source_url}` : '';
             msgBody = `📢 [Anuncio: ${adInfo}${adId}]${adUrl}\n\n${msgBody}`;
-            
-            if (incomingAdId) {
-                // We inject a property so we can process it after chat is instantiated
-                msg._incomingAdId = incomingAdId;
-            }
         }
 
         if (msgBody) {
@@ -2109,25 +2103,7 @@ app.post('/webhook', async (req, res) => {
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
             
-            // Si el mensaje trae un Ad ID, intentamos mapearlo de inmediato
-            if (msg._incomingAdId) {
-                const wLine = String(currentChat.waLine || '1');
-                const lineProducts = knowledgeBaseDb.filter(p => {
-                    const pLine = String(p.line);
-                    return pLine === wLine || pLine === 'Ambas' || pLine === 'all';
-                });
-                const cleanAdId = String(msg._incomingAdId).trim();
-                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.map(id => String(id).trim()).includes(cleanAdId));
-                
-                if (foundProduct) {
-                    currentChat.assignedProductId = foundProduct.id;
-                    currentChat.assignedProduct = foundProduct.name;
-                    console.log(`🎯 [AD MATCH] Anuncio ${msg._incomingAdId} auto-asignado al producto: ${foundProduct.name}`);
-                } else {
-                    console.log(`⚠️ [AD MISMATCH] Anuncio ${msg._incomingAdId} NO RECONOCIDO en la base de datos de esta línea.`);
-                    msgBody += "\n\n[SYSTEM CRÍTICO: El ID de este anuncio NO está registrado en la base de datos. ESTÁ ESTRICTAMENTE PROHIBIDO intentar adivinar o alucinar información. Debes apagar el bot INMEDIATAMENTE usando la etiqueta [APAGAR_BOT_SOPORTE] y dile amablemente al cliente que en un momento un asesor humano le brindará la información correcta.]";
-                }
-            }
+            
             
             // DEDUPLICACIÓN DE WEBHOOKS: Ignorar si el mensaje ya fue procesado
             if (msg.id && currentChat.messages.some(m => m.wamid === msg.id || m.id === msg.id)) {
