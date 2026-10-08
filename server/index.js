@@ -915,6 +915,7 @@ Cuando el cliente haya proporcionado sus datos de despacho (nombre, celular, ciu
 
 Ejemplo:
 ¡Excelente! Tu pedido ha sido confirmado. [ENTREGAR_AHORA] [PRODUCTOS: 1 Frasco Shilajit] [NOMBRE: Juan Perez] [TELEFONO: 3001234567] [DIRECCION: Calle 123 #45-67] [MUNICIPIO: Bogota] [DEPARTAMENTO: Bogota D.C.]
+*Si el cliente pide programarlo para una fecha lejana (ej. el fin de mes), sustituye [ENTREGAR_AHORA] por [PEDIDO_PROGRAMADO: Fin de mes].
 
 ### ETIQUETAS DE SEGUIMIENTO INTERNO:
 - Si el cliente muestra interés real en comprar (ej. pregunta precios, envío) pero aún no deja datos de envío, incluye (solo una vez) al final de tu respuesta la etiqueta: [INTERESADO]
@@ -1135,6 +1136,31 @@ async function registerOrder(to, products) {
     const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
 
     if (isComplete) {
+        // --- AUTO-APROBACIÓN ---
+        
+        if (chat.isScheduledForLater) {
+            chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido');
+            chat.tags.push('programado_retenido');
+            chat.updatedAt = Date.now();
+            saveChats(chats);
+            io.emit('tag_updated', { from: to, tags: chat.tags });
+            
+            console.log(`📅 [PEDIDO PROGRAMADO] Pedido de ${chat.customerName} programado para: ${chat.scheduledDate}. Retenido en CRM, NO se enviará a Shopify.`);
+            
+            const notif = `📅 *NUEVO PEDIDO PROGRAMADO*
+
+👤 *Nombre:* ${orderName}
+📱 *Teléfono:* ${orderPhone}
+📍 *Dirección:* ${orderAddress}
+🏙️ *Municipio:* ${orderCity}
+🛒 *Producto:* ${productList}
+🗓️ *Fecha Solicitada:* ${chat.scheduledDate}
+
+⚠️ *El pedido fue guardado en "Programado / Retenido" y NO se envió a Dropi.*`;
+            notifyAdmins(chat, notif);
+            
+            return; // Detener flujo para no enviarlo a Shopify
+        }
         // --- AUTO-APROBACIÓN ---
         chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido');
         chat.tags.push('preparar_pedido');
@@ -2448,7 +2474,14 @@ async function processAIResponse(from, msgBodyLower) {
         }
     }
 
-    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply);
+    const hasOrderTag = /\[ENTREGAR_AHORA\]/i.test(cleanAiReply) || /\[PEDIDO_PROGRAMADO/i.test(cleanAiReply);
+    const scheduledMatch = cleanAiReply.match(/\[PEDIDO_PROGRAMADO:\s*([^\]]+)\]/i);
+    
+    if (scheduledMatch) {
+        refreshedChat.isScheduledForLater = true;
+        refreshedChat.scheduledDate = cleanVal(scheduledMatch[1]);
+        refreshedChat.orderNotes = `[PROGRAMADO PARA: ${refreshedChat.scheduledDate}] ` + (refreshedChat.orderNotes || '');
+    }
     const hasConfirmacionRetenida = /\[CONFIRMACION_RETENIDA\]/i.test(cleanAiReply);
     
         const prodsMatch = cleanAiReply.match(/\[PRODUCTOS:(.+?)\]/i);
@@ -2606,7 +2639,7 @@ async function processAIResponse(from, msgBodyLower) {
     }
 
     // Limpiar etiquetas internas antes de enviar al cliente
-    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO|FIN_CORTESIA)[^\]]*\]\s*/gi, ' ').trim();
+    const cleanReply = cleanAiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|PEDIDO_PROGRAMADO|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO|FIN_CORTESIA)[^\]]*\]\s*/gi, ' ').trim();
     
     await delay(1500);
     if (cleanReply) {
@@ -4416,6 +4449,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
   9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. Adapta tu atención a ese país. ¡NUNCA deduzcas el ${termCity} a partir de un simple barrio! PERO si el cliente menciona un lugar importante (Ej: Matagalpa, Managua, San Pedro Sula, Tegucigalpa), ASUME inmediatamente que ese es el ${termCity} y NO vuelvas a preguntarlo. Además, NO le pidas el ${termProv}, el sistema lo deducirá.
   10. CIERRE ESTRICTO Y RECOLECCIÓN DE DATOS (¡CRÍTICO!): Bajo NINGUNA circunstancia des por confirmado un pedido ni despidas al cliente si falta alguno de los datos obligatorios.
   11. RECOLECCIÓN PARCIAL DE DATOS (FALTAN DATOS): Si el cliente te proporciona CUALQUIER DATO válido para su pedido (por ejemplo, te da su nombre, o te dice su municipio, o te dice su dirección), PERO aún faltan otros datos obligatorios para cerrar la orden, DEBES OBLIGATORIAMENTE incluir al final de tu mensaje la etiqueta oculta: [FALTAN_DATOS]. Esto ayuda al sistema a saber que ya empezaste a recolectar datos.
+  12. PEDIDOS PROGRAMADOS A FUTURO: Si el cliente proporciona sus datos para el pedido PERO pide explícitamente que la entrega se realice en una fecha futura lejana (ej. "el 31 de octubre", "el 15", "a fin de mes", "la otra semana"), ESTÁ ESTRICTAMENTE PROHIBIDO usar la etiqueta [ENTREGAR_AHORA]. En su lugar, debes usar EXCLUSIVAMENTE la etiqueta [PEDIDO_PROGRAMADO: Fecha Solicitada]. Y asegúrate de incluir el resto de etiquetas de datos igual que en un cierre normal (PRODUCTOS, NOMBRE, TELEFONO, DIRECCION, etc).
 
 CAMPOS OBLIGATORIOS PARA VALIDAR EL PEDIDO:
 1. Nombre completo de quien recibe.
@@ -4583,7 +4617,7 @@ async function runFollowUpSequence() {
                 const aiPrompt = `[INSTRUCCIÓN INTERNA DEL SISTEMA PARA SEGUIMIENTO AUTOMÁTICO]: ${promptType}\n\nEscribe directamente el mensaje para enviarlo al cliente.`;
                 const aiReply = await getAIResponse(aiPrompt, chat.messages.slice(-15), chat.waLine || 1, chatId);
                 
-                const cleanReply = aiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|APAGAR_BOT_SOPORTE)[^\]]*\]\s*/gi, ' ').trim();
+                const cleanReply = aiReply.replace(/\s*\[(PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|PEDIDO_PROGRAMADO|APAGAR_BOT_SOPORTE)[^\]]*\]\s*/gi, ' ').trim();
                 
                 if (cleanReply) {
                     const wamid = await smartSendMessage(chatId, cleanReply);
