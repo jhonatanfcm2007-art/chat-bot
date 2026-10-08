@@ -1,0 +1,10 @@
+const fs = require('fs');
+let code = fs.readFileSync('src/components/AIAssistant.jsx', 'utf8');
+
+code = code.replace(
+  "const [welcomeImageUrl,\n        metaPixelId,\n        metaCapiToken, setWelcomeImageUrl] = useState('');",
+  "const [welcomeImageUrl, setWelcomeImageUrl] = useState('');"
+);
+
+fs.writeFileSync('src/components/AIAssistant.jsx', code);
+console.log('Fixed syntax error via multiline string replace!');

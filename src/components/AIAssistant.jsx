@@ -15,6 +15,8 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const [welcomeImageEnabled, setWelcomeImageEnabled] = useState(false);
+  const [metaPixelId, setMetaPixelId] = useState('');
+  const [metaCapiToken, setMetaCapiToken] = useState('');
   const [welcomeImageUrl, setWelcomeImageUrl] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   
@@ -30,7 +32,9 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
       welcomeAudioEnabled: false,
       welcomeAudioUrl: '',
       welcomeImageEnabled: false,
-      welcomeImageUrl: ''
+      welcomeImageUrl: '',
+      metaPixelId: '',
+      metaCapiToken: ''
     };
     
     if (lineSettings?.systemPrompt) {
@@ -60,6 +64,8 @@ const AIAssistant = ({ settings, socket, serverUrl, globalLine }) => {
       setWelcomeAudioUrl(lineSettings.welcomeAudioUrl || '');
       setWelcomeImageEnabled(lineSettings.welcomeImageEnabled || false);
       setWelcomeImageUrl(lineSettings.welcomeImageUrl || '');
+      setMetaPixelId(lineSettings.metaPixelId || '');
+      setMetaCapiToken(lineSettings.metaCapiToken || '');
     }
   }, [settings, globalLine]);
 
