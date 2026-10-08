@@ -2479,7 +2479,7 @@ async function processAIResponse(from, msgBodyLower) {
 
 
     // --- REGISTRO DE PEDIDO ---
-    const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null;
+    function cleanVal(val) { return val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null; }
 
     // Extraer Interés temprano del producto/combo en cualquier mensaje
     const interesRegex = /\[INTERES:\s*([^\]]+)\]/i;
