@@ -2449,6 +2449,35 @@ async function processAIResponse(from, msgBodyLower) {
 
     let cleanAiReply = aiReply;
 
+        const nameMatch = cleanAiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
+        const phoneMatch = cleanAiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
+        const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
+        const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
+        const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
+        const paisMatch = cleanAiReply.match(/\[PAIS:?\s*([^\]]+)\]/i);
+        const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
+        const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
+        
+        if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
+        if (phoneMatch) {
+            let extractedPhone = cleanVal(phoneMatch[1]);
+            const basePhone = from.split('@')[0].split('_')[0].replace(/\D/g, '');
+            const cleanExtracted = extractedPhone ? extractedPhone.replace(/\D/g, '') : '';
+            
+            if (cleanExtracted === basePhone + (refreshedChat.waLine || 1)) {
+                extractedPhone = basePhone;
+            }
+            
+            refreshedChat.orderPhone = extractedPhone || refreshedChat.orderPhone;
+        }
+        if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
+        if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
+        if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
+        if (paisMatch) refreshedChat.country = cleanVal(paisMatch[1]).toUpperCase() || refreshedChat.country;
+        if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
+        if (notesMatch) refreshedChat.orderNotes = cleanVal(notesMatch[1]) || refreshedChat.orderNotes;
+
+
     // --- REGISTRO DE PEDIDO ---
     const cleanVal = (val) => val && !/no proporcionad[oa]/i.test(val) && !/no especificad[oa]/i.test(val) && !/opcional/i.test(val) ? val.trim() : null;
 
