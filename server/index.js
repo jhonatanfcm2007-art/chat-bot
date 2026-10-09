@@ -4387,7 +4387,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
         if (activeProducts.length > 0) {
             const isBroadSearch = activeProducts.length > 1 && (!currentChat || (!currentChat.assignedProduct && !currentChat.assignedProductId));
             if (isBroadSearch) {
-                knowledgeContext += "\n\n⚠️ ¡ALERTA CRÍTICA! EL CLIENTE AÚN NO HA ELEGIDO UN PRODUCTO Y NO HAY NINGÚN ANUNCIO (ID) ASIGNADO A ESTE CHAT. COMO NO SABES DE QUÉ ESTÁ HABLANDO, ESTÁ ESTRICTAMENTE PROHIBIDO ADIVINAR PRODUCTOS O INVENTAR PRECIOS. DEBES OBLIGATORIAMENTE APAGARTE Y ENVIAR AL CLIENTE A SOPORTE USANDO EXACTAMENTE LA ETIQUETA [APAGAR_BOT_SOPORTE] Y NO DIGAS NADA MÁS.\n\n";
+
             }
 
             activeProducts.forEach(prod => {
