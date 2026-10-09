@@ -90,6 +90,15 @@ const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN
 console.log('Backend URL:', BACKEND_URL || '⚠️ No configurada (usando rutas relativas)');
 console.log('-----------------------------------------');
 
+app.get('/api/debug-ad', (req, res) => {
+    try {
+        const data = fs.readFileSync('server/data/debug_ad.json', 'utf8');
+        res.json(JSON.parse(data));
+    } catch (e) {
+        res.json({ error: e.message });
+    }
+});
+
 app.get('/api/health', async (req, res) => {
     res.json({ status: 'ok' });
 });
@@ -4556,6 +4565,22 @@ REGLA DE ORO: Solo cuando tengas los 6 campos OBLIGATORIOS 100% explícitos, pro
                 { role: "user", content: message } ] }, { timeout: 15000 });
         
         let reply = comp.choices[0].message.content;
+        
+        try {
+            const debugData = {
+                timestamp: new Date().toISOString(),
+                event: 'OPENAI_RESPONSE',
+                promptLength: (settings[waLine]?.systemPrompt || settings["1"].systemPrompt).length + knowledgeContext.length + globalRules.length + feriadoRules.length,
+                userMsg: message,
+                aiResponse: reply,
+                contextGiven: knowledgeContext
+            };
+            const fs = require('fs');
+            let logs = [];
+            try { logs = JSON.parse(fs.readFileSync('server/data/debug_ad.json', 'utf8')); } catch(e){}
+            logs.push(debugData);
+            fs.writeFileSync('server/data/debug_ad.json', JSON.stringify(logs.slice(-50), null, 2));
+        } catch(e) {}
         
         // Bloqueo duro por código para evitar alucinaciones
         if (/(usuario|correo|email|contraseña|clave|password):\s*(?!.*(te envié|sistema))/i.test(reply) || /te envié la información por mensaje/i.test(reply)) {
