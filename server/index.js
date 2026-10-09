@@ -1133,7 +1133,7 @@ async function registerOrder(to, products) {
 
     if (!chat.assignedProduct) chat.assignedProduct = productList;
 
-    const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado' && orderDep !== 'No especificado';
+    const isComplete = orderName !== 'No especificado' && orderAddress !== 'No especificada' && orderCity !== 'No especificado';
 
     if (isComplete) {
         // --- AUTO-APROBACIÓN ---
@@ -2559,10 +2559,10 @@ async function processAIResponse(from, msgBodyLower) {
             refreshedChat.orderPhone = from.split('@')[0].split('_')[0];
         }
         
-        let isComplete = refreshedChat.orderName && refreshedChat.address && refreshedChat.city && refreshedChat.province;
+        let isCompleteForGemini = refreshedChat.orderName && refreshedChat.address && refreshedChat.city;
         
         // --- NORMALIZACIÓN CON GEMINI ---
-        if (isComplete && process.env.GEMINI_API_KEY) {
+        if (isCompleteForGemini && process.env.GEMINI_API_KEY) {
             console.log(`🧠 [GEMINI] Interceptando dirección para normalizar: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}`);
             const paisContexto = getCountryFromPhone(from);
             const rawAddress = `${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}. Ref: ${refreshedChat.references || ''}`;
