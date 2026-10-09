@@ -2173,7 +2173,7 @@ app.post('/webhook', async (req, res) => {
                         productFound: foundProduct ? foundProduct.name : null,
                         lineProducts: lineProducts.map(p => ({name: p.name, line: p.line, adIds: p.adIds}))
                     };
-                    const fs = require('fs');
+                    
                     if (!fs.existsSync('server/data')) fs.mkdirSync('server/data', { recursive: true });
                     let logs = [];
                     try { logs = JSON.parse(fs.readFileSync('server/data/debug_ad.json', 'utf8')); } catch(e){}
@@ -4577,7 +4577,7 @@ REGLA DE ORO: Solo cuando tengas los 6 campos OBLIGATORIOS 100% explícitos, pro
                 aiResponse: reply,
                 contextGiven: knowledgeContext
             };
-            const fs = require('fs');
+            
             let logs = [];
             try { logs = JSON.parse(fs.readFileSync('server/data/debug_ad.json', 'utf8')); } catch(e){}
             logs.push(debugData);
