@@ -2151,7 +2151,11 @@ app.post('/webhook', async (req, res) => {
                 });
                 
                 const cleanAdId = String(msg._incomingAdId).trim();
-                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.map(id => String(id).trim()).includes(cleanAdId));
+                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.some(id => String(id).replace(/\D/g, '') === String(cleanAdId).replace(/\D/g, '')));
+                console.log(`[DEBUG AD] cleanAdId: '${cleanAdId}', lineProducts length: ${lineProducts.length}, wLine: ${wLine}`);
+                if (!foundProduct) {
+                    console.log(`[DEBUG AD] Did not find product. Available adIds in lineProducts: `, lineProducts.map(p => ({name: p.name, adIds: p.adIds})));
+                }
                 
                 if (foundProduct) {
                     currentChat.assignedProductId = foundProduct.id;
