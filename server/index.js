@@ -92,6 +92,7 @@ console.log('-----------------------------------------');
 
 app.get('/api/debug-ad', (req, res) => {
     try {
+        if (!fs.existsSync('server/data')) fs.mkdirSync('server/data', { recursive: true });
         const data = fs.readFileSync('server/data/debug_ad.json', 'utf8');
         res.json(JSON.parse(data));
     } catch (e) {
@@ -2173,6 +2174,7 @@ app.post('/webhook', async (req, res) => {
                         lineProducts: lineProducts.map(p => ({name: p.name, line: p.line, adIds: p.adIds}))
                     };
                     const fs = require('fs');
+                    if (!fs.existsSync('server/data')) fs.mkdirSync('server/data', { recursive: true });
                     let logs = [];
                     try { logs = JSON.parse(fs.readFileSync('server/data/debug_ad.json', 'utf8')); } catch(e){}
                     logs.push(debugData);
