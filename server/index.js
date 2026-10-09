@@ -1977,7 +1977,7 @@ app.post('/webhook', async (req, res) => {
 
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
-        const originalFrom = msg.from || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].wa_id);
+        const originalFrom = msg.from || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].wa_id) || msg.from_user_id || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].user_id);
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
         
@@ -2841,7 +2841,7 @@ async function sendAudioToCloudAPI(to, audioUrl) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
     if (!token || !phoneId || !to) return;
     try {
-        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
+        const baseTo = String(to).split('_')[0]; const cleanTo = /[a-zA-Z\.]/.test(baseTo) ? baseTo : baseTo.replace(/[^0-9]/g, '');
         console.log(`📡 [META L${line}] Enviando audio a ${cleanTo}: ${audioUrl}`);
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
@@ -2909,7 +2909,7 @@ async function sendImageToCloudAPI(to, imageUrl, caption) {
     const { token, phoneId, line } = getWhatsAppCredentials(to);
     if (!token || !phoneId || !to) return;
     try {
-        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
+        const baseTo = String(to).split('_')[0]; const cleanTo = /[a-zA-Z\.]/.test(baseTo) ? baseTo : baseTo.replace(/[^0-9]/g, '');
         console.log(`📡 [META L${line}] Enviando imagen a ${cleanTo}: ${imageUrl}`);
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
@@ -4286,7 +4286,7 @@ async function sendMessageToCloudAPI(to, text, forceLine = null) {
         return null;
     }
     try {
-        const cleanTo = String(to).split('_')[0].replace(/[^0-9]/g, '');
+        const baseTo = String(to).split('_')[0]; const cleanTo = /[a-zA-Z\.]/.test(baseTo) ? baseTo : baseTo.replace(/[^0-9]/g, '');
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
