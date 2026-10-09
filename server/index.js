@@ -2435,15 +2435,22 @@ async function processAIResponse(from, msgBodyLower) {
         refreshedChat.tags = refreshedChat.tags.filter(t => t !== 'soporte' && t !== 'pedidos_abandonados');
         refreshedChat.tags.push(newTag);
         
-        refreshedChat.aiDisabled = true; // FIX: Actually disable the AI!
+        refreshedChat.aiDisabled = true;
 
         saveChats(chats);
         io.emit('tag_updated', { from, tags: refreshedChat.tags });
-        io.emit('ai_state_updated', { chatId: from, disabled: true }); // FIX: Update UI
+        io.emit('ai_state_updated', { chatId: from, disabled: true });
 
         notifyAdmins(refreshedChat, alertMsg, 'support');
         registerAnomaly(hasPartialData ? 'Pedido Abandonado' : 'Soporte Requerido', customerName, from);
         delete aiTimers[from];
+        
+        // Fix: Send any message that was generated alongside the tag before returning!
+        const msgToSend = aiReply.replace(/\s*\[(VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|CONFIRMACION_RETENIDA|PAGO_PENDIENTE|PRODUCTOS|TOTAL|ENTREGAR_AHORA|PEDIDO_PROGRAMADO|APAGAR_BOT_SOPORTE|NOMBRE|TELEFONO|DIRECCION|REFERENCIAS|NOTAS|MUNICIPIO|DEPARTAMENTO|PAIS|ENVIAR_FOTO|INTERESADO|INTERES|ABANDONADO|FIN_CORTESIA)[^\]]*\]\s*/gi, ' ').trim();
+        if (msgToSend) {
+            await smartSendMessage(from, msgToSend, refreshedChat);
+        }
+        
         return;
     }
 
