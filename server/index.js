@@ -2359,8 +2359,20 @@ async function processAIResponse(from, msgBodyLower) {
     const customerName = refreshedChat.customerName;
 
     // Detección de soporte (cliente con problema real)
+    
+    // Extraer mensaje limpio sin la cabecera del anuncio para evaluar reglas
+    let cleanMsgBodyLower = msgBodyLower;
+    if (cleanMsgBodyLower.includes('📢 [anuncio:')) {
+        const parts = cleanMsgBodyLower.split('\n\n');
+        if (parts.length > 1) {
+            cleanMsgBodyLower = parts.slice(1).join('\n\n').trim();
+        }
+    }
+
+    // Detección de soporte (cliente con problema real)
     const supportRegex = /no (puedo|me deja|funciona|entra|sirve|carga|abre)|error|caído|cayó|problema|garant[ií]a|devolu|reclam|queja|asesor|humano|persona|ayuda/i;
-    const isSupport = supportRegex.test(msgBodyLower);
+    const isSupport = supportRegex.test(cleanMsgBodyLower);
+
 
     if (isSupport) {
         if (!refreshedChat.tags?.includes('soporte')) {
