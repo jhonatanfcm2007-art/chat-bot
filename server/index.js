@@ -4299,7 +4299,7 @@ async function sendMessageToCloudAPI(to, text, forceLine = null) {
                 const errorMsg = {
                     id: 'error-' + Date.now(),
                     isMe: true,
-                    body: `⚠️ ERROR DEL SISTEMA: Meta rechazó el mensaje. Revisa tu WHATSAPP_TOKEN_${line}. Detalle: ${errData}`,
+                    body: `⚠️ ERROR DEL SISTEMA: Meta rechazó el mensaje. Revisa tu WHATSAPP_TOKEN_${line}. Detalle: ${errData} | DEBUG_TO: '${cleanTo}' | DEBUG_ORIG: '${to}'`,
                     time: new Date().toLocaleTimeString('es-CO')
                 };
                 chats[to].messages.push(errorMsg);
