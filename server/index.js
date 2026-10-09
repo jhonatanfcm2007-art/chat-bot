@@ -2449,33 +2449,7 @@ async function processAIResponse(from, msgBodyLower) {
 
     let cleanAiReply = aiReply;
 
-        const nameMatch = cleanAiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
-        const phoneMatch = cleanAiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
-        const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
-        const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
-        const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
-        const paisMatch = cleanAiReply.match(/\[PAIS:?\s*([^\]]+)\]/i);
-        const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
-        const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
         
-        if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
-        if (phoneMatch) {
-            let extractedPhone = cleanVal(phoneMatch[1]);
-            const basePhone = from.split('@')[0].split('_')[0].replace(/\D/g, '');
-            const cleanExtracted = extractedPhone ? extractedPhone.replace(/\D/g, '') : '';
-            
-            if (cleanExtracted === basePhone + (refreshedChat.waLine || 1)) {
-                extractedPhone = basePhone;
-            }
-            
-            refreshedChat.orderPhone = extractedPhone || refreshedChat.orderPhone;
-        }
-        if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
-        if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
-        if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
-        if (paisMatch) refreshedChat.country = cleanVal(paisMatch[1]).toUpperCase() || refreshedChat.country;
-        if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
-        if (notesMatch) refreshedChat.orderNotes = cleanVal(notesMatch[1]) || refreshedChat.orderNotes;
 
 
     // --- REGISTRO DE PEDIDO ---
@@ -2535,6 +2509,35 @@ async function processAIResponse(from, msgBodyLower) {
 
     if (hasOrderTag && prodsMatch) {
         const products = prodsMatch[1].trim();
+
+        const nameMatch = cleanAiReply.match(/\[NOMBRE:?\s*([^\]]+)\]/i);
+        const phoneMatch = cleanAiReply.match(/\[TELEFONO:?\s*([^\]]+)\]/i);
+        const dirMatch = cleanAiReply.match(/\[DIRECCION:?\s*([^\]]+)\]/i);
+        const munMatch = cleanAiReply.match(/\[MUNICIPIO:?\s*([^\]]+)\]/i);
+        const depMatch = cleanAiReply.match(/\[DEPARTAMENTO:?\s*([^\]]+)\]/i);
+        const paisMatch = cleanAiReply.match(/\[PAIS:?\s*([^\]]+)\]/i);
+        const refMatch = cleanAiReply.match(/\[REFERENCIAS:?\s*([^\]]+)\]/i);
+        const notesMatch = cleanAiReply.match(/\[NOTAS:?\s*([^\]]+)\]/i);
+        
+        if (nameMatch) refreshedChat.orderName = cleanVal(nameMatch[1]) || refreshedChat.orderName;
+        if (phoneMatch) {
+            let extractedPhone = cleanVal(phoneMatch[1]);
+            const basePhone = from.split('@')[0].split('_')[0].replace(/\D/g, '');
+            const cleanExtracted = extractedPhone ? extractedPhone.replace(/\D/g, '') : '';
+            
+            if (cleanExtracted === basePhone + (refreshedChat.waLine || 1)) {
+                extractedPhone = basePhone;
+            }
+            
+            refreshedChat.orderPhone = extractedPhone || refreshedChat.orderPhone;
+        }
+        if (dirMatch) refreshedChat.address = cleanVal(dirMatch[1]) || refreshedChat.address;
+        if (munMatch) refreshedChat.city = cleanVal(munMatch[1]) || refreshedChat.city;
+        if (depMatch) refreshedChat.province = cleanVal(depMatch[1]) || refreshedChat.province;
+        if (paisMatch) refreshedChat.country = cleanVal(paisMatch[1]).toUpperCase() || refreshedChat.country;
+        if (refMatch) refreshedChat.references = cleanVal(refMatch[1]) || refreshedChat.references;
+        if (notesMatch) refreshedChat.orderNotes = cleanVal(notesMatch[1]) || refreshedChat.orderNotes;
+
         
         
         
@@ -4449,7 +4452,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
   8. FORMATO Y VARIANTES DEL PRODUCTO: Si el cliente pregunta si tienes un producto en un formato específico (ej. "líquido", "gel", "gotas", "polvo") y eso NO está en tu Base de Conocimiento, usa la etiqueta [APAGAR_BOT_SOPORTE]. PERO si simplemente hace preguntas normales sobre el producto, NO TE APAGUES.
   9. INTELIGENCIA GEOGRÁFICA: El número del cliente es de ${countryContext}. Adapta tu atención a ese país. ¡NUNCA deduzcas el ${termCity} a partir de un simple barrio! PERO si el cliente menciona un lugar importante (Ej: Matagalpa, Managua, San Pedro Sula, Tegucigalpa), ASUME inmediatamente que ese es el ${termCity} y NO vuelvas a preguntarlo. Además, NO le pidas el ${termProv}, el sistema lo deducirá.
   10. CIERRE ESTRICTO Y RECOLECCIÓN DE DATOS (¡CRÍTICO!): Bajo NINGUNA circunstancia des por confirmado un pedido ni despidas al cliente si falta alguno de los datos obligatorios.
-  11. RECOLECCIÓN PARCIAL DE DATOS (FALTAN DATOS): Si el cliente te proporciona CUALQUIER DATO válido para su pedido (por ejemplo, te da su nombre, o te dice su municipio, o te dice su dirección), PERO aún faltan otros datos obligatorios para cerrar la orden, DEBES OBLIGATORIAMENTE incluir al final de tu mensaje la etiqueta oculta: [FALTAN_DATOS]. ADEMÁS, DEBES INCLUIR LAS ETIQUETAS DE LOS DATOS QUE YA TIENES (ej. [NOMBRE: Juan] [MUNICIPIO: X]). Esto ayuda al sistema a saber que ya empezaste a recolectar datos y a actualizar el panel en tiempo real.
+  11. RECOLECCIÓN PARCIAL DE DATOS (FALTAN DATOS): Si el cliente te proporciona CUALQUIER DATO válido para su pedido (por ejemplo, te da su nombre, o te dice su municipio, o te dice su dirección), PERO aún faltan otros datos obligatorios para cerrar la orden, DEBES OBLIGATORIAMENTE incluir al final de tu mensaje la etiqueta oculta: [FALTAN_DATOS]. Esto ayuda al sistema a saber que ya empezaste a recolectar datos.
   12. PEDIDOS PROGRAMADOS A FUTURO: Si el cliente proporciona sus datos para el pedido PERO pide explícitamente que la entrega se realice en una fecha futura lejana (ej. "el 31 de octubre", "el 15", "a fin de mes", "la otra semana"), ESTÁ ESTRICTAMENTE PROHIBIDO usar la etiqueta [ENTREGAR_AHORA]. En su lugar, debes usar EXCLUSIVAMENTE la etiqueta [PEDIDO_PROGRAMADO: Fecha Solicitada]. Y asegúrate de incluir el resto de etiquetas de datos igual que en un cierre normal (PRODUCTOS, NOMBRE, TELEFONO, DIRECCION, etc).
 
 CAMPOS OBLIGATORIOS PARA VALIDAR EL PEDIDO:
