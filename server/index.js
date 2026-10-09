@@ -2136,6 +2136,12 @@ app.post('/webhook', async (req, res) => {
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
             
+            // Fix: Immediately assign the correct waLine during instantiation before Ad Match
+            if (!currentChat.waLine) {
+                const cleanWebhookId = (body.entry[0].changes[0].value.metadata?.phone_number_id || '').trim();
+                currentChat.waLine = cleanWebhookId === PHONE_ID_8 ? 8 : (cleanWebhookId === PHONE_ID_7 ? 7 : (cleanWebhookId === PHONE_ID_6 ? 6 : (cleanWebhookId === PHONE_ID_5 ? 5 : (cleanWebhookId === PHONE_ID_4 ? 4 : (cleanWebhookId === PHONE_ID_3 ? 3 : (cleanWebhookId === PHONE_ID_2 ? 2 : 1))))));
+            }
+            
             // --- CRUCE NATIVO SEGURO POR SERVIDOR (Re-activado y corregido) ---
             if (msg._incomingAdId && !currentChat.assignedProductId) {
                 const wLine = String(currentChat.waLine || '1');
