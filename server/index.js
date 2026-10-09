@@ -4465,7 +4465,7 @@ let countryContext = detectedCountry !== 'Desconocido' ? detectedCountry : 'Guat
                         if (hasNumbers) {
                             finalPrices = matchedVar.prices;
                             // BORRAMOS físicamente cualquier precio hardcodeado solo si la variación de país tiene precios reales numéricos
-                            detailsText = detailsText.replace(/([$Q\L\₡C€]|usd|mxn|hn|gtq)\$?\s*\d+([.,]\d+)?/gi, '[PRECIO EXCLUSIVO DE ' + detectedCountry.toUpperCase() + ']');
+                            detailsText = detailsText.replace(/([$Q\L\₡C€]|usd|mxn|hn|gtq|rd)\$?\s*\d+([.,]\d+)?/gi, '[PRECIO EXCLUSIVO DE ' + detectedCountry.toUpperCase() + ']');
                         }
                     }
                 }
