@@ -2192,7 +2192,7 @@ app.post('/webhook', async (req, res) => {
             // Multi-Línea: Detectar de qué número de WhatsApp viene el mensaje
             const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
             const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
-            if (cleanWebhookId === PHONE_ID_6) {
+            if (cleanWebhookId === PHONE_ID_8) { currentChat.waLine = 8; } else if (cleanWebhookId === PHONE_ID_7) { currentChat.waLine = 7; } else if (cleanWebhookId === PHONE_ID_6) {
                 currentChat.waLine = 6;
             } else if (cleanWebhookId === PHONE_ID_5) {
                 currentChat.waLine = 5;
