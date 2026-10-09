@@ -2151,8 +2151,25 @@ app.post('/webhook', async (req, res) => {
                 });
                 
                 const cleanAdId = String(msg._incomingAdId).trim();
-                const foundProduct = lineProducts.find(p => p.adIds && p.adIds.some(id => String(id).replace(/\D/g, '') === String(cleanAdId).replace(/\D/g, '')));
+                const foundProduct = knowledgeBaseDb.find(p => p.adIds && (Array.isArray(p.adIds) ? p.adIds : String(p.adIds).split(/[,\s]+/)).some(id => String(id).replace(/\D/g, '') === String(cleanAdId).replace(/\D/g, '')));
                 console.log(`[DEBUG AD] cleanAdId: '${cleanAdId}', lineProducts length: ${lineProducts.length}, wLine: ${wLine}`);
+                
+                try {
+                    const debugData = {
+                        timestamp: new Date().toISOString(),
+                        waLine: currentChat.waLine,
+                        cleanAdId,
+                        found: !!foundProduct,
+                        productFound: foundProduct ? foundProduct.name : null,
+                        lineProducts: lineProducts.map(p => ({name: p.name, line: p.line, adIds: p.adIds}))
+                    };
+                    const fs = require('fs');
+                    let logs = [];
+                    try { logs = JSON.parse(fs.readFileSync('server/data/debug_ad.json', 'utf8')); } catch(e){}
+                    logs.push(debugData);
+                    fs.writeFileSync('server/data/debug_ad.json', JSON.stringify(logs.slice(-50), null, 2));
+                } catch(e) { console.error('Debug write error', e); }
+                
                 if (!foundProduct) {
                     console.log(`[DEBUG AD] Did not find product. Available adIds in lineProducts: `, lineProducts.map(p => ({name: p.name, adIds: p.adIds})));
                 }
