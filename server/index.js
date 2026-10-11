@@ -2145,6 +2145,18 @@ app.post('/webhook', async (req, res) => {
             const isNewChat = !chats[from];
             if (!chats[from]) chats[from] = { from, customerName, messages: [] };
             const currentChat = chats[from];
+
+            // REACTIVACIÓN AUTOMÁTICA DE IA PARA CLIENTES RECURRENTES QUE ENTRAN POR UN NUEVO ANUNCIO
+            const isIncomingAd = !!msg._incomingAdId || (msgBody && msgBody.includes('📢 [Anuncio:'));
+            if (isIncomingAd && currentChat.aiDisabled) {
+                console.log(`🎯 [NUEVO LEAD POR ANUNCIO] ${customerName} (${from}) tenía la IA apagada de una charla anterior. Reactivando IA automáticamente.`);
+                currentChat.aiDisabled = false;
+                if (currentChat.tags && currentChat.tags.includes('soporte')) {
+                    currentChat.tags = currentChat.tags.filter(t => t !== 'soporte');
+                }
+                io.emit('ai_state_updated', { chatId: from, disabled: false });
+                io.emit('tag_updated', { from, tags: currentChat.tags || [] });
+            }
             
             // Fix: Immediately assign the correct waLine during instantiation before Ad Match
             if (!currentChat.waLine) {
@@ -2788,7 +2800,18 @@ function handleIncomingMessage(from) {
         console.log(`ℹ️ [SISTEMA] Mensaje entrante de ${from} ignorado porque el contacto está bloqueado.`);
         return;
     }
-    if (currentChat.aiDisabled) return;
+    if (currentChat.aiDisabled) {
+        // Doble verificación: si el último mensaje del cliente es un anuncio, reactivar la IA de inmediato
+        const lastUserMsg = (currentChat.messages || []).filter(m => m.role === 'user').slice(-1)[0];
+        const isAd = lastUserMsg && lastUserMsg.content && (lastUserMsg.content.includes('📢 [Anuncio:') || lastUserMsg.content.includes('[anuncio:'));
+        if (isAd) {
+            console.log(`🎯 [SAFETY NET] Reactivando IA en handleIncomingMessage para ${from} por mensaje de anuncio.`);
+            currentChat.aiDisabled = false;
+            io.emit('ai_state_updated', { chatId: from, disabled: false });
+        } else {
+            return;
+        }
+    }
 
     aiTimers[from] = setTimeout(async () => {
         const refreshedChat = chats[from];
@@ -4233,6 +4256,16 @@ io.on('connection', (socket) => {
             chats[chatId].aiDisabled = disabled;
             saveChats(chats);
             io.emit('ai_state_updated', { chatId, disabled });
+            
+            // Si el asesor reactiva la IA manualmente y hay un mensaje pendiente del cliente, ¡responderlo de inmediato!
+            if (!disabled) {
+                const messages = chats[chatId].messages || [];
+                const lastMsg = messages[messages.length - 1];
+                if (lastMsg && (lastMsg.role === 'user' || !lastMsg.isMe)) {
+                    console.log(`🤖 [TOGGLE_AI] IA reactivada manualmente en ${chatId}. Procesando mensaje pendiente...`);
+                    handleIncomingMessage(chatId);
+                }
+            }
         }
     });
 
