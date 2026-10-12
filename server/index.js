@@ -263,6 +263,11 @@ let lastReceiptFrom = null;
 const aiTimers = {};
 const webhookLogs = []; // Stores last 20 webhooks for debugging
 
+// --- BLINDAJES ANTI-DUPLICADOS (SHOPIFY / DROPI / IA) ---
+const processedMessageIds = new Set();        // Deduplicación inmediata de webhooks en microsegundos
+const aiRunningLocks = new Set();             // Evita que dos llamadas de IA respondan en paralelo al mismo chat
+const activeOrderCreationLocks = new Set();   // Evita que se envíen 2 órdenes simultáneas a Shopify/Dropi
+
 // --- NOTIFICATIONS HELPERS ---
 function getCountryFromPhone(phoneStr) {
     if (!phoneStr) return 'Desconocido';
@@ -1132,6 +1137,18 @@ async function registerOrder(to, products) {
     const chat = chats[to];
     if (!chat) return;
 
+    // BLINDAJE 1: Si ya fue registrado o ya tiene orden creada en Shopify, ABORTAR
+    if (chat.orderRegistered || chat.shopifyOrderId || chat.shopifyOrderName) {
+        console.log(`⚠️ [BLINDAJE DUPLICADOS] El pedido de ${chat.customerName || to} ya fue registrado y enviado a Shopify previamente (${chat.shopifyOrderName || chat.shopifyOrderId}). Abortando creación duplicada.`);
+        return;
+    }
+
+    // BLINDAJE 2: Si ya hay un proceso de creación en curso para este cliente, ABORTAR
+    if (activeOrderCreationLocks.has(to)) {
+        console.log(`🔒 [BLOQUEO CONCURRENCIA] Ya hay una creación de pedido en Shopify en curso para ${to}. Abortando duplicado.`);
+        return;
+    }
+
     const productList = products || 'Producto solicitado';
     
     const orderName = chat.orderName || chat.customerName || 'No especificado';
@@ -1198,6 +1215,7 @@ async function registerOrder(to, products) {
         console.log(`📦 [AUTO-APROBADO] Pedido de ${chat.customerName}: ${productList}. Creando en Shopify...`);
         
         try {
+            activeOrderCreationLocks.add(to);
             const shopifyRes = await createShopifyOrder(chat, productList);
             
             if (shopifyRes.success) {
@@ -1235,6 +1253,8 @@ async function registerOrder(to, products) {
         } catch (error) {
             console.error('Error in auto-approve flow:', error);
             notifyAdmins(chat, `❌ Ocurrió un error inesperado al intentar crear el pedido en Dropi para ${orderName}.`);
+        } finally {
+            activeOrderCreationLocks.delete(to);
         }
         return;
     }
@@ -1259,6 +1279,12 @@ async function registerOrder(to, products) {
 
 // --- SHOPIFY INTEGRATION ---
 async function createShopifyOrder(chat, products) {
+    // BLINDAJE INTERNO: Jamás crear pedido en Shopify si el chat ya tiene orden registrada
+    if (chat.shopifyOrderId || chat.shopifyOrderName) {
+        console.log(`⚠️ [BLINDAJE SHOPIFY] El pedido para ${chat.customerName} ya existe en Shopify (${chat.shopifyOrderName || chat.shopifyOrderId}). Abortando llamada API duplicada.`);
+        return { success: true, orderName: chat.shopifyOrderName, orderId: chat.shopifyOrderId, alreadyExisted: true };
+    }
+
     let waLine = '1';
     if (chat.from && chat.from.includes('_')) {
         waLine = chat.from.split('_')[1];
@@ -1987,6 +2013,20 @@ app.post('/webhook', async (req, res) => {
 
     if (body.object === 'whatsapp_business_account' && body.entry?.[0].changes?.[0].value.messages?.[0]) {
         const msg = body.entry[0].changes[0].value.messages[0];
+
+        // BLINDAJE INMEDIATO: Deduplicación atómica de webhooks por ID de mensaje
+        if (msg.id && processedMessageIds.has(msg.id)) {
+            console.log("♻️ [DEDUPLICACIÓN INMEDIATA] Webhook duplicado " + msg.id + ". Ignorando de raíz.");
+            res.sendStatus(200);
+            return;
+        }
+        if (msg.id) {
+            processedMessageIds.add(msg.id);
+            if (processedMessageIds.size > 5000) {
+                const arr = Array.from(processedMessageIds);
+                arr.slice(0, 2500).forEach(id => processedMessageIds.delete(id));
+            }
+        }
         const originalFrom = msg.from || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].wa_id) || msg.from_user_id || (body.entry[0].changes[0].value.contacts && body.entry[0].changes[0].value.contacts[0].user_id);
         const webhookPhoneId = body.entry[0].changes[0].value.metadata?.phone_number_id;
         const cleanWebhookId = webhookPhoneId ? String(webhookPhoneId).trim() : '';
@@ -2028,6 +2068,10 @@ app.post('/webhook', async (req, res) => {
                 }
 
                 if (action === 'APROBAR') {
+                    if (targetChat.orderRegistered || targetChat.shopifyOrderId || targetChat.shopifyOrderName) {
+                        smartSendMessage(from, `⚠️ *Aviso:* Este pedido ya fue aprobado y enviado a Shopify previamente (${targetChat.shopifyOrderName || 'ID: ' + targetChat.shopifyOrderId}).`);
+                        res.sendStatus(200); return;
+                    }
                     // Validar que los datos mínimos existan para Dropi
                     if (!targetChat.orderName || !targetChat.address || !targetChat.city || !targetChat.province) {
                         smartSendMessage(from, '❌ *Error de Aprobación:* No se puede aprobar el pedido porque faltan datos esenciales (Nombre, Dirección, Municipio o Departamento). Por favor, pídele los datos faltantes al cliente antes de aprobar.');
@@ -2847,9 +2891,22 @@ function handleIncomingMessage(from) {
             return;
         }
 
-        processAIResponse(from, msgBodyLower).catch(err => {
+        // Evitar que dos ejecuciones de IA corran en simultáneo para el mismo chat
+        if (aiRunningLocks.has(from)) {
+            console.log(`⏳ [AI LOCK] Ya hay una respuesta de IA generándose para ${refreshedChat.customerName || from}. Omitiendo llamada concurrente.`);
+            delete aiTimers[from];
+            return;
+        }
+
+        try {
+            aiRunningLocks.add(from);
+            await processAIResponse(from, msgBodyLower);
+        } catch (err) {
             console.error('❌ [CRITICAL ERROR] Excepción no controlada en processAIResponse:', err);
-        });
+        } finally {
+            aiRunningLocks.delete(from);
+            delete aiTimers[from];
+        }
     }, 2500);
 }
 
