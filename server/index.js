@@ -393,6 +393,18 @@ function notifyAdmins(chat, text, type = 'sales') {
             }
         }
 
+        // Deduplicación estricta en Google Sheets: NO insertar la misma fila para el mismo cliente y estado en 24h
+        if (chat) {
+            const sheetsKey = `${chat.from || ''}_${shortInfo}`;
+            if (chat.lastSheetsKey === sheetsKey && Date.now() - (chat.lastSheetsTime || 0) < 24 * 60 * 60 * 1000) {
+                console.log(`♻️ [SHEETS DEDUP] Omitiendo fila duplicada en Google Sheets para ${chat.customerName || chat.from}: ${shortInfo}`);
+                return;
+            }
+            chat.lastSheetsKey = sheetsKey;
+            chat.lastSheetsTime = Date.now();
+            saveChats(chats);
+        }
+
         const payload = {
             "fecha": new Date().toISOString(),
             "date": new Date().toISOString(),
@@ -1189,7 +1201,7 @@ async function registerOrder(to, products) {
             return; // Detener flujo para no enviarlo a Shopify
         }
         // --- AUTO-APROBACIÓN ---
-        chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido');
+        chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido' && t !== 'preparar_pedido');
         chat.tags.push('preparar_pedido');
         chat.updatedAt = Date.now();
         saveChats(chats);
@@ -1198,6 +1210,8 @@ async function registerOrder(to, products) {
         const isLocationAddress = chat.address && (chat.address.includes('google.com/maps') || chat.address.includes('[UBICACIÓN]'));
 
         if (isLocationAddress) {
+            chat.orderRegistered = true;
+            saveChats(chats);
             console.log(`📍 [UBICACIÓN] Pedido de ${chat.customerName}: ${productList}. Retenido en preparar_pedido por tener mapa.`);
             // Enviar notificación a WhatsApp de que hay un pedido con ubicación
             if (settings && settings[chat.waLine || '1'] && settings[chat.waLine || '1'].notificationPhone) {
@@ -1218,11 +1232,13 @@ async function registerOrder(to, products) {
             activeOrderCreationLocks.add(to);
             const shopifyRes = await createShopifyOrder(chat, productList);
             
+            chat.orderRegistered = true; // El pedido queda registrado en CRM (evita reintentos y filas duplicadas)
+            if (!chat.assignedProduct) chat.assignedProduct = productList;
+
             if (shopifyRes.success) {
-                chat.orderRegistered = true;
-                if (!chat.assignedProduct) chat.assignedProduct = productList;
                 if (shopifyRes.orderName) chat.shopifyOrderName = shopifyRes.orderName;
                 if (shopifyRes.orderId) chat.shopifyOrderId = shopifyRes.orderId;
+                delete chat.shopifyError;
                 saveChats(chats);
                 
                 const notif = `✅ *PEDIDO AUTO-APROBADO Y ENVIADO A DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🔖 *Referencias:* ${orderRef}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n📦 *Pedido Dropi:* ${shopifyRes.orderName}`;
@@ -1247,11 +1263,17 @@ async function registerOrder(to, products) {
                 saveSales(sales);
                 io.emit('sales_updated', sales);
             } else {
+                chat.shopifyError = shopifyRes.error;
+                saveChats(chats);
+
                 const errorNotif = `⚠️ *ERROR CREANDO PEDIDO EN DROPI*\n\n👤 *Nombre:* ${orderName}\n📱 *Teléfono:* ${orderPhone}\n📍 *Dirección:* ${orderAddress}\n🏙️ *Municipio:* ${orderCity}\n🗺️ *Depto:* ${orderDep}\n🛒 *Producto:* ${productList}\n\n❌ *Error:* ${shopifyRes.error}`;
                 notifyAdmins(chat, errorNotif);
             }
         } catch (error) {
             console.error('Error in auto-approve flow:', error);
+            chat.orderRegistered = true;
+            chat.shopifyError = error.message;
+            saveChats(chats);
             notifyAdmins(chat, `❌ Ocurrió un error inesperado al intentar crear el pedido en Dropi para ${orderName}.`);
         } finally {
             activeOrderCreationLocks.delete(to);
