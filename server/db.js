@@ -125,10 +125,17 @@ export async function saveDbIncident(id, data) {
 
 export async function getDbChats() {
     if (!pool) return null;
-    const { rows } = await pool.query('SELECT id, data FROM chats');
     const chats = {};
-    for (const row of rows) {
-        chats[row.id] = row.data;
+    // Bound PostgreSQL result buffers while loading the existing history.
+    let lastId = null;
+    while (true) {
+        const { rows } = await pool.query(
+            'SELECT id, data FROM chats WHERE ($1::varchar IS NULL OR id > $1) ORDER BY id LIMIT 100',
+            [lastId]
+        );
+        if (rows.length === 0) break;
+        for (const row of rows) chats[row.id] = row.data;
+        lastId = rows[rows.length - 1].id;
     }
     return chats;
 }

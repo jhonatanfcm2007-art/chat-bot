@@ -1,3 +1,4 @@
+import { createChatPersistence } from './services/chatPersistence.js';
 import dotenv from 'dotenv';
 dotenv.config(); 
 
@@ -539,40 +540,16 @@ function asyncAtomicSave(filepath, data) {
     });
 }
 
-const chatHashes = {};
-let pendingDbSave = false;
+const chatPersistence = createChatPersistence({
+    getChats: () => chats,
+    saveChat: isPgEnabled ? saveDbChat : null,
+    saveAll: data => asyncAtomicSave(CHATS_FILE, data),
+    onError: error => console.error('Error guardando chats:', error),
+});
 
-function saveChats(data) {
-    if (pendingDbSave) return;
-    pendingDbSave = true;
-    setTimeout(async () => {
-        pendingDbSave = false;
-        if (!isPgEnabled) {
-            await asyncAtomicSave(CHATS_FILE, chats);
-            return;
-        }
-
-        const dirtyChats = [];
-        for (const id in chats) {
-            const chat = chats[id];
-            const hash = `${chat.messages?.length || 0}-${chat.updatedAt || 0}-${chat.tags?.join(',') || ''}-${chat.assignedProduct || ''}-${chat.aiDisabled ? 1 : 0}-${chat.isBlocked ? 1 : 0}-${chat.trackingNumber || ''}-${chat.customerName || ''}`;
-            
-            if (chatHashes[id] !== hash) {
-                dirtyChats.push({ id, data: chat });
-                chatHashes[id] = hash;
-            }
-        }
-        
-        if (dirtyChats.length > 0) {
-            try {
-                await Promise.all(dirtyChats.map(c => saveDbChat(c.id, c.data)));
-            } catch (e) {
-                console.error('Error guardando chats en Postgres:', e);
-            }
-        }
-    }, 2000);
+function saveChats() {
+    chatPersistence.request();
 }
-
 const KNOWLEDGE_BASE_FILE = path.join(DATA_DIR, 'knowledge_base.json');
 const STORES_FILE = path.join(DATA_DIR, 'stores.json');
 const ANOMALIES_FILE = path.join(DATA_DIR, 'anomalies.json');
