@@ -1,6 +1,6 @@
 import { restoreOrderTags, readOrderSummary } from './services/orderSummary.js';
 import { createChatPersistence } from './services/chatPersistence.js';
-import { isSalvador, salvadorCoveragePrompt, applySalvadorCoverage } from './services/salvadorCoverage.js';
+import { isSalvador, salvadorCoveragePrompt, applySalvadorCoverage, resolveSalvadorTexts } from './services/salvadorCoverage.js';
 import { isNicaragua, nicaraguaCoveragePrompt, applyNicaraguaCoverage, checkNicaraguaOrder } from './services/nicaraguaCoverage.js';
 import { isHonduras, hondurasContext, hondurasPrompt, applyHondurasCoverage, checkHondurasOrder, hondurasDeliveryNote, needsHondurasReview } from './services/hondurasCoverage.js';
 import dotenv from 'dotenv';
@@ -4688,6 +4688,8 @@ REGLA DE ORO (¡EL BOT VA UN PASO ADELANTE!): Los únicos datos que le pides al 
 
         const customerTextsHN = history.filter(m => m.role === 'user').map(m => m.content || m.body || '');
         customerTextsHN.push(message);
+        const svResolved = isSalvador(currentChat, fromPhone) ? resolveSalvadorTexts(customerTextsHN) : null;
+        const svReminder = svResolved?.status === 'covered' ? ' UBICACION YA VERIFICADA: ' + svResolved.locality + ', ' + svResolved.department + '. NO vuelvas a pedir municipio ni departamento. Usa nombre y direccion de los mensajes previos; pide solo lo realmente faltante.' : '';
         const hnContext = isHonduras(currentChat, fromPhone) ? hondurasContext(customerTextsHN, currentChat) : null;
 
         console.log("Tokens approx:", (settings[waLine]?.systemPrompt || settings["1"].systemPrompt).length + knowledgeContext.length + globalRules.length + feriadoRules.length);
@@ -4701,7 +4703,7 @@ REGLA DE ORO (¡EL BOT VA UN PASO ADELANTE!): Los únicos datos que le pides al 
                 })),
                 { role: "system", content: `${dateContext}\n\n[CONTEXTO DEL CLIENTE]\nTeléfono real del cliente (¡YA LO TIENES! ESTÁ TERMINANTEMENTE PROHIBIDO PEDIRLO AL CLIENTE): ${fromPhone.split('@')[0].split('_')[0]}\n\nRECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente pide EXPLÍCITAMENTE precios o pagos en una moneda EXTRANJERA que no está en tu catálogo (ej. pide pagar en dólares pero solo tienes quetzales). 2) Si el cliente pide ver fotos, imagenes o videos reales del producto. EN CUALQUIERA DE ESTOS DOS CASOS, ESTÁ ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU ÚNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada más, para que un humano asuma el control. NUNCA te apagues si solo te piden un combo o información normal.` },
                 ...(isNicaragua(currentChat, fromPhone) ? [{ role: 'system', content: nicaraguaCoveragePrompt }] : []),
-                ...(isSalvador(currentChat, fromPhone) ? [{ role: 'system', content: salvadorCoveragePrompt }] : []),
+                ...(isSalvador(currentChat, fromPhone) ? [{ role: 'system', content: salvadorCoveragePrompt + svReminder }] : []),
                 ...(hnContext ? [{ role: 'system', content: hondurasPrompt(hnContext, currentChat) }] : []),
                 { role: "user", content: message } ] }, { timeout: 15000 });
         

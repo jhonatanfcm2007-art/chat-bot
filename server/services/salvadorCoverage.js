@@ -24,6 +24,20 @@ export function lookupSalvador(locality, department = '') {
     return { status: row.covered ? 'covered' : 'uncovered', ...row };
 }
 
+export function resolveSalvadorTexts(texts = []) {
+    const departments = new Set(locations.map(row => normalize(row.department)));
+    for (const text of [...texts].reverse()) {
+        const value = ` ${normalize(text)} `;
+        const matches = locations.filter(row => value.includes(` ${normalize(row.locality)} `));
+        const specific = matches.filter(row => !departments.has(normalize(row.locality)));
+        const candidates = specific.length ? specific : [];
+        const unique = [...new Map(candidates.map(row => [row.id, row])).values()];
+        if (unique.length === 1) return lookupSalvador(unique[0].locality);
+        if (unique.length > 1) return { status: 'unknown' };
+    }
+    return { status: 'unknown' };
+}
+
 export function coverageMessage(result) {
     return result.status === 'uncovered'
         ? `Gracias por tu interés. Por el momento no tenemos cobertura de entrega en ${result.locality}, por lo que no podemos enviar tu pedido a esa localidad.`
@@ -51,7 +65,12 @@ export function applySalvadorCoverage(reply, chat, customerTexts = []) {
     const evidence = reply.match(/\[EVIDENCIA_SV:\s*([^\]]+)\]/i)?.[1];
     let clean = reply.replace(/\[(?:DESTINO_SV|EVIDENCIA_SV):[^\]]*\]/gi, '').trim();
     if (chat.orderRegistered || chat.shopifyOrderId || chat.shopifyOrderName) return clean;
-    let result;
+    let result = resolveSalvadorTexts(customerTexts);
+    if (result.status === 'covered') {
+        chat.salvadorCoverage = result;
+        chat.city = result.locality;
+        chat.province = result.department;
+    }
     if (marker) {
         const row = byId.get(marker[1].trim());
         // A model-selected ID alone is not evidence. Require a literal customer quote
@@ -59,7 +78,7 @@ export function applySalvadorCoverage(reply, chat, customerTexts = []) {
         const quote = normalize(evidence);
         const supported = row && quote && customerTexts.some(text => normalize(text).includes(quote))
             && (` ${quote} `).includes(` ${normalize(row.locality)} `);
-        result = supported ? lookupSalvador(row.locality) : { status: 'unknown' };
+        result = result.status === 'covered' ? result : (supported ? lookupSalvador(row.locality) : { status: 'unknown' });
         chat.salvadorCoverage = result;
         if (result.status === 'covered') {
             chat.city = result.locality;
@@ -68,14 +87,13 @@ export function applySalvadorCoverage(reply, chat, customerTexts = []) {
     }
     const closing = /\[(?:ENTREGAR_AHORA|VERIFICAR_DATOS|CONFIRMACION_AFIRMATIVA|PAGO_PENDIENTE|PEDIDO_PROGRAMADO)\b/i.test(clean)
         || /\*\*Nombre\*\*:/i.test(clean);
-    if (result && result.status !== 'covered') return coverageMessage(result);
+    // An absent/malformed model marker must not replace a valid sales reply.
     if (closing) {
-        result ||= chat.salvadorCoverage;
-        if (!result || result.status !== 'covered') return coverageMessage(result || { status: 'unknown' });
+        if (result.status !== 'covered') result = chat.salvadorCoverage;
+        if (!result || result.status !== 'covered') return clean;
         const proposedCity = clean.match(/\[MUNICIPIO:\s*([^\]]+)\]/i)?.[1];
         if (proposedCity && normalize(proposedCity) !== normalize(result.locality)) {
-            chat.salvadorCoverage = { status: 'unknown' };
-            return coverageMessage({ status: 'unknown' });
+            return clean;
         }
         // Canonical transport locality/department override model guesses.
         clean = clean.replace(/\[MUNICIPIO:[^\]]*\]/gi, '').replace(/\[DEPARTAMENTO:[^\]]*\]/gi, '');
