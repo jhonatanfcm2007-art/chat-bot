@@ -1,4 +1,6 @@
+import { restoreOrderTags, readOrderSummary } from './services/orderSummary.js';
 import { createChatPersistence } from './services/chatPersistence.js';
+import { isSalvador, salvadorCoveragePrompt, applySalvadorCoverage } from './services/salvadorCoverage.js';
 import { isNicaragua, nicaraguaCoveragePrompt, applyNicaraguaCoverage, checkNicaraguaOrder } from './services/nicaraguaCoverage.js';
 import { isHonduras, hondurasContext, hondurasPrompt, applyHondurasCoverage, checkHondurasOrder, hondurasDeliveryNote, needsHondurasReview } from './services/hondurasCoverage.js';
 import dotenv from 'dotenv';
@@ -2589,7 +2591,7 @@ async function processAIResponse(from, msgBodyLower) {
         return;
     }
 
-    let cleanAiReply = aiReply;
+    let cleanAiReply = restoreOrderTags(aiReply);
 
         
 
@@ -2691,7 +2693,7 @@ async function processAIResponse(from, msgBodyLower) {
         let isCompleteForGemini = refreshedChat.orderName && refreshedChat.address && refreshedChat.city;
         
         // --- NORMALIZACIÓN CON GEMINI ---
-        if (isCompleteForGemini && process.env.GEMINI_API_KEY && !isNicaragua(refreshedChat, from) && !isHonduras(refreshedChat, from)) {
+        if (isCompleteForGemini && process.env.GEMINI_API_KEY && !isNicaragua(refreshedChat, from) && !isHonduras(refreshedChat, from) && !isSalvador(refreshedChat, from)) {
             console.log(`🧠 [GEMINI] Interceptando dirección para normalizar: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}`);
             const paisContexto = getCountryFromPhone(from);
             const rawAddress = `${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}. Ref: ${refreshedChat.references || ''}`;
@@ -4699,10 +4701,31 @@ REGLA DE ORO (¡EL BOT VA UN PASO ADELANTE!): Los únicos datos que le pides al 
                 })),
                 { role: "system", content: `${dateContext}\n\n[CONTEXTO DEL CLIENTE]\nTeléfono real del cliente (¡YA LO TIENES! ESTÁ TERMINANTEMENTE PROHIBIDO PEDIRLO AL CLIENTE): ${fromPhone.split('@')[0].split('_')[0]}\n\nRECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente pide EXPLÍCITAMENTE precios o pagos en una moneda EXTRANJERA que no está en tu catálogo (ej. pide pagar en dólares pero solo tienes quetzales). 2) Si el cliente pide ver fotos, imagenes o videos reales del producto. EN CUALQUIERA DE ESTOS DOS CASOS, ESTÁ ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU ÚNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada más, para que un humano asuma el control. NUNCA te apagues si solo te piden un combo o información normal.` },
                 ...(isNicaragua(currentChat, fromPhone) ? [{ role: 'system', content: nicaraguaCoveragePrompt }] : []),
+                ...(isSalvador(currentChat, fromPhone) ? [{ role: 'system', content: salvadorCoveragePrompt }] : []),
                 ...(hnContext ? [{ role: 'system', content: hondurasPrompt(hnContext, currentChat) }] : []),
                 { role: "user", content: message } ] }, { timeout: 15000 });
         
-        let reply = comp.choices[0].message.content;
+        const rawReply = comp.choices[0].message.content;
+        let reply = restoreOrderTags(rawReply);
+        if (currentChat && reply !== rawReply && !currentChat.orderRegistered) {
+            const summary = readOrderSummary(rawReply);
+            currentChat.orderName = summary.name;
+            currentChat.address = summary.address;
+            currentChat.city = summary.city || currentChat.city;
+            currentChat.province = summary.department || currentChat.province;
+            currentChat.pendingApprovalProducts = summary.products;
+            currentChat.shippingReviewRequired = true;
+            currentChat.tags = [...new Set([...(currentChat.tags || []), 'preparar_pedido'])];
+            saveChats(chats);
+            io.emit('tag_updated', { from: fromPhone, tags: currentChat.tags });
+        }
+        if (isSalvador(currentChat, fromPhone)) {
+            reply = applySalvadorCoverage(reply, currentChat || {}, customerTextsHN);
+            if (currentChat) {
+                saveChats(chats);
+                io.emit('chat_meta_updated', { id: fromPhone, chat: { ...currentChat, messages: undefined } });
+            }
+        }
         if (hnContext) {
             reply = applyHondurasCoverage(reply, currentChat || {}, customerTextsHN, hnContext);
             if (currentChat) {
@@ -5335,6 +5358,33 @@ function gracefulShutdown() {
 }
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
+
+// Recover previously confirmed summaries for review only; never recreate orders.
+let recoveredSummaries = 0;
+for (const [id, chat] of Object.entries(chats)) {
+    if (chat.orderRegistered || chat.shopifyOrderId || chat.shopifyOrderName || chat.tags?.includes('preparar_pedido')) continue;
+    const messages = chat.messages || [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (!(message.isMe || message.role === 'bot')) continue;
+        const text = message.content || message.body || '';
+        if (restoreOrderTags(text) === text) continue;
+        const summary = readOrderSummary(text);
+        chat.orderName ||= summary.name;
+        chat.address ||= summary.address;
+        chat.city ||= summary.city;
+        chat.province ||= summary.department;
+        chat.pendingApprovalProducts ||= summary.products;
+        chat.shippingReviewRequired = true;
+        chat.tags = [...new Set([...(chat.tags || []), 'preparar_pedido'])];
+        recoveredSummaries++;
+        break;
+    }
+}
+if (recoveredSummaries) {
+    saveChats(chats);
+    console.log('[RECUPERACIÓN] Resúmenes confirmados retenidos para revisión:', recoveredSummaries);
+}
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor CRM listo y escuchando en el puerto ${PORT}`);

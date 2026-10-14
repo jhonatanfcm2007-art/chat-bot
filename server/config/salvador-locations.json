@@ -1,0 +1,1584 @@
+{
+  "country": "SV",
+  "source": "catalogo_dropi_el_salvador.csv",
+  "locations": [
+    {
+      "id": 1,
+      "department": "Ahuachapán",
+      "locality": "Ahuachapán",
+      "covered": true
+    },
+    {
+      "id": 2,
+      "department": "Ahuachapán",
+      "locality": "Apaneca",
+      "covered": true
+    },
+    {
+      "id": 3,
+      "department": "Ahuachapán",
+      "locality": "Atiquizaya",
+      "covered": true
+    },
+    {
+      "id": 4,
+      "department": "Ahuachapán",
+      "locality": "Concepción de Ataco",
+      "covered": true
+    },
+    {
+      "id": 5,
+      "department": "Ahuachapán",
+      "locality": "El Refugio",
+      "covered": true
+    },
+    {
+      "id": 6,
+      "department": "Ahuachapán",
+      "locality": "Guaymango",
+      "covered": true
+    },
+    {
+      "id": 7,
+      "department": "Ahuachapán",
+      "locality": "Jujutla",
+      "covered": true
+    },
+    {
+      "id": 8,
+      "department": "Ahuachapán",
+      "locality": "San Francisco Menéndez",
+      "covered": true
+    },
+    {
+      "id": 9,
+      "department": "Ahuachapán",
+      "locality": "San Lorenzo",
+      "covered": true
+    },
+    {
+      "id": 10,
+      "department": "Ahuachapán",
+      "locality": "San Pedro Puxtla",
+      "covered": true
+    },
+    {
+      "id": 11,
+      "department": "Ahuachapán",
+      "locality": "Tacuba",
+      "covered": true
+    },
+    {
+      "id": 12,
+      "department": "Ahuachapán",
+      "locality": "Turín",
+      "covered": true
+    },
+    {
+      "id": 13,
+      "department": "Cabañas",
+      "locality": "Cinquera",
+      "covered": true
+    },
+    {
+      "id": 14,
+      "department": "Cabañas",
+      "locality": "Dolores",
+      "covered": true
+    },
+    {
+      "id": 15,
+      "department": "Cabañas",
+      "locality": "Guacotecti",
+      "covered": true
+    },
+    {
+      "id": 16,
+      "department": "Cabañas",
+      "locality": "Ilobasco",
+      "covered": true
+    },
+    {
+      "id": 17,
+      "department": "Cabañas",
+      "locality": "Jutiapa",
+      "covered": true
+    },
+    {
+      "id": 18,
+      "department": "Cabañas",
+      "locality": "San Isidro",
+      "covered": true
+    },
+    {
+      "id": 19,
+      "department": "Cabañas",
+      "locality": "Sensuntepeque",
+      "covered": true
+    },
+    {
+      "id": 20,
+      "department": "Cabañas",
+      "locality": "Tejutepeque",
+      "covered": true
+    },
+    {
+      "id": 21,
+      "department": "Cabañas",
+      "locality": "Victoria",
+      "covered": true
+    },
+    {
+      "id": 22,
+      "department": "Chalatenango",
+      "locality": "Agua Caliente",
+      "covered": true
+    },
+    {
+      "id": 23,
+      "department": "Chalatenango",
+      "locality": "Arcatao",
+      "covered": true
+    },
+    {
+      "id": 24,
+      "department": "Chalatenango",
+      "locality": "Azacualpa",
+      "covered": true
+    },
+    {
+      "id": 25,
+      "department": "Chalatenango",
+      "locality": "Cancasque",
+      "covered": true
+    },
+    {
+      "id": 26,
+      "department": "Chalatenango",
+      "locality": "Chalatenango",
+      "covered": true
+    },
+    {
+      "id": 27,
+      "department": "Chalatenango",
+      "locality": "Citalá",
+      "covered": true
+    },
+    {
+      "id": 28,
+      "department": "Chalatenango",
+      "locality": "Comalapa",
+      "covered": true
+    },
+    {
+      "id": 29,
+      "department": "Chalatenango",
+      "locality": "Concepción Quezaltepeque",
+      "covered": true
+    },
+    {
+      "id": 30,
+      "department": "Chalatenango",
+      "locality": "Dulce Nombre de María",
+      "covered": true
+    },
+    {
+      "id": 31,
+      "department": "Chalatenango",
+      "locality": "El Carrizal",
+      "covered": true
+    },
+    {
+      "id": 32,
+      "department": "Chalatenango",
+      "locality": "El Paraíso",
+      "covered": true
+    },
+    {
+      "id": 33,
+      "department": "Chalatenango",
+      "locality": "La Laguna",
+      "covered": true
+    },
+    {
+      "id": 34,
+      "department": "Chalatenango",
+      "locality": "La Palma",
+      "covered": true
+    },
+    {
+      "id": 35,
+      "department": "Chalatenango",
+      "locality": "La Reina",
+      "covered": true
+    },
+    {
+      "id": 36,
+      "department": "Chalatenango",
+      "locality": "Las Flores",
+      "covered": true
+    },
+    {
+      "id": 37,
+      "department": "Chalatenango",
+      "locality": "Las Vueltas",
+      "covered": true
+    },
+    {
+      "id": 38,
+      "department": "Chalatenango",
+      "locality": "Nombre de Jesús",
+      "covered": true
+    },
+    {
+      "id": 39,
+      "department": "Chalatenango",
+      "locality": "Nueva Concepción",
+      "covered": true
+    },
+    {
+      "id": 40,
+      "department": "Chalatenango",
+      "locality": "Nueva Trinidad",
+      "covered": true
+    },
+    {
+      "id": 41,
+      "department": "Chalatenango",
+      "locality": "Ojos de Agua",
+      "covered": true
+    },
+    {
+      "id": 42,
+      "department": "Chalatenango",
+      "locality": "Potonico",
+      "covered": true
+    },
+    {
+      "id": 43,
+      "department": "Chalatenango",
+      "locality": "San Antonio Los Ranchos",
+      "covered": true
+    },
+    {
+      "id": 44,
+      "department": "Chalatenango",
+      "locality": "San Antonio de la Cruz",
+      "covered": true
+    },
+    {
+      "id": 45,
+      "department": "Chalatenango",
+      "locality": "San Fernando",
+      "covered": true
+    },
+    {
+      "id": 46,
+      "department": "Chalatenango",
+      "locality": "San Francisco Lempa",
+      "covered": true
+    },
+    {
+      "id": 47,
+      "department": "Chalatenango",
+      "locality": "San Francisco Morazán",
+      "covered": true
+    },
+    {
+      "id": 48,
+      "department": "Chalatenango",
+      "locality": "San Ignacio",
+      "covered": true
+    },
+    {
+      "id": 49,
+      "department": "Chalatenango",
+      "locality": "San Isidro Labrador",
+      "covered": true
+    },
+    {
+      "id": 50,
+      "department": "Chalatenango",
+      "locality": "San Luis del Carmen",
+      "covered": true
+    },
+    {
+      "id": 51,
+      "department": "Chalatenango",
+      "locality": "San Miguel de Mercedes",
+      "covered": true
+    },
+    {
+      "id": 52,
+      "department": "Chalatenango",
+      "locality": "San Rafael",
+      "covered": true
+    },
+    {
+      "id": 53,
+      "department": "Chalatenango",
+      "locality": "Santa Rita",
+      "covered": true
+    },
+    {
+      "id": 54,
+      "department": "Chalatenango",
+      "locality": "Tejutla",
+      "covered": true
+    },
+    {
+      "id": 55,
+      "department": "Cuscatlán",
+      "locality": "Candelaria",
+      "covered": true
+    },
+    {
+      "id": 56,
+      "department": "Cuscatlán",
+      "locality": "Cojutepeque",
+      "covered": true
+    },
+    {
+      "id": 57,
+      "department": "Cuscatlán",
+      "locality": "El Carmen",
+      "covered": true
+    },
+    {
+      "id": 58,
+      "department": "Cuscatlán",
+      "locality": "El Rosario",
+      "covered": true
+    },
+    {
+      "id": 59,
+      "department": "Cuscatlán",
+      "locality": "Monte San Juan",
+      "covered": true
+    },
+    {
+      "id": 60,
+      "department": "Cuscatlán",
+      "locality": "Oratorio de Concepción",
+      "covered": true
+    },
+    {
+      "id": 61,
+      "department": "Cuscatlán",
+      "locality": "San Bartolomé Perulapía",
+      "covered": true
+    },
+    {
+      "id": 62,
+      "department": "Cuscatlán",
+      "locality": "San Cristóbal",
+      "covered": true
+    },
+    {
+      "id": 63,
+      "department": "Cuscatlán",
+      "locality": "San José Guayabal",
+      "covered": true
+    },
+    {
+      "id": 64,
+      "department": "Cuscatlán",
+      "locality": "San Pedro Perulapán",
+      "covered": true
+    },
+    {
+      "id": 65,
+      "department": "Cuscatlán",
+      "locality": "San Rafael Cedros",
+      "covered": true
+    },
+    {
+      "id": 66,
+      "department": "Cuscatlán",
+      "locality": "San Ramón",
+      "covered": true
+    },
+    {
+      "id": 67,
+      "department": "Cuscatlán",
+      "locality": "Santa Cruz Analquito",
+      "covered": true
+    },
+    {
+      "id": 68,
+      "department": "Cuscatlán",
+      "locality": "Santa Cruz Michapa",
+      "covered": true
+    },
+    {
+      "id": 69,
+      "department": "Cuscatlán",
+      "locality": "Suchitoto",
+      "covered": true
+    },
+    {
+      "id": 70,
+      "department": "Cuscatlán",
+      "locality": "Tenancingo",
+      "covered": true
+    },
+    {
+      "id": 71,
+      "department": "La Libertad",
+      "locality": "Antiguo Cuscatlán",
+      "covered": true
+    },
+    {
+      "id": 72,
+      "department": "La Libertad",
+      "locality": "Chiltiupán",
+      "covered": true
+    },
+    {
+      "id": 73,
+      "department": "La Libertad",
+      "locality": "Ciudad Arce",
+      "covered": true
+    },
+    {
+      "id": 74,
+      "department": "La Libertad",
+      "locality": "Colón",
+      "covered": true
+    },
+    {
+      "id": 75,
+      "department": "La Libertad",
+      "locality": "Comasagua",
+      "covered": true
+    },
+    {
+      "id": 76,
+      "department": "La Libertad",
+      "locality": "Huizúcar",
+      "covered": true
+    },
+    {
+      "id": 77,
+      "department": "La Libertad",
+      "locality": "Jayaque",
+      "covered": true
+    },
+    {
+      "id": 78,
+      "department": "La Libertad",
+      "locality": "Jicalapa",
+      "covered": true
+    },
+    {
+      "id": 79,
+      "department": "La Libertad",
+      "locality": "La Libertad",
+      "covered": true
+    },
+    {
+      "id": 80,
+      "department": "La Libertad",
+      "locality": "Nuevo Cuscatlán",
+      "covered": true
+    },
+    {
+      "id": 81,
+      "department": "La Libertad",
+      "locality": "Puerto La Libertad",
+      "covered": true
+    },
+    {
+      "id": 82,
+      "department": "La Libertad",
+      "locality": "Quezaltepeque",
+      "covered": true
+    },
+    {
+      "id": 83,
+      "department": "La Libertad",
+      "locality": "Sacacoyo",
+      "covered": true
+    },
+    {
+      "id": 84,
+      "department": "La Libertad",
+      "locality": "San José Villanueva",
+      "covered": true
+    },
+    {
+      "id": 85,
+      "department": "La Libertad",
+      "locality": "San Juan Opico",
+      "covered": true
+    },
+    {
+      "id": 86,
+      "department": "La Libertad",
+      "locality": "San Matías",
+      "covered": true
+    },
+    {
+      "id": 87,
+      "department": "La Libertad",
+      "locality": "San Pablo Tacachico",
+      "covered": true
+    },
+    {
+      "id": 88,
+      "department": "La Libertad",
+      "locality": "Santa Tecla",
+      "covered": true
+    },
+    {
+      "id": 89,
+      "department": "La Libertad",
+      "locality": "Talnique",
+      "covered": true
+    },
+    {
+      "id": 90,
+      "department": "La Libertad",
+      "locality": "Tamanique",
+      "covered": true
+    },
+    {
+      "id": 91,
+      "department": "La Libertad",
+      "locality": "Teotepeque",
+      "covered": true
+    },
+    {
+      "id": 92,
+      "department": "La Libertad",
+      "locality": "Tepecoyo",
+      "covered": true
+    },
+    {
+      "id": 93,
+      "department": "La Libertad",
+      "locality": "Zaragoza",
+      "covered": true
+    },
+    {
+      "id": 94,
+      "department": "La Paz",
+      "locality": "Cuyultitán",
+      "covered": true
+    },
+    {
+      "id": 95,
+      "department": "La Paz",
+      "locality": "El Rosario",
+      "covered": true
+    },
+    {
+      "id": 96,
+      "department": "La Paz",
+      "locality": "Jerusalén",
+      "covered": true
+    },
+    {
+      "id": 97,
+      "department": "La Paz",
+      "locality": "Mercedes La Ceiba",
+      "covered": true
+    },
+    {
+      "id": 98,
+      "department": "La Paz",
+      "locality": "Olocuilta",
+      "covered": true
+    },
+    {
+      "id": 99,
+      "department": "La Paz",
+      "locality": "Paraíso de Osorio",
+      "covered": true
+    },
+    {
+      "id": 100,
+      "department": "La Paz",
+      "locality": "San Antonio Masahuat",
+      "covered": true
+    },
+    {
+      "id": 101,
+      "department": "La Paz",
+      "locality": "San Emigdio",
+      "covered": true
+    },
+    {
+      "id": 102,
+      "department": "La Paz",
+      "locality": "San Francisco Chinameca",
+      "covered": true
+    },
+    {
+      "id": 103,
+      "department": "La Paz",
+      "locality": "San Juan Nonualco",
+      "covered": true
+    },
+    {
+      "id": 104,
+      "department": "La Paz",
+      "locality": "San Juan Talpa",
+      "covered": true
+    },
+    {
+      "id": 105,
+      "department": "La Paz",
+      "locality": "San Juan Tepezontes",
+      "covered": true
+    },
+    {
+      "id": 106,
+      "department": "La Paz",
+      "locality": "San Luis La Herradura",
+      "covered": true
+    },
+    {
+      "id": 107,
+      "department": "La Paz",
+      "locality": "San Luis Talpa",
+      "covered": true
+    },
+    {
+      "id": 108,
+      "department": "La Paz",
+      "locality": "San Miguel Tepezontes",
+      "covered": true
+    },
+    {
+      "id": 109,
+      "department": "La Paz",
+      "locality": "San Pedro Masahuat",
+      "covered": true
+    },
+    {
+      "id": 110,
+      "department": "La Paz",
+      "locality": "San Pedro Nonualco",
+      "covered": true
+    },
+    {
+      "id": 111,
+      "department": "La Paz",
+      "locality": "San Rafael Obrajuelo",
+      "covered": true
+    },
+    {
+      "id": 112,
+      "department": "La Paz",
+      "locality": "Santa María Ostuma",
+      "covered": true
+    },
+    {
+      "id": 113,
+      "department": "La Paz",
+      "locality": "Santiago Nonualco",
+      "covered": true
+    },
+    {
+      "id": 114,
+      "department": "La Paz",
+      "locality": "Tapalhuaca",
+      "covered": true
+    },
+    {
+      "id": 115,
+      "department": "La Paz",
+      "locality": "Zacatecoluca",
+      "covered": true
+    },
+    {
+      "id": 116,
+      "department": "La Unión",
+      "locality": "Anamorós",
+      "covered": true
+    },
+    {
+      "id": 117,
+      "department": "La Unión",
+      "locality": "Bolívar",
+      "covered": true
+    },
+    {
+      "id": 118,
+      "department": "La Unión",
+      "locality": "Concepción de Oriente",
+      "covered": true
+    },
+    {
+      "id": 119,
+      "department": "La Unión",
+      "locality": "Conchagua",
+      "covered": true
+    },
+    {
+      "id": 120,
+      "department": "La Unión",
+      "locality": "El Carmen",
+      "covered": true
+    },
+    {
+      "id": 121,
+      "department": "La Unión",
+      "locality": "El Sauce",
+      "covered": true
+    },
+    {
+      "id": 122,
+      "department": "La Unión",
+      "locality": "Intipucá",
+      "covered": true
+    },
+    {
+      "id": 123,
+      "department": "La Unión",
+      "locality": "La Unión",
+      "covered": true
+    },
+    {
+      "id": 124,
+      "department": "La Unión",
+      "locality": "Lislique",
+      "covered": true
+    },
+    {
+      "id": 125,
+      "department": "La Unión",
+      "locality": "Meanguera Del Golfo",
+      "covered": true
+    },
+    {
+      "id": 126,
+      "department": "La Unión",
+      "locality": "Nueva Esparta",
+      "covered": true
+    },
+    {
+      "id": 127,
+      "department": "La Unión",
+      "locality": "Pasaquina",
+      "covered": true
+    },
+    {
+      "id": 128,
+      "department": "La Unión",
+      "locality": "Polorós",
+      "covered": true
+    },
+    {
+      "id": 129,
+      "department": "La Unión",
+      "locality": "San Alejo",
+      "covered": true
+    },
+    {
+      "id": 130,
+      "department": "La Unión",
+      "locality": "San José",
+      "covered": true
+    },
+    {
+      "id": 131,
+      "department": "La Unión",
+      "locality": "Santa Rosa de Lima",
+      "covered": true
+    },
+    {
+      "id": 132,
+      "department": "La Unión",
+      "locality": "Yayantique",
+      "covered": true
+    },
+    {
+      "id": 133,
+      "department": "La Unión",
+      "locality": "Yucuaiquín",
+      "covered": true
+    },
+    {
+      "id": 134,
+      "department": "Morazán",
+      "locality": "Arambala",
+      "covered": true
+    },
+    {
+      "id": 135,
+      "department": "Morazán",
+      "locality": "Cacaopera",
+      "covered": true
+    },
+    {
+      "id": 136,
+      "department": "Morazán",
+      "locality": "Chilanga",
+      "covered": true
+    },
+    {
+      "id": 137,
+      "department": "Morazán",
+      "locality": "Corinto",
+      "covered": true
+    },
+    {
+      "id": 138,
+      "department": "Morazán",
+      "locality": "Delicias de Concepción",
+      "covered": true
+    },
+    {
+      "id": 139,
+      "department": "Morazán",
+      "locality": "El Divisadero",
+      "covered": true
+    },
+    {
+      "id": 140,
+      "department": "Morazán",
+      "locality": "El Rosario",
+      "covered": true
+    },
+    {
+      "id": 141,
+      "department": "Morazán",
+      "locality": "Gualococti",
+      "covered": true
+    },
+    {
+      "id": 142,
+      "department": "Morazán",
+      "locality": "Guatajiagua",
+      "covered": true
+    },
+    {
+      "id": 143,
+      "department": "Morazán",
+      "locality": "Joateca",
+      "covered": true
+    },
+    {
+      "id": 144,
+      "department": "Morazán",
+      "locality": "Jocoaitique",
+      "covered": true
+    },
+    {
+      "id": 145,
+      "department": "Morazán",
+      "locality": "Jocoro",
+      "covered": true
+    },
+    {
+      "id": 146,
+      "department": "Morazán",
+      "locality": "Lolotiquillo",
+      "covered": true
+    },
+    {
+      "id": 147,
+      "department": "Morazán",
+      "locality": "Meanguera",
+      "covered": true
+    },
+    {
+      "id": 148,
+      "department": "Morazán",
+      "locality": "Osicala",
+      "covered": true
+    },
+    {
+      "id": 149,
+      "department": "Morazán",
+      "locality": "Perquín",
+      "covered": true
+    },
+    {
+      "id": 150,
+      "department": "Morazán",
+      "locality": "San Carlos",
+      "covered": true
+    },
+    {
+      "id": 151,
+      "department": "Morazán",
+      "locality": "San Fernando",
+      "covered": true
+    },
+    {
+      "id": 152,
+      "department": "Morazán",
+      "locality": "San Francisco Gotera",
+      "covered": true
+    },
+    {
+      "id": 153,
+      "department": "Morazán",
+      "locality": "San Isidro",
+      "covered": true
+    },
+    {
+      "id": 154,
+      "department": "Morazán",
+      "locality": "San Simón",
+      "covered": true
+    },
+    {
+      "id": 155,
+      "department": "Morazán",
+      "locality": "Sensembra",
+      "covered": true
+    },
+    {
+      "id": 156,
+      "department": "Morazán",
+      "locality": "Sociedad",
+      "covered": true
+    },
+    {
+      "id": 157,
+      "department": "Morazán",
+      "locality": "Torola",
+      "covered": true
+    },
+    {
+      "id": 158,
+      "department": "Morazán",
+      "locality": "Yamabal",
+      "covered": true
+    },
+    {
+      "id": 159,
+      "department": "Morazán",
+      "locality": "Yoloaiquín",
+      "covered": true
+    },
+    {
+      "id": 160,
+      "department": "San Miguel",
+      "locality": "Carolina",
+      "covered": true
+    },
+    {
+      "id": 161,
+      "department": "San Miguel",
+      "locality": "Chapeltique",
+      "covered": true
+    },
+    {
+      "id": 162,
+      "department": "San Miguel",
+      "locality": "Chinameca",
+      "covered": true
+    },
+    {
+      "id": 163,
+      "department": "San Miguel",
+      "locality": "Chirilagua",
+      "covered": true
+    },
+    {
+      "id": 164,
+      "department": "San Miguel",
+      "locality": "Ciudad Barrios",
+      "covered": true
+    },
+    {
+      "id": 165,
+      "department": "San Miguel",
+      "locality": "Comacarán",
+      "covered": true
+    },
+    {
+      "id": 166,
+      "department": "San Miguel",
+      "locality": "El Tránsito",
+      "covered": true
+    },
+    {
+      "id": 167,
+      "department": "San Miguel",
+      "locality": "Lolotique",
+      "covered": true
+    },
+    {
+      "id": 168,
+      "department": "San Miguel",
+      "locality": "Moncagua",
+      "covered": true
+    },
+    {
+      "id": 169,
+      "department": "San Miguel",
+      "locality": "Nueva Guadalupe",
+      "covered": true
+    },
+    {
+      "id": 170,
+      "department": "San Miguel",
+      "locality": "Nuevo Edén de San Juan",
+      "covered": true
+    },
+    {
+      "id": 171,
+      "department": "San Miguel",
+      "locality": "Quelepa",
+      "covered": true
+    },
+    {
+      "id": 172,
+      "department": "San Miguel",
+      "locality": "San Antonio del Mosco",
+      "covered": true
+    },
+    {
+      "id": 173,
+      "department": "San Miguel",
+      "locality": "San Gerardo",
+      "covered": true
+    },
+    {
+      "id": 174,
+      "department": "San Miguel",
+      "locality": "San Jorge",
+      "covered": true
+    },
+    {
+      "id": 175,
+      "department": "San Miguel",
+      "locality": "San Luis de La Reina",
+      "covered": true
+    },
+    {
+      "id": 176,
+      "department": "San Miguel",
+      "locality": "San Miguel",
+      "covered": true
+    },
+    {
+      "id": 177,
+      "department": "San Miguel",
+      "locality": "San Rafael Oriente",
+      "covered": true
+    },
+    {
+      "id": 178,
+      "department": "San Miguel",
+      "locality": "Sesori",
+      "covered": true
+    },
+    {
+      "id": 179,
+      "department": "San Miguel",
+      "locality": "Uluazapa",
+      "covered": true
+    },
+    {
+      "id": 180,
+      "department": "San Salvador",
+      "locality": "Aguilares",
+      "covered": true
+    },
+    {
+      "id": 181,
+      "department": "San Salvador",
+      "locality": "Apopa",
+      "covered": true
+    },
+    {
+      "id": 182,
+      "department": "San Salvador",
+      "locality": "Ayutuxtepeque",
+      "covered": true
+    },
+    {
+      "id": 183,
+      "department": "San Salvador",
+      "locality": "Cuscatancingo",
+      "covered": true
+    },
+    {
+      "id": 184,
+      "department": "San Salvador",
+      "locality": "Delgado",
+      "covered": true
+    },
+    {
+      "id": 185,
+      "department": "San Salvador",
+      "locality": "El Paisnal",
+      "covered": true
+    },
+    {
+      "id": 186,
+      "department": "San Salvador",
+      "locality": "Guazapa",
+      "covered": true
+    },
+    {
+      "id": 187,
+      "department": "San Salvador",
+      "locality": "Ilopango",
+      "covered": true
+    },
+    {
+      "id": 188,
+      "department": "San Salvador",
+      "locality": "Mejicanos",
+      "covered": true
+    },
+    {
+      "id": 189,
+      "department": "San Salvador",
+      "locality": "Nejapa",
+      "covered": true
+    },
+    {
+      "id": 190,
+      "department": "San Salvador",
+      "locality": "Panchimalco",
+      "covered": true
+    },
+    {
+      "id": 191,
+      "department": "San Salvador",
+      "locality": "Rosario de Mora",
+      "covered": true
+    },
+    {
+      "id": 192,
+      "department": "San Salvador",
+      "locality": "San Marcos",
+      "covered": true
+    },
+    {
+      "id": 193,
+      "department": "San Salvador",
+      "locality": "San Martín",
+      "covered": true
+    },
+    {
+      "id": 194,
+      "department": "San Salvador",
+      "locality": "San Salvador",
+      "covered": true
+    },
+    {
+      "id": 195,
+      "department": "San Salvador",
+      "locality": "Santiago Texacuangos",
+      "covered": true
+    },
+    {
+      "id": 196,
+      "department": "San Salvador",
+      "locality": "Santo Tomás",
+      "covered": true
+    },
+    {
+      "id": 197,
+      "department": "San Salvador",
+      "locality": "Soyapango",
+      "covered": true
+    },
+    {
+      "id": 198,
+      "department": "San Salvador",
+      "locality": "Tonacatepeque",
+      "covered": true
+    },
+    {
+      "id": 199,
+      "department": "San Vicente",
+      "locality": "Apastepeque",
+      "covered": true
+    },
+    {
+      "id": 200,
+      "department": "San Vicente",
+      "locality": "Guadalupe",
+      "covered": true
+    },
+    {
+      "id": 201,
+      "department": "San Vicente",
+      "locality": "San Cayetano Istepeque",
+      "covered": true
+    },
+    {
+      "id": 202,
+      "department": "San Vicente",
+      "locality": "San Esteban Catarina",
+      "covered": true
+    },
+    {
+      "id": 203,
+      "department": "San Vicente",
+      "locality": "San Ildefonso",
+      "covered": true
+    },
+    {
+      "id": 204,
+      "department": "San Vicente",
+      "locality": "San Lorenzo",
+      "covered": true
+    },
+    {
+      "id": 205,
+      "department": "San Vicente",
+      "locality": "San Sebastián",
+      "covered": true
+    },
+    {
+      "id": 206,
+      "department": "San Vicente",
+      "locality": "San Vicente",
+      "covered": true
+    },
+    {
+      "id": 207,
+      "department": "San Vicente",
+      "locality": "Santa Clara",
+      "covered": true
+    },
+    {
+      "id": 208,
+      "department": "San Vicente",
+      "locality": "Santo Domingo",
+      "covered": true
+    },
+    {
+      "id": 209,
+      "department": "San Vicente",
+      "locality": "Tecoluca",
+      "covered": true
+    },
+    {
+      "id": 210,
+      "department": "San Vicente",
+      "locality": "Tepetitán",
+      "covered": true
+    },
+    {
+      "id": 211,
+      "department": "San Vicente",
+      "locality": "Verapaz",
+      "covered": true
+    },
+    {
+      "id": 212,
+      "department": "Santa Ana",
+      "locality": "Candelaria De La Frontera",
+      "covered": true
+    },
+    {
+      "id": 213,
+      "department": "Santa Ana",
+      "locality": "Chalchuapa",
+      "covered": true
+    },
+    {
+      "id": 214,
+      "department": "Santa Ana",
+      "locality": "Coatepeque",
+      "covered": true
+    },
+    {
+      "id": 215,
+      "department": "Santa Ana",
+      "locality": "El Congo",
+      "covered": true
+    },
+    {
+      "id": 216,
+      "department": "Santa Ana",
+      "locality": "El Porvenir",
+      "covered": true
+    },
+    {
+      "id": 217,
+      "department": "Santa Ana",
+      "locality": "Masahuat",
+      "covered": true
+    },
+    {
+      "id": 218,
+      "department": "Santa Ana",
+      "locality": "Metapán",
+      "covered": true
+    },
+    {
+      "id": 219,
+      "department": "Santa Ana",
+      "locality": "San Antonio Pajonal",
+      "covered": true
+    },
+    {
+      "id": 220,
+      "department": "Santa Ana",
+      "locality": "San Sebastián Salitrillo",
+      "covered": true
+    },
+    {
+      "id": 221,
+      "department": "Santa Ana",
+      "locality": "Santa Ana",
+      "covered": true
+    },
+    {
+      "id": 222,
+      "department": "Santa Ana",
+      "locality": "Santa Rosa Guachipilín",
+      "covered": true
+    },
+    {
+      "id": 223,
+      "department": "Santa Ana",
+      "locality": "Santiago de la Frontera",
+      "covered": true
+    },
+    {
+      "id": 224,
+      "department": "Santa Ana",
+      "locality": "Texistepeque",
+      "covered": true
+    },
+    {
+      "id": 225,
+      "department": "Sonsonate",
+      "locality": "Acajutla",
+      "covered": true
+    },
+    {
+      "id": 226,
+      "department": "Sonsonate",
+      "locality": "Armenia",
+      "covered": true
+    },
+    {
+      "id": 227,
+      "department": "Sonsonate",
+      "locality": "Caluco",
+      "covered": true
+    },
+    {
+      "id": 228,
+      "department": "Sonsonate",
+      "locality": "Cuisnahuat",
+      "covered": true
+    },
+    {
+      "id": 229,
+      "department": "Sonsonate",
+      "locality": "Izalco",
+      "covered": true
+    },
+    {
+      "id": 230,
+      "department": "Sonsonate",
+      "locality": "Juayúa",
+      "covered": true
+    },
+    {
+      "id": 231,
+      "department": "Sonsonate",
+      "locality": "Nahuizalco",
+      "covered": true
+    },
+    {
+      "id": 232,
+      "department": "Sonsonate",
+      "locality": "Nahulingo",
+      "covered": true
+    },
+    {
+      "id": 233,
+      "department": "Sonsonate",
+      "locality": "Salcoatitán",
+      "covered": true
+    },
+    {
+      "id": 234,
+      "department": "Sonsonate",
+      "locality": "San Antonio del Monte",
+      "covered": true
+    },
+    {
+      "id": 235,
+      "department": "Sonsonate",
+      "locality": "San Julián",
+      "covered": true
+    },
+    {
+      "id": 236,
+      "department": "Sonsonate",
+      "locality": "Santa Catarina Masahuat",
+      "covered": true
+    },
+    {
+      "id": 237,
+      "department": "Sonsonate",
+      "locality": "Santa Isabel Ishuatán",
+      "covered": true
+    },
+    {
+      "id": 238,
+      "department": "Sonsonate",
+      "locality": "Santo Domingo de Guzmán",
+      "covered": true
+    },
+    {
+      "id": 239,
+      "department": "Sonsonate",
+      "locality": "Sonsonate",
+      "covered": true
+    },
+    {
+      "id": 240,
+      "department": "Sonsonate",
+      "locality": "Sonzacate",
+      "covered": true
+    },
+    {
+      "id": 241,
+      "department": "Usulután",
+      "locality": "Alegría",
+      "covered": true
+    },
+    {
+      "id": 242,
+      "department": "Usulután",
+      "locality": "Berlín",
+      "covered": true
+    },
+    {
+      "id": 243,
+      "department": "Usulután",
+      "locality": "California",
+      "covered": true
+    },
+    {
+      "id": 244,
+      "department": "Usulután",
+      "locality": "Concepción Batres",
+      "covered": true
+    },
+    {
+      "id": 245,
+      "department": "Usulután",
+      "locality": "El Triunfo",
+      "covered": true
+    },
+    {
+      "id": 246,
+      "department": "Usulután",
+      "locality": "Ereguayquín",
+      "covered": true
+    },
+    {
+      "id": 247,
+      "department": "Usulután",
+      "locality": "Estanzuelas",
+      "covered": true
+    },
+    {
+      "id": 248,
+      "department": "Usulután",
+      "locality": "Jiquilisco",
+      "covered": true
+    },
+    {
+      "id": 249,
+      "department": "Usulután",
+      "locality": "Jucuapa",
+      "covered": true
+    },
+    {
+      "id": 250,
+      "department": "Usulután",
+      "locality": "Jucuarán",
+      "covered": true
+    },
+    {
+      "id": 251,
+      "department": "Usulután",
+      "locality": "Mercedes Umaña",
+      "covered": true
+    },
+    {
+      "id": 252,
+      "department": "Usulután",
+      "locality": "Nueva Granada",
+      "covered": true
+    },
+    {
+      "id": 253,
+      "department": "Usulután",
+      "locality": "Ozatlán",
+      "covered": true
+    },
+    {
+      "id": 254,
+      "department": "Usulután",
+      "locality": "Puerto El Triunfo",
+      "covered": true
+    },
+    {
+      "id": 255,
+      "department": "Usulután",
+      "locality": "San Agustín",
+      "covered": true
+    },
+    {
+      "id": 256,
+      "department": "Usulután",
+      "locality": "San Buenaventura",
+      "covered": true
+    },
+    {
+      "id": 257,
+      "department": "Usulután",
+      "locality": "San Dionisio",
+      "covered": true
+    },
+    {
+      "id": 258,
+      "department": "Usulután",
+      "locality": "San Francisco Javier",
+      "covered": true
+    },
+    {
+      "id": 259,
+      "department": "Usulután",
+      "locality": "Santa Elena",
+      "covered": true
+    },
+    {
+      "id": 260,
+      "department": "Usulután",
+      "locality": "Santa María",
+      "covered": true
+    },
+    {
+      "id": 261,
+      "department": "Usulután",
+      "locality": "Santiago de María",
+      "covered": true
+    },
+    {
+      "id": 262,
+      "department": "Usulután",
+      "locality": "Tecapán",
+      "covered": true
+    },
+    {
+      "id": 263,
+      "department": "Usulután",
+      "locality": "Usulután",
+      "covered": true
+    }
+  ]
+}
