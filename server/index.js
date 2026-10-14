@@ -1,4 +1,6 @@
 import { createChatPersistence } from './services/chatPersistence.js';
+import { isNicaragua, nicaraguaCoveragePrompt, applyNicaraguaCoverage, checkNicaraguaOrder } from './services/nicaraguaCoverage.js';
+import { isHonduras, hondurasContext, hondurasPrompt, applyHondurasCoverage, checkHondurasOrder, hondurasDeliveryNote, needsHondurasReview } from './services/hondurasCoverage.js';
 import dotenv from 'dotenv';
 dotenv.config(); 
 
@@ -981,7 +983,7 @@ const paymentReminderTimers = {};
 function scheduleRecovery(to) {
     if (recoveryTimers[to]) clearTimeout(recoveryTimers[to]);
     const chat = chats[to];
-    if (!chat || chat.aiDisabled) return;
+    if (!chat || chat.aiDisabled || chat.nicaraguaCoverage?.status === 'uncovered') return;
 
     // Verificar si el último mensaje del bot fue la Etapa 5 (contiene la pregunta de cierre o precios)
     const lastBotMsg = [...(chat.messages || [])].reverse().find(m => m.role === 'bot');
@@ -992,7 +994,7 @@ function scheduleRecovery(to) {
         
         recoveryTimers[to] = setTimeout(async () => {
             const currentChat = chats[to];
-            if (!currentChat || currentChat.aiDisabled) return;
+            if (!currentChat || currentChat.aiDisabled || currentChat.nicaraguaCoverage?.status === 'uncovered') return;
 
             // Verificar nuevamente que el cliente no haya respondido (el último mensaje sigue siendo el nuestro)
             const newLastMsg = [...(currentChat.messages || [])].reverse()[0];
@@ -1126,6 +1128,14 @@ async function registerOrder(to, products) {
     const chat = chats[to];
     if (!chat) return;
 
+    const coverage = checkNicaraguaOrder(chat, to);
+    if (!coverage.allowed) {
+        console.warn('[COBERTURA NIC] Registro bloqueado:', coverage.result.status);
+        return { success: false, error: coverage.error };
+    }
+    const hnCoverage = checkHondurasOrder(chat, to);
+    if (!hnCoverage.allowed) return { success: false, error: hnCoverage.error };
+
     // BLINDAJE 1: Si ya fue registrado o ya tiene orden creada en Shopify, ABORTAR
     if (chat.orderRegistered || chat.shopifyOrderId || chat.shopifyOrderName) {
         console.log(`⚠️ [BLINDAJE DUPLICADOS] El pedido de ${chat.customerName || to} ya fue registrado y enviado a Shopify previamente (${chat.shopifyOrderName || chat.shopifyOrderId}). Abortando creación duplicada.`);
@@ -1153,6 +1163,20 @@ async function registerOrder(to, products) {
 
     if (isComplete) {
         // --- AUTO-APROBACIÓN ---
+
+        if (needsHondurasReview(chat)) {
+            chat.tags = [...new Set([...(chat.tags || []).filter(tag => !['pedido-pendiente', 'interesado'].includes(tag)), 'preparar_pedido'])];
+            chat.orderRegistered = true; // Retained in CRM, not created in Shopify/Dropi.
+            chat.pendingApprovalProducts = productList;
+            chat.shippingReviewRequired = true;
+            chat.orderNotes = [chat.orderNotes, hondurasDeliveryNote(chat)].filter(Boolean).join(' | ');
+            chat.updatedAt = Date.now();
+            saveChats(chats);
+            io.emit('tag_updated', { from: to, tags: chat.tags });
+            io.emit('chat_meta_updated', { id: to, chat: { ...chat, messages: undefined } });
+            notifyAdmins(chat, `📦 Pedido guardado para revisión logística: ${orderName}. ${productList}. ${chat.orderNotes} NO se envió a Shopify. Revísalo en Preparar pedido.`, 'support');
+            return { success: true, pendingReview: true };
+        }
         
         if (chat.isScheduledForLater) {
             chat.tags = (chat.tags || []).filter(t => t !== 'soporte' && t !== 'interesado' && t !== 'pedido-pendiente' && t !== 'pedido');
@@ -1283,6 +1307,12 @@ async function createShopifyOrder(chat, products) {
         console.log(`⚠️ [BLINDAJE SHOPIFY] El pedido para ${chat.customerName} ya existe en Shopify (${chat.shopifyOrderName || chat.shopifyOrderId}). Abortando llamada API duplicada.`);
         return { success: true, orderName: chat.shopifyOrderName, orderId: chat.shopifyOrderId, alreadyExisted: true };
     }
+
+    const coverage = checkNicaraguaOrder(chat);
+    if (!coverage.allowed) return { success: false, error: coverage.error };
+    const hnCoverage = checkHondurasOrder(chat);
+    if (!hnCoverage.allowed) return { success: false, error: hnCoverage.error };
+    if (needsHondurasReview(chat)) return { success: false, error: 'Pedido retenido para gestionar transportadora/retiro en Dropi. No enviar por la transportadora predeterminada.' };
 
     let waLine = '1';
     if (chat.from && chat.from.includes('_')) {
@@ -1698,7 +1728,7 @@ async function createShopifyOrder(chat, products) {
                     last_name: lastName,
                     email: `${finalPhone.replace('+', '')}@whatsapp.bot`
                 },
-                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nDepto Detectado: ${provinceVal}\nReferencias: ${chat.references || 'No especificadas'}`,
+                note: `Pedido vía WhatsApp Bot.\nTeléfono Original: ${chat.orderPhone || chat.from}\nDepto Detectado: ${provinceVal}\nReferencias: ${chat.references || 'No especificadas'}\n${hondurasDeliveryNote(chat)}`,
                 tags: 'whatsapp-bot, contraentrega',
                 financial_status: 'pending',
                 gateway: "Cash on Delivery (COD)",
@@ -2661,7 +2691,7 @@ async function processAIResponse(from, msgBodyLower) {
         let isCompleteForGemini = refreshedChat.orderName && refreshedChat.address && refreshedChat.city;
         
         // --- NORMALIZACIÓN CON GEMINI ---
-        if (isCompleteForGemini && process.env.GEMINI_API_KEY) {
+        if (isCompleteForGemini && process.env.GEMINI_API_KEY && !isNicaragua(refreshedChat, from) && !isHonduras(refreshedChat, from)) {
             console.log(`🧠 [GEMINI] Interceptando dirección para normalizar: ${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}`);
             const paisContexto = getCountryFromPhone(from);
             const rawAddress = `${refreshedChat.address}, ${refreshedChat.city}, ${refreshedChat.province}. Ref: ${refreshedChat.references || ''}`;
@@ -4654,6 +4684,10 @@ REGLA DE ORO (¡EL BOT VA UN PASO ADELANTE!): Los únicos datos que le pides al 
         const timeStr = `${nowGmt5.getHours().toString().padStart(2, '0')}:${nowGmt5.getMinutes().toString().padStart(2, '0')}`;
         const dateContext = `\n\n### CONTEXTO DE TIEMPO (GMT-5):\n- Hoy es: ${todayDateStr}\n- Hora actual: ${timeStr}\n`;
 
+        const customerTextsHN = history.filter(m => m.role === 'user').map(m => m.content || m.body || '');
+        customerTextsHN.push(message);
+        const hnContext = isHonduras(currentChat, fromPhone) ? hondurasContext(customerTextsHN, currentChat) : null;
+
         console.log("Tokens approx:", (settings[waLine]?.systemPrompt || settings["1"].systemPrompt).length + knowledgeContext.length + globalRules.length + feriadoRules.length);
         const comp = await activeOpenAI.chat.completions.create({ 
             model: "gpt-4o-mini",
@@ -4664,9 +4698,27 @@ REGLA DE ORO (¡EL BOT VA UN PASO ADELANTE!): Los únicos datos que le pides al 
                     content: m.content || m.body 
                 })),
                 { role: "system", content: `${dateContext}\n\n[CONTEXTO DEL CLIENTE]\nTeléfono real del cliente (¡YA LO TIENES! ESTÁ TERMINANTEMENTE PROHIBIDO PEDIRLO AL CLIENTE): ${fromPhone.split('@')[0].split('_')[0]}\n\nRECORDATORIO DE EMERGENCIA Y REGLA ABSOLUTA: 1) Si el cliente pide EXPLÍCITAMENTE precios o pagos en una moneda EXTRANJERA que no está en tu catálogo (ej. pide pagar en dólares pero solo tienes quetzales). 2) Si el cliente pide ver fotos, imagenes o videos reales del producto. EN CUALQUIERA DE ESTOS DOS CASOS, ESTÁ ESTRICTAMENTE PROHIBIDO DAR EXPLICACIONES O DISCULPARTE. TU ÚNICA SALIDA PERMITIDA es escribir exactamente la etiqueta [APAGAR_BOT_SOPORTE] y nada más, para que un humano asuma el control. NUNCA te apagues si solo te piden un combo o información normal.` },
+                ...(isNicaragua(currentChat, fromPhone) ? [{ role: 'system', content: nicaraguaCoveragePrompt }] : []),
+                ...(hnContext ? [{ role: 'system', content: hondurasPrompt(hnContext, currentChat) }] : []),
                 { role: "user", content: message } ] }, { timeout: 15000 });
         
         let reply = comp.choices[0].message.content;
+        if (hnContext) {
+            reply = applyHondurasCoverage(reply, currentChat || {}, customerTextsHN, hnContext);
+            if (currentChat) {
+                saveChats(chats);
+                io.emit('chat_meta_updated', { id: fromPhone, chat: { ...currentChat, messages: undefined } });
+            }
+        }
+        if (isNicaragua(currentChat, fromPhone)) {
+            const customerTexts = history.filter(m => m.role === 'user').map(m => m.content || m.body || '');
+            customerTexts.push(message);
+            reply = applyNicaraguaCoverage(reply, currentChat || {}, customerTexts);
+            if (currentChat) {
+                saveChats(chats);
+                io.emit('chat_meta_updated', { id: fromPhone, chat: { ...currentChat, messages: undefined } });
+            }
+        }
         
         try {
             const debugData = {
@@ -4753,7 +4805,7 @@ async function runFollowUpSequence() {
         const chat = chats[chatId];
         
         // Ignorar si el cliente ya compró
-        if (chat.orderRegistered) continue;
+        if (chat.orderRegistered || chat.nicaraguaCoverage?.status === 'uncovered') continue;
         if (chat.tags && (chat.tags.includes('venta') || chat.tags.includes('pagado') || chat.tags.includes('entregado') || chat.tags.includes('pago-pendiente'))) continue;
         
         // Ignorar si la IA está apagada, el chat bloqueado o si es un grupo

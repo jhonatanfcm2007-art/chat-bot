@@ -1,0 +1,1564 @@
+{
+  "country": "NI",
+  "carrier": "Cargotrans",
+  "source": "COBERTURAS NIC (2).xlsx",
+  "sheet": "CARGO TRANS",
+  "sha256": "3a85e5ba18e093d1115089faa94bee0c1c56495fb8493c466014bbb488f42c05",
+  "policy": "Only PRIMARIA A and PRIMARIA B; confirmed by owner 2026-10-14. Departments preserved as supplied carrier labels, not verified administrative geography.",
+  "locations": [
+    {
+      "id": 4,
+      "route": "PRIMARIA A",
+      "department": "León",
+      "locality": "Nagarote",
+      "covered": true
+    },
+    {
+      "id": 5,
+      "route": "PRIMARIA A",
+      "department": "León",
+      "locality": "La Paz Centro",
+      "covered": true
+    },
+    {
+      "id": 6,
+      "route": "PRIMARIA A",
+      "department": "León",
+      "locality": "León",
+      "covered": true
+    },
+    {
+      "id": 7,
+      "route": "PRIMARIA A",
+      "department": "Chinandega",
+      "locality": "Chichigalpa",
+      "covered": true
+    },
+    {
+      "id": 8,
+      "route": "PRIMARIA A",
+      "department": "Chinandega",
+      "locality": "Chinandega",
+      "covered": true
+    },
+    {
+      "id": 9,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "Niquinohomo",
+      "covered": true
+    },
+    {
+      "id": 10,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "Nindirí",
+      "covered": true
+    },
+    {
+      "id": 11,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "Masaya",
+      "covered": true
+    },
+    {
+      "id": 12,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "Catarina",
+      "covered": true
+    },
+    {
+      "id": 13,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "La Concepción",
+      "covered": true
+    },
+    {
+      "id": 14,
+      "route": "PRIMARIA A",
+      "department": "Masaya",
+      "locality": "Masatepe",
+      "covered": true
+    },
+    {
+      "id": 15,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "Diriamba",
+      "covered": true
+    },
+    {
+      "id": 16,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "Dolores",
+      "covered": true
+    },
+    {
+      "id": 17,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "Jinotepe",
+      "covered": true
+    },
+    {
+      "id": 18,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "Las Esquinas",
+      "covered": true
+    },
+    {
+      "id": 19,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "San Marcos",
+      "covered": true
+    },
+    {
+      "id": 20,
+      "route": "PRIMARIA A",
+      "department": "Carazo",
+      "locality": "El Rosario",
+      "covered": true
+    },
+    {
+      "id": 21,
+      "route": "PRIMARIA A",
+      "department": "Granada",
+      "locality": "Granada",
+      "covered": true
+    },
+    {
+      "id": 22,
+      "route": "PRIMARIA A",
+      "department": "Granada",
+      "locality": "Nandaime",
+      "covered": true
+    },
+    {
+      "id": 23,
+      "route": "PRIMARIA A",
+      "department": "Rivas",
+      "locality": "Rivas",
+      "covered": true
+    },
+    {
+      "id": 24,
+      "route": "PRIMARIA A",
+      "department": "Boaco",
+      "locality": "Teustepe",
+      "covered": true
+    },
+    {
+      "id": 25,
+      "route": "PRIMARIA A",
+      "department": "Boaco",
+      "locality": "Empalme Boaco",
+      "covered": true
+    },
+    {
+      "id": 26,
+      "route": "PRIMARIA A",
+      "department": "Boaco",
+      "locality": "Boaco",
+      "covered": true
+    },
+    {
+      "id": 27,
+      "route": "PRIMARIA A",
+      "department": "Boaco",
+      "locality": "Camoapa",
+      "covered": true
+    },
+    {
+      "id": 28,
+      "route": "PRIMARIA A",
+      "department": "Chontales",
+      "locality": "San Benito",
+      "covered": true
+    },
+    {
+      "id": 29,
+      "route": "PRIMARIA A",
+      "department": "Chontales",
+      "locality": "Juigalpa",
+      "covered": true
+    },
+    {
+      "id": 30,
+      "route": "PRIMARIA A",
+      "department": "Chontales",
+      "locality": "Empalme San Benito",
+      "covered": true
+    },
+    {
+      "id": 31,
+      "route": "PRIMARIA A",
+      "department": "Matagalpa",
+      "locality": "Ciudad Darío",
+      "covered": true
+    },
+    {
+      "id": 32,
+      "route": "PRIMARIA A",
+      "department": "Matagalpa",
+      "locality": "Sébaco",
+      "covered": true
+    },
+    {
+      "id": 33,
+      "route": "PRIMARIA A",
+      "department": "Matagalpa",
+      "locality": "Matagalpa",
+      "covered": true
+    },
+    {
+      "id": 34,
+      "route": "PRIMARIA A",
+      "department": "Jinotega",
+      "locality": "Jinotega",
+      "covered": true
+    },
+    {
+      "id": 35,
+      "route": "PRIMARIA A",
+      "department": "Estelí",
+      "locality": "Estelí",
+      "covered": true
+    },
+    {
+      "id": 36,
+      "route": "PRIMARIA A",
+      "department": "Managua",
+      "locality": "Managua",
+      "covered": true
+    },
+    {
+      "id": 37,
+      "route": "PRIMARIA B",
+      "department": "León",
+      "locality": "Telica",
+      "covered": true
+    },
+    {
+      "id": 38,
+      "route": "PRIMARIA B",
+      "department": "León",
+      "locality": "Quezalguaque",
+      "covered": true
+    },
+    {
+      "id": 39,
+      "route": "PRIMARIA B",
+      "department": "Chinandega",
+      "locality": "Posoltega",
+      "covered": true
+    },
+    {
+      "id": 40,
+      "route": "PRIMARIA B",
+      "department": "Chinandega",
+      "locality": "El Viejo",
+      "covered": true
+    },
+    {
+      "id": 41,
+      "route": "PRIMARIA B",
+      "department": "Chinandega",
+      "locality": "Corinto",
+      "covered": true
+    },
+    {
+      "id": 42,
+      "route": "PRIMARIA B",
+      "department": "Masaya",
+      "locality": "Nandasmo",
+      "covered": true
+    },
+    {
+      "id": 43,
+      "route": "PRIMARIA B",
+      "department": "Masaya",
+      "locality": "San Juan de Oriente",
+      "covered": true
+    },
+    {
+      "id": 44,
+      "route": "PRIMARIA B",
+      "department": "Granada",
+      "locality": "Diriá",
+      "covered": true
+    },
+    {
+      "id": 45,
+      "route": "PRIMARIA B",
+      "department": "Granada",
+      "locality": "Diriomo",
+      "covered": true
+    },
+    {
+      "id": 46,
+      "route": "PRIMARIA B",
+      "department": "Carazo",
+      "locality": "La Paz Carazo",
+      "covered": true
+    },
+    {
+      "id": 47,
+      "route": "PRIMARIA B",
+      "department": "Carazo",
+      "locality": "El Guanacaste",
+      "covered": true
+    },
+    {
+      "id": 48,
+      "route": "PRIMARIA B",
+      "department": "Carazo",
+      "locality": "Santa Teresa",
+      "covered": true
+    },
+    {
+      "id": 49,
+      "route": "PRIMARIA B",
+      "department": "Rivas",
+      "locality": "Belén",
+      "covered": true
+    },
+    {
+      "id": 50,
+      "route": "PRIMARIA B",
+      "department": "Rivas",
+      "locality": "San Jorge",
+      "covered": true
+    },
+    {
+      "id": 51,
+      "route": "PRIMARIA B",
+      "department": "Rivas",
+      "locality": "Buenos Aires",
+      "covered": true
+    },
+    {
+      "id": 52,
+      "route": "PRIMARIA B",
+      "department": "Boaco",
+      "locality": "Las Canoas",
+      "covered": true
+    },
+    {
+      "id": 53,
+      "route": "PRIMARIA B",
+      "department": "Boaco",
+      "locality": "Las Banderas",
+      "covered": true
+    },
+    {
+      "id": 54,
+      "route": "PRIMARIA B",
+      "department": "Boaco",
+      "locality": "Tecolostote",
+      "covered": true
+    },
+    {
+      "id": 55,
+      "route": "PRIMARIA B",
+      "department": "Chontales",
+      "locality": "San Patricio",
+      "covered": true
+    },
+    {
+      "id": 56,
+      "route": "PRIMARIA B",
+      "department": "Chontales",
+      "locality": "Santo Tomás",
+      "covered": true
+    },
+    {
+      "id": 57,
+      "route": "PRIMARIA B",
+      "department": "Chontales",
+      "locality": "La Palma",
+      "covered": true
+    },
+    {
+      "id": 58,
+      "route": "PRIMARIA B",
+      "department": "Matagalpa",
+      "locality": "Las Maderas",
+      "covered": true
+    },
+    {
+      "id": 59,
+      "route": "PRIMARIA B",
+      "department": "Matagalpa",
+      "locality": "Chagüitillo",
+      "covered": true
+    },
+    {
+      "id": 60,
+      "route": "PRIMARIA B",
+      "department": "Matagalpa",
+      "locality": "San Isidro",
+      "covered": true
+    },
+    {
+      "id": 61,
+      "route": "PRIMARIA B",
+      "department": "Estelí",
+      "locality": "La Trinidad",
+      "covered": true
+    },
+    {
+      "id": 62,
+      "route": "PRIMARIA B",
+      "department": "Estelí",
+      "locality": "Santa Cruz",
+      "covered": true
+    },
+    {
+      "id": 63,
+      "route": "PRIMARIA B",
+      "department": "Madriz",
+      "locality": "Somoto",
+      "covered": true
+    },
+    {
+      "id": 64,
+      "route": "PRIMARIA B",
+      "department": "Madriz",
+      "locality": "Yalagüina",
+      "covered": true
+    },
+    {
+      "id": 65,
+      "route": "PRIMARIA B",
+      "department": "Madriz",
+      "locality": "Palacagüina",
+      "covered": true
+    },
+    {
+      "id": 66,
+      "route": "PRIMARIA B",
+      "department": "Nueva Segovia",
+      "locality": "Ocotal",
+      "covered": true
+    },
+    {
+      "id": 67,
+      "route": "PRIMARIA B",
+      "department": "Estelí",
+      "locality": "Condega",
+      "covered": true
+    },
+    {
+      "id": 68,
+      "route": "PRIMARIA B",
+      "department": "Chinandega",
+      "locality": "Tologalpa",
+      "covered": true
+    },
+    {
+      "id": 69,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Veracruz",
+      "covered": true
+    },
+    {
+      "id": 70,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Tipitapa",
+      "covered": true
+    },
+    {
+      "id": 71,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Nejapa",
+      "covered": true
+    },
+    {
+      "id": 72,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Mateare",
+      "covered": true
+    },
+    {
+      "id": 73,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Ciudad El Doral",
+      "covered": true
+    },
+    {
+      "id": 74,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Ciudad Sandino",
+      "covered": true
+    },
+    {
+      "id": 75,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Ticuantepe",
+      "covered": true
+    },
+    {
+      "id": 76,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "El Crucero",
+      "covered": true
+    },
+    {
+      "id": 77,
+      "route": "PRIMARIA B",
+      "department": "Managua",
+      "locality": "Los Brasiles",
+      "covered": true
+    },
+    {
+      "id": 78,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "Ingenio San Antonio",
+      "covered": false
+    },
+    {
+      "id": 79,
+      "route": "SECUNDARIA",
+      "department": "León",
+      "locality": "Malpaisillo",
+      "covered": false
+    },
+    {
+      "id": 80,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "San Jacinto",
+      "covered": false
+    },
+    {
+      "id": 81,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "Mina El Limón",
+      "covered": false
+    },
+    {
+      "id": 82,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "El Realejo",
+      "covered": false
+    },
+    {
+      "id": 83,
+      "route": "SECUNDARIA",
+      "department": "León",
+      "locality": "El Sauce",
+      "covered": false
+    },
+    {
+      "id": 84,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "Villa Nueva",
+      "covered": false
+    },
+    {
+      "id": 85,
+      "route": "SECUNDARIA",
+      "department": "Chinandega",
+      "locality": "Somotillo",
+      "covered": false
+    },
+    {
+      "id": 86,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "Paso Caballos",
+      "covered": false
+    },
+    {
+      "id": 87,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "Potosí",
+      "covered": false
+    },
+    {
+      "id": 88,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "Popoyuapa",
+      "covered": false
+    },
+    {
+      "id": 89,
+      "route": "SECUNDARIA",
+      "department": "Masaya",
+      "locality": "Tisma",
+      "covered": false
+    },
+    {
+      "id": 90,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "Pueblo Nuevo Rivas",
+      "covered": false
+    },
+    {
+      "id": 91,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "Tola",
+      "covered": false
+    },
+    {
+      "id": 92,
+      "route": "SECUNDARIA",
+      "department": "Rivas",
+      "locality": "San Juan del Sur",
+      "covered": false
+    },
+    {
+      "id": 93,
+      "route": "SECUNDARIA",
+      "department": "Masaya",
+      "locality": "La Curva-Niquinohomo",
+      "covered": false
+    },
+    {
+      "id": 94,
+      "route": "SECUNDARIA",
+      "department": "Boaco",
+      "locality": "San Lorenzo",
+      "covered": false
+    },
+    {
+      "id": 95,
+      "route": "SECUNDARIA",
+      "department": "Boaco",
+      "locality": "La Galeada",
+      "covered": false
+    },
+    {
+      "id": 96,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "Comalapa",
+      "covered": false
+    },
+    {
+      "id": 97,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "La Libertad",
+      "covered": false
+    },
+    {
+      "id": 98,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "Acoyapa",
+      "covered": false
+    },
+    {
+      "id": 99,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "Santo Domingo",
+      "covered": false
+    },
+    {
+      "id": 100,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "Villa Sandino",
+      "covered": false
+    },
+    {
+      "id": 101,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "San Pedro de Lovago",
+      "covered": false
+    },
+    {
+      "id": 102,
+      "route": "SECUNDARIA",
+      "department": "Chontales",
+      "locality": "Muhan",
+      "covered": false
+    },
+    {
+      "id": 103,
+      "route": "SECUNDARIA",
+      "department": "RAAS",
+      "locality": "Muelles de Bueyes",
+      "covered": false
+    },
+    {
+      "id": 104,
+      "route": "SECUNDARIA",
+      "department": "RAAS",
+      "locality": "Nueva Guinea",
+      "covered": false
+    },
+    {
+      "id": 105,
+      "route": "SECUNDARIA",
+      "department": "RAAS",
+      "locality": "El Rama",
+      "covered": false
+    },
+    {
+      "id": 106,
+      "route": "SECUNDARIA",
+      "department": "RAAS",
+      "locality": "Precillas",
+      "covered": false
+    },
+    {
+      "id": 107,
+      "route": "SECUNDARIA",
+      "department": "RAAS",
+      "locality": "Puerto La Esperanza",
+      "covered": false
+    },
+    {
+      "id": 108,
+      "route": "SECUNDARIA",
+      "department": "Río San Juan",
+      "locality": "El Coral",
+      "covered": false
+    },
+    {
+      "id": 109,
+      "route": "SECUNDARIA",
+      "department": "Río San Juan",
+      "locality": "La Batea",
+      "covered": false
+    },
+    {
+      "id": 110,
+      "route": "SECUNDARIA",
+      "department": "Matagalpa",
+      "locality": "Río Blanco",
+      "covered": false
+    },
+    {
+      "id": 111,
+      "route": "SECUNDARIA",
+      "department": "Matagalpa",
+      "locality": "Muy Muy",
+      "covered": false
+    },
+    {
+      "id": 112,
+      "route": "SECUNDARIA",
+      "department": "Matagalpa",
+      "locality": "San Ramón",
+      "covered": false
+    },
+    {
+      "id": 113,
+      "route": "SECUNDARIA",
+      "department": "Matagalpa",
+      "locality": "Matiguas",
+      "covered": false
+    },
+    {
+      "id": 114,
+      "route": "SECUNDARIA",
+      "department": "Matagalpa",
+      "locality": "La Dalia",
+      "covered": false
+    },
+    {
+      "id": 115,
+      "route": "SECUNDARIA",
+      "department": "Jinotega",
+      "locality": "Las Calabazas",
+      "covered": false
+    },
+    {
+      "id": 116,
+      "route": "SECUNDARIA",
+      "department": "Jinotega",
+      "locality": "San Rafael del Norte",
+      "covered": false
+    },
+    {
+      "id": 117,
+      "route": "SECUNDARIA",
+      "department": "Jinotega",
+      "locality": "El Tuma",
+      "covered": false
+    },
+    {
+      "id": 118,
+      "route": "SECUNDARIA",
+      "department": "Jinotega",
+      "locality": "La Concordia",
+      "covered": false
+    },
+    {
+      "id": 119,
+      "route": "SECUNDARIA",
+      "department": "Estelí",
+      "locality": "Pueblo Nuevo",
+      "covered": false
+    },
+    {
+      "id": 120,
+      "route": "SECUNDARIA",
+      "department": "Madriz",
+      "locality": "San Lucas",
+      "covered": false
+    },
+    {
+      "id": 121,
+      "route": "SECUNDARIA",
+      "department": "Nueva Segovia",
+      "locality": "Mozonte",
+      "covered": false
+    },
+    {
+      "id": 122,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "Los Cedros",
+      "covered": false
+    },
+    {
+      "id": 123,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "Villa El Carmen",
+      "covered": false
+    },
+    {
+      "id": 124,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "San Rafael del Sur",
+      "covered": false
+    },
+    {
+      "id": 125,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "Montelimar",
+      "covered": false
+    },
+    {
+      "id": 126,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "Masachapa",
+      "covered": false
+    },
+    {
+      "id": 127,
+      "route": "SECUNDARIA",
+      "department": "Managua",
+      "locality": "Pochomil",
+      "covered": false
+    },
+    {
+      "id": 128,
+      "route": "TERCIARIA",
+      "department": "León",
+      "locality": "Momotombo",
+      "covered": false
+    },
+    {
+      "id": 129,
+      "route": "TERCIARIA",
+      "department": "León",
+      "locality": "Villa 15 de Julio",
+      "covered": false
+    },
+    {
+      "id": 130,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "El Tamarindo",
+      "covered": false
+    },
+    {
+      "id": 131,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Ojo de Agua - Las Pilas",
+      "covered": false
+    },
+    {
+      "id": 132,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "La Reynaga",
+      "covered": false
+    },
+    {
+      "id": 133,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Los Zarzales",
+      "covered": false
+    },
+    {
+      "id": 134,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Tonalá",
+      "covered": false
+    },
+    {
+      "id": 135,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Ing. Monte Rosa",
+      "covered": false
+    },
+    {
+      "id": 136,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Cinco Pinos",
+      "covered": false
+    },
+    {
+      "id": 137,
+      "route": "TERCIARIA",
+      "department": "Chinandega",
+      "locality": "Empalme de Izapa",
+      "covered": false
+    },
+    {
+      "id": 138,
+      "route": "TERCIARIA",
+      "department": "Rivas",
+      "locality": "Jicaral",
+      "covered": false
+    },
+    {
+      "id": 139,
+      "route": "TERCIARIA",
+      "department": "Carazo",
+      "locality": "La Conquista",
+      "covered": false
+    },
+    {
+      "id": 140,
+      "route": "TERCIARIA",
+      "department": "Rivas",
+      "locality": "La Virgen",
+      "covered": false
+    },
+    {
+      "id": 141,
+      "route": "TERCIARIA",
+      "department": "Rivas",
+      "locality": "Moyogalpa",
+      "covered": false
+    },
+    {
+      "id": 142,
+      "route": "TERCIARIA",
+      "department": "Rivas",
+      "locality": "Altagracia",
+      "covered": false
+    },
+    {
+      "id": 143,
+      "route": "TERCIARIA",
+      "department": "Boaco",
+      "locality": "Santa Lucía",
+      "covered": false
+    },
+    {
+      "id": 144,
+      "route": "TERCIARIA",
+      "department": "Boaco",
+      "locality": "San José de los Remates",
+      "covered": false
+    },
+    {
+      "id": 145,
+      "route": "TERCIARIA",
+      "department": "Chontales",
+      "locality": "Apompuá",
+      "covered": false
+    },
+    {
+      "id": 146,
+      "route": "TERCIARIA",
+      "department": "Chontales",
+      "locality": "El Cacao",
+      "covered": false
+    },
+    {
+      "id": 147,
+      "route": "TERCIARIA",
+      "department": "Chontales",
+      "locality": "Cara de Mono",
+      "covered": false
+    },
+    {
+      "id": 148,
+      "route": "TERCIARIA",
+      "department": "Chontales",
+      "locality": "Cuapa",
+      "covered": false
+    },
+    {
+      "id": 149,
+      "route": "TERCIARIA",
+      "department": "Chontales",
+      "locality": "La Esperanza",
+      "covered": false
+    },
+    {
+      "id": 150,
+      "route": "TERCIARIA",
+      "department": "RAAS",
+      "locality": "Colonia Rama",
+      "covered": false
+    },
+    {
+      "id": 151,
+      "route": "TERCIARIA",
+      "department": "RAAS",
+      "locality": "El Ayote",
+      "covered": false
+    },
+    {
+      "id": 152,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "El Almendro",
+      "covered": false
+    },
+    {
+      "id": 153,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "El Triunfo",
+      "covered": false
+    },
+    {
+      "id": 154,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "El Tule",
+      "covered": false
+    },
+    {
+      "id": 155,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "San Carlos",
+      "covered": false
+    },
+    {
+      "id": 156,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "Las Azucenas",
+      "covered": false
+    },
+    {
+      "id": 157,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "Los Chiles",
+      "covered": false
+    },
+    {
+      "id": 158,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "San Miguelito",
+      "covered": false
+    },
+    {
+      "id": 159,
+      "route": "TERCIARIA",
+      "department": "Río San Juan",
+      "locality": "Wapi",
+      "covered": false
+    },
+    {
+      "id": 160,
+      "route": "TERCIARIA",
+      "department": "Matagalpa",
+      "locality": "Solingalpa",
+      "covered": false
+    },
+    {
+      "id": 161,
+      "route": "TERCIARIA",
+      "department": "Matagalpa",
+      "locality": "Terrabona",
+      "covered": false
+    },
+    {
+      "id": 162,
+      "route": "TERCIARIA",
+      "department": "Matagalpa",
+      "locality": "Esquipulas",
+      "covered": false
+    },
+    {
+      "id": 163,
+      "route": "TERCIARIA",
+      "department": "Matagalpa",
+      "locality": "San Dionisio",
+      "covered": false
+    },
+    {
+      "id": 164,
+      "route": "TERCIARIA",
+      "department": "Matagalpa",
+      "locality": "Rancho Grande",
+      "covered": false
+    },
+    {
+      "id": 165,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "San Sebastián de Yalí",
+      "covered": false
+    },
+    {
+      "id": 166,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "El Cuá",
+      "covered": false
+    },
+    {
+      "id": 167,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "San José de Bocay",
+      "covered": false
+    },
+    {
+      "id": 168,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "Naranjo",
+      "covered": false
+    },
+    {
+      "id": 169,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "Pantasma",
+      "covered": false
+    },
+    {
+      "id": 170,
+      "route": "TERCIARIA",
+      "department": "RAAN",
+      "locality": "Waslala",
+      "covered": false
+    },
+    {
+      "id": 171,
+      "route": "TERCIARIA",
+      "department": "RAAN",
+      "locality": "Mulukulú",
+      "covered": false
+    },
+    {
+      "id": 172,
+      "route": "TERCIARIA",
+      "department": "RAAN",
+      "locality": "Paiwas",
+      "covered": false
+    },
+    {
+      "id": 173,
+      "route": "TERCIARIA",
+      "department": "Madriz",
+      "locality": "Las Sabanas",
+      "covered": false
+    },
+    {
+      "id": 174,
+      "route": "TERCIARIA",
+      "department": "Madriz",
+      "locality": "San José Cusmapa",
+      "covered": false
+    },
+    {
+      "id": 175,
+      "route": "TERCIARIA",
+      "department": "Madriz",
+      "locality": "Telpaneca",
+      "covered": false
+    },
+    {
+      "id": 176,
+      "route": "TERCIARIA",
+      "department": "Madriz",
+      "locality": "San Juan de Río Coco",
+      "covered": false
+    },
+    {
+      "id": 177,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "Jalapa",
+      "covered": false
+    },
+    {
+      "id": 178,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "Santa Clara",
+      "covered": false
+    },
+    {
+      "id": 179,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "Susucayán",
+      "covered": false
+    },
+    {
+      "id": 180,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "Quilalí",
+      "covered": false
+    },
+    {
+      "id": 181,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "El Jícaro",
+      "covered": false
+    },
+    {
+      "id": 182,
+      "route": "TERCIARIA",
+      "department": "Nueva Segovia",
+      "locality": "San Fernando",
+      "covered": false
+    },
+    {
+      "id": 183,
+      "route": "TERCIARIA",
+      "department": "Estelí",
+      "locality": "San Nicolás",
+      "covered": false
+    },
+    {
+      "id": 184,
+      "route": "TERCIARIA",
+      "department": "Estelí",
+      "locality": "San Juan de Limay",
+      "covered": false
+    },
+    {
+      "id": 185,
+      "route": "TERCIARIA",
+      "department": "Jinotega",
+      "locality": "Wiwilí",
+      "covered": false
+    },
+    {
+      "id": 186,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Bilwi / Puerto Cabezas",
+      "covered": false
+    },
+    {
+      "id": 187,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Siuna",
+      "covered": false
+    },
+    {
+      "id": 188,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Rosita",
+      "covered": false
+    },
+    {
+      "id": 189,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Bonanza",
+      "covered": false
+    },
+    {
+      "id": 190,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Sun Sun",
+      "covered": false
+    },
+    {
+      "id": 191,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Sahsa",
+      "covered": false
+    },
+    {
+      "id": 192,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "El Naranjal",
+      "covered": false
+    },
+    {
+      "id": 193,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Banacruz",
+      "covered": false
+    },
+    {
+      "id": 194,
+      "route": "ESPECIAL A",
+      "department": "RAAN",
+      "locality": "Empalme Alamikamba",
+      "covered": false
+    },
+    {
+      "id": 195,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Bluefields",
+      "covered": false
+    },
+    {
+      "id": 196,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Ubu Norte",
+      "covered": false
+    },
+    {
+      "id": 197,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Waspam Atlántico",
+      "covered": false
+    },
+    {
+      "id": 198,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Corn Island",
+      "covered": false
+    },
+    {
+      "id": 199,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Laguna de Perlas",
+      "covered": false
+    },
+    {
+      "id": 200,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Kukra Hill",
+      "covered": false
+    },
+    {
+      "id": 201,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "El Tortuguero",
+      "covered": false
+    },
+    {
+      "id": 202,
+      "route": "ESPECIAL B",
+      "department": "RAAS",
+      "locality": "Maleconcito",
+      "covered": false
+    },
+    {
+      "id": 203,
+      "route": "ESPECIAL B",
+      "department": "León",
+      "locality": "Achuapa",
+      "covered": false
+    },
+    {
+      "id": 204,
+      "route": "ESPECIAL B",
+      "department": "León",
+      "locality": "Poneloya",
+      "covered": false
+    },
+    {
+      "id": 205,
+      "route": "ESPECIAL B",
+      "department": "León",
+      "locality": "Santa Rosa del Peñón",
+      "covered": false
+    },
+    {
+      "id": 206,
+      "route": "ESPECIAL B",
+      "department": "León",
+      "locality": "Puerto Sandino",
+      "covered": false
+    },
+    {
+      "id": 207,
+      "route": "ESPECIAL B",
+      "department": "León",
+      "locality": "Las Peñitas",
+      "covered": false
+    },
+    {
+      "id": 208,
+      "route": "ESPECIAL B",
+      "department": "Chinandega",
+      "locality": "Guasaule",
+      "covered": false
+    },
+    {
+      "id": 209,
+      "route": "ESPECIAL B",
+      "department": "Chinandega",
+      "locality": "Puerto Morazán",
+      "covered": false
+    },
+    {
+      "id": 210,
+      "route": "ESPECIAL B",
+      "department": "Chinandega",
+      "locality": "San Pedro del Norte",
+      "covered": false
+    },
+    {
+      "id": 211,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Peñas Blancas",
+      "covered": false
+    },
+    {
+      "id": 212,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Sapoá",
+      "covered": false
+    },
+    {
+      "id": 213,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Playa Limón 1-2",
+      "covered": false
+    },
+    {
+      "id": 214,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Cárdenas",
+      "covered": false
+    },
+    {
+      "id": 215,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Las Salinas de Tola",
+      "covered": false
+    },
+    {
+      "id": 216,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Rancho Sta. Ana",
+      "covered": false
+    },
+    {
+      "id": 217,
+      "route": "ESPECIAL B",
+      "department": "Rivas",
+      "locality": "Hacienda Iguana",
+      "covered": false
+    },
+    {
+      "id": 218,
+      "route": "ESPECIAL B",
+      "department": "Granada",
+      "locality": "Malacatoya",
+      "covered": false
+    },
+    {
+      "id": 219,
+      "route": "ESPECIAL B",
+      "department": "RAAN",
+      "locality": "Puerto Viejo (Waslala)",
+      "covered": false
+    },
+    {
+      "id": 220,
+      "route": "ESPECIAL B",
+      "department": "RAAN",
+      "locality": "El Guineo",
+      "covered": false
+    },
+    {
+      "id": 221,
+      "route": "ESPECIAL B",
+      "department": "RAAN",
+      "locality": "Coperno",
+      "covered": false
+    },
+    {
+      "id": 222,
+      "route": "ESPECIAL B",
+      "department": "Jinotega",
+      "locality": "Wamblan",
+      "covered": false
+    },
+    {
+      "id": 223,
+      "route": "ESPECIAL B",
+      "department": "Jinotega",
+      "locality": "Plan de Grama",
+      "covered": false
+    },
+    {
+      "id": 224,
+      "route": "ESPECIAL B",
+      "department": "Jinotega",
+      "locality": "Ayapal",
+      "covered": false
+    },
+    {
+      "id": 225,
+      "route": "ESPECIAL B",
+      "department": "Jinotega",
+      "locality": "Santa Rita",
+      "covered": false
+    }
+  ]
+}
