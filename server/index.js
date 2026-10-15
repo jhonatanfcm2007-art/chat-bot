@@ -1441,7 +1441,7 @@ async function createShopifyOrder(chat, products) {
         
         // ------------------ NUEVO PARSEADOR INTELIGENTE DE PRECIOS Y CANTIDADES ------------------
         let orderQty = 1;
-        let unitPriceVal = 155.00; // Fallback estricto
+        let unitPriceVal = null; // Never invent a price when the catalog cannot be parsed.
 
         const parseSafePrice = (str) => {
             let clean = String(str).trim().replace(/[^0-9.,]/g, '');
@@ -1465,11 +1465,11 @@ async function createShopifyOrder(chat, products) {
             const options = [];
             const lines = targetPricesText.split('\n');
             for (const line of lines) {
-                const pMatch = line.match(/(?:Q|L|\$|₡|C\$|C|RD\$|S\/)\s*([0-9.,]+)/i);
+                const pMatch = line.match(/(?:RD\$|C\$|Q|L|\$|₡|S\/)\s*([0-9.,]+)/i) || line.match(/([0-9][0-9.,]*)\s*c[oó]rdobas?\b/i);
                 if (pMatch) {
                     let price = parseSafePrice(pMatch[1]);
                     let qty = 1;
-                    const promoMatch = line.match(/\b([1-9]\d*)\s*x\s*[1-9]\d*\b/i);
+                    const promoMatch = line.match(/\b([1-9]\d*)\s*[x×]\s*[1-9]\d*\b/i);
                     if (promoMatch) {
                         qty = parseInt(promoMatch[1], 10);
                     } else {
@@ -1486,7 +1486,7 @@ async function createShopifyOrder(chat, products) {
 
             // Paso 2: Intentar deducir la cantidad basándonos en el texto de "products" devuelto por la IA
             let aiQty = null;
-            const aiPromo = products.match(/\b([1-9]\d*)\s*x\s*[1-9]\d*\b/i);
+            const aiPromo = products.match(/\b([1-9]\d*)\s*[x×]\s*[1-9]\d*\b/i);
             if (aiPromo) aiQty = parseInt(aiPromo[1], 10);
             else {
                 const aiQMatch = products.match(/(?:\s+x\s*|combo\s*|pack\s*)([1-9]\d*)/i) || 
@@ -1547,6 +1547,7 @@ async function createShopifyOrder(chat, products) {
             }
         }
         
+        if (!Number.isFinite(unitPriceVal) || unitPriceVal <= 0) throw new Error('Precio del catálogo no reconocido: revisar antes de enviar a Shopify.');
         const unitPrice = unitPriceVal.toFixed(2);
 
         // Resolver el Variant ID a partir del Product ID
